@@ -293,16 +293,14 @@ export function canvasToBlob(
 }
 
 /**
- * Reliably trigger client-side download for Blobs with guaranteed filename and extension.
- * Eliminates browser UUID/blob URL fallback filenames seen in legacy file-saver.
+ * Triggers a client-side file download via an invisible anchor tag.
  */
-export function downloadBlob(blob: Blob, filename: string): void {
-  if (typeof window === "undefined" || !blob) return;
+export function triggerBrowserDownload(href: string, filename: string): void {
+  if (typeof window === "undefined") return;
 
-  const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.style.display = "none";
-  link.href = url;
+  link.href = href;
   link.download = filename;
   link.setAttribute("download", filename);
 
@@ -314,10 +312,102 @@ export function downloadBlob(blob: Blob, filename: string): void {
       if (link.parentNode) {
         document.body.removeChild(link);
       }
-      URL.revokeObjectURL(url);
     } catch {
-      // ignore cleanup errors
+      // ignore cleanup
     }
-  }, 1000);
+  }, 2000);
 }
+
+/**
+ * Downloads a canvas directly as a JPEG file with guaranteed extension.
+ * Uses canvas.toDataURL to completely avoid Chromium's Blob URL UUID fallback.
+ */
+export function downloadCanvasAsJpeg(
+  canvas: HTMLCanvasElement,
+  filename: string,
+  quality: number = 0.93
+): void {
+  try {
+    const dataUrl = canvas.toDataURL("image/jpeg", quality);
+    triggerBrowserDownload(dataUrl, filename);
+  } catch {
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) return;
+        const file = new File([blob], filename, { type: "image/jpeg" });
+        const url = URL.createObjectURL(file);
+        triggerBrowserDownload(url, filename);
+        setTimeout(() => {
+          try {
+            URL.revokeObjectURL(url);
+          } catch {}
+        }, 300000);
+      },
+      "image/jpeg",
+      quality
+    );
+  }
+}
+
+/**
+ * Downloads a JSZip archive as a .zip file.
+ * Uses base64 Data URL (guaranteed filename integrity in Chromium) with fallback to File object.
+ */
+export async function downloadZipArchive(
+  zip: any,
+  filename: string
+): Promise<void> {
+  try {
+    // Base64 Data URL completely avoids Chromium Blob UUID fallback
+    const base64 = await zip.generateAsync({
+      type: "base64",
+      compression: "DEFLATE",
+      compressionOptions: { level: 6 },
+    });
+
+    if (base64 && base64.length < 150 * 1024 * 1024) {
+      const dataUri = `data:application/zip;base64,${base64}`;
+      triggerBrowserDownload(dataUri, filename);
+      return;
+    }
+  } catch (err) {
+    console.warn("Base64 zip generation fallback to blob:", err);
+  }
+
+  // Fallback for massive archives: use File object and keep URL alive for 5 minutes
+  const blob = await zip.generateAsync({
+    type: "blob",
+    mimeType: "application/zip",
+    compression: "DEFLATE",
+    compressionOptions: { level: 6 },
+  });
+
+  const file = new File([blob], filename, { type: "application/zip" });
+  const objectUrl = URL.createObjectURL(file);
+  triggerBrowserDownload(objectUrl, filename);
+
+  setTimeout(() => {
+    try {
+      URL.revokeObjectURL(objectUrl);
+    } catch {}
+  }, 300000);
+}
+
+/**
+ * Fallback downloadBlob utility (with extended 5-minute revocation)
+ */
+export function downloadBlob(blob: Blob, filename: string): void {
+  if (typeof window === "undefined" || !blob) return;
+
+  const file = new File([blob], filename, { type: blob.type || "application/octet-stream" });
+  const url = URL.createObjectURL(file);
+  triggerBrowserDownload(url, filename);
+
+  setTimeout(() => {
+    try {
+      URL.revokeObjectURL(url);
+    } catch {}
+  }, 300000);
+}
+
 

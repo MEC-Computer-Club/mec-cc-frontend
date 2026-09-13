@@ -36,7 +36,8 @@ import {
   renderWatermarkOnCanvas,
   loadImage,
   canvasToBlob,
-  downloadBlob,
+  downloadCanvasAsJpeg,
+  downloadZipArchive,
   ensureFontLoaded,
 } from "@/lib/watermarkEngine";
 import {
@@ -343,15 +344,13 @@ export function WatermarkForgeClient() {
       const sourceImg = await loadImage(photo.originalUrl);
       const sigilImg = selectedSigil ? await loadImage(selectedSigil.src) : null;
       const canvas = await renderWatermarkOnCanvas(sourceImg, sigilImg, config);
-      const blob = await canvasToBlob(canvas, "image/jpeg", 0.93);
-
       const cleanTitle = (config.eventName || "Photo")
         .trim()
         .replace(/[^a-zA-Z0-9_-]/g, "_")
         .replace(/_+/g, "_")
         .substring(0, 30) || "Photo";
       const cleanBase = photo.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9_-]/g, "_");
-      downloadBlob(blob, `MEC_${cleanTitle}_${cleanBase}.jpg`);
+      downloadCanvasAsJpeg(canvas, `MEC_${cleanTitle}_${cleanBase}.jpg`);
       toast.success(`Artifact inscribed and saved!`, { id: toastId });
     } catch (err) {
       console.error("Single export failed:", err);
@@ -442,12 +441,6 @@ export function WatermarkForgeClient() {
       });
 
       toast.loading("Compressing chronicle archive...", { id: toastId });
-      const content = await zip.generateAsync({
-        type: "blob",
-        mimeType: "application/zip",
-        compression: "DEFLATE",
-        compressionOptions: { level: 6 },
-      });
 
       const cleanEventName = (config.eventName || "Event")
         .trim()
@@ -455,7 +448,8 @@ export function WatermarkForgeClient() {
         .replace(/_+/g, "_")
         .replace(/^_|_$/g, "") || "Chronicles";
       const zipFilename = `MEC_${cleanEventName}_${new Date().toISOString().slice(0, 10)}.zip`;
-      downloadBlob(content, zipFilename);
+
+      await downloadZipArchive(zip, zipFilename);
 
       confetti({
         particleCount: 80,
