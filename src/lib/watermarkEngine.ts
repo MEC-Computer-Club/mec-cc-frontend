@@ -291,3 +291,33 @@ export function canvasToBlob(
     );
   });
 }
+
+/**
+ * Reliably trigger client-side download for Blobs with guaranteed filename and extension.
+ * Eliminates browser UUID/blob URL fallback filenames seen in legacy file-saver.
+ */
+export function downloadBlob(blob: Blob, filename: string): void {
+  if (typeof window === "undefined" || !blob) return;
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.style.display = "none";
+  link.href = url;
+  link.download = filename;
+  link.setAttribute("download", filename);
+
+  document.body.appendChild(link);
+  link.click();
+
+  setTimeout(() => {
+    try {
+      if (link.parentNode) {
+        document.body.removeChild(link);
+      }
+      URL.revokeObjectURL(url);
+    } catch {
+      // ignore cleanup errors
+    }
+  }, 1000);
+}
+

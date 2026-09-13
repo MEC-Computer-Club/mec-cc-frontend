@@ -6,7 +6,6 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import confetti from "canvas-confetti";
 import JSZip from "jszip";
-import { saveAs } from "file-saver";
 import {
   Upload,
   Sparkles,
@@ -37,6 +36,7 @@ import {
   renderWatermarkOnCanvas,
   loadImage,
   canvasToBlob,
+  downloadBlob,
   ensureFontLoaded,
 } from "@/lib/watermarkEngine";
 import {
@@ -346,9 +346,12 @@ export function WatermarkForgeClient() {
       const blob = await canvasToBlob(canvas, "image/jpeg", 0.93);
 
       const cleanTitle = (config.eventName || "Photo")
+        .trim()
         .replace(/[^a-zA-Z0-9_-]/g, "_")
-        .substring(0, 30);
-      saveAs(blob, `MEC_${cleanTitle}_${photo.name.replace(/\.[^/.]+$/, "")}.jpg`);
+        .replace(/_+/g, "_")
+        .substring(0, 30) || "Photo";
+      const cleanBase = photo.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9_-]/g, "_");
+      downloadBlob(blob, `MEC_${cleanTitle}_${cleanBase}.jpg`);
       toast.success(`Artifact inscribed and saved!`, { id: toastId });
     } catch (err) {
       console.error("Single export failed:", err);
@@ -439,10 +442,20 @@ export function WatermarkForgeClient() {
       });
 
       toast.loading("Compressing chronicle archive...", { id: toastId });
-      const content = await zip.generateAsync({ type: "blob" });
+      const content = await zip.generateAsync({
+        type: "blob",
+        mimeType: "application/zip",
+        compression: "DEFLATE",
+        compressionOptions: { level: 6 },
+      });
 
-      const zipFilename = `MEC_Sigil_${(config.eventName || "Event").replace(/[^a-zA-Z0-9_-]/g, "_")}_${new Date().toISOString().slice(0, 10)}.zip`;
-      saveAs(content, zipFilename);
+      const cleanEventName = (config.eventName || "Event")
+        .trim()
+        .replace(/[^a-zA-Z0-9_-]/g, "_")
+        .replace(/_+/g, "_")
+        .replace(/^_|_$/g, "") || "Chronicles";
+      const zipFilename = `MEC_${cleanEventName}_${new Date().toISOString().slice(0, 10)}.zip`;
+      downloadBlob(content, zipFilename);
 
       confetti({
         particleCount: 80,
