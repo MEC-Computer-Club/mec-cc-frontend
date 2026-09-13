@@ -350,7 +350,7 @@ export function WatermarkForgeClient() {
         .replace(/_+/g, "_")
         .substring(0, 30) || "Photo";
       const cleanBase = photo.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9_-]/g, "_");
-      downloadCanvasAsJpeg(canvas, `MEC_${cleanTitle}_${cleanBase}.jpg`);
+      await downloadCanvasAsJpeg(canvas, `MEC_${cleanTitle}_${cleanBase}.jpg`);
       toast.success(`Artifact inscribed and saved!`, { id: toastId });
     } catch (err) {
       console.error("Single export failed:", err);

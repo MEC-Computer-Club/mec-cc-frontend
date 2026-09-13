@@ -308,58 +308,80 @@ export function canvasToBlob(
 export function downloadFile(blob: Blob, filename: string): void {
   if (typeof window === "undefined" || !blob) return;
 
-  // Wrap in File to attach filename metadata to the object URL
-  const file = new File([blob], filename, {
-    type: blob.type || "application/octet-stream",
-  });
+  // Ensure filename has proper extension based on MIME type or fallback
+  let cleanFilename = filename.trim();
+  let mimeType = blob.type;
+
+  if (cleanFilename.toLowerCase().endsWith(".zip")) {
+    mimeType = "application/zip";
+  } else if (cleanFilename.toLowerCase().endsWith(".jpg") || cleanFilename.toLowerCase().endsWith(".jpeg")) {
+    mimeType = "image/jpeg";
+  } else if (cleanFilename.toLowerCase().endsWith(".png")) {
+    mimeType = "image/png";
+  } else if (!mimeType) {
+    mimeType = "application/octet-stream";
+  }
+
+  // Wrap in File object so that the object URL has name metadata
+  const file = new File([blob], cleanFilename, { type: mimeType });
   const url = URL.createObjectURL(file);
 
   const anchor = document.createElement("a");
-  anchor.style.display = "none";
+  anchor.style.position = "fixed";
+  anchor.style.left = "-9999px";
+  anchor.style.top = "-9999px";
+  anchor.style.opacity = "0";
   anchor.href = url;
-  anchor.download = filename;
+  anchor.download = cleanFilename;
+  anchor.setAttribute("download", cleanFilename);
 
   document.body.appendChild(anchor);
 
-  // Use requestAnimationFrame to ensure the anchor is in the DOM before clicking
-  requestAnimationFrame(() => {
+  // Synchronous click ensures browser recognizes caller event activation
+  try {
+    anchor.dispatchEvent(
+      new MouseEvent("click", {
+        bubbles: true,
+        cancelable: true,
+        view: window,
+      })
+    );
+  } catch {
     anchor.click();
+  }
 
-    // Clean up anchor after a short delay
-    setTimeout(() => {
-      try {
-        if (anchor.parentNode) anchor.parentNode.removeChild(anchor);
-      } catch {}
-    }, 5000);
+  // Remove anchor after a 2-second grace period
+  setTimeout(() => {
+    try {
+      if (anchor.parentNode) {
+        anchor.parentNode.removeChild(anchor);
+      }
+    } catch {}
+  }, 2000);
 
-    // Revoke the object URL after 5 minutes to give Chrome plenty of time
-    setTimeout(() => {
-      try {
-        URL.revokeObjectURL(url);
-      } catch {}
-    }, 5 * 60 * 1000);
-  });
+  // Keep object URL alive for 5 minutes to prevent Chromium from dropping metadata
+  // or falling back to raw blob UUIDs before disk writing finishes
+  setTimeout(() => {
+    try {
+      URL.revokeObjectURL(url);
+    } catch {}
+  }, 5 * 60 * 1000);
 }
 
 /**
  * Render watermark on canvas, then download as JPEG.
  */
-export function downloadCanvasAsJpeg(
+export async function downloadCanvasAsJpeg(
   canvas: HTMLCanvasElement,
   filename: string,
   quality: number = 0.93
-): void {
-  canvas.toBlob(
-    (blob) => {
-      if (!blob) {
-        console.error("Canvas toBlob returned null");
-        return;
-      }
-      downloadFile(blob, filename);
-    },
-    "image/jpeg",
-    quality
-  );
+): Promise<void> {
+  const safeFilename = filename.toLowerCase().endsWith(".jpg") || filename.toLowerCase().endsWith(".jpeg")
+    ? filename
+    : `${filename}.jpg`;
+
+  const blob = await canvasToBlob(canvas, "image/jpeg", quality);
+  downloadFile(blob, safeFilename);
 }
 
 /**
@@ -369,6 +391,10 @@ export async function downloadZipArchive(
   zip: any,
   filename: string
 ): Promise<void> {
+  const safeFilename = filename.toLowerCase().endsWith(".zip")
+    ? filename
+    : `${filename}.zip`;
+
   const blob: Blob = await zip.generateAsync({
     type: "blob",
     mimeType: "application/zip",
@@ -376,7 +402,7 @@ export async function downloadZipArchive(
     compressionOptions: { level: 6 },
   });
 
-  downloadFile(blob, filename);
+  downloadFile(blob, safeFilename);
 }
 
 // Legacy alias kept for any other callers
