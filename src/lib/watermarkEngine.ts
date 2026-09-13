@@ -293,121 +293,94 @@ export function canvasToBlob(
 }
 
 /**
- * Triggers a client-side file download via an invisible anchor tag.
+ * Robust client-side file download.
+ *
+ * Strategy:
+ * - Wraps the blob in a `new File(…)` so the object URL carries metadata.
+ * - Creates an invisible `<a download="filename">` anchor, clicks it.
+ * - Delays `URL.revokeObjectURL` by **5 full minutes** so Chrome's download
+ *   manager has time to read the blob even for very large files.
+ *
+ * This avoids:
+ * - The UUID-as-filename bug (caused by revoking too early).
+ * - The silent-fail bug with data: URLs >2 MB in Chromium.
  */
-export function triggerBrowserDownload(href: string, filename: string): void {
-  if (typeof window === "undefined") return;
+export function downloadFile(blob: Blob, filename: string): void {
+  if (typeof window === "undefined" || !blob) return;
 
-  const link = document.createElement("a");
-  link.style.display = "none";
-  link.href = href;
-  link.download = filename;
-  link.setAttribute("download", filename);
+  // Wrap in File to attach filename metadata to the object URL
+  const file = new File([blob], filename, {
+    type: blob.type || "application/octet-stream",
+  });
+  const url = URL.createObjectURL(file);
 
-  document.body.appendChild(link);
-  link.click();
+  const anchor = document.createElement("a");
+  anchor.style.display = "none";
+  anchor.href = url;
+  anchor.download = filename;
 
-  setTimeout(() => {
-    try {
-      if (link.parentNode) {
-        document.body.removeChild(link);
-      }
-    } catch {
-      // ignore cleanup
-    }
-  }, 2000);
+  document.body.appendChild(anchor);
+
+  // Use requestAnimationFrame to ensure the anchor is in the DOM before clicking
+  requestAnimationFrame(() => {
+    anchor.click();
+
+    // Clean up anchor after a short delay
+    setTimeout(() => {
+      try {
+        if (anchor.parentNode) anchor.parentNode.removeChild(anchor);
+      } catch {}
+    }, 5000);
+
+    // Revoke the object URL after 5 minutes to give Chrome plenty of time
+    setTimeout(() => {
+      try {
+        URL.revokeObjectURL(url);
+      } catch {}
+    }, 5 * 60 * 1000);
+  });
 }
 
 /**
- * Downloads a canvas directly as a JPEG file with guaranteed extension.
- * Uses canvas.toDataURL to completely avoid Chromium's Blob URL UUID fallback.
+ * Render watermark on canvas, then download as JPEG.
  */
 export function downloadCanvasAsJpeg(
   canvas: HTMLCanvasElement,
   filename: string,
   quality: number = 0.93
 ): void {
-  try {
-    const dataUrl = canvas.toDataURL("image/jpeg", quality);
-    triggerBrowserDownload(dataUrl, filename);
-  } catch {
-    canvas.toBlob(
-      (blob) => {
-        if (!blob) return;
-        const file = new File([blob], filename, { type: "image/jpeg" });
-        const url = URL.createObjectURL(file);
-        triggerBrowserDownload(url, filename);
-        setTimeout(() => {
-          try {
-            URL.revokeObjectURL(url);
-          } catch {}
-        }, 300000);
-      },
-      "image/jpeg",
-      quality
-    );
-  }
+  canvas.toBlob(
+    (blob) => {
+      if (!blob) {
+        console.error("Canvas toBlob returned null");
+        return;
+      }
+      downloadFile(blob, filename);
+    },
+    "image/jpeg",
+    quality
+  );
 }
 
 /**
- * Downloads a JSZip archive as a .zip file.
- * Uses base64 Data URL (guaranteed filename integrity in Chromium) with fallback to File object.
+ * Generate a ZIP archive from a JSZip instance and download it.
  */
 export async function downloadZipArchive(
   zip: any,
   filename: string
 ): Promise<void> {
-  try {
-    // Base64 Data URL completely avoids Chromium Blob UUID fallback
-    const base64 = await zip.generateAsync({
-      type: "base64",
-      compression: "DEFLATE",
-      compressionOptions: { level: 6 },
-    });
-
-    if (base64 && base64.length < 150 * 1024 * 1024) {
-      const dataUri = `data:application/zip;base64,${base64}`;
-      triggerBrowserDownload(dataUri, filename);
-      return;
-    }
-  } catch (err) {
-    console.warn("Base64 zip generation fallback to blob:", err);
-  }
-
-  // Fallback for massive archives: use File object and keep URL alive for 5 minutes
-  const blob = await zip.generateAsync({
+  const blob: Blob = await zip.generateAsync({
     type: "blob",
     mimeType: "application/zip",
     compression: "DEFLATE",
     compressionOptions: { level: 6 },
   });
 
-  const file = new File([blob], filename, { type: "application/zip" });
-  const objectUrl = URL.createObjectURL(file);
-  triggerBrowserDownload(objectUrl, filename);
-
-  setTimeout(() => {
-    try {
-      URL.revokeObjectURL(objectUrl);
-    } catch {}
-  }, 300000);
+  downloadFile(blob, filename);
 }
 
-/**
- * Fallback downloadBlob utility (with extended 5-minute revocation)
- */
-export function downloadBlob(blob: Blob, filename: string): void {
-  if (typeof window === "undefined" || !blob) return;
+// Legacy alias kept for any other callers
+export const downloadBlob = downloadFile;
 
-  const file = new File([blob], filename, { type: blob.type || "application/octet-stream" });
-  const url = URL.createObjectURL(file);
-  triggerBrowserDownload(url, filename);
-
-  setTimeout(() => {
-    try {
-      URL.revokeObjectURL(url);
-    } catch {}
-  }, 300000);
-}
 
 
