@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { WatermarkForgeClient } from "./WatermarkForgeClient";
+import { WatermarkForgeClient } from "@/app/resources/watermark/WatermarkForgeClient";
 
 export const metadata: Metadata = {
   title: "The Sigil Forge — Batch Event Photo Watermarking",

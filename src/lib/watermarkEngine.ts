@@ -112,6 +112,17 @@ export async function renderWatermarkOnCanvas(
   const width = sourceImage.naturalWidth || sourceImage.width;
   const height = sourceImage.naturalHeight || sourceImage.height;
 
+  // Guard: if the source image hasn't actually decoded (e.g. a race where
+  // `onload` fired but naturalWidth/Height are still 0), fail loudly here
+  // instead of silently producing a 0x0 canvas that later exports as a
+  // "valid" but essentially empty JPEG.
+  if (!width || !height) {
+    throw new Error(
+      `Source image has no usable dimensions (got ${width}\u00d7${height}) ` +
+      `- it may not have finished decoding before rendering was attempted.`
+    );
+  }
+
   const canvas = targetCanvas || document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
@@ -155,10 +166,9 @@ export async function renderWatermarkOnCanvas(
   // Measure Subtitle line
   const clubText = (config.clubName || "MEC Computer Club").trim();
   const dateText = (config.date || "").trim();
-  const subtitleLine = dateText ? `${clubText}  •  ${dateText}` : clubText;
+  const subtitleLine = dateText ? `${clubText}  \u2022  ${dateText}` : clubText;
 
   ctx.font = `500 ${subSize}px "Space Grotesk", system-ui, -apple-system, sans-serif`;
-  const subMetrics = ctx.measureText(subtitleLine);
   const subHeight = subSize;
 
   // Measure Title lines
@@ -166,10 +176,6 @@ export async function renderWatermarkOnCanvas(
   const titleText = (config.eventName || "Event Photo").trim();
   const titleLines = wrapText(ctx, titleText, maxTextWidth);
   const titleLineHeight = Math.round(titleSize * 1.18);
-
-  // Calculate vertical placement from bottom
-  const totalTextBlockHeight =
-    titleLines.length * titleLineHeight + lineSpacing + subHeight;
 
   let currentY = height - paddingBottom;
 
@@ -195,7 +201,6 @@ export async function renderWatermarkOnCanvas(
   ctx.shadowOffsetX = 0;
   ctx.shadowOffsetY = Math.round(2 * scale);
 
-  // Draw lines from bottom to top or top to bottom
   const titleStartY = currentY - (titleLines.length - 1) * titleLineHeight;
   for (let i = 0; i < titleLines.length; i++) {
     ctx.fillText(titleLines[i], paddingX, titleStartY + i * titleLineHeight);
@@ -260,20 +265,38 @@ export async function renderWatermarkOnCanvas(
 }
 
 /**
- * Convert an image file / object URL to an HTMLImageElement
+ * Convert an image file / object URL to an HTMLImageElement.
+ * Waits for full decode (not just the `load` event) so canvas draws never
+ * race ahead of pixel data being ready.
  */
 export function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
-    img.onload = () => resolve(img);
+
+    img.onload = () => {
+      // `decode()` guarantees the bitmap is fully available before we hand
+      // the image back for drawImage(). Falls back gracefully if the
+      // browser lacks it or decode() itself rejects (rare, but non-fatal
+      // since onload already fired).
+      if (typeof img.decode === "function") {
+        img
+          .decode()
+          .then(() => resolve(img))
+          .catch(() => resolve(img));
+      } else {
+        resolve(img);
+      }
+    };
     img.onerror = (err) => reject(err);
     img.src = src;
   });
 }
 
 /**
- * Convert canvas to Blob
+ * Convert canvas to Blob. Rejects on a null result AND on a suspiciously
+ * empty/undersized result, so a 0x0 or near-blank render fails loudly
+ * instead of silently downloading as a "successful" but corrupt file.
  */
 export function canvasToBlob(
   canvas: HTMLCanvasElement,
@@ -281,10 +304,25 @@ export function canvasToBlob(
   quality: number = 0.93
 ): Promise<Blob> {
   return new Promise((resolve, reject) => {
+    if (!canvas.width || !canvas.height) {
+      reject(new Error(`Cannot export a ${canvas.width}\u00d7${canvas.height} canvas`));
+      return;
+    }
     canvas.toBlob(
       (blob) => {
-        if (blob) resolve(blob);
-        else reject(new Error("Canvas toBlob failed"));
+        if (!blob) {
+          reject(new Error("Canvas toBlob failed"));
+          return;
+        }
+        if (blob.size < 1000) {
+          reject(
+            new Error(
+              `Render produced a suspiciously small blob (${blob.size} bytes) - likely an empty canvas`
+            )
+          );
+          return;
+        }
+        resolve(blob);
       },
       type,
       quality
@@ -295,26 +333,25 @@ export function canvasToBlob(
 /**
  * Robust client-side file download.
  *
- * Strategy:
- * - Wraps the blob in a `new File(…)` so the object URL carries metadata.
- * - Creates an invisible `<a download="filename">` anchor, clicks it.
- * - Delays `URL.revokeObjectURL` by **5 full minutes** so Chrome's download
- *   manager has time to read the blob even for very large files.
- *
- * This avoids:
- * - The UUID-as-filename bug (caused by revoking too early).
- * - The silent-fail bug with data: URLs >2 MB in Chromium.
+ * Uses the native `anchor.click()` method (NOT a synthetic
+ * `dispatchEvent(new MouseEvent(...))`). Chrome only reliably honors the
+ * `download` attribute's suggested filename for a real `.click()` call -
+ * a dispatched MouseEvent is treated as an untrusted/scripted event and,
+ * once transient user-activation has expired (which it has by this point,
+ * since we got here via several awaited async steps), Chrome falls back to
+ * treating it as an anonymous/automatic download and substitutes its own
+ * internal blob identifier as the filename with no extension. That's the
+ * exact "UUID with no extension" bug in the download history.
  */
 export function downloadFile(blob: Blob, filename: string): void {
   if (typeof window === "undefined" || !blob) return;
 
-  // Ensure filename has proper extension based on MIME type or fallback
-  let cleanFilename = filename.trim();
+  const cleanFilename = filename.trim();
   let mimeType = blob.type;
 
   if (cleanFilename.toLowerCase().endsWith(".zip")) {
     mimeType = "application/zip";
-  } else if (cleanFilename.toLowerCase().endsWith(".jpg") || cleanFilename.toLowerCase().endsWith(".jpeg")) {
+  } else if (/\.(jpe?g)$/i.test(cleanFilename)) {
     mimeType = "image/jpeg";
   } else if (cleanFilename.toLowerCase().endsWith(".png")) {
     mimeType = "image/png";
@@ -322,50 +359,35 @@ export function downloadFile(blob: Blob, filename: string): void {
     mimeType = "application/octet-stream";
   }
 
-  // Wrap in File object so that the object URL has name metadata
-  const file = new File([blob], cleanFilename, { type: mimeType });
-  const url = URL.createObjectURL(file);
+  // A plain Blob is all we need - wrapping in `File` doesn't propagate a
+  // name into the resulting blob: URL, so it bought us nothing before.
+  const typedBlob =
+    blob.type === mimeType ? blob : new Blob([blob], { type: mimeType });
+  const url = URL.createObjectURL(typedBlob);
 
   const anchor = document.createElement("a");
-  anchor.style.position = "fixed";
-  anchor.style.left = "-9999px";
-  anchor.style.top = "-9999px";
-  anchor.style.opacity = "0";
+  anchor.style.display = "none";
   anchor.href = url;
   anchor.download = cleanFilename;
-  anchor.setAttribute("download", cleanFilename);
 
   document.body.appendChild(anchor);
 
-  // Synchronous click ensures browser recognizes caller event activation
-  try {
-    anchor.dispatchEvent(
-      new MouseEvent("click", {
-        bubbles: true,
-        cancelable: true,
-        view: window,
-      })
-    );
-  } catch {
-    anchor.click();
-  }
+  // The one line that actually matters: a real, trusted-enough click.
+  anchor.click();
 
-  // Remove anchor after a 2-second grace period
-  setTimeout(() => {
-    try {
-      if (anchor.parentNode) {
-        anchor.parentNode.removeChild(anchor);
-      }
-    } catch {}
-  }, 2000);
+  anchor.remove();
 
-  // Keep object URL alive for 5 minutes to prevent Chromium from dropping metadata
-  // or falling back to raw blob UUIDs before disk writing finishes
+  // Chrome reads the blob synchronously when the download starts, so a
+  // short delay is plenty. The previous 5-minute delay was compensating
+  // for a cause ("revoking too early") that isn't actually what produces
+  // the UUID-filename bug, and just kept memory pinned unnecessarily.
   setTimeout(() => {
     try {
       URL.revokeObjectURL(url);
-    } catch {}
-  }, 5 * 60 * 1000);
+    } catch {
+      // no-op - URL may already be invalid/revoked
+    }
+  }, 5000);
 }
 
 /**
@@ -376,9 +398,8 @@ export async function downloadCanvasAsJpeg(
   filename: string,
   quality: number = 0.93
 ): Promise<void> {
-  const safeFilename = filename.toLowerCase().endsWith(".jpg") || filename.toLowerCase().endsWith(".jpeg")
-    ? filename
-    : `${filename}.jpg`;
+  const safeFilename =
+    /\.(jpe?g)$/i.test(filename) ? filename : `${filename}.jpg`;
 
   const blob = await canvasToBlob(canvas, "image/jpeg", quality);
   downloadFile(blob, safeFilename);
@@ -402,11 +423,14 @@ export async function downloadZipArchive(
     compressionOptions: { level: 6 },
   });
 
+  if (!blob || blob.size < 100) {
+    throw new Error(
+      `ZIP generation produced a suspiciously small archive (${blob?.size ?? 0} bytes)`
+    );
+  }
+
   downloadFile(blob, safeFilename);
 }
 
 // Legacy alias kept for any other callers
 export const downloadBlob = downloadFile;
-
-
-

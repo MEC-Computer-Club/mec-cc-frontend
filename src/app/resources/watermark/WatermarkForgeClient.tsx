@@ -1159,3 +1159,5 @@ export function WatermarkForgeClient() {
     </div>
   );
 }
+
+export default WatermarkForgeClient;
