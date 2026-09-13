@@ -17,16 +17,31 @@ import {
   BookOpen,
   BarChart3,
   Layers,
+  Plus,
+  Trash2,
+  Users,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { API_BASE_URL } from "@/lib/api";
 
 const API_BASE = API_BASE_URL;
 
-export default function PageContentManager() {
-  const [activeTab, setActiveTab] = useState<"home" | "cp-hub" | "contact">("home");
+type TabKey = "home" | "cp-hub" | "contact" | "about";
+const VALID_TABS: TabKey[] = ["home", "cp-hub", "contact", "about"];
+
+export default function PageContentManager({ initialSection }: { initialSection?: string }) {
+  const resolvedInitial: TabKey = initialSection && VALID_TABS.includes(initialSection as TabKey)
+    ? (initialSection as TabKey)
+    : "home";
+  const [activeTab, setActiveTab] = useState<TabKey>(resolvedInitial);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (initialSection && VALID_TABS.includes(initialSection as TabKey)) {
+      setActiveTab(initialSection as TabKey);
+    }
+  }, [initialSection]);
 
   // Home Page Content State
   const [homeContent, setHomeContent] = useState({
@@ -86,6 +101,38 @@ export default function PageContentManager() {
     },
   });
 
+  // About Page Content State
+  const [aboutContent, setAboutContent] = useState({
+    hero: {
+      kicker: "About us",
+      title: "Hello World! Meet the Club",
+      description:
+        'MEC Computer Club exists to give students a structured path from "I\'m interested in CS" to "I\'ve shipped real projects, competed at ICPC, and have something concrete to show for it."',
+      subDescription:
+        "Founded in 2019, the club started as a small competitive programming group. Today, 70+ members work across specialized departments — Competitive Programming, Web Development, Machine Learning, and Cybersecurity. We run weekly practice sessions, build internal tools, host contests, and send teams to national and regional competitions.",
+    },
+    departments: {
+      sectionKicker: "Departments",
+      sectionTitle: "Your Core Functions & Tasks",
+      sectionDescription:
+        "Each department runs its own activities, projects, and learning tracks.",
+      memberCounts: {
+        cp: 24,
+        webdev: 18,
+        ml: 15,
+        cybersec: 12,
+        gaming: 20,
+      } as Record<string, number>,
+    },
+    milestones: [
+      { year: "2019", title: "Founded", description: "Started as a CP study group with 12 members and a shared Google Sheet." },
+      { year: "2020", title: "First ICPC participation", description: "Sent our first team to ICPC Asia Dhaka Regional. Didn't place, but learned everything." },
+      { year: "2022", title: "Expanded to 4 departments", description: "Added Web Dev, ML/AI, and Cybersecurity panels. Membership grew to 40+." },
+      { year: "2024", title: "Built MEC Judge", description: "Launched our own online judge platform. 80+ students used it in the first contest." },
+      { year: "2025", title: "70+ members, 3 ICPC teams", description: "Largest year yet. Shipping projects, running workshops, and sending 3 teams to ICPC." },
+    ],
+  });
+
   // Fetch content for a page
   const fetchPageContent = async (pageKey: string) => {
     setLoading(true);
@@ -115,6 +162,20 @@ export default function PageContentManager() {
             ...sections,
             info: { ...prev.info, ...(sections.info || {}) },
           }));
+        } else if (pageKey === "about") {
+          setAboutContent((prev) => ({
+            ...prev,
+            ...sections,
+            hero: { ...prev.hero, ...(sections.hero || {}) },
+            departments: {
+              ...prev.departments,
+              ...(sections.departments || {}),
+              memberCounts: { ...prev.departments.memberCounts, ...(sections.departments?.memberCounts || {}) },
+            },
+            milestones: Array.isArray(sections.milestones) && sections.milestones.length > 0
+              ? sections.milestones
+              : prev.milestones,
+          }));
         }
       }
     } catch (err) {
@@ -136,6 +197,7 @@ export default function PageContentManager() {
       if (activeTab === "home") sectionsToSave = homeContent;
       if (activeTab === "cp-hub") sectionsToSave = cpContent;
       if (activeTab === "contact") sectionsToSave = contactContent;
+      if (activeTab === "about") sectionsToSave = aboutContent;
 
       await axios.put(
         `${API_BASE}/api/page-content/${activeTab}`,
@@ -158,6 +220,7 @@ export default function PageContentManager() {
   const getLivePageUrl = () => {
     if (activeTab === "home") return "/";
     if (activeTab === "cp-hub") return "/cp-hub";
+    if (activeTab === "about") return "/about";
     return "/contact";
   };
 
@@ -170,7 +233,7 @@ export default function PageContentManager() {
             Core Page Content
           </h3>
           <p className="text-xs sm:text-sm text-text-tertiary">
-            Update key texts, contact numbers, and headlines for Home, CP Hub, and Contact pages without touching code.
+            Update key texts, contact numbers, and headlines for Home, CP Hub, Contact, and About pages without touching code.
           </p>
         </div>
 
@@ -241,6 +304,18 @@ export default function PageContentManager() {
         >
           <MessageSquare className="w-4 h-4" />
           Contact Page
+        </button>
+
+        <button
+          onClick={() => setActiveTab("about")}
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-colors ${
+            activeTab === "about"
+              ? "bg-accent-primary text-white shadow-[2px_2px_0px_var(--border-brutalist)]"
+              : "bg-surface-secondary text-text-secondary hover:text-text-primary"
+          }`}
+        >
+          <BookOpen className="w-4 h-4" />
+          About Page
         </button>
       </div>
 
@@ -810,7 +885,7 @@ export default function PageContentManager() {
             </div>
           </div>
         </div>
-      ) : (
+      ) : activeTab === "contact" ? (
         <div className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl p-5 shadow-[4px_4px_0px_var(--accent-primary)] space-y-4">
           <div className="flex items-center gap-2 border-b border-border-default pb-3">
             <MessageSquare className="w-4 h-4 text-accent-primary" />
@@ -896,6 +971,314 @@ export default function PageContentManager() {
                 placeholder="Department of CSE..."
                 className="w-full px-3 py-2 text-sm bg-surface-secondary border border-border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary text-text-primary"
               />
+            </div>
+          </div>
+        </div>
+      ) : (
+        /* ── About Page Editor ── */
+        <div className="space-y-6">
+          {/* Hero Section */}
+          <div className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl p-5 shadow-[4px_4px_0px_var(--accent-primary)] space-y-4">
+            <div className="flex items-center gap-2 border-b border-border-default pb-3">
+              <Sparkles className="w-4 h-4 text-accent-primary" />
+              <h2 className="text-base font-bold text-text-primary">
+                Hero Section
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-mono uppercase tracking-wider text-text-tertiary mb-1">
+                  Kicker Label
+                </label>
+                <input
+                  type="text"
+                  value={aboutContent.hero.kicker}
+                  onChange={(e) =>
+                    setAboutContent({
+                      ...aboutContent,
+                      hero: { ...aboutContent.hero, kicker: e.target.value },
+                    })
+                  }
+                  placeholder="About us"
+                  className="w-full px-3 py-2 text-sm bg-surface-secondary border border-border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary text-text-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono uppercase tracking-wider text-text-tertiary mb-1">
+                  Page Title (H1)
+                </label>
+                <input
+                  type="text"
+                  value={aboutContent.hero.title}
+                  onChange={(e) =>
+                    setAboutContent({
+                      ...aboutContent,
+                      hero: { ...aboutContent.hero, title: e.target.value },
+                    })
+                  }
+                  placeholder="Hello World! Meet the Club"
+                  className="w-full px-3 py-2 text-sm bg-surface-secondary border border-border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary text-text-primary"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono uppercase tracking-wider text-text-tertiary mb-1">
+                Main Description
+              </label>
+              <textarea
+                rows={3}
+                value={aboutContent.hero.description}
+                onChange={(e) =>
+                  setAboutContent({
+                    ...aboutContent,
+                    hero: { ...aboutContent.hero, description: e.target.value },
+                  })
+                }
+                placeholder="Main paragraph about the club..."
+                className="w-full px-3 py-2 text-sm bg-surface-secondary border border-border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary text-text-primary resize-y"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono uppercase tracking-wider text-text-tertiary mb-1">
+                Sub-Description
+              </label>
+              <textarea
+                rows={3}
+                value={aboutContent.hero.subDescription}
+                onChange={(e) =>
+                  setAboutContent({
+                    ...aboutContent,
+                    hero: { ...aboutContent.hero, subDescription: e.target.value },
+                  })
+                }
+                placeholder="Additional context paragraph..."
+                className="w-full px-3 py-2 text-sm bg-surface-secondary border border-border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary text-text-primary resize-y"
+              />
+            </div>
+          </div>
+
+          {/* Departments Section */}
+          <div className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl p-5 shadow-[4px_4px_0px_var(--accent-primary)] space-y-4">
+            <div className="flex items-center gap-2 border-b border-border-default pb-3">
+              <Users className="w-4 h-4 text-accent-primary" />
+              <h2 className="text-base font-bold text-text-primary">
+                Departments Section
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-mono uppercase tracking-wider text-text-tertiary mb-1">
+                  Section Kicker
+                </label>
+                <input
+                  type="text"
+                  value={aboutContent.departments.sectionKicker}
+                  onChange={(e) =>
+                    setAboutContent({
+                      ...aboutContent,
+                      departments: { ...aboutContent.departments, sectionKicker: e.target.value },
+                    })
+                  }
+                  placeholder="Departments"
+                  className="w-full px-3 py-2 text-sm bg-surface-secondary border border-border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary text-text-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-mono uppercase tracking-wider text-text-tertiary mb-1">
+                  Section Title
+                </label>
+                <input
+                  type="text"
+                  value={aboutContent.departments.sectionTitle}
+                  onChange={(e) =>
+                    setAboutContent({
+                      ...aboutContent,
+                      departments: { ...aboutContent.departments, sectionTitle: e.target.value },
+                    })
+                  }
+                  placeholder="Your Core Functions & Tasks"
+                  className="w-full px-3 py-2 text-sm bg-surface-secondary border border-border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary text-text-primary"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-mono uppercase tracking-wider text-text-tertiary mb-1">
+                  Section Subtitle
+                </label>
+                <input
+                  type="text"
+                  value={aboutContent.departments.sectionDescription}
+                  onChange={(e) =>
+                    setAboutContent({
+                      ...aboutContent,
+                      departments: { ...aboutContent.departments, sectionDescription: e.target.value },
+                    })
+                  }
+                  placeholder="Each department runs its own..."
+                  className="w-full px-3 py-2 text-sm bg-surface-secondary border border-border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary text-text-primary"
+                />
+              </div>
+            </div>
+
+            {/* Member Counts Grid */}
+            <div className="pt-3 border-t border-border-default">
+              <label className="block text-xs font-mono uppercase tracking-wider text-text-tertiary mb-3">
+                Active Members Per Department
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                {[
+                  { id: "cp", label: "CP" },
+                  { id: "webdev", label: "Web Dev" },
+                  { id: "ml", label: "ML / AI" },
+                  { id: "cybersec", label: "Cybersecurity" },
+                  { id: "gaming", label: "Gaming" },
+                ].map((dept) => (
+                  <div key={dept.id} className="flex flex-col gap-1">
+                    <span className="text-[11px] font-bold text-text-secondary truncate">
+                      {dept.label}
+                    </span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={aboutContent.departments.memberCounts[dept.id] || 0}
+                      onChange={(e) =>
+                        setAboutContent({
+                          ...aboutContent,
+                          departments: {
+                            ...aboutContent.departments,
+                            memberCounts: {
+                              ...aboutContent.departments.memberCounts,
+                              [dept.id]: Number(e.target.value) || 0,
+                            },
+                          },
+                        })
+                      }
+                      className="w-full px-3 py-2 text-sm bg-surface-secondary border border-border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary font-mono text-text-primary text-center"
+                    />
+                  </div>
+                ))}
+              </div>
+              <span className="text-[11px] text-text-tertiary mt-1.5 block">
+                These numbers are shown as &quot;X+ Active Members&quot; on each department card on the About page.
+              </span>
+            </div>
+          </div>
+
+          {/* Milestones Section */}
+          <div className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl p-5 shadow-[4px_4px_0px_var(--accent-primary)] space-y-4">
+            <div className="flex items-center justify-between border-b border-border-default pb-3">
+              <div className="flex items-center gap-2">
+                <Layers className="w-4 h-4 text-accent-primary" />
+                <h2 className="text-base font-bold text-text-primary">
+                  History Timeline / Milestones
+                </h2>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setAboutContent({
+                    ...aboutContent,
+                    milestones: [
+                      ...aboutContent.milestones,
+                      { year: "", title: "", description: "" },
+                    ],
+                  })
+                }
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-accent-primary bg-accent-primary/10 border border-accent-primary/30 rounded-lg hover:bg-accent-primary/20 transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Add Milestone
+              </button>
+            </div>
+
+            {aboutContent.milestones.length === 0 && (
+              <p className="text-sm text-text-tertiary text-center py-4">
+                No milestones yet. Click &quot;Add Milestone&quot; to create one.
+              </p>
+            )}
+
+            <div className="space-y-3">
+              {aboutContent.milestones.map((milestone, idx) => (
+                <div
+                  key={idx}
+                  className="p-4 bg-surface-secondary/70 rounded-xl border border-border-default space-y-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono font-bold text-text-tertiary uppercase tracking-wider">
+                      Milestone #{idx + 1}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setAboutContent({
+                          ...aboutContent,
+                          milestones: aboutContent.milestones.filter((_, i) => i !== idx),
+                        })
+                      }
+                      className="p-1.5 text-text-tertiary hover:text-accent-error rounded-lg hover:bg-surface-secondary transition-colors"
+                      title="Remove milestone"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-[100px_1fr] gap-3">
+                    <div>
+                      <label className="block text-[11px] font-mono uppercase tracking-wider text-text-tertiary mb-1">
+                        Year
+                      </label>
+                      <input
+                        type="text"
+                        value={milestone.year}
+                        onChange={(e) => {
+                          const updated = [...aboutContent.milestones];
+                          updated[idx] = { ...updated[idx], year: e.target.value };
+                          setAboutContent({ ...aboutContent, milestones: updated });
+                        }}
+                        placeholder="2025"
+                        className="w-full px-3 py-2 text-sm bg-surface-primary border border-border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary font-mono text-text-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-mono uppercase tracking-wider text-text-tertiary mb-1">
+                        Title
+                      </label>
+                      <input
+                        type="text"
+                        value={milestone.title}
+                        onChange={(e) => {
+                          const updated = [...aboutContent.milestones];
+                          updated[idx] = { ...updated[idx], title: e.target.value };
+                          setAboutContent({ ...aboutContent, milestones: updated });
+                        }}
+                        placeholder="Milestone title"
+                        className="w-full px-3 py-2 text-sm bg-surface-primary border border-border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary text-text-primary"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-mono uppercase tracking-wider text-text-tertiary mb-1">
+                      Description
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={milestone.description}
+                      onChange={(e) => {
+                        const updated = [...aboutContent.milestones];
+                        updated[idx] = { ...updated[idx], description: e.target.value };
+                        setAboutContent({ ...aboutContent, milestones: updated });
+                      }}
+                      placeholder="What happened this year..."
+                      className="w-full px-3 py-2 text-sm bg-surface-primary border border-border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary text-text-primary resize-y"
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

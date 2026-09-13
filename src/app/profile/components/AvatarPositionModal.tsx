@@ -17,6 +17,59 @@ interface AvatarPositionModalProps {
   onSuccess: () => Promise<void>;
 }
 
+async function generateCroppedAvatar(
+  imageUrl: string,
+  posX: number,
+  posY: number,
+  zoom: number
+): Promise<File | null> {
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        const targetSize = 800;
+        canvas.width = targetSize;
+        canvas.height = targetSize;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return resolve(null);
+
+        const imgW = img.naturalWidth || img.width;
+        const imgH = img.naturalHeight || img.height;
+        const baseCropSize = Math.min(imgW, imgH);
+        const zoomFactor = Math.max(1, (zoom || 100) / 100);
+        const cropSize = baseCropSize / zoomFactor;
+
+        const maxTravelX = Math.max(0, imgW - cropSize);
+        const maxTravelY = Math.max(0, imgH - cropSize);
+        const sx = Math.max(0, Math.min(maxTravelX, maxTravelX * (posX / 100)));
+        const sy = Math.max(0, Math.min(maxTravelY, maxTravelY * (posY / 100)));
+
+        ctx.drawImage(img, sx, sy, cropSize, cropSize, 0, 0, targetSize, targetSize);
+
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) return resolve(null);
+            const croppedFile = new File([blob], "profile-avatar.webp", {
+              type: "image/webp",
+              lastModified: Date.now(),
+            });
+            resolve(croppedFile);
+          },
+          "image/webp",
+          0.90
+        );
+      } catch (err) {
+        console.warn("Canvas crop failed:", err);
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = imageUrl;
+  });
+}
+
 export function AvatarPositionModal({
   isOpen,
   onClose,
@@ -106,39 +159,48 @@ export function AvatarPositionModal({
   };
 
   // Drag to reposition inside the preview circle
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!photoUrl) return;
     e.preventDefault();
+    try {
+      (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+    } catch {}
     isDraggingRef.current = true;
+    setIsDragging(true);
     dragStartRef.current = {
       x: e.clientX,
       y: e.clientY,
       posX,
       posY,
     };
+  };
 
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (!isDraggingRef.current || !previewBoxRef.current) return;
-      const rect = previewBoxRef.current.getBoundingClientRect();
-      const dx = moveEvent.clientX - dragStartRef.current.x;
-      const dy = moveEvent.clientY - dragStartRef.current.y;
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current || !previewBoxRef.current) return;
+    e.preventDefault();
+    const rect = previewBoxRef.current.getBoundingClientRect();
+    const dx = e.clientX - dragStartRef.current.x;
+    const dy = e.clientY - dragStartRef.current.y;
 
-      // Invert delta: dragging right moves focal point left
-      const nextX = Math.min(100, Math.max(0, dragStartRef.current.posX - (dx / rect.width) * 100));
-      const nextY = Math.min(100, Math.max(0, dragStartRef.current.posY - (dy / rect.height) * 100));
+    const zoomFactor = Math.max(1, (zoom || 100) / 100);
+    const deltaX = (dx / rect.width) * (100 / zoomFactor);
+    const deltaY = (dy / rect.height) * (100 / zoomFactor);
 
-      setPosX(Math.round(nextX));
-      setPosY(Math.round(nextY));
-    };
+    const nextX = Math.min(100, Math.max(0, dragStartRef.current.posX - deltaX));
+    const nextY = Math.min(100, Math.max(0, dragStartRef.current.posY - deltaY));
 
-    const handleMouseUp = () => {
-      isDraggingRef.current = false;
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-    };
+    setPosX(Math.round(nextX));
+    setPosY(Math.round(nextY));
+  };
 
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    isDraggingRef.current = false;
+    setIsDragging(false);
+    try {
+      (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
+    } catch {}
   };
 
   const handleSave = async () => {
@@ -151,11 +213,24 @@ export function AvatarPositionModal({
     const posString = `${posX}% ${posY}%`;
 
     try {
-      if (selectedFile) {
+      let fileToUpload = selectedFile;
+      let finalPos = posString;
+
+      if (photoUrl && (zoom > 100 || posX !== 50 || posY !== 50)) {
+        try {
+          const cropped = await generateCroppedAvatar(photoUrl, posX, posY, zoom);
+          if (cropped) {
+            fileToUpload = cropped;
+            finalPos = "50% 50%";
+          }
+        } catch {}
+      }
+
+      if (fileToUpload) {
         // Upload new photo with imagePosition
         const formData = new FormData();
-        formData.append("image", selectedFile);
-        formData.append("imagePosition", posString);
+        formData.append("image", fileToUpload);
+        formData.append("imagePosition", finalPos);
 
         const targetId = userId || "";
         await api.upload(`/api/users/update/image/${targetId}`, formData, {
@@ -164,7 +239,7 @@ export function AvatarPositionModal({
       } else {
         // Only repositioning existing photo
         await api.patch("/api/users/update/profile", {
-          imagePosition: posString,
+          imagePosition: finalPos,
         });
       }
 
@@ -221,54 +296,69 @@ export function AvatarPositionModal({
         )}
 
         {/* Interactive Preview Canvas */}
-        <div className="flex flex-col items-center justify-center my-3">
-          <div
-            ref={previewBoxRef}
-            onMouseDown={handleMouseDown}
-            style={{ cursor: photoUrl ? "grab" : "default" }}
-            className="w-52 h-52 sm:w-60 sm:h-60 rounded-2xl border-2 border-text-primary dark:border-border-default shadow-[4px_4px_0px_0px_var(--accent-primary)] overflow-hidden relative select-none bg-surface-secondary flex items-center justify-center group"
-          >
-            {photoUrl ? (
-              <>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={photoUrl}
-                  alt="Avatar preview"
-                  draggable={false}
-                  className="pointer-events-none transition-transform duration-75"
-                  style={{
-                    width: `${zoom}%`,
-                    height: `${zoom}%`,
-                    objectFit: "cover",
-                    objectPosition: `${posX}% ${posY}%`,
-                    position: "absolute",
-                    left: "50%",
-                    top: "50%",
-                    transform: "translate(-50%, -50%)",
-                  }}
-                />
+        {(() => {
+          const zoomFactor = Math.max(1, (zoom || 100) / 100);
+          const panX = zoomFactor > 1 ? ((50 - posX) * (zoomFactor - 1)) / zoomFactor : 0;
+          const panY = zoomFactor > 1 ? ((50 - posY) * (zoomFactor - 1)) / zoomFactor : 0;
 
-                {/* Circular mask overlay for guide */}
-                <div className="absolute inset-0 rounded-full border-2 border-dashed border-white/60 pointer-events-none" />
+          return (
+            <div className="flex flex-col items-center justify-center my-3">
+              <div
+                ref={previewBoxRef}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onPointerCancel={handlePointerUp}
+                style={{
+                  cursor: photoUrl ? (isDragging ? "grabbing" : "grab") : "default",
+                  touchAction: "none",
+                }}
+                className="w-52 h-52 sm:w-60 sm:h-60 rounded-2xl border-2 border-text-primary dark:border-border-default shadow-[4px_4px_0px_0px_var(--accent-primary)] overflow-hidden relative select-none bg-surface-secondary flex items-center justify-center group"
+              >
+                {photoUrl ? (
+                  <>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={photoUrl}
+                      alt="Avatar preview"
+                      draggable={false}
+                      className="pointer-events-none select-none w-full h-full object-cover"
+                      style={{
+                        objectPosition: `${posX}% ${posY}%`,
+                        transform: `translate(${panX}%, ${panY}%) scale(${zoomFactor})`,
+                        transformOrigin: "center center",
+                        position: "absolute",
+                        left: 0,
+                        top: 0,
+                        width: "100%",
+                        height: "100%",
+                        transition: isDragging ? "none" : "transform 0.08s ease-out",
+                      }}
+                    />
 
-                {/* Drag hint tooltip badge */}
-                <div className="absolute bottom-2.5 px-2.5 py-1 bg-black/75 backdrop-blur-sm text-white text-[11px] font-mono font-bold rounded-full pointer-events-none flex items-center gap-1.5 opacity-90 group-hover:opacity-100">
-                  <Move size={12} />
-                  <span>Drag to reposition</span>
-                </div>
-              </>
-            ) : (
-              <div className="flex flex-col items-center justify-center gap-2 text-text-tertiary">
-                <Upload size={32} />
-                <span className="text-xs font-bold">No photo selected</span>
+                    {/* Circular mask overlay for guide */}
+                    <div className="absolute inset-0 rounded-full border-2 border-dashed border-white/60 pointer-events-none" />
+
+                    {/* Drag hint tooltip badge */}
+                    <div className="absolute bottom-2.5 px-2.5 py-1 bg-black/75 backdrop-blur-sm text-white text-[11px] font-mono font-bold rounded-full pointer-events-none flex items-center gap-1.5 opacity-90 group-hover:opacity-100">
+                      <Move size={12} />
+                      <span>Drag to reposition</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center justify-center gap-2 text-text-tertiary">
+                    <Upload size={32} />
+                    <span className="text-xs font-bold">No photo selected</span>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          <span className="text-[11px] text-text-tertiary font-mono mt-2">
-            Position: {posX}% X, {posY}% Y • Zoom: {zoom}%
-          </span>
-        </div>
+              <span className="text-[11px] text-text-tertiary font-mono mt-2">
+                Position: {posX}% X, {posY}% Y • Zoom: {zoom}%
+              </span>
+            </div>
+          );
+        })()}
 
         {/* Sliders and adjustment controls */}
         {photoUrl && (

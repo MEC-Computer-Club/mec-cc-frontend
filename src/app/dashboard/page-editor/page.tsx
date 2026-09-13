@@ -205,12 +205,12 @@ function PageEditorContent() {
           }`}
         >
           <FileText className="w-4 h-4" />
-          Core Page Content (Home / CP Hub / Contact)
+          Core Page Content (Home / CP Hub / Contact / About)
         </button>
       </div>
 
       {mainTab === "content" ? (
-        <PageContentManager />
+        <PageContentManager initialSection={searchParams.get("section") || undefined} />
       ) : (
         <>
           {/* Header */}

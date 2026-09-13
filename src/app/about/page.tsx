@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 import { departments } from "@/data/departments";
+import { getPageContent } from "@/lib/pageContent";
+import { AboutEditButton } from "./components/AboutEditButton";
+
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "About MEC Computer Club | Mission, History & Tech Wings",
@@ -43,7 +47,8 @@ const jsonLdAbout = {
   }
 };
 
-const historyMilestones = [
+// Fallback defaults (used when API hasn't been seeded yet)
+const DEFAULT_MILESTONES = [
   {
     year: "2019",
     title: "Founded",
@@ -71,50 +76,83 @@ const historyMilestones = [
   },
 ];
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const content = await getPageContent("about");
+
+  // Hero
+  const kicker = content?.hero?.kicker || "About us";
+  const title = content?.hero?.title || "Hello World! Meet the Club";
+  const description =
+    content?.hero?.description ||
+    'MEC Computer Club exists to give students a structured path from "I\'m interested in CS" to "I\'ve shipped real projects, competed at ICPC, and have something concrete to show for it."';
+  const subDescription =
+    content?.hero?.subDescription ||
+    "Founded in 2019, the club started as a small competitive programming group. Today, 70+ members work across specialized departments — Competitive Programming, Web Development, Machine Learning, and Cybersecurity. We run weekly practice sessions, build internal tools, host contests, and send teams to national and regional competitions.";
+
+  // Departments section
+  const deptKicker = content?.departments?.sectionKicker || "Departments";
+  const deptTitle = content?.departments?.sectionTitle || "Your Core Functions & Tasks";
+  const deptDescription =
+    content?.departments?.sectionDescription ||
+    "Each department runs its own activities, projects, and learning tracks.";
+  const memberCounts: Record<string, number> = content?.departments?.memberCounts || {};
+
+  // Merge API member counts over static department data
+  const mergedDepartments = departments.map((dept) => ({
+    ...dept,
+    memberCount:
+      memberCounts[dept.id] !== undefined ? memberCounts[dept.id] : dept.memberCount,
+  }));
+
+  // Milestones
+  const milestones: { year: string; title: string; description: string }[] =
+    content?.milestones && Array.isArray(content.milestones) && content.milestones.length > 0
+      ? content.milestones
+      : DEFAULT_MILESTONES;
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdAbout) }}
       />
-      {/* Mission Hero */}
-      <section className="pt-10 md:pt-14 pb-8 md:pb-12">
-        <div className="container mx-auto px-4 md:px-8">
-          <span className="kicker">About us</span>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-text-primary mb-4">
-            Hello World! Meet the Club
-          </h1>
-          <p className="text-lg sm:text-xl text-text-secondary leading-relaxed max-w-[700px] mb-4">
-            MEC Computer Club exists to give students a structured path from
-            &quot;I&apos;m interested in CS&quot; to &quot;I&apos;ve shipped real projects, competed
-            at ICPC, and have something concrete to show for it.&quot;
-          </p>
-          <p className="text-base text-text-tertiary leading-relaxed max-w-[700px]">
-            Founded in 2019, the club started as a small competitive programming
-            group. Today, 70+ members work across specialized departments — Competitive
-            Programming, Web Development, Machine Learning, and Cybersecurity.
-            We run weekly practice sessions, build internal tools, host contests,
-            and send teams to national and regional competitions.
-          </p>
+
+      {/* ===== Mission Hero ===== */}
+      <section
+        className="relative flex flex-col justify-center overflow-hidden pt-4 pb-10 sm:pt-6 sm:pb-14 lg:pt-8 lg:pb-16"
+        id="about-hero"
+      >
+        <div className="container">
+          <div className="animate-fade-in-up">
+            <span className="kicker">{kicker}</span>
+            <h1 className="font-heading font-bold text-[clamp(2.2rem,5vw,3.75rem)] leading-[1.1] my-[var(--space-4)] tracking-[-0.03em] max-[768px]:text-[clamp(1.8rem,6.5vw,2.6rem)] max-[768px]:my-[var(--space-3)] max-[480px]:text-[clamp(1.55rem,7vw,2rem)] max-[480px]:leading-[1.15]">
+              {title}
+            </h1>
+            <p className="text-lg text-text-secondary leading-[var(--leading-relaxed)] max-w-[700px] mb-[var(--space-4)] max-[768px]:text-base max-[768px]:max-w-full">
+              {description}
+            </p>
+            <p className="text-base text-text-tertiary leading-[var(--leading-relaxed)] max-w-[700px]">
+              {subDescription}
+            </p>
+          </div>
         </div>
       </section>
 
-      {/* Departments */}
+      {/* ===== Departments ===== */}
       <section className="py-12 md:py-16 bg-surface-secondary" id="departments">
         <div className="container mx-auto px-4 md:px-8">
           <div className="text-center max-w-[640px] mx-auto mb-10">
-            <span className="kicker">Departments</span>
+            <span className="kicker">{deptKicker}</span>
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-text-primary mb-3">
-              Your Core Functions &amp; Tasks
+              {deptTitle}
             </h2>
             <p className="text-base sm:text-lg text-text-tertiary">
-              Each department runs its own activities, projects, and learning tracks.
+              {deptDescription}
             </p>
           </div>
 
           <div className="flex flex-wrap justify-center gap-6 max-w-6xl mx-auto">
-            {departments.map((dept) => (
+            {mergedDepartments.map((dept) => (
               <div
                 key={dept.id}
                 className="group flex-1 basis-[320px] max-w-[500px] flex flex-col bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl p-6 transition-all duration-200 hover:border-border-brutalist hover:shadow-[6px_6px_0px_var(--accent-primary)] hover:-translate-x-[2px] hover:-translate-y-[2px]"
@@ -143,7 +181,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* History Timeline */}
+      {/* ===== History Timeline ===== */}
       <section className="py-12 md:py-16">
         <div className="container max-w-[var(--max-width-narrow)] mx-auto px-4 md:px-8">
           <div className="text-center max-w-[640px] mx-auto mb-10">
@@ -154,7 +192,7 @@ export default function AboutPage() {
           </div>
 
           <div className="relative pl-6 before:content-[''] before:absolute before:left-[7px] before:top-2 before:bottom-2 before:w-[2px] before:bg-border-default">
-            {historyMilestones.map((item, idx) => (
+            {milestones.map((item, idx) => (
               <div key={idx} className="relative pb-8 last:pb-0 pl-4">
                 <div className="absolute -left-6 top-1.5 w-2.5 h-2.5 rounded-full bg-accent-secondary border-2 border-surface-primary z-10" />
                 <div>
@@ -173,6 +211,9 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
+
+      {/* Admin/Moderator floating edit button */}
+      <AboutEditButton />
     </>
   );
 }

@@ -183,7 +183,7 @@ export default async function RootLayout({
           <AuthProvider>
             <SiteSettingsProvider>
               <ScaleWrapper>
-                <Toaster position="bottom-right" />
+                <Toaster position="bottom-right" containerStyle={{ zIndex: 99999 }} />
                 <Navbar />
                 <main id="main-content" className="w-full max-w-[1440px] mx-auto min-h-[calc(100vh-var(--nav-height))]">
                   {children}

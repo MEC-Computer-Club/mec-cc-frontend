@@ -268,40 +268,55 @@ function LiveCardPreview({
 }: LiveCardProps) {
   const photoBoxRef = useRef<HTMLDivElement>(null);
   const isDraggingRef = useRef(false);
+  const [isDragging, setIsDragging] = useState(false);
   const dragStartRef = useRef({ x: 0, y: 0, posX: 50, posY: 50 });
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!photoUrl || !onPositionChange) return;
     e.preventDefault();
+    try {
+      (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+    } catch {}
     isDraggingRef.current = true;
+    setIsDragging(true);
     dragStartRef.current = {
       x: e.clientX,
       y: e.clientY,
       posX: photoPosX,
       posY: photoPosY,
     };
-
-    const handleMouseMove = (moveEvent: MouseEvent) => {
-      if (!isDraggingRef.current || !photoBoxRef.current) return;
-      const rect = photoBoxRef.current.getBoundingClientRect();
-      const dx = moveEvent.clientX - dragStartRef.current.x;
-      const dy = moveEvent.clientY - dragStartRef.current.y;
-
-      const nextX = Math.min(100, Math.max(0, dragStartRef.current.posX - (dx / rect.width) * 100));
-      const nextY = Math.min(100, Math.max(0, dragStartRef.current.posY - (dy / rect.height) * 100));
-
-      onPositionChange(Math.round(nextX), Math.round(nextY));
-    };
-
-    const handleMouseUp = () => {
-      isDraggingRef.current = false;
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-    };
-
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
   };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDraggingRef.current || !photoBoxRef.current || !onPositionChange) return;
+    e.preventDefault();
+    const rect = photoBoxRef.current.getBoundingClientRect();
+    const dx = e.clientX - dragStartRef.current.x;
+    const dy = e.clientY - dragStartRef.current.y;
+
+    const zoomFactor = Math.max(1, (photoZoom || 100) / 100);
+    // Dragging mouse down reveals more of top (decreases Y%), dragging right reveals more of left (decreases X%)
+    const deltaX = (dx / rect.width) * (100 / zoomFactor);
+    const deltaY = (dy / rect.height) * (100 / zoomFactor);
+
+    const nextX = Math.min(100, Math.max(0, dragStartRef.current.posX - deltaX));
+    const nextY = Math.min(100, Math.max(0, dragStartRef.current.posY - deltaY));
+
+    onPositionChange(Math.round(nextX), Math.round(nextY));
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    isDraggingRef.current = false;
+    setIsDragging(false);
+    try {
+      (e.currentTarget as HTMLDivElement).releasePointerCapture(e.pointerId);
+    } catch {}
+  };
+
+  const zoomFactor = Math.max(1, (photoZoom || 100) / 100);
+  // Pan offsets translate zoomed image viewport according to posX and posY
+  const panX = zoomFactor > 1 ? ((50 - photoPosX) * (zoomFactor - 1)) / zoomFactor : 0;
+  const panY = zoomFactor > 1 ? ((50 - photoPosY) * (zoomFactor - 1)) / zoomFactor : 0;
 
   return (
     <div className="jc-preview-card">
@@ -325,9 +340,16 @@ function LiveCardPreview({
       {/* Photo */}
       <div
         ref={photoBoxRef}
-        onMouseDown={handleMouseDown}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
         className="jc-preview-card__photo"
-        style={{ cursor: photoUrl && onPositionChange ? "grab" : "default", userSelect: "none" }}
+        style={{
+          cursor: photoUrl && onPositionChange ? (isDragging ? "grabbing" : "grab") : "default",
+          userSelect: "none",
+          touchAction: "none",
+        }}
       >
         {photoUrl ? (
           <div style={{ width: "100%", height: "100%", overflow: "hidden", position: "relative" }}>
@@ -336,15 +358,17 @@ function LiveCardPreview({
               src={photoUrl}
               alt="preview"
               draggable={false}
+              className="pointer-events-none select-none w-full h-full object-cover"
               style={{
-                width: `${photoZoom}%`,
-                height: `${photoZoom}%`,
-                objectFit: "cover",
                 objectPosition: `${photoPosX}% ${photoPosY}%`,
+                transform: `translate(${panX}%, ${panY}%) scale(${zoomFactor})`,
+                transformOrigin: "center center",
                 position: "absolute",
-                left: "50%",
-                top: "50%",
-                transform: "translate(-50%, -50%)",
+                left: 0,
+                top: 0,
+                width: "100%",
+                height: "100%",
+                transition: isDragging ? "none" : "transform 0.08s ease-out",
               }}
             />
             {onPositionChange && (
@@ -399,6 +423,62 @@ function LiveCardPreview({
       )}
     </div>
   );
+}
+
+/* ════════════════════════════════════════════════════════════
+   AVATAR CROPPING UTILITY
+   ════════════════════════════════════════════════════════════ */
+async function generateCroppedAvatar(
+  imageUrl: string,
+  posX: number,
+  posY: number,
+  zoom: number
+): Promise<File | null> {
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const canvas = document.createElement("canvas");
+        const targetSize = 800; // High-resolution square avatar
+        canvas.width = targetSize;
+        canvas.height = targetSize;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return resolve(null);
+
+        const imgW = img.naturalWidth || img.width;
+        const imgH = img.naturalHeight || img.height;
+        const baseCropSize = Math.min(imgW, imgH);
+        const zoomFactor = Math.max(1, (zoom || 100) / 100);
+        const cropSize = baseCropSize / zoomFactor;
+
+        const maxTravelX = Math.max(0, imgW - cropSize);
+        const maxTravelY = Math.max(0, imgH - cropSize);
+        const sx = Math.max(0, Math.min(maxTravelX, maxTravelX * (posX / 100)));
+        const sy = Math.max(0, Math.min(maxTravelY, maxTravelY * (posY / 100)));
+
+        ctx.drawImage(img, sx, sy, cropSize, cropSize, 0, 0, targetSize, targetSize);
+
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) return resolve(null);
+            const croppedFile = new File([blob], "profile-avatar.webp", {
+              type: "image/webp",
+              lastModified: Date.now(),
+            });
+            resolve(croppedFile);
+          },
+          "image/webp",
+          0.90
+        );
+      } catch (err) {
+        console.warn("Canvas crop failed, fallback to original:", err);
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = imageUrl;
+  });
 }
 
 /* ════════════════════════════════════════════════════════════
@@ -763,12 +843,28 @@ function RegisterContent() {
             : "General Member";
       }
 
-      payload.imagePosition = `${photoPosX}% ${photoPosY}%`;
+      let fileToUpload = selectedFile;
+      if (photoUrl && (photoZoom > 100 || photoPosX !== 50 || photoPosY !== 50)) {
+        try {
+          const cropped = await generateCroppedAvatar(photoUrl, photoPosX, photoPosY, photoZoom);
+          if (cropped) {
+            fileToUpload = cropped;
+            payload.imagePosition = "50% 50%";
+          } else {
+            payload.imagePosition = `${photoPosX}% ${photoPosY}%`;
+          }
+        } catch {
+          payload.imagePosition = `${photoPosX}% ${photoPosY}%`;
+        }
+      } else {
+        payload.imagePosition = `${photoPosX}% ${photoPosY}%`;
+      }
+
       payload.inviteCode = inviteCode.trim();
 
       const formData = new FormData();
       formData.append("data", JSON.stringify(payload));
-      formData.append("image", selectedFile);
+      formData.append("image", fileToUpload);
 
       const res = await api.upload("/api/users/register", formData, {
         headers: {
