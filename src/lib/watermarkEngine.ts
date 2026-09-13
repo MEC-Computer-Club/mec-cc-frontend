@@ -372,22 +372,32 @@ export function downloadFile(blob: Blob, filename: string): void {
 
   document.body.appendChild(anchor);
 
-  // The one line that actually matters: a real, trusted-enough click.
+  // Trigger the browser download
   anchor.click();
 
-  anchor.remove();
+  // CRITICAL: Do NOT remove anchor synchronously!
+  // Chromium / Edge processes the download request asynchronously via Mojo IPC.
+  // If anchor.remove() runs synchronously immediately after click(), the node is
+  // already detached (isConnected === false) when the browser evaluates the
+  // download suggestion. Under Chromium security policy for detached elements,
+  // the suggested filename is dropped and the browser falls back to the raw
+  // Blob URL path (the UUID with no extension).
+  // Keeping the anchor in the DOM for 2 seconds ensures the download handshake completes.
+  setTimeout(() => {
+    try {
+      if (anchor.parentNode) {
+        anchor.parentNode.removeChild(anchor);
+      }
+    } catch {}
+  }, 2000);
 
-  // Chrome reads the blob synchronously when the download starts, so a
-  // short delay is plenty. The previous 5-minute delay was compensating
-  // for a cause ("revoking too early") that isn't actually what produces
-  // the UUID-filename bug, and just kept memory pinned unnecessarily.
+  // Keep object URL alive for 60 seconds so background download manager
+  // can stream the file to disk without prematurely losing data.
   setTimeout(() => {
     try {
       URL.revokeObjectURL(url);
-    } catch {
-      // no-op - URL may already be invalid/revoked
-    }
-  }, 5000);
+    } catch {}
+  }, 60000);
 }
 
 /**
