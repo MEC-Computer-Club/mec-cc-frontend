@@ -49,6 +49,7 @@ const navItems = [
       { label: "CP Hub", href: "/cp-hub" },
       { label: "Projects", href: "/projects" },
       { label: "Verify & Lookup", href: "/verify" },
+      { label: "Photo Sigil", href: "/resources/watermark" },
     ],
   },
   {
