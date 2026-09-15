@@ -6,14 +6,14 @@ import { getUpcomingEvents, getPastEvents } from "@/data/events";
 export const metadata: Metadata = {
   title: "Tech Events, Contests & Workshops | MEC Computer Club",
   description:
-    "Discover upcoming and past programming contests, cybersecurity CTFs, web workshops, and seminars hosted by MEC Computer Club at Murari Chand College, Sylhet.",
+    "Discover upcoming and past programming contests, cybersecurity CTFs, web workshops, and seminars hosted by MEC Computer Club at Mymensingh Engineering College, Mymensingh.",
   keywords: [
     "MEC Computer Club events",
     "MEC programming contests",
-    "Murari Chand College tech events",
-    "Sylhet CTF workshop",
+    "Mymensingh Engineering College tech events",
+    "Mymensingh CTF workshop",
     "MEC hackathon",
-    "Sylhet CP contest",
+    "Mymensingh CP contest",
   ],
   alternates: {
     canonical: "https://meccomputerclub.org/events",
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Tech Events, Contests & Workshops | MEC Computer Club",
     description:
-      "Join competitive programming battles, web bootcamps, and cybersecurity CTFs organized by the MEC Computer Club in Sylhet.",
+      "Join competitive programming battles, web bootcamps, and cybersecurity CTFs organized by the MEC Computer Club in Mymensingh.",
     url: "https://meccomputerclub.org/events",
     images: ["/mec-club-photo.jpg"],
   },

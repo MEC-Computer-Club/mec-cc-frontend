@@ -12,7 +12,15 @@ if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
   };
 }
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
+import type { VibeName } from "@/lib/accent-themes";
+
+export function ThemeProvider({
+  children,
+  initialVibe,
+}: {
+  children: React.ReactNode;
+  initialVibe?: VibeName;
+}) {
   return (
     <NextThemesProvider
       attribute="class"
@@ -20,7 +28,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       enableSystem
       storageKey="mec-cc-theme"
     >
-      <AccentProvider>{children}</AccentProvider>
+      <AccentProvider initialVibe={initialVibe}>{children}</AccentProvider>
     </NextThemesProvider>
   );
 }
+

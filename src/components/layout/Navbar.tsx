@@ -33,14 +33,7 @@ const navItems = [
       { label: "Members", href: "/members" },
     ],
   },
-  {
-    label: "Events",
-    href: "/events",
-    children: [
-      { label: "Upcoming Event", href: "/events#upcoming" },
-      { label: "Past Event", href: "/events#past" },
-    ],
-  },
+  { label: "Events", href: "/events" },
   { label: "Blog", href: "/blog" },
   {
     label: "Resources",
@@ -289,25 +282,22 @@ export function Navbar() {
 
         {/* Logo */}
         <Link href="/" className="navbar__logo" aria-label="MEC Computer Club — Home">
-          {mounted ? (
-            <Image
-              src={`/logo-${currentVibe}-${resolvedTheme === 'dark' ? 'dark' : 'light'}.png`}
-              alt="MEC Computer Club Logo"
-              width={160}
-              height={40}
-              priority
-              className="navbar__logo-image"
-            />
-          ) : (
-            <Image
-              src="/logo-lime-light.png"
-              alt="MEC Computer Club Logo"
-              width={160}
-              height={40}
-              priority
-              className="navbar__logo-image"
-            />
-          )}
+          <Image
+            src={`/logo-${currentVibe}-light.png`}
+            alt="MEC Computer Club Logo"
+            width={160}
+            height={40}
+            priority
+            className="navbar__logo-image block dark:hidden"
+          />
+          <Image
+            src={`/logo-${currentVibe}-dark.png`}
+            alt="MEC Computer Club Logo"
+            width={160}
+            height={40}
+            priority
+            className="navbar__logo-image hidden dark:block"
+          />
         </Link>
 
         {/* Desktop nav — centered */}
@@ -479,11 +469,18 @@ export function Navbar() {
             <div className="navbar__mobile-header">
               <div className="navbar__mobile-logo">
                 <Image
-                  src={`/logo-${currentVibe}-${resolvedTheme === 'dark' ? 'dark' : 'light'}.png`}
+                  src={`/logo-${currentVibe}-light.png`}
                   alt="MEC Computer Club"
                   width={130}
                   height={32}
-                  className="navbar__logo-image"
+                  className="navbar__logo-image block dark:hidden"
+                />
+                <Image
+                  src={`/logo-${currentVibe}-dark.png`}
+                  alt="MEC Computer Club"
+                  width={130}
+                  height={32}
+                  className="navbar__logo-image hidden dark:block"
                 />
               </div>
               <button

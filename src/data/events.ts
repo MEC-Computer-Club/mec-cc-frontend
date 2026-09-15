@@ -158,40 +158,82 @@ function mapBackendEvent(e: any): Event {
   };
 }
 
+/**
+ * Safely parse an event's date into an epoch millisecond timestamp.
+ * Returns null if the date is missing, "TBA", or invalid.
+ */
+export function getEventDateTimestamp(e: { date?: string }): number | null {
+  if (!e || !e.date || e.date === "TBA") return null;
+  const time = new Date(e.date).getTime();
+  if (!isNaN(time)) return time;
+  const parsed = Date.parse(e.date);
+  return isNaN(parsed) ? null : parsed;
+}
+
+/**
+ * Sorts upcoming events in ascending chronological order (soonest upcoming event first).
+ * Events with TBA or unparseable dates are placed at the end.
+ */
+export function sortUpcomingEvents(eventsList: Event[]): Event[] {
+  return [...eventsList].sort((a, b) => {
+    const tA = getEventDateTimestamp(a);
+    const tB = getEventDateTimestamp(b);
+    if (tA === null && tB === null) return 0;
+    if (tA === null) return 1;
+    if (tB === null) return -1;
+    return tA - tB; // Earliest/soonest upcoming first
+  });
+}
+
+/**
+ * Sorts past events in descending chronological order (most recent past event first).
+ * Events with TBA or unparseable dates are placed at the end.
+ */
+export function sortPastEvents(eventsList: Event[]): Event[] {
+  return [...eventsList].sort((a, b) => {
+    const tA = getEventDateTimestamp(a);
+    const tB = getEventDateTimestamp(b);
+    if (tA === null && tB === null) return 0;
+    if (tA === null) return 1;
+    if (tB === null) return -1;
+    return tB - tA; // Most recent/newest past event first
+  });
+}
+
 export async function getUpcomingEvents(): Promise<Event[]> {
   try {
-    const res = await fetch(`${API_URL}/api/events`, { next: { revalidate: 60 } });
+    const res = await fetch(`${API_URL}/api/events?sort=asc`, { next: { revalidate: 60 } });
     if (res.ok) {
       const data = await res.json();
       const backendEvents: any[] = data.data || data.events || [];
       if (backendEvents && backendEvents.length > 0) {
         const mapped = backendEvents.map(mapBackendEvent);
         const upcoming = mapped.filter(isEventUpcoming);
-        if (upcoming.length > 0) return upcoming;
+        if (upcoming.length > 0) return sortUpcomingEvents(upcoming);
       }
     }
   } catch (err) {
     console.warn("Could not fetch backend events, using static fallback:", err);
   }
-  return events.filter(isEventUpcoming);
+  return sortUpcomingEvents(events.filter(isEventUpcoming));
 }
 
 export async function getPastEvents(): Promise<Event[]> {
   try {
-    const res = await fetch(`${API_URL}/api/events`, { next: { revalidate: 60 } });
+    const res = await fetch(`${API_URL}/api/events?sort=desc`, { next: { revalidate: 60 } });
     if (res.ok) {
       const data = await res.json();
       const backendEvents: any[] = data.data || data.events || [];
       if (backendEvents && backendEvents.length > 0) {
         const mapped = backendEvents.map(mapBackendEvent);
         const past = mapped.filter(isEventPast);
-        if (past.length > 0) return past;
+        if (past.length > 0) return sortPastEvents(past);
       }
     }
   } catch (err) {
     console.warn("Could not fetch backend events, using static fallback:", err);
   }
-  return events.filter(isEventPast);
+  return sortPastEvents(events.filter(isEventPast));
 }
 
 export async function getHomeEvents(limit = 5): Promise<Event[]> {
@@ -202,16 +244,8 @@ export async function getHomeEvents(limit = 5): Promise<Event[]> {
       const backendEvents: any[] = data.data || data.events || [];
       if (backendEvents && backendEvents.length > 0) {
         const mapped = backendEvents.map(mapBackendEvent);
-        const upcoming = mapped.filter(isEventUpcoming).sort((a, b) => {
-          const da = new Date(a.date).getTime() || 0;
-          const db = new Date(b.date).getTime() || 0;
-          return da - db;
-        });
-        const past = mapped.filter(isEventPast).sort((a, b) => {
-          const da = new Date(a.date).getTime() || 0;
-          const db = new Date(b.date).getTime() || 0;
-          return db - da;
-        });
+        const upcoming = sortUpcomingEvents(mapped.filter(isEventUpcoming));
+        const past = sortPastEvents(mapped.filter(isEventPast));
         const combined = [...upcoming, ...past].slice(0, limit);
         if (combined.length > 0) return combined;
       }
@@ -220,8 +254,8 @@ export async function getHomeEvents(limit = 5): Promise<Event[]> {
     console.warn("Could not fetch backend events for home, using static fallback:", err);
   }
 
-  const upcoming = events.filter(isEventUpcoming);
-  const past = events.filter(isEventPast);
+  const upcoming = sortUpcomingEvents(events.filter(isEventUpcoming));
+  const past = sortPastEvents(events.filter(isEventPast));
   return [...upcoming, ...past].slice(0, limit);
 }
 

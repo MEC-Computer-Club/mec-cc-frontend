@@ -4,14 +4,14 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { EventCard, ProjectCard } from "@/components/ui/Card";
 import { departments } from "@/data/departments";
-import { getUpcomingEvents, getHomeEvents } from "@/data/events";
+import { getHomeEvents } from "@/data/events";
 import { getFeaturedProjects } from "@/data/projects";
 import { getFeaturedBlogs } from "@/data/blog";
 import { getClubLeaderboard } from "@/data/cp";
 import { getHomeGalleryItems } from "@/data/gallery";
 import { getPartners } from "@/data/partners";
 import { getPageContent } from "@/lib/pageContent";
-import { HeroEventQueue } from "@/components/home/HeroEventQueue";
+import { AlgorithmVisualizer } from "@/components/ui/AlgorithmVisualizer";
 import { HomeGallery } from "@/components/home/HomeGallery";
 import { HomeSponsors } from "@/components/home/HomeSponsors";
 import { HomeBlogs } from "@/components/home/HomeBlogs";
@@ -24,8 +24,7 @@ export const metadata: Metadata = {
 };
 
 export default async function HomePage() {
-  const [upcomingEvents, homeEvents, galleryItems, sponsors, leaderboardData, homeContent, featuredProjects, featuredBlogs] = await Promise.all([
-    getUpcomingEvents(),
+  const [homeEvents, galleryItems, sponsors, leaderboardData, homeContent, featuredProjects, featuredBlogs] = await Promise.all([
     getHomeEvents(5),
     getHomeGalleryItems(5),
     getPartners(),
@@ -108,9 +107,9 @@ export default async function HomePage() {
             </div>
           </div>
 
-          {/* Right Column: Upcoming Events Queue Widget replacing bubble sort animation */}
+          {/* Right Column: Bubble Sort Algorithm Visualizer */}
           <div className="relative w-full flex justify-end items-center max-[1024px]:justify-center">
-            <HeroEventQueue events={upcomingEvents.length > 0 ? upcomingEvents : homeEvents} />
+            <AlgorithmVisualizer />
           </div>
         </div>
       </section>
@@ -237,12 +236,12 @@ export default async function HomePage() {
             </p>
           </div>
           <div className="max-w-[850px] mx-auto max-[768px]:max-w-full">
-            <div className="w-full overflow-x-auto [WebkitOverflowScrolling:touch] p-2 sm:p-3 pb-5 sm:pb-6 -m-2 sm:-m-3">
-              <div className="min-w-[560px] bg-surface-elevated border border-border-brutalist rounded-[var(--radius-lg)] overflow-hidden transition-all duration-200 hover:border-border-brutalist hover:shadow-[6px_6px_0px_var(--accent-primary)] hover:translate-x-[-2px] hover:translate-y-[-2px] max-[768px]:min-w-[500px] max-[480px]:min-w-[420px]">
-                <div className="grid grid-cols-[55px_1.6fr_1.1fr_85px_75px] p-[var(--space-3)_var(--space-4)] bg-surface-secondary font-mono text-xs font-semibold uppercase tracking-wider text-text-tertiary max-[480px]:grid-cols-[45px_1.4fr_1fr_75px_65px] max-[480px]:p-[var(--space-2)_var(--space-3)]">
+            <div className="w-full p-1 sm:p-3 pb-3 sm:pb-6">
+              <div className="w-full bg-surface-elevated border border-border-brutalist rounded-[var(--radius-lg)] overflow-hidden transition-all duration-200 hover:border-border-brutalist hover:shadow-[6px_6px_0px_var(--accent-primary)] hover:translate-x-[-2px] hover:translate-y-[-2px]">
+                <div className="grid grid-cols-[40px_1fr_65px_55px] sm:grid-cols-[50px_1.6fr_1.1fr_80px_70px] p-3 sm:px-4 bg-surface-secondary font-mono text-xs font-semibold uppercase tracking-wider text-text-tertiary">
                   <span>Rank</span>
                   <span>Member</span>
-                  <span>Handle</span>
+                  <span className="hidden sm:inline">Handle</span>
                   <span className="text-right">Rating</span>
                   <span className="text-right">Solved</span>
                 </div>
@@ -258,7 +257,7 @@ export default async function HomePage() {
                   return (
                     <div
                       key={entry.userId || entry.handle || entry.rank}
-                      className={`grid grid-cols-[55px_1.6fr_1.1fr_85px_75px] p-[var(--space-3)_var(--space-4)] border-t border-border-default items-center transition-colors duration-150 hover:bg-accent-primary-light/20 max-[480px]:grid-cols-[45px_1.4fr_1fr_75px_65px] max-[480px]:p-[var(--space-2)_var(--space-3)] ${
+                      className={`grid grid-cols-[40px_1fr_65px_55px] sm:grid-cols-[50px_1.6fr_1.1fr_80px_70px] p-2.5 sm:p-3 sm:px-4 border-t border-border-default items-center transition-colors duration-150 hover:bg-accent-primary-light/20 ${
                         isTop1
                           ? "border-l-4 border-l-amber-400 bg-amber-400/5"
                           : isTop2
@@ -286,8 +285,8 @@ export default async function HomePage() {
                         )}
                       </div>
 
-                      <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                        <div className="relative w-8 h-8 rounded-full overflow-hidden shrink-0 border border-border-default bg-surface-secondary">
+                      <div className="flex items-center gap-2 min-w-0 pr-1.5 sm:pr-2">
+                        <div className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden shrink-0 border border-border-default bg-surface-secondary">
                           <img
                             src={avatarSrc}
                             alt={entry.name}
@@ -298,24 +297,33 @@ export default async function HomePage() {
                           {entry.profileUrl ? (
                             <Link
                               href={entry.profileUrl}
-                              className="font-semibold text-text-primary hover:text-accent-primary-hover transition-colors truncate block text-sm sm:text-base"
+                              className="font-semibold text-text-primary hover:text-accent-primary-hover transition-colors truncate block text-xs sm:text-base"
                             >
                               {entry.name}
                             </Link>
                           ) : (
-                            <span className="font-semibold text-text-primary truncate block text-sm sm:text-base">
+                            <span className="font-semibold text-text-primary truncate block text-xs sm:text-base">
                               {entry.name}
                             </span>
                           )}
+                          {/* Mobile inline handle & tier */}
+                          <div className="sm:hidden flex items-center gap-1 font-mono text-[10px] text-text-tertiary truncate">
+                            <span className="text-accent-primary-hover font-bold truncate">@{entry.handle}</span>
+                            {entry.tier && entry.tier !== "unrated" && (
+                              <span className="uppercase text-[9px] font-bold">({entry.tier})</span>
+                            )}
+                          </div>
+                          {/* Desktop designation */}
                           {entry.designation && (
-                            <span className="text-[11px] text-text-tertiary truncate block leading-tight">
+                            <span className="hidden sm:block text-[11px] text-text-tertiary truncate leading-tight">
                               {entry.designation}
                             </span>
                           )}
                         </div>
                       </div>
 
-                      <div className="min-w-0 pr-2">
+                      {/* Desktop separate handle column */}
+                      <div className="hidden sm:block min-w-0 pr-2">
                         {entry.hasCfHandle ? (
                           <a
                             href={`https://codeforces.com/profile/${entry.handle}`}
@@ -339,14 +347,14 @@ export default async function HomePage() {
                       </div>
 
                       <span
-                        className={`font-mono font-semibold text-right ${
+                        className={`font-mono font-semibold text-right text-xs sm:text-sm ${
                           entry.rating > 0 ? "text-accent-primary font-bold" : "text-text-tertiary"
                         }`}
                       >
                         {entry.rating > 0 ? entry.rating : "—"}
                       </span>
 
-                      <span className="font-mono text-text-secondary text-right">
+                      <span className="font-mono text-text-secondary text-right text-xs sm:text-sm">
                         {entry.solved > 0 ? entry.solved : 0}
                       </span>
                     </div>

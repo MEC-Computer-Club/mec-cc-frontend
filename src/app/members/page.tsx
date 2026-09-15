@@ -9,11 +9,11 @@ export const revalidate = 0;
 export const metadata: Metadata = {
   title: "Club Members & Student Developers | MEC Computer Club",
   description:
-    "Directory of active student members, problem solvers, and engineers at MEC Computer Club, Murari Chand College, Sylhet. Explore batch-wise member profiles.",
+    "Directory of active student members, problem solvers, and engineers at MEC Computer Club, Mymensingh Engineering College, Mymensingh. Explore batch-wise member profiles.",
   keywords: [
     "MEC Computer Club members",
-    "Murari Chand College CSE students",
-    "Sylhet student developers",
+    "Mymensingh Engineering College CSE students",
+    "Mymensingh student developers",
     "MEC CC member directory",
     "MEC competitive programmers",
   ],
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Club Members & Student Developers | MEC Computer Club",
     description:
-      "Meet the talented student engineers, developers, and problem solvers at Murari Chand College (MEC), Sylhet.",
+      "Meet the talented student engineers, developers, and problem solvers at Mymensingh Engineering College (MEC), Mymensingh.",
     url: "https://meccomputerclub.org/members",
     images: ["/mec-club-photo.jpg"],
   },

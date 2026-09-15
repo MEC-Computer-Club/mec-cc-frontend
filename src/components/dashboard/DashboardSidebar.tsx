@@ -48,13 +48,8 @@ const SidebarContent: React.FC<{
       setMounted(true);
     }, []);
 
-    const logoSrc = mounted
-      ? `/logo-${currentVibe || "lime"}-${resolvedTheme === "dark" ? "dark" : "light"}.png`
-      : "/logo-lime-light.png";
-
-    const logoIconSrc = mounted
-      ? `/logo-icon-${currentVibe || "lime"}-${resolvedTheme === "dark" ? "dark" : "light"}.png`
-      : "/logo-icon-lime-light.png";
+    const logoSrc = `/logo-${currentVibe || "lime"}-${resolvedTheme === "dark" ? "dark" : "light"}.png`;
+    const logoIconSrc = `/logo-icon-${currentVibe || "lime"}-${resolvedTheme === "dark" ? "dark" : "light"}.png`;
 
     return (
       <div className="flex flex-col h-full bg-surface-elevated border-r border-border-default select-none">

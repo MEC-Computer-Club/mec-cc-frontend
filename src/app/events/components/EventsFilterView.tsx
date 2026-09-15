@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { EventCard } from "@/components/ui/Card";
 import { Event } from "@/types";
+import { sortUpcomingEvents, sortPastEvents } from "@/data/events";
 import { Shield, Gamepad2, Code2, Globe, Cpu, Layers } from "lucide-react";
 
 interface EventsFilterViewProps {
@@ -108,12 +109,12 @@ function EventsFilterContent({ initialUpcoming, initialPast }: EventsFilterViewP
   };
 
   const filteredUpcoming = useMemo(
-    () => initialUpcoming.filter((e) => matchEventCategory(e, selectedCategory)),
+    () => sortUpcomingEvents(initialUpcoming.filter((e) => matchEventCategory(e, selectedCategory))),
     [initialUpcoming, selectedCategory]
   );
 
   const filteredPast = useMemo(
-    () => initialPast.filter((e) => matchEventCategory(e, selectedCategory)),
+    () => sortPastEvents(initialPast.filter((e) => matchEventCategory(e, selectedCategory))),
     [initialPast, selectedCategory]
   );
 
@@ -138,17 +139,17 @@ function EventsFilterContent({ initialUpcoming, initialPast }: EventsFilterViewP
                 <button
                   key={cat.id}
                   onClick={() => handleCategorySelect(cat.id)}
-                  className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all ${
+                  className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
                     isSelected
-                      ? "bg-accent-primary text-black shadow-[3px_3px_0px_var(--border-brutalist)] border-2 border-text-primary"
+                      ? "bg-accent-primary !text-accent-primary-text shadow-[3px_3px_0px_var(--border-brutalist)] border-2 border-text-primary dark:border-border-default"
                       : "bg-surface-elevated text-text-secondary hover:text-text-primary border border-border-default hover:bg-surface-secondary"
                   }`}
                 >
                   <Icon size={15} />
                   <span>{cat.label}</span>
                   <span
-                    className={`text-[11px] font-mono px-1.5 py-0.2 rounded ${
-                      isSelected ? "bg-black/15 text-black" : "bg-surface-secondary text-text-tertiary"
+                    className={`text-[11px] font-mono px-1.5 py-0.5 rounded ${
+                      isSelected ? "bg-current/20 text-inherit" : "bg-surface-secondary text-text-tertiary"
                     }`}
                   >
                     {count}

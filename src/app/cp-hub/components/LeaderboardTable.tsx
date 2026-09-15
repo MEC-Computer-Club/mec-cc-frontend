@@ -180,15 +180,15 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
       </div>
 
       {/* 3. Neo-Brutalist Leaderboard Table */}
-      <div className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl overflow-hidden shadow-[4px_4px_0px_var(--border-brutalist)] dark:shadow-[4px_4px_0px_var(--border-default)] transition-all duration-200">
+      <div className="w-full bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl overflow-hidden shadow-[4px_4px_0px_var(--border-brutalist)] dark:shadow-[4px_4px_0px_var(--border-default)] transition-all duration-200">
         {/* Table Header */}
-        <div className="grid grid-cols-[55px_1.8fr_1.2fr_90px_80px_70px] p-3 sm:px-4 bg-surface-secondary font-mono [font-feature-settings:'liga'_0,'calt'_0] text-xs font-semibold uppercase tracking-wider text-text-tertiary border-b border-border-default max-[768px]:grid-cols-[50px_1.6fr_1fr_80px_70px] max-[480px]:grid-cols-[45px_1.4fr_1fr_70px_60px]">
+        <div className="grid grid-cols-[38px_1fr_65px_55px] sm:grid-cols-[50px_1.8fr_1.2fr_85px_75px_55px] p-3 sm:px-4 bg-surface-secondary font-mono [font-feature-settings:'liga'_0,'calt'_0] text-xs font-semibold uppercase tracking-wider text-text-tertiary border-b border-border-default">
           <span>#</span>
           <span>Member</span>
-          <span>Handle</span>
+          <span className="hidden sm:inline">Handle</span>
           <span className="text-right">Rating</span>
           <span className="text-right">Solved</span>
-          <span className="text-right max-[768px]:hidden">Profile</span>
+          <span className="hidden sm:inline text-right">Profile</span>
         </div>
 
         {/* Rows */}
@@ -210,7 +210,7 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
             return (
               <div
                 key={entry.userId || entry.handle || actualRank}
-                className={`grid grid-cols-[55px_1.8fr_1.2fr_90px_80px_70px] p-3 sm:px-4 border-t border-border-default items-center transition-colors hover:bg-accent-primary-light/20 max-[768px]:grid-cols-[50px_1.6fr_1fr_80px_70px] max-[480px]:grid-cols-[45px_1.4fr_1fr_70px_60px] ${
+                className={`grid grid-cols-[38px_1fr_65px_55px] sm:grid-cols-[50px_1.8fr_1.2fr_85px_75px_55px] p-2.5 sm:p-3 sm:px-4 border-t border-border-default items-center transition-colors hover:bg-accent-primary-light/20 ${
                   isTop1
                     ? "border-l-4 border-l-amber-400 bg-amber-400/5"
                     : isTop2
@@ -235,13 +235,13 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
                       #3
                     </span>
                   ) : (
-                    <span className="text-text-tertiary text-sm">#{actualRank}</span>
+                    <span className="text-text-tertiary text-xs sm:text-sm">#{actualRank}</span>
                   )}
                 </div>
 
                 {/* Member Name & Avatar */}
-                <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                  <div className="relative w-8 h-8 rounded-full overflow-hidden shrink-0 border border-border-default bg-surface-secondary">
+                <div className="flex items-center gap-2 min-w-0 pr-1.5 sm:pr-2">
+                  <div className="relative w-7 h-7 sm:w-8 sm:h-8 rounded-full overflow-hidden shrink-0 border border-border-default bg-surface-secondary">
                     <img
                       src={avatarSrc}
                       alt={entry.name}
@@ -256,16 +256,26 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
                     {entry.profileUrl ? (
                       <Link
                         href={entry.profileUrl}
-                        className="font-semibold text-text-primary hover:text-accent-primary-hover transition-colors truncate block text-sm sm:text-base"
+                        className="font-semibold text-text-primary hover:text-accent-primary-hover transition-colors truncate block text-xs sm:text-base"
                       >
                         {entry.name}
                       </Link>
                     ) : (
-                      <span className="font-semibold text-text-primary truncate block text-sm sm:text-base">
+                      <span className="font-semibold text-text-primary truncate block text-xs sm:text-base">
                         {entry.name}
                       </span>
                     )}
-                    <div className="flex items-center gap-1.5 text-[11px] text-text-tertiary truncate">
+
+                    {/* Mobile: inline handle & tier info */}
+                    <div className="sm:hidden flex items-center gap-1 font-mono text-[10px] text-text-tertiary truncate">
+                      <span className="text-accent-primary-hover font-bold truncate">@{entry.handle}</span>
+                      {entry.tier && (
+                        <span className="uppercase text-[9px] font-bold text-accent-primary-hover">({entry.tier})</span>
+                      )}
+                    </div>
+
+                    {/* Desktop: designation & batch */}
+                    <div className="hidden sm:flex items-center gap-1.5 text-[11px] text-text-tertiary truncate">
                       {entry.designation && <span>{entry.designation}</span>}
                       {entry.designation && entry.batch && <span>•</span>}
                       {entry.batch && <span>{entry.batch}</span>}
@@ -273,8 +283,8 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
                   </div>
                 </div>
 
-                {/* Handle & Tier */}
-                <div className="min-w-0 pr-2">
+                {/* Desktop Handle & Tier Column */}
+                <div className="hidden sm:block min-w-0 pr-2">
                   {entry.hasCfHandle ? (
                     <div className="flex flex-col items-start gap-0.5">
                       <a
@@ -312,26 +322,26 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
                 {/* Rating */}
                 <div className="text-right">
                   <span
-                    className={`font-mono [font-feature-settings:'liga'_0,'calt'_0] font-bold text-sm sm:text-base ${
+                    className={`font-mono [font-feature-settings:'liga'_0,'calt'_0] font-bold text-xs sm:text-base ${
                       entry.rating > 0 ? "text-accent-primary" : "text-text-tertiary font-normal"
                     }`}
                   >
                     {entry.rating > 0 ? entry.rating : "—"}
                   </span>
                   {entry.maxRating && entry.maxRating > entry.rating ? (
-                    <span className="block text-[10px] font-mono text-text-tertiary">
+                    <span className="block text-[9px] sm:text-[10px] font-mono text-text-tertiary">
                       max: {entry.maxRating}
                     </span>
                   ) : null}
                 </div>
 
                 {/* Solved */}
-                <span className="font-mono [font-feature-settings:'liga'_0,'calt'_0] text-text-secondary text-right font-medium text-sm sm:text-base">
+                <span className="font-mono [font-feature-settings:'liga'_0,'calt'_0] text-text-secondary text-right font-medium text-xs sm:text-base">
                   {entry.solved > 0 ? entry.solved : 0}
                 </span>
 
-                {/* Action Link to Profile */}
-                <div className="text-right max-[768px]:hidden">
+                {/* Action Link to Profile (Desktop only) */}
+                <div className="hidden sm:block text-right">
                   {entry.profileUrl ? (
                     <Link
                       href={entry.profileUrl}

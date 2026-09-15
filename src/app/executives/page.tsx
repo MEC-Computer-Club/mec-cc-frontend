@@ -9,12 +9,12 @@ export const revalidate = 0;
 export const metadata: Metadata = {
   title: "Executive Committee & Student Leaders | MEC Computer Club",
   description:
-    "Meet the executive committee and student leadership driving the MEC Computer Club forward at Murari Chand College, Sylhet. Explore batch-wise panels, presidents, and secretaries.",
+    "Meet the executive committee and student leadership driving the MEC Computer Club forward at Mymensingh Engineering College, Mymensingh. Explore batch-wise panels, presidents, and secretaries.",
   keywords: [
     "MEC Computer Club executives",
     "MEC CC executive committee",
     "MEC CC leadership",
-    "Murari Chand College computer club leaders",
+    "Mymensingh Engineering College computer club leaders",
     "MEC CSE executives",
     "MEC Computer Club president",
   ],
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Executive Committee & Leadership | MEC Computer Club",
     description:
-      "Meet the student leaders driving the MEC Computer Club at Murari Chand College, Sylhet. Batch-wise executive panels and leads.",
+      "Meet the student leaders driving the MEC Computer Club at Mymensingh Engineering College, Mymensingh. Batch-wise executive panels and leads.",
     url: "https://meccomputerclub.org/executives",
     images: ["/mec-club-photo.jpg"],
   },

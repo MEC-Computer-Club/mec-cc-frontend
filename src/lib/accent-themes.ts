@@ -385,8 +385,23 @@ export const THEMES: Record<VibeName, VibeDefinition> = {
 /* ------------------------------------------------------------------ */
 /*  camelCase → kebab-case CSS custom property                        */
 /* ------------------------------------------------------------------ */
-function toKebab(key: string): string {
+export function toKebab(key: string): string {
   return "--" + key.replace(/([A-Z])/g, "-$1").toLowerCase();
+}
+
+/**
+ * Generate CSS variable rules for initial SSR render of a vibe in both light & dark modes.
+ */
+export function getInitialThemeCss(vibe: VibeName): string {
+  const lightTokens = THEMES[vibe].light;
+  const darkTokens = THEMES[vibe].dark;
+  const lightRules = Object.entries(lightTokens)
+    .map(([k, v]) => `${toKebab(k)}: ${v};`)
+    .join(" ");
+  const darkRules = Object.entries(darkTokens)
+    .map(([k, v]) => `${toKebab(k)}: ${v};`)
+    .join(" ");
+  return `:root { ${lightRules} } .dark { ${darkRules} }`;
 }
 
 /**

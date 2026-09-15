@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import { defaultState, IHomePageData } from "@/lib/types/homePage";
 import ImageUpload from "@/components/ui/shared/ImageUpload";
-import { rawGalleryItems } from "@/data/gallery";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ALL helper components are defined at MODULE SCOPE (outside any component).
@@ -139,6 +138,19 @@ export default function HomePageEditor({ initialData }: { initialData?: Partial<
   const [formData, setFormData] = useState<IHomePageData>(() => buildState(initialData));
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [availableGallery, setAvailableGallery] = useState<any[]>([]);
+
+  // Fetch real gallery items from backend for quick select
+  useEffect(() => {
+    axios
+      .get(`${API_BASE_URL}/api/events/media/gallery`)
+      .then((res) => {
+        if (Array.isArray(res.data?.data)) {
+          setAvailableGallery(res.data.data);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Re-initialise when parent passes fresh data after fetch
   useEffect(() => {
@@ -371,17 +383,19 @@ export default function HomePageEditor({ initialData }: { initialData?: Partial<
                   </button>
                 </div>
                 <div className="space-y-2">
-                  {section.key === "gallery" && (
+                  {section.key === "gallery" && availableGallery.length > 0 && (
                     <div className="mb-2 p-2 bg-purple-50 dark:bg-purple-950/30 rounded border border-purple-200 dark:border-purple-800">
                       <span className="text-[11px] font-bold text-purple-700 dark:text-purple-300 block mb-1.5">
-                        Quick Select (Max 5 for Homepage):
+                        Quick Select from Gallery Media (Max 5 for Homepage):
                       </span>
-                      <div className="flex flex-wrap gap-1.5">
-                        {rawGalleryItems.map((g) => {
-                          const isSelected = (formData.featuredData.gallery || []).includes(g.id);
+                      <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto">
+                        {availableGallery.map((g: any) => {
+                          const gId = String(g._id || g.id);
+                          const isSelected = (formData.featuredData.gallery || []).includes(gId);
+                          const itemTitle = g.title || g.relatedEvent?.title || "Gallery Item";
                           return (
                             <button
-                              key={g.id}
+                              key={gId}
                               type="button"
                               onClick={() => {
                                 if (isSelected) {
@@ -389,18 +403,19 @@ export default function HomePageEditor({ initialData }: { initialData?: Partial<
                                     ...prev,
                                     featuredData: {
                                       ...prev.featuredData,
-                                      gallery: prev.featuredData.gallery.filter((id) => id !== g.id),
+                                      gallery: prev.featuredData.gallery.filter((id) => id !== gId),
                                     },
                                   }));
                                 } else {
                                   if ((formData.featuredData.gallery || []).length >= 5) {
                                     alert("Homepage displays up to 5 featured gallery items.");
+                                    return;
                                   }
                                   setFormData((prev) => ({
                                     ...prev,
                                     featuredData: {
                                       ...prev.featuredData,
-                                      gallery: [...(prev.featuredData.gallery || []), g.id],
+                                      gallery: [...(prev.featuredData.gallery || []), gId],
                                     },
                                   }));
                                 }
@@ -411,7 +426,7 @@ export default function HomePageEditor({ initialData }: { initialData?: Partial<
                                   : "bg-white dark:bg-slate-700 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-600 hover:border-purple-400"
                               }`}
                             >
-                              {isSelected ? "✓ " : "+ "}{g.title} ({g.id})
+                              {isSelected ? "✓ " : "+ "}{itemTitle} ({gId.slice(-6)})
                             </button>
                           );
                         })}

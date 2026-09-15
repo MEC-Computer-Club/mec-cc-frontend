@@ -8,10 +8,10 @@ export const revalidate = 0;
 export const metadata: Metadata = {
   title: "Advisory Board & Faculty Mentors | MEC Computer Club",
   description:
-    "Meet the honorable faculty advisors, academic mentors, and senior guides of the MEC Computer Club at Murari Chand College, Sylhet.",
+    "Meet the honorable faculty advisors, academic mentors, and senior guides of the MEC Computer Club at Mymensingh Engineering College, Mymensingh.",
   keywords: [
     "MEC Computer Club advisors",
-    "Murari Chand College faculty advisors",
+    "Mymensingh Engineering College faculty advisors",
     "MEC computer club mentors",
     "MEC CSE faculty",
   ],
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Advisory Board & Faculty Mentors | MEC Computer Club",
     description:
-      "Honorable faculty advisors guiding student technology initiatives at Murari Chand College (MEC), Sylhet.",
+      "Honorable faculty advisors guiding student technology initiatives at Mymensingh Engineering College (MEC), Mymensingh.",
     url: "https://meccomputerclub.org/advisors",
     images: ["/mec-club-photo.jpg"],
   },

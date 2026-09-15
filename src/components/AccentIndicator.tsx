@@ -37,7 +37,7 @@ export function AccentIndicator() {
       <style dangerouslySetInnerHTML={{
         __html: `
           .accent-indicator-bar-animating {
-            animation: accent-progress 30s linear forwards;
+            animation: accent-progress 120s linear forwards;
           }
           @keyframes accent-progress {
             from { width: 0%; }
@@ -52,7 +52,7 @@ export function AccentIndicator() {
         `
       }} />
       <span className="w-2 h-2 rounded-full bg-accent-primary shrink-0 transition-colors duration-500" />
-      <span className="font-semibold whitespace-nowrap text-text-primary">{currentVibe}</span>
+      <span className="font-semibold whitespace-nowrap text-text-primary" suppressHydrationWarning>{currentVibe}</span>
       {!isManual && (
         <div className="absolute bottom-0 left-3.5 right-3.5 h-[2px] bg-border-default rounded-full overflow-hidden">
           <div ref={barRef} className="h-full w-0 bg-accent-primary rounded-full transition-colors duration-500" />

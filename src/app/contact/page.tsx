@@ -5,14 +5,14 @@ import { ContactForm } from "./components/ContactForm";
 export const metadata: Metadata = {
   title: "Contact Us | Campus Location, Inquiries & Support",
   description:
-    "Get in touch with the MEC Computer Club at Murari Chand College, Sylhet. Find room location, club emails, executive contacts, and partnership inquiries.",
+    "Get in touch with the MEC Computer Club at Mymensingh Engineering College, Mymensingh. Find room location, club emails, executive contacts, and partnership inquiries.",
   keywords: [
     "Contact MEC Computer Club",
     "MEC Computer Club email",
     "MEC Computer Club address",
     "MEC Computer Club phone",
-    "Murari Chand College Computer Club contact",
-    "MEC Sylhet club room",
+    "Mymensingh Engineering College Computer Club contact",
+    "MEC Mymensingh club room",
     "MEC CC inquiry",
   ],
   alternates: {
@@ -32,7 +32,7 @@ const jsonLdContact = {
   "@type": "ContactPage",
   "name": "MEC Computer Club Contact",
   "url": "https://meccomputerclub.org/contact",
-  "description": "Official communication desk for MEC Computer Club, Murari Chand College, Sylhet.",
+  "description": "Official communication desk for MEC Computer Club, Mymensingh Engineering College, Mymensingh.",
   "mainEntity": {
     "@type": "EducationalOrganization",
     "name": "MEC Computer Club",
@@ -41,9 +41,9 @@ const jsonLdContact = {
     "telephone": "+8801700000000",
     "address": {
       "@type": "PostalAddress",
-      "streetAddress": "Room 402, Building 2, Murari Chand College (MEC), Tilagarh",
-      "addressLocality": "Sylhet",
-      "postalCode": "3100",
+      "streetAddress": "Department of CSE, Mymensingh Engineering College, Khagdahar",
+      "addressLocality": "Mymensingh",
+      "postalCode": "2200",
       "addressCountry": "BD"
     },
     "openingHoursSpecification": {

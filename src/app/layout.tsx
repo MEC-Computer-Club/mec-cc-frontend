@@ -24,22 +24,22 @@ export const metadata: Metadata = {
     default: "MEC Computer Club | Official Website — CP Practice, Real Projects & Tech Community",
   },
   description:
-    "The official computer club of Murari Chand College (MEC), Sylhet. Weekly competitive programming, ICPC training, real-world software development, AI/ML, cybersecurity, and tech events.",
+    "The official computer club of Mymensingh Engineering College (MEC), Mymensingh. Weekly competitive programming, ICPC training, real-world software development, AI/ML, cybersecurity, and tech events.",
   keywords: [
     "MEC Computer Club",
     "meccomputerclub.org",
     "MEC CC",
-    "Murari Chand College Computer Club",
-    "MEC Sylhet",
+    "Mymensingh Engineering College Computer Club",
+    "MEC Mymensingh",
     "MEC CSE Club",
-    "Competitive Programming Sylhet",
+    "Competitive Programming Mymensingh",
     "ICPC MEC",
     "MEC Judge",
-    "Sylhet tech community",
+    "Mymensingh tech community",
     "Bangladesh student programming club",
     "MEC programming club",
     "MEC tech events",
-    "Murari Chand College tech club",
+    "Mymensingh Engineering College tech club",
   ],
   authors: [{ name: "MEC Computer Club", url: "https://meccomputerclub.org" }],
   creator: "MEC Computer Club",
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
     siteName: "MEC Computer Club",
     title: "MEC Computer Club | Weekly CP Practice, Real Projects, One Club",
     description:
-      "The official computer club of MEC, Sylhet. Join 70+ members competing in ICPC, building production software, and advancing student technology careers.",
+      "The official computer club of MEC, Mymensingh. Join 70+ members competing in ICPC, building production software, and advancing student technology careers.",
     images: [
       {
         url: "/mec-club-photo.jpg",
@@ -73,7 +73,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "MEC Computer Club | Official Website",
     description:
-      "Weekly CP practice, real projects, one club. The official student tech community of Murari Chand College (MEC), Sylhet.",
+      "Weekly CP practice, real projects, one club. The official student tech community of Mymensingh Engineering College (MEC), Mymensingh.",
     images: ["/mec-club-photo.jpg"],
   },
   robots: {
@@ -112,20 +112,20 @@ const jsonLdOrg = {
   "name": "MEC Computer Club",
   "alternateName": [
     "MEC CC",
-    "Murari Chand College Computer Club",
+    "Mymensingh Engineering College Computer Club",
     "MEC Programming Club",
-    "Sylhet MEC Computer Club"
+    "Mymensingh MEC Computer Club"
   ],
   "url": "https://meccomputerclub.org",
   "logo": "https://meccomputerclub.org/logo-lime-dark.png",
   "image": "https://meccomputerclub.org/mec-club-photo.jpg",
-  "description": "The official student technology and competitive programming organization of Murari Chand College (MEC), Sylhet. Providing weekly CP practices, software development projects, hackathons, and career workshops.",
+  "description": "The official student technology and competitive programming organization of Mymensingh Engineering College (MEC), Mymensingh. Providing weekly CP practices, software development projects, hackathons, and career workshops.",
   "address": {
     "@type": "PostalAddress",
-    "streetAddress": "Tilagarh",
-    "addressLocality": "Sylhet",
-    "postalCode": "3100",
-    "addressRegion": "Sylhet Division",
+    "streetAddress": "Khagdahar",
+    "addressLocality": "Mymensingh",
+    "postalCode": "2200",
+    "addressRegion": "Mymensingh Division",
     "addressCountry": "BD"
   },
   "contactPoint": {
@@ -165,21 +165,36 @@ const jsonLdOrg = {
   ]
 };
 
+export const dynamic = "force-dynamic";
+
+import { headers } from "next/headers";
+import { VIBE_ORDER, getInitialThemeCss, type VibeName } from "@/lib/accent-themes";
+
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Opt-in to per-request dynamic rendering so every refresh generates a random vibe
+  await headers();
+  const randomVibeIndex = Math.floor(Math.random() * VIBE_ORDER.length);
+  const initialVibe: VibeName = VIBE_ORDER[randomVibeIndex];
+  const initialThemeCss = getInitialThemeCss(initialVibe);
+
   return (
     <html lang="en" className={`${GeistSans.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
       <head>
+        <style
+          id="initial-accent-theme"
+          dangerouslySetInnerHTML={{ __html: initialThemeCss }}
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdOrg) }}
         />
       </head>
       <body suppressHydrationWarning>
-        <ThemeProvider>
+        <ThemeProvider initialVibe={initialVibe}>
           <AuthProvider>
             <SiteSettingsProvider>
               <ScaleWrapper>

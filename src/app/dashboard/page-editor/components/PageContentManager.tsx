@@ -20,14 +20,24 @@ import {
   Plus,
   Trash2,
   Users,
+  Briefcase,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { API_BASE_URL } from "@/lib/api";
+import FilterSelect from "@/app/dashboard/components/FilterSelect";
 
 const API_BASE = API_BASE_URL;
 
-type TabKey = "home" | "cp-hub" | "contact" | "about";
-const VALID_TABS: TabKey[] = ["home", "cp-hub", "contact", "about"];
+type TabKey = "home" | "cp-hub" | "contact" | "about" | "sponsor";
+const VALID_TABS: TabKey[] = ["home", "cp-hub", "contact", "about", "sponsor"];
+
+const PAGE_OPTIONS = [
+  { value: "home", label: "Home Page" },
+  { value: "cp-hub", label: "CP Hub Page" },
+  { value: "contact", label: "Contact Page" },
+  { value: "about", label: "About Page" },
+  { value: "sponsor", label: "Corporate Sponsorship Page" },
+];
 
 export default function PageContentManager({ initialSection }: { initialSection?: string }) {
   const resolvedInitial: TabKey = initialSection && VALID_TABS.includes(initialSection as TabKey)
@@ -133,6 +143,34 @@ export default function PageContentManager({ initialSection }: { initialSection?
     ],
   });
 
+  // Corporate Sponsorship Content State
+  const [sponsorContent, setSponsorContent] = useState({
+    hero: {
+      kicker: "Corporate Sponsorship",
+      title: "Acquire Top Tech Talent",
+      description:
+        "150+ active members. Trusted by 15+ companies to deliver battle-tested engineering students before they hit the job market.",
+      deckButtonText: "Get the Pitch Deck",
+      tiersButtonText: "View Sponsorship Tiers",
+    },
+    stats: {
+      stat1Value: "150+",
+      stat1Label: "Active Members",
+      stat2Value: "20+",
+      stat2Label: "Yearly Events",
+      stat3Value: "500+",
+      stat3Label: "Participants",
+      stat4Value: "15+",
+      stat4Label: "Sponsors",
+    },
+    cta: {
+      cycleNotice: "Sponsorship cycle closes Nov 30",
+      title: "Ready to collaborate?",
+      emailButtonText: "Email Us",
+      callButtonText: "Call Us",
+    },
+  });
+
   // Fetch content for a page
   const fetchPageContent = async (pageKey: string) => {
     setLoading(true);
@@ -176,6 +214,14 @@ export default function PageContentManager({ initialSection }: { initialSection?
               ? sections.milestones
               : prev.milestones,
           }));
+        } else if (pageKey === "sponsor") {
+          setSponsorContent((prev) => ({
+            ...prev,
+            ...sections,
+            hero: { ...prev.hero, ...(sections.hero || {}) },
+            stats: { ...prev.stats, ...(sections.stats || {}) },
+            cta: { ...prev.cta, ...(sections.cta || {}) },
+          }));
         }
       }
     } catch (err) {
@@ -198,6 +244,7 @@ export default function PageContentManager({ initialSection }: { initialSection?
       if (activeTab === "cp-hub") sectionsToSave = cpContent;
       if (activeTab === "contact") sectionsToSave = contactContent;
       if (activeTab === "about") sectionsToSave = aboutContent;
+      if (activeTab === "sponsor") sectionsToSave = sponsorContent;
 
       await axios.put(
         `${API_BASE}/api/page-content/${activeTab}`,
@@ -221,102 +268,38 @@ export default function PageContentManager({ initialSection }: { initialSection?
     if (activeTab === "home") return "/";
     if (activeTab === "cp-hub") return "/cp-hub";
     if (activeTab === "about") return "/about";
+    if (activeTab === "sponsor") return "/collaborate/sponsor";
     return "/contact";
   };
 
   return (
-    <div className="space-y-6 max-w-5xl">
-      {/* Action bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl p-4 sm:p-5 shadow-[4px_4px_0px_var(--accent-primary)]">
-        <div>
-          <h3 className="text-lg sm:text-xl font-bold font-heading text-text-primary">
-            Core Page Content
-          </h3>
-          <p className="text-xs sm:text-sm text-text-tertiary">
-            Update key texts, contact numbers, and headlines for Home, CP Hub, Contact, and About pages without touching code.
-          </p>
+    <div className="space-y-6 max-w-5xl pb-24">
+
+      {/* Page Selector Dropdown */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl p-4 shadow-[3px_3px_0px_var(--accent-primary)]">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-accent-primary/10 text-accent-primary flex items-center justify-center font-bold border border-accent-primary/20">
+            <Layers className="w-5 h-5" />
+          </div>
+          <div>
+            <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-text-tertiary block">
+              Active Page View
+            </span>
+            <span className="text-sm sm:text-base font-bold text-text-primary">
+              {PAGE_OPTIONS.find((p) => p.value === activeTab)?.label || "Select Page"}
+            </span>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          <a
-            href={getLivePageUrl()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg border border-border-default bg-surface-secondary text-text-secondary hover:text-accent-primary hover:border-accent-primary transition-colors"
-          >
-            <ExternalLink className="w-3.5 h-3.5" />
-            Live Preview
-          </a>
-
-          <button
-            onClick={handleSave}
-            disabled={saving || loading}
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs sm:text-sm font-bold rounded-lg bg-accent-primary text-white hover:bg-accent-primary-hover shadow-[2px_2px_0px_var(--border-brutalist)] active:translate-x-0.5 active:translate-y-0.5 transition-all disabled:opacity-50"
-          >
-            {saving ? (
-              <>
-                <RefreshCw className="w-4 h-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4" />
-                Save Changes
-              </>
-            )}
-          </button>
+        <div className="w-full sm:w-72">
+          <FilterSelect
+            value={activeTab}
+            onChange={(val) => setActiveTab(val as TabKey)}
+            options={PAGE_OPTIONS}
+            placeholder="Select page..."
+            className="w-full"
+          />
         </div>
-      </div>
-
-      {/* Page Tabs */}
-      <div className="flex items-center gap-2 border-b border-border-default pb-2">
-        <button
-          onClick={() => setActiveTab("home")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-colors ${
-            activeTab === "home"
-              ? "bg-accent-primary text-white shadow-[2px_2px_0px_var(--border-brutalist)]"
-              : "bg-surface-secondary text-text-secondary hover:text-text-primary"
-          }`}
-        >
-          <Home className="w-4 h-4" />
-          Home Page
-        </button>
-
-        <button
-          onClick={() => setActiveTab("cp-hub")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-colors ${
-            activeTab === "cp-hub"
-              ? "bg-accent-primary text-white shadow-[2px_2px_0px_var(--border-brutalist)]"
-              : "bg-surface-secondary text-text-secondary hover:text-text-primary"
-          }`}
-        >
-          <Code2 className="w-4 h-4" />
-          CP Hub Page
-        </button>
-
-        <button
-          onClick={() => setActiveTab("contact")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-colors ${
-            activeTab === "contact"
-              ? "bg-accent-primary text-white shadow-[2px_2px_0px_var(--border-brutalist)]"
-              : "bg-surface-secondary text-text-secondary hover:text-text-primary"
-          }`}
-        >
-          <MessageSquare className="w-4 h-4" />
-          Contact Page
-        </button>
-
-        <button
-          onClick={() => setActiveTab("about")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition-colors ${
-            activeTab === "about"
-              ? "bg-accent-primary text-white shadow-[2px_2px_0px_var(--border-brutalist)]"
-              : "bg-surface-secondary text-text-secondary hover:text-text-primary"
-          }`}
-        >
-          <BookOpen className="w-4 h-4" />
-          About Page
-        </button>
       </div>
 
       {/* Main Content Form */}
@@ -974,7 +957,7 @@ export default function PageContentManager({ initialSection }: { initialSection?
             </div>
           </div>
         </div>
-      ) : (
+      ) : activeTab === "about" ? (
         /* ── About Page Editor ── */
         <div className="space-y-6">
           {/* Hero Section */}
@@ -1282,7 +1265,420 @@ export default function PageContentManager({ initialSection }: { initialSection?
             </div>
           </div>
         </div>
-      )}
+      ) : activeTab === "sponsor" ? (
+        <div className="space-y-6">
+          {/* Hero Section */}
+          <div className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl p-5 shadow-[4px_4px_0px_var(--accent-primary)] space-y-4">
+            <div className="flex items-center gap-2 border-b border-border-default pb-3">
+              <Briefcase className="w-4 h-4 text-accent-primary" />
+              <h2 className="text-base font-bold text-text-primary">
+                Hero Section
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-mono uppercase tracking-wider text-text-tertiary mb-1">
+                  Kicker / Tag
+                </label>
+                <input
+                  type="text"
+                  value={sponsorContent.hero.kicker}
+                  onChange={(e) =>
+                    setSponsorContent({
+                      ...sponsorContent,
+                      hero: { ...sponsorContent.hero, kicker: e.target.value },
+                    })
+                  }
+                  placeholder="Corporate Sponsorship"
+                  className="w-full px-3 py-2 text-sm bg-surface-secondary border border-border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary text-text-primary font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono uppercase tracking-wider text-text-tertiary mb-1">
+                  Headline / Title
+                </label>
+                <input
+                  type="text"
+                  value={sponsorContent.hero.title}
+                  onChange={(e) =>
+                    setSponsorContent({
+                      ...sponsorContent,
+                      hero: { ...sponsorContent.hero, title: e.target.value },
+                    })
+                  }
+                  placeholder="Acquire Top Tech Talent"
+                  className="w-full px-3 py-2 text-sm bg-surface-secondary border border-border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary text-text-primary font-bold"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-mono uppercase tracking-wider text-text-tertiary mb-1">
+                Main Description
+              </label>
+              <textarea
+                rows={3}
+                value={sponsorContent.hero.description}
+                onChange={(e) =>
+                  setSponsorContent({
+                    ...sponsorContent,
+                    hero: { ...sponsorContent.hero, description: e.target.value },
+                  })
+                }
+                placeholder="Overview describing club reach and value to corporate sponsors..."
+                className="w-full px-3 py-2 text-sm bg-surface-secondary border border-border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary text-text-primary resize-y"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-mono uppercase tracking-wider text-text-tertiary mb-1">
+                  Deck CTA Button Text
+                </label>
+                <input
+                  type="text"
+                  value={sponsorContent.hero.deckButtonText}
+                  onChange={(e) =>
+                    setSponsorContent({
+                      ...sponsorContent,
+                      hero: { ...sponsorContent.hero, deckButtonText: e.target.value },
+                    })
+                  }
+                  placeholder="Get the Pitch Deck"
+                  className="w-full px-3 py-2 text-sm bg-surface-secondary border border-border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary text-text-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono uppercase tracking-wider text-text-tertiary mb-1">
+                  Tiers CTA Button Text
+                </label>
+                <input
+                  type="text"
+                  value={sponsorContent.hero.tiersButtonText}
+                  onChange={(e) =>
+                    setSponsorContent({
+                      ...sponsorContent,
+                      hero: { ...sponsorContent.hero, tiersButtonText: e.target.value },
+                    })
+                  }
+                  placeholder="View Sponsorship Tiers"
+                  className="w-full px-3 py-2 text-sm bg-surface-secondary border border-border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary text-text-primary"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Trust Strip Statistics */}
+          <div className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl p-5 shadow-[4px_4px_0px_var(--accent-primary)] space-y-4">
+            <div className="flex items-center gap-2 border-b border-border-default pb-3">
+              <BarChart3 className="w-4 h-4 text-accent-primary" />
+              <h2 className="text-base font-bold text-text-primary">
+                Trust Strip Statistics
+              </h2>
+            </div>
+            <p className="text-xs text-text-tertiary">
+              Metrics displayed in the trust strip immediately beneath the hero section.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* Stat 1 */}
+              <div className="p-3 bg-surface-secondary rounded-xl border border-border-default space-y-2">
+                <span className="text-[10px] font-mono uppercase text-accent-primary font-bold block">
+                  Metric #1
+                </span>
+                <div>
+                  <label className="block text-[11px] font-mono uppercase tracking-wider text-text-tertiary mb-1">
+                    Value
+                  </label>
+                  <input
+                    type="text"
+                    value={sponsorContent.stats.stat1Value}
+                    onChange={(e) =>
+                      setSponsorContent({
+                        ...sponsorContent,
+                        stats: { ...sponsorContent.stats, stat1Value: e.target.value },
+                      })
+                    }
+                    placeholder="150+"
+                    className="w-full px-2.5 py-1.5 text-sm bg-surface-primary border border-border-default rounded-lg font-mono font-bold text-text-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-mono uppercase tracking-wider text-text-tertiary mb-1">
+                    Label
+                  </label>
+                  <input
+                    type="text"
+                    value={sponsorContent.stats.stat1Label}
+                    onChange={(e) =>
+                      setSponsorContent({
+                        ...sponsorContent,
+                        stats: { ...sponsorContent.stats, stat1Label: e.target.value },
+                      })
+                    }
+                    placeholder="Active Members"
+                    className="w-full px-2.5 py-1.5 text-xs bg-surface-primary border border-border-default rounded-lg text-text-secondary"
+                  />
+                </div>
+              </div>
+
+              {/* Stat 2 */}
+              <div className="p-3 bg-surface-secondary rounded-xl border border-border-default space-y-2">
+                <span className="text-[10px] font-mono uppercase text-accent-primary font-bold block">
+                  Metric #2
+                </span>
+                <div>
+                  <label className="block text-[11px] font-mono uppercase tracking-wider text-text-tertiary mb-1">
+                    Value
+                  </label>
+                  <input
+                    type="text"
+                    value={sponsorContent.stats.stat2Value}
+                    onChange={(e) =>
+                      setSponsorContent({
+                        ...sponsorContent,
+                        stats: { ...sponsorContent.stats, stat2Value: e.target.value },
+                      })
+                    }
+                    placeholder="20+"
+                    className="w-full px-2.5 py-1.5 text-sm bg-surface-primary border border-border-default rounded-lg font-mono font-bold text-text-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-mono uppercase tracking-wider text-text-tertiary mb-1">
+                    Label
+                  </label>
+                  <input
+                    type="text"
+                    value={sponsorContent.stats.stat2Label}
+                    onChange={(e) =>
+                      setSponsorContent({
+                        ...sponsorContent,
+                        stats: { ...sponsorContent.stats, stat2Label: e.target.value },
+                      })
+                    }
+                    placeholder="Yearly Events"
+                    className="w-full px-2.5 py-1.5 text-xs bg-surface-primary border border-border-default rounded-lg text-text-secondary"
+                  />
+                </div>
+              </div>
+
+              {/* Stat 3 */}
+              <div className="p-3 bg-surface-secondary rounded-xl border border-border-default space-y-2">
+                <span className="text-[10px] font-mono uppercase text-accent-primary font-bold block">
+                  Metric #3
+                </span>
+                <div>
+                  <label className="block text-[11px] font-mono uppercase tracking-wider text-text-tertiary mb-1">
+                    Value
+                  </label>
+                  <input
+                    type="text"
+                    value={sponsorContent.stats.stat3Value}
+                    onChange={(e) =>
+                      setSponsorContent({
+                        ...sponsorContent,
+                        stats: { ...sponsorContent.stats, stat3Value: e.target.value },
+                      })
+                    }
+                    placeholder="500+"
+                    className="w-full px-2.5 py-1.5 text-sm bg-surface-primary border border-border-default rounded-lg font-mono font-bold text-text-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-mono uppercase tracking-wider text-text-tertiary mb-1">
+                    Label
+                  </label>
+                  <input
+                    type="text"
+                    value={sponsorContent.stats.stat3Label}
+                    onChange={(e) =>
+                      setSponsorContent({
+                        ...sponsorContent,
+                        stats: { ...sponsorContent.stats, stat3Label: e.target.value },
+                      })
+                    }
+                    placeholder="Participants"
+                    className="w-full px-2.5 py-1.5 text-xs bg-surface-primary border border-border-default rounded-lg text-text-secondary"
+                  />
+                </div>
+              </div>
+
+              {/* Stat 4 */}
+              <div className="p-3 bg-surface-secondary rounded-xl border border-border-default space-y-2">
+                <span className="text-[10px] font-mono uppercase text-accent-primary font-bold block">
+                  Metric #4
+                </span>
+                <div>
+                  <label className="block text-[11px] font-mono uppercase tracking-wider text-text-tertiary mb-1">
+                    Value
+                  </label>
+                  <input
+                    type="text"
+                    value={sponsorContent.stats.stat4Value}
+                    onChange={(e) =>
+                      setSponsorContent({
+                        ...sponsorContent,
+                        stats: { ...sponsorContent.stats, stat4Value: e.target.value },
+                      })
+                    }
+                    placeholder="15+"
+                    className="w-full px-2.5 py-1.5 text-sm bg-surface-primary border border-border-default rounded-lg font-mono font-bold text-text-primary"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[11px] font-mono uppercase tracking-wider text-text-tertiary mb-1">
+                    Label
+                  </label>
+                  <input
+                    type="text"
+                    value={sponsorContent.stats.stat4Label}
+                    onChange={(e) =>
+                      setSponsorContent({
+                        ...sponsorContent,
+                        stats: { ...sponsorContent.stats, stat4Label: e.target.value },
+                      })
+                    }
+                    placeholder="Sponsors"
+                    className="w-full px-2.5 py-1.5 text-xs bg-surface-primary border border-border-default rounded-lg text-text-secondary"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Closing Call To Action Section */}
+          <div className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl p-5 shadow-[4px_4px_0px_var(--accent-primary)] space-y-4">
+            <div className="flex items-center gap-2 border-b border-border-default pb-3">
+              <MessageSquare className="w-4 h-4 text-accent-primary" />
+              <h2 className="text-base font-bold text-text-primary">
+                Closing Call To Action & Links
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-mono uppercase tracking-wider text-text-tertiary mb-1">
+                  Cycle / Deadline Notice
+                </label>
+                <input
+                  type="text"
+                  value={sponsorContent.cta.cycleNotice}
+                  onChange={(e) =>
+                    setSponsorContent({
+                      ...sponsorContent,
+                      cta: { ...sponsorContent.cta, cycleNotice: e.target.value },
+                    })
+                  }
+                  placeholder="Sponsorship cycle closes Nov 30"
+                  className="w-full px-3 py-2 text-sm bg-surface-secondary border border-border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary text-text-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono uppercase tracking-wider text-text-tertiary mb-1">
+                  Headline
+                </label>
+                <input
+                  type="text"
+                  value={sponsorContent.cta.title}
+                  onChange={(e) =>
+                    setSponsorContent({
+                      ...sponsorContent,
+                      cta: { ...sponsorContent.cta, title: e.target.value },
+                    })
+                  }
+                  placeholder="Ready to collaborate?"
+                  className="w-full px-3 py-2 text-sm bg-surface-secondary border border-border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary text-text-primary font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono uppercase tracking-wider text-text-tertiary mb-1">
+                  Email Button Label
+                </label>
+                <input
+                  type="text"
+                  value={sponsorContent.cta.emailButtonText}
+                  onChange={(e) =>
+                    setSponsorContent({
+                      ...sponsorContent,
+                      cta: { ...sponsorContent.cta, emailButtonText: e.target.value },
+                    })
+                  }
+                  placeholder="Email Us"
+                  className="w-full px-3 py-2 text-sm bg-surface-secondary border border-border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary text-text-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-mono uppercase tracking-wider text-text-tertiary mb-1">
+                  Call Button Label
+                </label>
+                <input
+                  type="text"
+                  value={sponsorContent.cta.callButtonText}
+                  onChange={(e) =>
+                    setSponsorContent({
+                      ...sponsorContent,
+                      cta: { ...sponsorContent.cta, callButtonText: e.target.value },
+                    })
+                  }
+                  placeholder="Call Us"
+                  className="w-full px-3 py-2 text-sm bg-surface-secondary border border-border-default rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-primary text-text-primary"
+                />
+              </div>
+            </div>
+
+            <div className="p-3.5 bg-accent-primary/10 border border-accent-primary/20 rounded-xl flex items-start gap-3">
+              <Sparkles className="w-4 h-4 text-accent-primary flex-shrink-0 mt-0.5" />
+              <div className="text-xs text-text-secondary">
+                <span className="font-bold text-text-primary block mb-0.5">
+                  Synchronized with Global Site Settings
+                </span>
+                The Email and Call action links automatically route directly to the official contact Gmail and phone number defined under{" "}
+                <Link href="/dashboard/settings" className="font-bold text-accent-primary underline hover:opacity-80">
+                  Global Settings
+                </Link>.
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* Floating Action Buttons */}
+      <div className="fixed bottom-6 right-6 z-40 flex items-center gap-2.5 p-2 bg-surface-elevated/95 backdrop-blur-md border-2 border-border-brutalist dark:border-border-default rounded-2xl shadow-[4px_4px_0px_var(--accent-primary)] transition-all">
+        <a
+          href={getLivePageUrl()}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs sm:text-sm font-semibold rounded-xl border border-border-default bg-surface-secondary text-text-secondary hover:text-accent-primary hover:border-accent-primary transition-all shadow-[2px_2px_0px_rgba(0,0,0,0.06)]"
+        >
+          <ExternalLink className="w-3.5 h-3.5" />
+          Live Preview
+        </a>
+
+        <button
+          onClick={handleSave}
+          disabled={saving || loading}
+          className="inline-flex items-center gap-2 px-4 py-2 text-xs sm:text-sm font-bold rounded-xl bg-accent-primary text-white hover:bg-accent-primary-hover shadow-[2px_2px_0px_var(--border-brutalist)] active:translate-x-0.5 active:translate-y-0.5 transition-all disabled:opacity-50 cursor-pointer"
+        >
+          {saving ? (
+            <>
+              <RefreshCw className="w-4 h-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            <>
+              <Save className="w-4 h-4" />
+              Save Changes
+            </>
+          )}
+        </button>
+      </div>
     </div>
   );
 }

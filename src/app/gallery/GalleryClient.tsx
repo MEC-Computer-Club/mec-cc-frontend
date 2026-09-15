@@ -227,7 +227,7 @@ export function GalleryClient({ initialItems }: GalleryClientProps) {
             onClick={() => setFilter("all")}
             className={`flex-1 md:flex-initial px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
               filter === "all"
-                ? "bg-accent-primary text-white shadow-sm"
+                ? "bg-accent-primary !text-accent-primary-text shadow-sm"
                 : "text-text-secondary hover:text-text-primary"
             }`}
           >
@@ -237,7 +237,7 @@ export function GalleryClient({ initialItems }: GalleryClientProps) {
             onClick={() => setFilter("image")}
             className={`flex-1 md:flex-initial px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center justify-center gap-1.5 ${
               filter === "image"
-                ? "bg-accent-primary text-white shadow-sm"
+                ? "bg-accent-primary !text-accent-primary-text shadow-sm"
                 : "text-text-secondary hover:text-text-primary"
             }`}
           >
@@ -247,7 +247,7 @@ export function GalleryClient({ initialItems }: GalleryClientProps) {
             onClick={() => setFilter("video")}
             className={`flex-1 md:flex-initial px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center justify-center gap-1.5 ${
               filter === "video"
-                ? "bg-accent-primary text-white shadow-sm"
+                ? "bg-accent-primary !text-accent-primary-text shadow-sm"
                 : "text-text-secondary hover:text-text-primary"
             }`}
           >

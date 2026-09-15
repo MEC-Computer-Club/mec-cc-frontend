@@ -104,23 +104,20 @@ export function Footer() {
           {/* Brand column — full-width on mobile & tablet, 2fr on desktop */}
           <div className="sm:col-span-2 lg:col-span-1 max-[640px]:text-center max-[640px]:flex max-[640px]:flex-col max-[640px]:items-center">
             <Link href="/" className="flex items-center no-underline mb-[var(--space-3)] h-12 max-[640px]:justify-center" aria-label={clubName}>
-              {mounted ? (
-                <Image
-                  src={`/logo-${currentVibe}-${resolvedTheme === 'dark' ? 'dark' : 'light'}.png`}
-                  alt={`${clubName} Logo`}
-                  width={180}
-                  height={45}
-                  className="object-contain"
-                />
-              ) : (
-                <Image
-                  src="/logo-lime-light.png"
-                  alt={`${clubName} Logo`}
-                  width={180}
-                  height={45}
-                  className="object-contain"
-                />
-              )}
+              <Image
+                src={`/logo-${currentVibe}-light.png`}
+                alt={`${clubName} Logo`}
+                width={180}
+                height={45}
+                className="object-contain block dark:hidden"
+              />
+              <Image
+                src={`/logo-${currentVibe}-dark.png`}
+                alt={`${clubName} Logo`}
+                width={180}
+                height={45}
+                className="object-contain hidden dark:block"
+              />
             </Link>
             <p className="text-sm text-text-tertiary leading-[var(--leading-relaxed)] max-w-[280px] mb-[var(--space-4)] max-[640px]:max-w-full max-[640px]:text-center">
               {clubTagline}

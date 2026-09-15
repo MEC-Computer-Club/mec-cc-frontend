@@ -29,6 +29,7 @@ import {
 import toast from "react-hot-toast";
 import { LeaderboardEntry, CPResource, CPAchievement } from "@/types";
 import LeaderboardTable from "./LeaderboardTable";
+import RoadmapView from "./RoadmapView";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/context/AuthContext";
@@ -55,61 +56,7 @@ const TABS = [
   { id: "achievements", label: "Achievements", icon: Award },
 ];
 
-const roadmapLevels = [
-  {
-    level: "Newbie",
-    rating: "< 1200",
-    color: "#808080",
-    description: "Build fundamentals: syntax fluency, time complexity, and brute force techniques.",
-    topics: [
-      "Language syntax & STL in C++ (vector, string, sort, pair, map, set)",
-      "Time & Space Complexity analysis (Big-O)",
-      "Basic Simulation, Arrays, Strings & Math",
-      "Brute force enumeration & complete search",
-      "Practice: Codeforces Div. 3 & Div. 4 Problems A, B",
-    ],
-  },
-  {
-    level: "Pupil",
-    rating: "1200 - 1399",
-    color: "#008000",
-    description: "Standard algorithmic paradigms and efficient data processing.",
-    topics: [
-      "Binary Search & Two Pointers technique",
-      "Prefix Sums & Difference Arrays",
-      "Basic Number Theory (Sieve of Eratosthenes, GCD, LCM, Modular arithmetic)",
-      "Greedy Algorithms & Constructive algorithms",
-      "Practice: Codeforces Div. 2 Problems A, B & Div. 3 Problem C",
-    ],
-  },
-  {
-    level: "Specialist",
-    rating: "1400 - 1599",
-    color: "#03A89E",
-    description: "Dynamic programming, graph theory, and intermediate data structures.",
-    topics: [
-      "Binary Search on Answer range",
-      "Dynamic Programming (0/1 Knapsack, LIS, LCS, Grid DP)",
-      "Bitmasking & Bitwise Operations",
-      "Graph Traversals (BFS, DFS, Connected Components, Topological Sort)",
-      "Disjoint Set Union (DSU / Union-Find)",
-      "Practice: Codeforces Div. 2 Problem C & CSES DP Section",
-    ],
-  },
-  {
-    level: "Expert+",
-    rating: "1600+",
-    color: "#0000FF",
-    description: "Advanced graph theory, range queries, and complex tree algorithms.",
-    topics: [
-      "Segment Trees, Fenwick Trees (Binary Indexed Tree), Sparse Table",
-      "Shortest Paths (Dijkstra, Bellman-Ford, Floyd-Warshall)",
-      "Trees (LCA, Tree DP, Binary Lifting)",
-      "Combinatorics, Inverses, and Game Theory",
-      "Practice: Codeforces Div. 2 Problem D, E & AtCoder ABC E, F",
-    ],
-  },
-];
+
 
 const problemSets = [
   { title: "Dynamic Programming", count: 50, tag: "CSES + CF", desc: "Classic memoization, tabulation, knapsack, and grid paths.", link: "https://cses.fi/problemset/list/#dynamic" },
@@ -676,22 +623,10 @@ function CPHubViewContent({
 
   return (
     <div className="space-y-8 pb-16">
-      {/* Header */}
-      <section className="pt-8 pb-2">
+      {/* Header & Tabs */}
+      <section className="border-b border-border-default sticky top-[var(--nav-height)] z-20 bg-surface-primary/95 backdrop-blur-sm pt-4 pb-2">
         <div className="container mx-auto px-4 md:px-8">
-          <span className="kicker">{kicker}</span>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-text-primary mb-3">
-            {title}
-          </h1>
-          <p className="text-lg sm:text-xl text-text-secondary max-w-[680px]">
-            {description}
-          </p>
-        </div>
-      </section>
-
-      {/* Main Tab Switcher */}
-      <section className="border-b border-border-default sticky top-[var(--nav-height)] z-20 bg-surface-primary/95 backdrop-blur-sm py-2">
-        <div className="container mx-auto px-4 md:px-8">
+          <span className="kicker mb-2 block">{kicker}</span>
           <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
             {TABS.map((tab) => {
               const Icon = tab.icon;
@@ -700,7 +635,7 @@ function CPHubViewContent({
                 <button
                   key={tab.id}
                   onClick={() => handleTabChange(tab.id)}
-                  className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all ${
+                  className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
                     isActive
                       ? "bg-accent-primary !text-accent-primary-text shadow-[3px_3px_0px_var(--border-brutalist)] border-2 border-text-primary dark:border-border-default"
                       : "bg-surface-elevated text-text-secondary hover:text-text-primary border border-border-default hover:bg-surface-secondary"
@@ -723,63 +658,7 @@ function CPHubViewContent({
       )}
 
       {/* Tab 2: Roadmaps */}
-      {activeTab === "roadmaps" && (
-        <section className="container mx-auto px-4 md:px-8 max-w-4xl space-y-6">
-          <div className="p-6 bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl shadow-[4px_4px_0px_var(--accent-primary)]">
-            <h2 className="text-xl sm:text-2xl font-bold text-text-primary mb-2 flex items-center gap-2">
-              <Compass className="text-accent-primary" /> Codeforces Rating Milestone Roadmaps
-            </h2>
-            <p className="text-sm text-text-secondary leading-relaxed">
-              Step-by-step topics and training drills crafted by club seniors to advance through Codeforces divisions systematically.
-            </p>
-          </div>
-
-          <div className="space-y-6">
-            {roadmapLevels.map((lvl) => (
-              <div
-                key={lvl.level}
-                className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl p-6 shadow-[4px_4px_0px_0px_var(--border-default)] transition-all hover:shadow-[6px_6px_0px_var(--accent-primary)]"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2 pb-3 mb-4 border-b border-border-default">
-                  <div className="flex items-center gap-3">
-                    <span
-                      className="w-3.5 h-3.5 rounded-full"
-                      style={{ backgroundColor: lvl.color }}
-                    />
-                    <h3 className="text-xl font-bold text-text-primary" style={{ color: lvl.color }}>
-                      {lvl.level}
-                    </h3>
-                  </div>
-                  <span
-                    className="font-mono text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded bg-surface-secondary border border-border-default"
-                    style={{ color: lvl.color }}
-                  >
-                    Rating: {lvl.rating}
-                  </span>
-                </div>
-
-                <p className="text-sm text-text-secondary mb-4 italic">
-                  {lvl.description}
-                </p>
-
-                <div className="space-y-2">
-                  <h4 className="text-xs font-mono font-bold uppercase text-text-tertiary tracking-wider">
-                    Core Curriculum &amp; Practice Drills:
-                  </h4>
-                  <ul className="space-y-2">
-                    {lvl.topics.map((t, i) => (
-                      <li key={i} className="flex items-start gap-2.5 text-sm text-text-primary">
-                        <span className="text-accent-primary font-mono font-bold">→</span>
-                        <span>{t}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      {activeTab === "roadmaps" && <RoadmapView />}
 
       {/* Tab 3: Problem Sets */}
       {activeTab === "problem-sets" && (
@@ -831,53 +710,6 @@ function CPHubViewContent({
       {/* Tab 4: Resources & Club Docs */}
       {activeTab === "resources" && (
         <section className="container mx-auto px-4 md:px-8 max-w-6xl space-y-10">
-          {/* Main Resource Categories */}
-          <div className="space-y-6">
-            <div className="p-6 bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl shadow-[4px_4px_0px_var(--accent-primary)]">
-              <h2 className="text-xl sm:text-2xl font-bold text-text-primary mb-2 flex items-center gap-2">
-                <BookOpen className="text-accent-primary" /> Curated Tools, Books &amp; Judges
-              </h2>
-              <p className="text-sm text-text-secondary leading-relaxed">
-                Essential reference libraries, coding portals, and practice platforms recommended for all competitive coders.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {resourceCategories.map((cat) => (
-                <div
-                  key={cat.name}
-                  className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl p-5 shadow-[4px_4px_0px_0px_var(--border-default)] flex flex-col justify-between"
-                >
-                  <div>
-                    <h3 className="text-base font-bold text-text-primary pb-3 border-b border-border-default mb-4">
-                      {cat.name}
-                    </h3>
-                    <ul className="space-y-3">
-                      {cat.items.map((item) => (
-                        <li key={item.name}>
-                          <a
-                            href={item.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="group block p-2.5 rounded-xl border border-border-default bg-surface-secondary hover:border-accent-primary transition-all no-underline"
-                          >
-                            <div className="flex items-center justify-between text-sm font-bold text-text-primary group-hover:text-accent-primary">
-                              <span>{item.name}</span>
-                              <ExternalLink size={13} />
-                            </div>
-                            <p className="text-xs text-text-secondary mt-1 leading-relaxed">
-                              {item.desc}
-                            </p>
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* Club Editorials, Algorithms & Docs */}
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border-default pb-3">
@@ -1017,6 +849,53 @@ function CPHubViewContent({
                 })}
               </div>
             )}
+          </div>
+
+          {/* Main Resource Categories */}
+          <div className="space-y-6">
+            <div className="p-6 bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl shadow-[4px_4px_0px_var(--accent-primary)]">
+              <h2 className="text-xl sm:text-2xl font-bold text-text-primary mb-2 flex items-center gap-2">
+                <BookOpen className="text-accent-primary" /> Curated Tools, Books &amp; Judges
+              </h2>
+              <p className="text-sm text-text-secondary leading-relaxed">
+                Essential reference libraries, coding portals, and practice platforms recommended for all competitive coders.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {resourceCategories.map((cat) => (
+                <div
+                  key={cat.name}
+                  className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl p-5 shadow-[4px_4px_0px_0px_var(--border-default)] flex flex-col justify-between"
+                >
+                  <div>
+                    <h3 className="text-base font-bold text-text-primary pb-3 border-b border-border-default mb-4">
+                      {cat.name}
+                    </h3>
+                    <ul className="space-y-3">
+                      {cat.items.map((item) => (
+                        <li key={item.name}>
+                          <a
+                            href={item.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group block p-2.5 rounded-xl border border-border-default bg-surface-secondary hover:border-accent-primary transition-all no-underline"
+                          >
+                            <div className="flex items-center justify-between text-sm font-bold text-text-primary group-hover:text-accent-primary">
+                              <span>{item.name}</span>
+                              <ExternalLink size={13} />
+                            </div>
+                            <p className="text-xs text-text-secondary mt-1 leading-relaxed">
+                              {item.desc}
+                            </p>
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </section>
       )}

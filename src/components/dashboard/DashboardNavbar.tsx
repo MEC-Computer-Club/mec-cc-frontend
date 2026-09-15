@@ -35,9 +35,7 @@ export const DashboardNavbar: React.FC<DashboardNavbarProps> = ({
     setMounted(true);
   }, []);
 
-  const logoSrc = mounted
-    ? `/logo-${currentVibe || "lime"}-${resolvedTheme === "dark" ? "dark" : "light"}.png`
-    : "/logo-lime-light.png";
+  const logoSrc = `/logo-${currentVibe || "lime"}-${resolvedTheme === "dark" ? "dark" : "light"}.png`;
 
   const handleLogout = async () => {
     try {

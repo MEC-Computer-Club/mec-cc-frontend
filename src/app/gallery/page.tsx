@@ -7,11 +7,11 @@ import { GalleryClient } from "./GalleryClient";
 export const metadata: Metadata = {
   title: "Event Gallery & Photo Highlights | MEC Computer Club",
   description:
-    "Explore photos and videos from tech events, coding contests, intra-college bootcamps, and workshops hosted by the MEC Computer Club in Sylhet.",
+    "Explore photos and videos from tech events, coding contests, intra-college bootcamps, and workshops hosted by the MEC Computer Club in Mymensingh.",
   keywords: [
     "MEC Computer Club photos",
     "MEC event gallery",
-    "Murari Chand College tech events photo",
+    "Mymensingh Engineering College tech events photo",
     "MEC programming contest photos",
   ],
   alternates: {

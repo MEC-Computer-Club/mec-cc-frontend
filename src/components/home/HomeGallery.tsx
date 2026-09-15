@@ -14,6 +14,10 @@ interface HomeGalleryProps {
 export function HomeGallery({ items }: HomeGalleryProps) {
   const [activeItem, setActiveItem] = useState<GalleryItem | null>(null);
 
+  if (!items || items.length === 0) {
+    return null;
+  }
+
   return (
     <section className="section bg-surface-secondary/40" id="home-gallery">
       <div className="container">
@@ -26,10 +30,13 @@ export function HomeGallery({ items }: HomeGalleryProps) {
           </p>
         </div>
 
-        {/* Gallery Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Gallery Grid - Centered rows */}
+        <div className="flex flex-wrap justify-center gap-6">
           {items.slice(0, 6).map((item) => (
-            <div key={item.id} className="cursor-pointer">
+            <div
+              key={item.id}
+              className="w-full sm:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] max-w-[400px] cursor-pointer"
+            >
               <div
                 onClick={() => setActiveItem(item)}
                 className="group relative aspect-[4/3] rounded-2xl overflow-hidden border-2 border-border-brutalist bg-surface-secondary cursor-pointer shadow-[4px_4px_0px_0px_var(--border-brutalist)] hover:shadow-[6px_6px_0px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-200"

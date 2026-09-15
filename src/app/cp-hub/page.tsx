@@ -8,13 +8,13 @@ import CPHubView from "./components/CPHubView";
 export const metadata: Metadata = {
   title: "CP Hub & Codeforces Leaderboard | MEC Computer Club",
   description:
-    "Official Competitive Programming hub of MEC Computer Club. Track live Codeforces ratings, access curated ICPC roadmaps, problem sets, and practice logs in Sylhet.",
+    "Official Competitive Programming hub of MEC Computer Club. Track live Codeforces ratings, access curated ICPC roadmaps, problem sets, and practice logs in Mymensingh.",
   keywords: [
     "MEC CP Hub",
     "MEC Codeforces leaderboard",
-    "Murari Chand College competitive programming",
+    "Mymensingh Engineering College competitive programming",
     "MEC ICPC training",
-    "Sylhet CP community",
+    "Mymensingh CP community",
     "MEC programming contest leaderboard",
   ],
   alternates: {
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "CP Hub & Codeforces Leaderboard | MEC Computer Club",
     description:
-      "Live club rankings, ICPC roadmaps, and competitive programming resources for Murari Chand College students.",
+      "Live club rankings, ICPC roadmaps, and competitive programming resources for Mymensingh Engineering College students.",
     url: "https://meccomputerclub.org/cp-hub",
     images: ["/mec-club-photo.jpg"],
   },

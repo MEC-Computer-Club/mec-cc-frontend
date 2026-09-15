@@ -680,7 +680,7 @@ export const ProfileEditTab = forwardRef<ProfileEditTabHandle, ProfileEditTabPro
                   type="text"
                   value={profileData.address}
                   onChange={(e) => setProfileData({ ...profileData, address: e.target.value })}
-                  placeholder="e.g. MEC Campus, Tilagarh, Sylhet"
+                  placeholder="e.g. MEC Campus, Khagdahar, Mymensingh"
                   className="w-full py-2.5 px-3.5 font-body text-sm font-medium text-text-primary bg-surface-primary border-[1.5px] border-text-primary dark:border-border-default rounded-md shadow-[2px_2px_0px_0px_var(--border-brutalist)] dark:shadow-[2px_2px_0px_0px_var(--border-default)] outline-none transition-all duration-150 focus:border-accent-primary focus:shadow-[3px_3px_0px_0px_var(--accent-primary)]"
                 />
               </div>
