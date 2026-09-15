@@ -25,6 +25,8 @@ import { useAuth } from "@/context/AuthContext";
 import FilterSelect, { FilterOption } from "@/app/dashboard/components/FilterSelect";
 import { Select, SelectOption } from "@/components/ui/Select";
 import { executives } from "@/data/executives";
+import axios from "axios";
+import { API_BASE_URL } from "@/lib/api";
 import {
   BorrowedEquipment,
   ClubAsset,
@@ -47,6 +49,41 @@ export default function AssetsPage() {
 
   // Tab State
   const [activeTab, setActiveTab] = useState<"borrowed" | "club">("borrowed");
+
+  // Live Registered Executive / Admin Accounts from backend database
+  const [liveExecutives, setLiveExecutives] = useState<{ name: string; role: string }[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchLiveExecutives() {
+      try {
+        const res = await axios.get(`${API_BASE_URL}/api/users/public/members`);
+        if (res.data?.success && Array.isArray(res.data.data)) {
+          const filtered = res.data.data
+            .filter(
+              (u: any) =>
+                u.clubRole === "executive" ||
+                u.role === "admin" ||
+                u.role === "moderator" ||
+                u.role === "executive"
+            )
+            .map((u: any) => ({
+              name: u.fullName,
+              role: u.designation || u.customRole || (u.role === "admin" ? "Executive (Admin)" : "Executive Member"),
+            }));
+          if (isMounted && filtered.length > 0) {
+            setLiveExecutives(filtered);
+          }
+        }
+      } catch (e) {
+        console.warn("Could not load live executives from API, fallback to committee roster:", e);
+      }
+    }
+    fetchLiveExecutives();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Data States
   const [borrowedItems, setBorrowedItems] = useState<BorrowedEquipment[]>(() => {
@@ -899,6 +936,7 @@ export default function AssetsPage() {
       {(isAddBorrowedOpen || editingBorrowed) && (
         <BorrowedEquipmentModal
           initialData={editingBorrowed}
+          liveExecutives={liveExecutives}
           onClose={() => {
             setIsAddBorrowedOpen(false);
             setEditingBorrowed(null);
@@ -1025,17 +1063,21 @@ export default function AssetsPage() {
 /* ========================================================================= */
 function BorrowedEquipmentModal({
   initialData,
+  liveExecutives,
   onClose,
   onSave,
 }: {
   initialData: BorrowedEquipment | null;
+  liveExecutives?: { name: string; role: string }[];
   onClose: () => void;
   onSave: (item: BorrowedEquipment) => void;
 }) {
   const { user } = useAuth();
 
+  const availableExecutives = liveExecutives && liveExecutives.length > 0 ? liveExecutives : executives;
+
   const executiveOptions: SelectOption[] = useMemo(() => {
-    const list: SelectOption[] = executives.map((exec) => ({
+    const list: SelectOption[] = availableExecutives.map((exec) => ({
       value: `${exec.name} (${exec.role})`,
       label: `${exec.name} — ${exec.role}`,
     }));
@@ -1043,24 +1085,30 @@ function BorrowedEquipmentModal({
       list.unshift({ value: initialData.borrowedBy, label: initialData.borrowedBy });
     }
     return list;
-  }, [initialData]);
+  }, [availableExecutives, initialData]);
 
   const defaultBorrower = useMemo(() => {
     if (initialData?.borrowedBy) return initialData.borrowedBy;
-    const match = executives.find(
+    const match = availableExecutives.find(
       (e) =>
         user?.fullName &&
         (e.name.toLowerCase().includes(user.fullName.toLowerCase()) ||
           user.fullName.toLowerCase().includes(e.name.toLowerCase()))
     );
-    return match ? `${match.name} (${match.role})` : `${executives[0]?.name || "Faisal Ahmed"} (${executives[0]?.role || "President"})`;
-  }, [initialData, user]);
+    return match ? `${match.name} (${match.role})` : `${availableExecutives[0]?.name || "Executive"} (${availableExecutives[0]?.role || "In Charge"})`;
+  }, [availableExecutives, initialData, user]);
 
   const [name, setName] = useState(initialData?.name || "");
   const [category, setCategory] = useState(initialData?.category || "Networking");
   const [quantity, setQuantity] = useState(initialData?.quantity || 1);
   const [borrowedFrom, setBorrowedFrom] = useState(initialData?.borrowedFrom || "Monir Vai (Lab Attendant)");
   const [borrowedBy, setBorrowedBy] = useState(defaultBorrower);
+
+  useEffect(() => {
+    if (!initialData?.borrowedBy && defaultBorrower) {
+      setBorrowedBy(defaultBorrower);
+    }
+  }, [defaultBorrower, initialData]);
   const [borrowDate, setBorrowDate] = useState(initialData?.borrowDate || new Date().toISOString().split("T")[0]);
   const [dueDate, setDueDate] = useState(initialData?.dueDate || "Permanent Borrow");
   const [location, setLocation] = useState(initialData?.location || "Club Room 302");

@@ -9,38 +9,7 @@ export interface Partner {
   isActive?: boolean;
 }
 
-export const partners: Partner[] = [
-  { 
-    name: "TechCorp Inc.", 
-    type: "Title Sponsor", 
-    desc: "Supported our flagship hackathon and provided cloud credits.",
-    logoPlaceholder: "TC"
-  },
-  { 
-    name: "DevAcademy", 
-    type: "Learning Partner", 
-    desc: "Provides premium courses for our competitive programming panel.",
-    logoPlaceholder: "DA"
-  },
-  { 
-    name: "Local Software Solutions", 
-    type: "Event Sponsor", 
-    desc: "Sponsored prizes for the intra-university programming contest.",
-    logoPlaceholder: "LSS"
-  },
-  {
-    name: "Innovate BD",
-    type: "Platinum Partner",
-    desc: "Provides mentorship and recruitment drives for fresh graduates.",
-    logoPlaceholder: "IBD"
-  },
-  {
-    name: "CloudForge",
-    type: "Technology Partner",
-    desc: "Official hosting and cloud infrastructure provider.",
-    logoPlaceholder: "CF"
-  }
-];
+export const partners: Partner[] = [];
 
 import { API_BASE_URL } from "@/lib/api";
 const API_URL = API_BASE_URL;
@@ -52,7 +21,7 @@ export async function getPartners(): Promise<Partner[]> {
       const data = await res.json();
       const backendSponsors: any[] = data.data || data.sponsors || [];
       if (backendSponsors && backendSponsors.length > 0) {
-        const mapped: Partner[] = backendSponsors.map((s: any) => {
+        return backendSponsors.map((s: any) => {
           let displayType = s.tier || "";
           if (!displayType) {
             if (s.contributionType === "service") displayType = "Service Partner";
@@ -72,13 +41,10 @@ export async function getPartners(): Promise<Partner[]> {
             isActive: s.isActive !== false,
           };
         });
-
-        // Backend sponsors first, followed by static fallback partners
-        return [...mapped, ...partners];
       }
     }
   } catch (err) {
-    console.warn("Could not fetch backend sponsors, using static partners:", err);
+    console.warn("Could not fetch backend sponsors:", err);
   }
-  return partners;
+  return [];
 }

@@ -11,6 +11,7 @@ interface HomeSponsorsProps {
 
 export function HomeSponsors({ sponsors }: HomeSponsorsProps) {
   const baseItems = sponsors && sponsors.length > 0 ? sponsors : [];
+  if (baseItems.length === 0) return null;
 
   // Desktop marquee track (all items)
   const track = baseItems.length < 8 ? [...baseItems, ...baseItems] : baseItems;
