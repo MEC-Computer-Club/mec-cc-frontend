@@ -28,16 +28,11 @@ import {
   Building,
   Type,
   FileCheck2,
-  Waves,
-  Cpu,
-  PenTool,
-  Crosshair,
 } from "lucide-react";
 import { Select, SelectOption } from "@/components/ui/Select";
 import {
   WatermarkConfig,
   FontCombination,
-  ArtisticTextureType,
   DEFAULT_WATERMARK_CONFIG,
   renderWatermarkOnCanvas,
   loadImage,
@@ -1206,117 +1201,6 @@ export function WatermarkForgeClient() {
                           />
                         </div>
                       </div>
-                    </div>
-
-                    {/* Artistic Ambient Texture Blend Card */}
-                    <div className="bg-surface-primary dark:bg-[#0f121d] rounded-xl border border-border-default/80 dark:border-white/10 p-4 space-y-3.5 shadow-xs">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-1.5">
-                          <Sparkles className="w-3.5 h-3.5 text-accent-primary" />
-                          <label className="text-xs font-mono font-bold uppercase tracking-wider text-text-secondary">
-                            Artistic Line & Ambient Blend
-                          </label>
-                        </div>
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-accent-primary/10 text-accent-text-on-surface border border-accent-primary/30 font-bold">
-                          CREATIVE FX
-                        </span>
-                      </div>
-
-                      {/* Texture Selection Grid */}
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                        {[
-                          { id: "none", label: "Clean Fade", desc: "Solid ambient gradient", icon: Layers },
-                          { id: "topographic", label: "Topo Waves", desc: "Elevation contour curves", icon: Waves },
-                          { id: "circuit", label: "Cyber Circuit", desc: "Tech PCB bus traces & pads", icon: Cpu },
-                          { id: "scribble", label: "Scribble Accent", desc: "Neon dynamic brush stroke", icon: PenTool },
-                          { id: "grid", label: "Viewfinder HUD", desc: "Camera CAD crosshairs & ticks", icon: Crosshair },
-                        ].map((tex) => {
-                          const isSelected = (config.artisticTexture || "none") === tex.id;
-                          const IconComp = tex.icon;
-                          return (
-                            <button
-                              key={tex.id}
-                              type="button"
-                              onClick={() =>
-                                setConfig({
-                                  ...config,
-                                  artisticTexture: tex.id as ArtisticTextureType,
-                                })
-                              }
-                              className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer flex flex-col justify-between gap-1.5 ${
-                                isSelected
-                                  ? "border-accent-primary bg-accent-primary/15 text-text-primary shadow-xs ring-1 ring-accent-primary/40"
-                                  : "border-border-default/80 dark:border-white/10 bg-surface-elevated dark:bg-black/30 text-text-secondary hover:border-text-primary/40 hover:text-text-primary"
-                              }`}
-                            >
-                              <div className="flex items-center justify-between w-full">
-                                <IconComp className={`w-3.5 h-3.5 ${isSelected ? "text-accent-primary" : "text-text-tertiary"}`} />
-                                {isSelected && (
-                                  <span className="w-1.5 h-1.5 rounded-full bg-accent-primary shadow-[0_0_6px_var(--accent-primary)]" />
-                                )}
-                              </div>
-                              <div>
-                                <div className="text-[11px] font-semibold font-heading leading-tight truncate">
-                                  {tex.label}
-                                </div>
-                                <div className="text-[9px] font-mono text-text-tertiary leading-tight truncate mt-0.5">
-                                  {tex.desc}
-                                </div>
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-
-                      {/* Texture Opacity Slider (Only if not 'none') */}
-                      {(config.artisticTexture || "none") !== "none" && (
-                        <div className="pt-2 border-t border-border-default/60 dark:border-white/10 space-y-1.5">
-                          <div className="flex justify-between items-center text-xs">
-                            <span className="font-mono text-text-secondary uppercase">
-                              Texture Blend Visibility
-                            </span>
-                            <span className="font-mono text-text-primary font-bold text-[11px] bg-surface-elevated dark:bg-black/40 px-2 py-0.5 rounded border border-border-default dark:border-white/15">
-                              {config.textureOpacity ?? 18}%
-                            </span>
-                          </div>
-                          <input
-                            type="range"
-                            min="5"
-                            max="45"
-                            step="1"
-                            value={config.textureOpacity ?? 18}
-                            onChange={(e) =>
-                              setConfig({
-                                ...config,
-                                textureOpacity: parseInt(e.target.value, 10),
-                              })
-                            }
-                            className="w-full accent-accent-primary cursor-pointer"
-                          />
-                          <div className="flex items-center gap-1.5 pt-0.5">
-                            <span className="text-[10px] font-mono text-text-tertiary mr-1">Intensity:</span>
-                            {[
-                              { label: "Ghost (10%)", val: 10 },
-                              { label: "Optimal (18%)", val: 18 },
-                              { label: "Vivid (28%)", val: 28 },
-                              { label: "Bold (38%)", val: 38 },
-                            ].map((preset) => (
-                              <button
-                                key={preset.label}
-                                type="button"
-                                onClick={() => setConfig({ ...config, textureOpacity: preset.val })}
-                                className={`px-2 py-0.5 text-[10px] font-mono rounded border transition-all cursor-pointer ${
-                                  (config.textureOpacity ?? 18) === preset.val
-                                    ? "bg-accent-primary text-black font-bold border-accent-primary shadow-xs"
-                                    : "bg-surface-elevated dark:bg-black/30 text-text-secondary border-border-default/80 dark:border-white/10 hover:text-text-primary"
-                                }`}
-                              >
-                                {preset.label}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
                     </div>
 
                     {/* Step 3 Footer Navigation */}
