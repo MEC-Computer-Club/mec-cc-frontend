@@ -13,52 +13,10 @@ export interface SigilItem {
 
 export const DEFAULT_SIGILS: SigilItem[] = [
   {
-    id: "default-crest",
-    name: "Standard Emblem",
-    subtitle: "Official MEC CC Crest",
-    src: "/mec-cc-logo-icon.png",
-  },
-  {
-    id: "lime-sigil",
-    name: "Lime Sigil",
-    subtitle: "Emerald CP Aura",
-    src: "/logo-icon-lime-dark.png",
-  },
-  {
-    id: "mint-sigil",
-    name: "Mint Sigil",
-    subtitle: "Algorithmic Sage",
-    src: "/logo-icon-mint-dark.png",
-  },
-  {
-    id: "sky-sigil",
-    name: "Sky Sigil",
-    subtitle: "Celestial Cyber Rune",
-    src: "/logo-icon-sky-dark.png",
-  },
-  {
-    id: "amber-sigil",
-    name: "Amber Sigil",
-    subtitle: "Solar Flame Inscription",
-    src: "/logo-icon-amber-dark.png",
-  },
-  {
-    id: "rose-sigil",
-    name: "Rose Sigil",
-    subtitle: "Crimson Dev Core",
-    src: "/logo-icon-rose-dark.png",
-  },
-  {
-    id: "violet-sigil",
-    name: "Violet Sigil",
-    subtitle: "Arcane Neural Seal",
-    src: "/logo-icon-violet-dark.png",
-  },
-  {
-    id: "slate-sigil",
-    name: "Slate Sigil",
-    subtitle: "Obsidian Tech Rune",
-    src: "/logo-icon-slate-dark.png",
+    id: "mcc-sigil",
+    name: "MCC Emblem",
+    subtitle: "Official Monogram Vector",
+    src: "/mcc.svg",
   },
 ];
 
