@@ -28,6 +28,7 @@ import {
   Building,
   Type,
   FileCheck2,
+  Film,
 } from "lucide-react";
 import { Select, SelectOption } from "@/components/ui/Select";
 import {
@@ -1200,6 +1201,113 @@ export function WatermarkForgeClient() {
                             className="w-full accent-accent-primary cursor-pointer"
                           />
                         </div>
+                      </div>
+                    </div>
+
+                    {/* Analog Film Grain & Matte Finish Card */}
+                    <div className="bg-surface-primary dark:bg-[#0f121d] rounded-xl border border-border-default/80 dark:border-white/10 p-4 space-y-3 shadow-xs">
+                      <div className="flex items-center justify-between">
+                        <label className="flex items-center gap-2 cursor-pointer select-none text-text-primary font-semibold text-xs">
+                          <Film className="w-3.5 h-3.5 text-accent-primary shrink-0" />
+                          <span>35mm Analog Film Grain & Matte Finish</span>
+                        </label>
+                        <span
+                          className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
+                            config.filmGrain
+                              ? "bg-accent-primary/20 text-accent-text-on-surface border border-accent-primary/30"
+                              : "bg-surface-secondary text-text-tertiary"
+                          }`}
+                        >
+                          {config.filmGrain ? "ACTIVE" : "MUTED"}
+                        </span>
+                      </div>
+
+                      <div className="pt-2 border-t border-border-default/60 dark:border-white/10 space-y-3">
+                        {/* Film Grain Toggle Checkbox */}
+                        <label className="flex items-center gap-2 cursor-pointer select-none text-text-secondary hover:text-text-primary text-xs">
+                          <input
+                            type="checkbox"
+                            checked={config.filmGrain}
+                            onChange={(e) =>
+                              setConfig({ ...config, filmGrain: e.target.checked })
+                            }
+                            className="accent-accent-primary w-4 h-4 rounded cursor-pointer"
+                          />
+                          <span className="font-mono text-[11px]">
+                            Enable authentic tactile film grain inside the bottom scrim
+                          </span>
+                        </label>
+
+                        {config.filmGrain && (
+                          <div className="space-y-2 pt-2 border-t border-border-default/40 dark:border-white/5 animate-in fade-in duration-150">
+                            {/* Grain Intensity Slider */}
+                            <div className="space-y-1.5">
+                              <div className="flex justify-between items-center text-xs">
+                                <span className="font-mono text-text-secondary uppercase">
+                                  Grain Intensity
+                                </span>
+                                <span className="font-mono text-text-primary font-bold text-[11px] bg-surface-elevated dark:bg-black/40 px-2 py-0.5 rounded border border-border-default dark:border-white/15">
+                                  {config.filmGrainIntensity}%{" "}
+                                  <span className="text-accent-primary font-normal">
+                                    {config.filmGrainIntensity <= 18
+                                      ? "• Subtle"
+                                      : config.filmGrainIntensity <= 35
+                                      ? "• Velvet"
+                                      : config.filmGrainIntensity <= 52
+                                      ? "• Cinematic"
+                                      : "• Gritty"}
+                                  </span>
+                                </span>
+                              </div>
+                              <input
+                                type="range"
+                                min="5"
+                                max="70"
+                                step="1"
+                                value={config.filmGrainIntensity}
+                                onChange={(e) =>
+                                  setConfig({
+                                    ...config,
+                                    filmGrainIntensity: parseInt(e.target.value, 10),
+                                  })
+                                }
+                                className="w-full accent-accent-primary cursor-pointer"
+                              />
+
+                              {/* Quick Grain Presets */}
+                              <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                                {[
+                                  { label: "Subtle (14%)", val: 14 },
+                                  { label: "Velvet (28%)", val: 28 },
+                                  { label: "Cinematic (42%)", val: 42 },
+                                  { label: "Gritty (58%)", val: 58 },
+                                ].map((preset) => (
+                                  <button
+                                    key={preset.label}
+                                    type="button"
+                                    onClick={() =>
+                                      setConfig({
+                                        ...config,
+                                        filmGrainIntensity: preset.val,
+                                      })
+                                    }
+                                    className={`px-2 py-0.5 text-[10px] font-mono rounded border transition-all cursor-pointer ${
+                                      Math.abs(config.filmGrainIntensity - preset.val) < 4
+                                        ? "bg-accent-primary text-black font-bold border-accent-primary shadow-xs"
+                                        : "bg-surface-elevated dark:bg-black/30 text-text-secondary border-border-default/80 dark:border-white/10 hover:text-text-primary"
+                                    }`}
+                                  >
+                                    {preset.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            <p className="text-[11px] font-mono text-text-tertiary leading-relaxed pt-1">
+                              ✦ Fine-grain 35mm physical film simulation. Procedurally masked to the shadow zone with non-linear cubic falloff to guarantee 0% interference with subjects or faces.
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
 

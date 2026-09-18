@@ -15,6 +15,8 @@ export interface WatermarkConfig {
   gradientColor: string; // hex, e.g. #000000
   gradientDepth: number; // percentage 20 - 75
   gradientOpacity: number; // percentage 40 - 100
+  filmGrain: boolean; // 35mm analog film grain & matte finish
+  filmGrainIntensity: number; // 0 - 100 (percentage)
   showMonogram: boolean;
   monogramSizeMultiplier: number; // 0.3 - 3.5
   monogramBorder: boolean;
@@ -31,6 +33,8 @@ export const DEFAULT_WATERMARK_CONFIG: WatermarkConfig = {
   gradientColor: "#000000",
   gradientDepth: 36,
   gradientOpacity: 92,
+  filmGrain: true,
+  filmGrainIntensity: 28,
   showMonogram: true,
   monogramSizeMultiplier: 1.0,
   monogramBorder: false,
@@ -117,6 +121,39 @@ function wrapText(
 }
 
 /**
+ * Cached monochrome 35mm film grain pattern tile.
+ * Generates an organic 256x256 Gaussian-distributed noise pattern mimicking physical film grain.
+ */
+let cachedGrainTile: HTMLCanvasElement | null = null;
+
+function getGrainTile(): HTMLCanvasElement {
+  if (cachedGrainTile) return cachedGrainTile;
+  const size = 256;
+  const tile = document.createElement("canvas");
+  tile.width = size;
+  tile.height = size;
+  const tCtx = tile.getContext("2d");
+  if (!tCtx) return tile;
+
+  const imgData = tCtx.createImageData(size, size);
+  const data = imgData.data;
+
+  // Gaussian-like bell distribution (central limit approximation) for tactile silver halide look
+  for (let i = 0; i < data.length; i += 4) {
+    const norm = (Math.random() + Math.random() + Math.random()) / 3 - 0.5;
+    const val = Math.min(255, Math.max(0, Math.round(128 + norm * 140)));
+    data[i] = val;
+    data[i + 1] = val;
+    data[i + 2] = val;
+    data[i + 3] = 255;
+  }
+
+  tCtx.putImageData(imgData, 0, 0);
+  cachedGrainTile = tile;
+  return cachedGrainTile;
+}
+
+/**
  * Render the watermark overlay onto the provided or newly created canvas.
  * Preserves exact original photo dimensions while scaling overlay proportionally.
  */
@@ -185,6 +222,65 @@ export async function renderWatermarkOnCanvas(
 
   ctx.fillStyle = gradient;
   ctx.fillRect(0, gradientStartY, width, gradientHeight);
+
+  // --- 1b. Analog Film Grain & Matte Texture (Velvety 35mm Finish) ---
+  // Infuses the bottom dark scrim with authentic analog photographic grain.
+  // Procedurally clipped strictly to [gradientStartY, height] and smoothly masked
+  // with non-linear cubic falloff to guarantee 0% grain on the photo subject.
+  if (
+    typeof document !== "undefined" &&
+    config.filmGrain &&
+    config.filmGrainIntensity > 0
+  ) {
+    try {
+      const grainTile = getGrainTile();
+      const scratch = document.createElement("canvas");
+      scratch.width = width;
+      scratch.height = gradientHeight;
+      const sCtx = scratch.getContext("2d");
+
+      if (sCtx) {
+        // Step 1: Fill scratch canvas with seamless tiled grain pattern
+        const pattern = sCtx.createPattern(grainTile, "repeat");
+        if (pattern) {
+          sCtx.fillStyle = pattern;
+          sCtx.fillRect(0, 0, width, gradientHeight);
+        }
+
+        // Step 2: Destination-in cubic alpha mask matching the scrim falloff
+        sCtx.globalCompositeOperation = "destination-in";
+        const alphaGrad = sCtx.createLinearGradient(0, 0, 0, gradientHeight);
+        alphaGrad.addColorStop(0.0, "rgba(0, 0, 0, 0)");
+        alphaGrad.addColorStop(0.2, "rgba(0, 0, 0, 0.04)");
+        alphaGrad.addColorStop(0.4, "rgba(0, 0, 0, 0.18)");
+        alphaGrad.addColorStop(0.7, "rgba(0, 0, 0, 0.58)");
+        alphaGrad.addColorStop(1.0, "rgba(0, 0, 0, 1.0)");
+        sCtx.fillStyle = alphaGrad;
+        sCtx.fillRect(0, 0, width, gradientHeight);
+
+        // Step 3: Composite onto main canvas inside the clipped scrim region
+        const intensityFactor = Math.min(Math.max(config.filmGrainIntensity, 0), 100) / 100;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, gradientStartY, width, gradientHeight);
+        ctx.clip();
+
+        // Primary pass: 'overlay' creates authentic photographic paper texture
+        ctx.globalCompositeOperation = "overlay";
+        ctx.globalAlpha = intensityFactor * 0.46;
+        ctx.drawImage(scratch, 0, gradientStartY);
+
+        // Secondary subtle pass: 'screen' adds fine silver halide luminance in deep blacks
+        ctx.globalCompositeOperation = "screen";
+        ctx.globalAlpha = intensityFactor * 0.14;
+        ctx.drawImage(scratch, 0, gradientStartY);
+
+        ctx.restore();
+      }
+    } catch (grainErr) {
+      console.warn("Film grain rendering skipped gracefully:", grainErr);
+    }
+  }
 
   // --- 2. Typography & Metadata Overlay ---
   const paddingX = Math.round(52 * scale);
