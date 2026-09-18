@@ -2067,33 +2067,36 @@ export function CoverPageGeneratorClient() {
                   <div className={`flex flex-col flex-1 justify-between select-text ${spaceMono.className} font-space-mono text-black`}>
                     {/* TOP SECTION: Header + Course Metadata + Student + Instructor */}
                     <div className="space-y-[40px]">
-                      {/* College Header: Official Seal + Vertical Divider + College & Department */}
-                      <div className="flex items-center gap-4.5">
-                        <div className="shrink-0 w-[78px] h-[78px] flex items-center justify-center text-black">
+                      {/* College Header: Official Seal + Thin Divider + College & Department */}
+                      <div className="flex items-center">
+                        {/* Enlarged official logo */}
+                        <div className="shrink-0 w-[96px] h-[96px] flex items-center justify-center text-black mr-[8px]">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src="/mec-college-seal.svg"
                             alt="Mymensingh Engineering College Seal"
-                            width={78}
-                            height={78}
-                            className="w-[78px] h-[78px] object-contain"
+                            width={96}
+                            height={96}
+                            className="w-[96px] h-[96px] object-contain"
                           />
                         </div>
 
-                        <div className="w-[1.5px] h-[74px] bg-black shrink-0" />
+                        {/* Thin 1px vertical line with perfectly balanced millimeter gap on both sides */}
+                        <div className="w-[1px] h-[78px] bg-black shrink-0" />
 
-                        <div className="flex flex-col justify-center select-text py-0.5">
-                          <div className="text-[31px] font-bold leading-[1.08] tracking-tight">
+                        {/* College name starting right next to the line (millimeter gap) with compact non-overlapping line-height */}
+                        <div className="flex flex-col justify-center select-text ml-[8px]">
+                          <div className="text-[23px] font-bold leading-[1.04] tracking-tight text-black">
                             Mymensingh
                           </div>
-                          <div className="text-[31px] font-bold leading-[1.08] tracking-tight mt-0.5">
+                          <div className="text-[23px] font-bold leading-[1.04] tracking-tight text-black mt-[1px]">
                             Engineering College
                           </div>
                           <div
                             contentEditable
                             suppressContentEditableWarning
                             onBlur={(e) => handleChange("department", e.currentTarget.textContent || "")}
-                            className="inline-editable block text-[13.5px] font-normal leading-normal mt-1.5 tracking-tight text-black"
+                            className="inline-editable block text-[12px] font-normal leading-[1.2] mt-[5px] tracking-tight text-black"
                             style={{ display: "block" }}
                             title="Click to edit department"
                           >
