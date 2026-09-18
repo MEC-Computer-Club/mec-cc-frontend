@@ -284,7 +284,13 @@ export function WatermarkForgeClient() {
       const updated = saveCustomSigil(newSigil);
       setSigils([...updated, ...DEFAULT_SIGILS]);
       setSelectedSigilId(newSigil.id);
-      toast.success(`Logo "${newSigil.name}" added successfully!`);
+      // Automatically display uploaded logo in its authentic full colors by default!
+      setConfig((prev) => ({
+        ...prev,
+        showMonogram: true,
+        monogramColor: "original",
+      }));
+      toast.success(`Logo "${newSigil.name}" added in original colors!`);
     };
     reader.readAsDataURL(file);
     e.target.value = "";
@@ -820,7 +826,14 @@ export function WatermarkForgeClient() {
                         return (
                           <div
                             key={sigil.id}
-                            onClick={() => setSelectedSigilId(sigil.id)}
+                            onClick={() => {
+                              setSelectedSigilId(sigil.id);
+                              if (sigil.isCustom && config.monogramColor === "#FFFFFF") {
+                                setConfig((prev) => ({ ...prev, monogramColor: "original" }));
+                              } else if (!sigil.isCustom && config.monogramColor === "original") {
+                                setConfig((prev) => ({ ...prev, monogramColor: "#FFFFFF" }));
+                              }
+                            }}
                             className={`group relative flex flex-col items-center p-2 rounded-xl border cursor-pointer transition-all ${
                               isSelected
                                 ? "border-accent-primary bg-accent-primary/10 shadow-sm ring-1 ring-accent-primary/50"
@@ -828,20 +841,48 @@ export function WatermarkForgeClient() {
                             }`}
                           >
                             <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-[#07090f] p-1.5 flex items-center justify-center border border-border-default/80 dark:border-white/10 shadow-inner overflow-hidden">
-                              <div
-                                className="w-full h-full transition-colors duration-200"
-                                style={{
-                                  maskImage: `url(${sigil.src})`,
-                                  WebkitMaskImage: `url(${sigil.src})`,
-                                  maskSize: "contain",
-                                  WebkitMaskSize: "contain",
-                                  maskRepeat: "no-repeat",
-                                  WebkitMaskRepeat: "no-repeat",
-                                  maskPosition: "center",
-                                  WebkitMaskPosition: "center",
-                                  backgroundColor: config.monogramColor || "#FFFFFF",
-                                }}
-                              />
+                              {sigil.isCustom ? (
+                                isSelected && config.monogramColor !== "original" ? (
+                                  <div
+                                    className="w-full h-full transition-colors duration-200"
+                                    style={{
+                                      maskImage: `url(${sigil.src})`,
+                                      WebkitMaskImage: `url(${sigil.src})`,
+                                      maskSize: "contain",
+                                      WebkitMaskSize: "contain",
+                                      maskRepeat: "no-repeat",
+                                      WebkitMaskRepeat: "no-repeat",
+                                      maskPosition: "center",
+                                      WebkitMaskPosition: "center",
+                                      backgroundColor: config.monogramColor,
+                                    }}
+                                  />
+                                ) : (
+                                  <img
+                                    src={sigil.src}
+                                    alt={sigil.name}
+                                    className="w-full h-full object-contain pointer-events-none"
+                                  />
+                                )
+                              ) : (
+                                <div
+                                  className="w-full h-full transition-colors duration-200"
+                                  style={{
+                                    maskImage: `url(${sigil.src})`,
+                                    WebkitMaskImage: `url(${sigil.src})`,
+                                    maskSize: "contain",
+                                    WebkitMaskSize: "contain",
+                                    maskRepeat: "no-repeat",
+                                    WebkitMaskRepeat: "no-repeat",
+                                    maskPosition: "center",
+                                    WebkitMaskPosition: "center",
+                                    backgroundColor:
+                                      config.monogramColor === "original"
+                                        ? "#FFFFFF"
+                                        : config.monogramColor || "#FFFFFF",
+                                  }}
+                                />
+                              )}
                               {isSelected && (
                                 <div className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-accent-primary flex items-center justify-center shadow-xs">
                                   <Check className="w-2.5 h-2.5 text-[#05050f] stroke-[3]" />
@@ -907,28 +948,58 @@ export function WatermarkForgeClient() {
                               <div className="flex items-center gap-2">
                                 <input
                                   type="color"
-                                  value={config.monogramColor}
+                                  value={
+                                    config.monogramColor.startsWith("#")
+                                      ? config.monogramColor
+                                      : "#FFFFFF"
+                                  }
                                   onChange={(e) =>
                                     setConfig({ ...config, monogramColor: e.target.value })
                                   }
                                   className="w-7 h-7 rounded-lg border border-border-default dark:border-white/20 cursor-pointer bg-surface-primary p-0.5 shadow-xs overflow-hidden"
-                                  title="Choose custom monogram color"
+                                  title="Choose custom monogram color tint"
                                 />
                                 <input
                                   type="text"
-                                  value={config.monogramColor}
-                                  onChange={(e) =>
-                                    setConfig({ ...config, monogramColor: e.target.value })
+                                  value={
+                                    config.monogramColor === "original"
+                                      ? "ORIGINAL"
+                                      : config.monogramColor
                                   }
+                                  onChange={(e) => {
+                                    const val = e.target.value.trim();
+                                    if (val.toLowerCase() === "original") {
+                                      setConfig({ ...config, monogramColor: "original" });
+                                    } else {
+                                      setConfig({ ...config, monogramColor: val });
+                                    }
+                                  }}
                                   placeholder="#FFFFFF"
                                   className="w-20 px-2 py-1 text-xs font-mono rounded-lg border border-border-default dark:border-white/15 bg-surface-elevated dark:bg-black/40 text-text-primary text-center font-bold focus:outline-none focus:border-accent-primary uppercase"
-                                  maxLength={7}
+                                  maxLength={8}
                                 />
                               </div>
                             </div>
 
                             {/* Preset Monogram Color Swatches */}
                             <div className="flex items-center gap-1.5 flex-wrap">
+                              {/* Option 0: Original Full Color */}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setConfig({ ...config, monogramColor: "original" })
+                                }
+                                className={`group flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono border transition-all cursor-pointer ${
+                                  config.monogramColor === "original"
+                                    ? "border-accent-primary bg-accent-primary/15 text-text-primary font-bold shadow-xs scale-102 ring-1 ring-accent-primary/40"
+                                    : "border-border-default/80 dark:border-white/10 bg-surface-elevated dark:bg-black/30 text-text-secondary hover:border-text-primary/40"
+                                }`}
+                                title="Preserve authentic multi-color emblem (Untinted / Native)"
+                              >
+                                <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-rose-500 via-amber-400 to-cyan-400 shrink-0 shadow-xs border border-white/20" />
+                                <span>✦ Full Color (Original)</span>
+                              </button>
+
                               {[
                                 { label: "White", color: "#FFFFFF" },
                                 { label: "MEC Lime", color: "#D4F429" },
@@ -940,6 +1011,7 @@ export function WatermarkForgeClient() {
                                 { label: "Deep Obsidian", color: "#000000" },
                               ].map((preset) => {
                                 const isActive =
+                                  config.monogramColor !== "original" &&
                                   config.monogramColor.toUpperCase() === preset.color.toUpperCase();
                                 return (
                                   <button
@@ -953,7 +1025,7 @@ export function WatermarkForgeClient() {
                                         ? "border-accent-primary bg-accent-primary/15 text-text-primary font-bold shadow-xs scale-102"
                                         : "border-border-default/80 dark:border-white/10 bg-surface-elevated dark:bg-black/30 text-text-secondary hover:border-text-primary/40"
                                     }`}
-                                    title={`Select ${preset.label} (${preset.color})`}
+                                    title={`Tint logo to ${preset.label} (${preset.color})`}
                                   >
                                     <span
                                       className="w-2.5 h-2.5 rounded-full border border-black/20 shrink-0 shadow-xs"
@@ -964,6 +1036,11 @@ export function WatermarkForgeClient() {
                                 );
                               })}
                             </div>
+                            <p className="text-[11px] font-mono text-text-tertiary pt-0.5">
+                              {config.monogramColor === "original"
+                                ? "✦ Preserving original uploaded colors. Click any color above to tint into a single-color silhouette."
+                                : `✦ Single-color silhouette active (${config.monogramColor}). Click "Full Color" to restore original colors.`}
+                            </p>
                           </div>
 
                           {/* Monogram Scale Slider */}

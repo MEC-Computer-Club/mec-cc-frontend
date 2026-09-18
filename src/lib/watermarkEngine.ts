@@ -375,10 +375,11 @@ export async function renderWatermarkOnCanvas(
 
     ctx.save();
 
-    // High quality tinting to config.monogramColor
+    // Check if original full-color mode is active (default for uploaded custom logos)
+    const isOriginal = !config.monogramColor || config.monogramColor.toLowerCase() === "original";
     const tintColor = config.monogramColor || "#FFFFFF";
 
-    // Use offscreen canvas for crisp anti-aliased tinting
+    // Use offscreen canvas for crisp anti-aliased rendering and optional tinting
     const offCanvas = document.createElement("canvas");
     offCanvas.width = Math.max(1, Math.ceil(targetW));
     offCanvas.height = Math.max(1, Math.ceil(targetH));
@@ -388,13 +389,15 @@ export async function renderWatermarkOnCanvas(
       offCtx.imageSmoothingEnabled = true;
       offCtx.imageSmoothingQuality = "high";
 
-      // 1. Draw monogram in native alpha
+      // 1. Draw monogram in native alpha & colors
       offCtx.drawImage(sigilImage, 0, 0, offCanvas.width, offCanvas.height);
 
-      // 2. Tint with monogramColor
-      offCtx.globalCompositeOperation = "source-in";
-      offCtx.fillStyle = tintColor;
-      offCtx.fillRect(0, 0, offCanvas.width, offCanvas.height);
+      // 2. Tint with single color ONLY if user chose a specific color (not "original")
+      if (!isOriginal) {
+        offCtx.globalCompositeOperation = "source-in";
+        offCtx.fillStyle = tintColor;
+        offCtx.fillRect(0, 0, offCanvas.width, offCanvas.height);
+      }
 
       // 3. Optional soft drop shadow / glow behind logo (Disabled by default)
       if (config.monogramShadow) {
