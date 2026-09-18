@@ -15,6 +15,8 @@ export interface WatermarkConfig {
   gradientColor: string; // hex, e.g. #000000
   gradientDepth: number; // percentage 20 - 75
   gradientOpacity: number; // percentage 40 - 100
+  filmGrain: boolean; // 35mm analog film grain & matte finish
+  filmGrainIntensity: number; // 0 - 100 (percentage)
   showMonogram: boolean;
   monogramSizeMultiplier: number; // 0.3 - 3.5
   monogramBorder: boolean;
@@ -29,8 +31,10 @@ export const DEFAULT_WATERMARK_CONFIG: WatermarkConfig = {
   clubName: "MEC Computer Club",
   fontSizeMultiplier: 1.0,
   gradientColor: "#000000",
-  gradientDepth: 42,
-  gradientOpacity: 88,
+  gradientDepth: 36,
+  gradientOpacity: 92,
+  filmGrain: true,
+  filmGrainIntensity: 28,
   showMonogram: true,
   monogramSizeMultiplier: 1.0,
   monogramBorder: false,
@@ -117,16 +121,55 @@ function wrapText(
 }
 
 /**
+ * Cached monochrome 35mm film grain pattern tile.
+ * Generates an organic 256x256 Gaussian-distributed noise pattern mimicking physical film grain.
+ */
+let cachedGrainTile: HTMLCanvasElement | null = null;
+
+function getGrainTile(): HTMLCanvasElement {
+  if (cachedGrainTile) return cachedGrainTile;
+  const size = 256;
+  const tile = document.createElement("canvas");
+  tile.width = size;
+  tile.height = size;
+  const tCtx = tile.getContext("2d");
+  if (!tCtx) return tile;
+
+  const imgData = tCtx.createImageData(size, size);
+  const data = imgData.data;
+
+  // Gaussian-like bell distribution (central limit approximation) for tactile silver halide look
+  for (let i = 0; i < data.length; i += 4) {
+    const norm = (Math.random() + Math.random() + Math.random()) / 3 - 0.5;
+    const val = Math.min(255, Math.max(0, Math.round(128 + norm * 140)));
+    data[i] = val;
+    data[i + 1] = val;
+    data[i + 2] = val;
+    data[i + 3] = 255;
+  }
+
+  tCtx.putImageData(imgData, 0, 0);
+  cachedGrainTile = tile;
+  return cachedGrainTile;
+}
+
+/**
  * Render the watermark overlay onto the provided or newly created canvas.
  * Preserves exact original photo dimensions while scaling overlay proportionally.
  */
+/** Guard so ensureFontLoaded() only runs once — not on every canvas render. */
+let _fontsReady = false;
+
 export async function renderWatermarkOnCanvas(
   sourceImage: HTMLImageElement,
   sigilImage: HTMLImageElement | null,
   config: WatermarkConfig,
   targetCanvas?: HTMLCanvasElement
 ): Promise<HTMLCanvasElement> {
-  await ensureFontLoaded();
+  if (!_fontsReady) {
+    await ensureFontLoaded();
+    _fontsReady = true;
+  }
 
   const width = sourceImage.naturalWidth || sourceImage.width;
   const height = sourceImage.naturalHeight || sourceImage.height;
@@ -159,28 +202,91 @@ export async function renderWatermarkOnCanvas(
   const isPortrait = height > width;
 
   // --- 1. Fade Gradient (Bottom) ---
-  // Auto-adapt gradient depth: In portrait orientation (e.g. 4:5, 9:16), a flat % depth can cover half the photo.
-  // We compress the depth proportionally for tall photos while guaranteeing sufficient breathing room for text.
-  const rawDepth = Math.min(Math.max(config.gradientDepth, 15), 80) / 100;
-  const portraitCompression = isPortrait ? Math.max(0.68, Math.min(1.0, (width / height) * 1.35)) : 1.0;
-  const depthFactor = rawDepth * portraitCompression;
+  // Pure Apple-grade cubic scrim gradient:
+  // Dynamically anchored to the lower region so it never covers portrait faces or chest subjects.
+  const rawDepth = Math.min(Math.max(config.gradientDepth, 15), 75) / 100;
+  // In portrait photos (height > width), cap vertical climb so it strictly covers text + gentle breathing room
+  const maxPortraitRatio = isPortrait ? 0.28 : 0.45;
+  const effectiveDepth = Math.min(rawDepth, maxPortraitRatio);
 
   const gradientHeight = Math.max(
-    Math.round(height * depthFactor),
-    Math.round(180 * scale)
+    Math.round(height * effectiveDepth),
+    Math.round(160 * scale)
   );
   const gradientStartY = height - gradientHeight;
   const maxOpacity = Math.min(Math.max(config.gradientOpacity, 10), 100) / 100;
 
+  // Ultra-smooth non-linear cubic scrim gradient stops
+  // (Zero banding, zero harsh edge lines, perfectly buttery falloff)
   const gradient = ctx.createLinearGradient(0, gradientStartY, 0, height);
-  gradient.addColorStop(0, hexToRgba(config.gradientColor, 0));
-  gradient.addColorStop(0.25, hexToRgba(config.gradientColor, maxOpacity * 0.2));
-  gradient.addColorStop(0.6, hexToRgba(config.gradientColor, maxOpacity * 0.65));
-  gradient.addColorStop(0.85, hexToRgba(config.gradientColor, maxOpacity * 0.92));
-  gradient.addColorStop(1, hexToRgba(config.gradientColor, maxOpacity));
+  gradient.addColorStop(0.0, hexToRgba(config.gradientColor, 0));
+  gradient.addColorStop(0.2, hexToRgba(config.gradientColor, maxOpacity * 0.03));
+  gradient.addColorStop(0.4, hexToRgba(config.gradientColor, maxOpacity * 0.14));
+  gradient.addColorStop(0.6, hexToRgba(config.gradientColor, maxOpacity * 0.38));
+  gradient.addColorStop(0.8, hexToRgba(config.gradientColor, maxOpacity * 0.72));
+  gradient.addColorStop(1.0, hexToRgba(config.gradientColor, maxOpacity));
 
   ctx.fillStyle = gradient;
   ctx.fillRect(0, gradientStartY, width, gradientHeight);
+
+  // --- 1b. Analog Film Grain & Matte Texture (Velvety 35mm Finish) ---
+  // Infuses the bottom dark scrim with authentic analog photographic grain.
+  // Procedurally clipped strictly to [gradientStartY, height] and smoothly masked
+  // with non-linear cubic falloff to guarantee 0% grain on the photo subject.
+  if (
+    typeof document !== "undefined" &&
+    config.filmGrain &&
+    config.filmGrainIntensity > 0
+  ) {
+    try {
+      const grainTile = getGrainTile();
+      const scratch = document.createElement("canvas");
+      scratch.width = width;
+      scratch.height = gradientHeight;
+      const sCtx = scratch.getContext("2d");
+
+      if (sCtx) {
+        // Step 1: Fill scratch canvas with seamless tiled grain pattern
+        const pattern = sCtx.createPattern(grainTile, "repeat");
+        if (pattern) {
+          sCtx.fillStyle = pattern;
+          sCtx.fillRect(0, 0, width, gradientHeight);
+        }
+
+        // Step 2: Destination-in cubic alpha mask matching the scrim falloff
+        sCtx.globalCompositeOperation = "destination-in";
+        const alphaGrad = sCtx.createLinearGradient(0, 0, 0, gradientHeight);
+        alphaGrad.addColorStop(0.0, "rgba(0, 0, 0, 0)");
+        alphaGrad.addColorStop(0.2, "rgba(0, 0, 0, 0.04)");
+        alphaGrad.addColorStop(0.4, "rgba(0, 0, 0, 0.18)");
+        alphaGrad.addColorStop(0.7, "rgba(0, 0, 0, 0.58)");
+        alphaGrad.addColorStop(1.0, "rgba(0, 0, 0, 1.0)");
+        sCtx.fillStyle = alphaGrad;
+        sCtx.fillRect(0, 0, width, gradientHeight);
+
+        // Step 3: Composite onto main canvas inside the clipped scrim region
+        const intensityFactor = Math.min(Math.max(config.filmGrainIntensity, 0), 100) / 100;
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, gradientStartY, width, gradientHeight);
+        ctx.clip();
+
+        // Primary pass: 'overlay' creates authentic photographic paper texture
+        ctx.globalCompositeOperation = "overlay";
+        ctx.globalAlpha = intensityFactor * 0.46;
+        ctx.drawImage(scratch, 0, gradientStartY);
+
+        // Secondary subtle pass: 'screen' adds fine silver halide luminance in deep blacks
+        ctx.globalCompositeOperation = "screen";
+        ctx.globalAlpha = intensityFactor * 0.14;
+        ctx.drawImage(scratch, 0, gradientStartY);
+
+        ctx.restore();
+      }
+    } catch (grainErr) {
+      console.warn("Film grain rendering skipped gracefully:", grainErr);
+    }
+  }
 
   // --- 2. Typography & Metadata Overlay ---
   const paddingX = Math.round(52 * scale);
@@ -275,10 +381,11 @@ export async function renderWatermarkOnCanvas(
 
     ctx.save();
 
-    // High quality tinting to config.monogramColor
+    // Check if original full-color mode is active (default for uploaded custom logos)
+    const isOriginal = !config.monogramColor || config.monogramColor.toLowerCase() === "original";
     const tintColor = config.monogramColor || "#FFFFFF";
 
-    // Use offscreen canvas for crisp anti-aliased tinting
+    // Use offscreen canvas for crisp anti-aliased rendering and optional tinting
     const offCanvas = document.createElement("canvas");
     offCanvas.width = Math.max(1, Math.ceil(targetW));
     offCanvas.height = Math.max(1, Math.ceil(targetH));
@@ -288,13 +395,15 @@ export async function renderWatermarkOnCanvas(
       offCtx.imageSmoothingEnabled = true;
       offCtx.imageSmoothingQuality = "high";
 
-      // 1. Draw monogram in native alpha
+      // 1. Draw monogram in native alpha & colors
       offCtx.drawImage(sigilImage, 0, 0, offCanvas.width, offCanvas.height);
 
-      // 2. Tint with monogramColor
-      offCtx.globalCompositeOperation = "source-in";
-      offCtx.fillStyle = tintColor;
-      offCtx.fillRect(0, 0, offCanvas.width, offCanvas.height);
+      // 2. Tint with single color ONLY if user chose a specific color (not "original")
+      if (!isOriginal) {
+        offCtx.globalCompositeOperation = "source-in";
+        offCtx.fillStyle = tintColor;
+        offCtx.fillRect(0, 0, offCanvas.width, offCanvas.height);
+      }
 
       // 3. Optional soft drop shadow / glow behind logo (Disabled by default)
       if (config.monogramShadow) {
@@ -323,12 +432,32 @@ export async function renderWatermarkOnCanvas(
 }
 
 /**
+ * Module-level image decode cache.
+ * Each unique src URL is decoded exactly once per browser session.
+ * Subsequent calls with the same URL return the cached Promise instantly,
+ * eliminating the 300-800ms JPEG/PNG decode on every config change.
+ * Cache is stored as a Promise (not the resolved image) so parallel callers
+ * for the same URL share a single in-flight decode instead of racing.
+ */
+const _imageCache = new Map<string, Promise<HTMLImageElement>>();
+
+/**
+ * Evict a URL from the image cache (call when revoking a blob URL on photo removal).
+ */
+export function evictImageCache(src: string): void {
+  _imageCache.delete(src);
+}
+
+/**
  * Convert an image file / object URL to an HTMLImageElement.
+ * Results are cached by src URL — repeat calls are instant (no re-decode).
  * Waits for full decode (not just the `load` event) so canvas draws never
  * race ahead of pixel data being ready.
  */
 export function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
+  if (_imageCache.has(src)) return _imageCache.get(src)!;
+
+  const p = new Promise<HTMLImageElement>((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
 
@@ -346,9 +475,15 @@ export function loadImage(src: string): Promise<HTMLImageElement> {
         resolve(img);
       }
     };
-    img.onerror = (err) => reject(err);
+    img.onerror = (err) => {
+      _imageCache.delete(src); // don't cache failures
+      reject(err);
+    };
     img.src = src;
   });
+
+  _imageCache.set(src, p);
+  return p;
 }
 
 /**
