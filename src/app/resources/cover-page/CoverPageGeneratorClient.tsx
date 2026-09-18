@@ -2070,26 +2070,26 @@ export function CoverPageGeneratorClient() {
                       {/* College Header: Official Seal + Equal-Length Line + Top-Aligned Typography */}
                       <div className="flex items-start">
                         {/* Official Seal */}
-                        <div className="shrink-0 w-[96px] h-[96px] flex items-center justify-center text-black mr-[5px]">
+                        <div className="shrink-0 w-[108px] h-[108px] flex items-center justify-center text-black mr-[5px]">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src="/mec-college-seal.svg"
                             alt="Mymensingh Engineering College Seal"
-                            width={96}
-                            height={96}
-                            className="w-[96px] h-[96px] object-contain"
+                            width={108}
+                            height={108}
+                            className="w-[108px] h-[108px] object-contain"
                           />
                         </div>
 
-                        {/* Thin vertical line: exact same length as logo (96px) */}
-                        <div className="w-[1px] h-[96px] bg-black shrink-0" />
+                        {/* Thin vertical line: exact same length as logo (108px) */}
+                        <div className="w-[1px] h-[108px] bg-black shrink-0" />
 
                         {/* College name and department: starts right from the top, tight millimeter gap, single lines */}
                         <div className="flex flex-col justify-start select-text ml-[5px]">
-                          <div className="text-[30px] font-bold leading-none tracking-tight text-black whitespace-nowrap">
+                          <div className="text-[42px] font-bold leading-none tracking-tight text-black whitespace-nowrap">
                             Mymensingh
                           </div>
-                          <div className="text-[30px] font-bold leading-none tracking-tight text-black whitespace-nowrap mt-[3px]">
+                          <div className="text-[42px] font-bold leading-none tracking-tight text-black whitespace-nowrap mt-[3px]">
                             Engineering College
                           </div>
                           <div
