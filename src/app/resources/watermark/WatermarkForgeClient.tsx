@@ -37,6 +37,7 @@ import {
   DEFAULT_WATERMARK_CONFIG,
   renderWatermarkOnCanvas,
   loadImage,
+  evictImageCache,
   canvasToBlob,
   downloadCanvasAsJpeg,
   downloadZipArchive,
@@ -108,6 +109,15 @@ export function WatermarkForgeClient() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const sigilInputRef = useRef<HTMLInputElement | null>(null);
   const livePreviewTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Always-current config ref — lets updateLivePreview read fresh config
+  // without being listed as a useCallback dependency (avoids function
+  // recreation on every keystroke / slider drag).
+  const configRef = useRef<WatermarkConfig>(config);
+  configRef.current = config;
+  // Monotonically-incrementing generation counter. Each render attempt claims
+  // a generation; if a newer render has started by the time an async step
+  // completes, the stale render bails out immediately.
+  const renderGenRef = useRef<number>(0);
 
   // Load custom sigils from localStorage on mount
   useEffect(() => {
@@ -125,34 +135,47 @@ export function WatermarkForgeClient() {
   );
 
   // --- Live Preview Re-render ---
+  // updateLivePreview intentionally omits `config` from its dependency array.
+  // Instead it reads the always-current `configRef.current` value. This keeps
+  // the function reference stable across config changes so the debounce effect
+  // below can list `config` directly — giving us the correct trigger behaviour
+  // while avoiding the thundering-herd of function recreations that caused
+  // the original sluggishness.
   const updateLivePreview = useCallback(async () => {
     if (!selectedPhoto || !previewCanvasRef.current) return;
+    // Claim a render generation. If another render starts before we finish
+    // an async step, ours is stale and we return early.
+    const gen = ++renderGenRef.current;
     try {
+      // loadImage is now cached — repeat calls are ~0ms.
       const sourceImg = await loadImage(selectedPhoto.originalUrl);
+      if (gen !== renderGenRef.current) return; // stale, newer render queued
+
       const sigilImg = selectedSigil ? await loadImage(selectedSigil.src) : null;
+      if (gen !== renderGenRef.current) return; // stale
 
       await renderWatermarkOnCanvas(
         sourceImg,
         sigilImg,
-        config,
+        configRef.current, // always latest config, no dep needed
         previewCanvasRef.current
       );
     } catch (err) {
       console.error("Failed to render preview canvas:", err);
     }
-  }, [selectedPhoto, selectedSigil, config]);
+  }, [selectedPhoto, selectedSigil]); // config intentionally excluded
 
-  // Debounced preview update on config or selection change
+  // Debounced preview update.
+  // Watches config, selectedPhoto, and selectedSigil directly so any change
+  // to these triggers a re-render. 180ms gives fast typists a comfortable
+  // window before the canvas updates.
   useEffect(() => {
     if (livePreviewTimeoutRef.current) clearTimeout(livePreviewTimeoutRef.current);
-    livePreviewTimeoutRef.current = setTimeout(() => {
-      updateLivePreview();
-    }, 40);
-
+    livePreviewTimeoutRef.current = setTimeout(updateLivePreview, 180);
     return () => {
       if (livePreviewTimeoutRef.current) clearTimeout(livePreviewTimeoutRef.current);
     };
-  }, [updateLivePreview]);
+  }, [config, selectedPhoto, selectedSigil, updateLivePreview]);
 
   // --- Photo Upload Handling ---
   const handleFiles = async (files: FileList | File[]) => {
@@ -236,6 +259,7 @@ export function WatermarkForgeClient() {
     setPhotos((prev) => {
       const itemToRemove = prev.find((p) => p.id === id);
       if (itemToRemove && itemToRemove.originalUrl.startsWith("blob:")) {
+        evictImageCache(itemToRemove.originalUrl); // remove from decode cache
         URL.revokeObjectURL(itemToRemove.originalUrl);
       }
       if (itemToRemove && itemToRemove.processedUrl?.startsWith("blob:")) {
@@ -251,7 +275,10 @@ export function WatermarkForgeClient() {
 
   const clearAllPhotos = () => {
     photos.forEach((p) => {
-      if (p.originalUrl.startsWith("blob:")) URL.revokeObjectURL(p.originalUrl);
+      if (p.originalUrl.startsWith("blob:")) {
+        evictImageCache(p.originalUrl);
+        URL.revokeObjectURL(p.originalUrl);
+      }
       if (p.processedUrl?.startsWith("blob:")) URL.revokeObjectURL(p.processedUrl);
     });
     setPhotos([]);

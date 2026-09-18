@@ -157,13 +157,19 @@ function getGrainTile(): HTMLCanvasElement {
  * Render the watermark overlay onto the provided or newly created canvas.
  * Preserves exact original photo dimensions while scaling overlay proportionally.
  */
+/** Guard so ensureFontLoaded() only runs once — not on every canvas render. */
+let _fontsReady = false;
+
 export async function renderWatermarkOnCanvas(
   sourceImage: HTMLImageElement,
   sigilImage: HTMLImageElement | null,
   config: WatermarkConfig,
   targetCanvas?: HTMLCanvasElement
 ): Promise<HTMLCanvasElement> {
-  await ensureFontLoaded();
+  if (!_fontsReady) {
+    await ensureFontLoaded();
+    _fontsReady = true;
+  }
 
   const width = sourceImage.naturalWidth || sourceImage.width;
   const height = sourceImage.naturalHeight || sourceImage.height;
@@ -426,12 +432,32 @@ export async function renderWatermarkOnCanvas(
 }
 
 /**
+ * Module-level image decode cache.
+ * Each unique src URL is decoded exactly once per browser session.
+ * Subsequent calls with the same URL return the cached Promise instantly,
+ * eliminating the 300-800ms JPEG/PNG decode on every config change.
+ * Cache is stored as a Promise (not the resolved image) so parallel callers
+ * for the same URL share a single in-flight decode instead of racing.
+ */
+const _imageCache = new Map<string, Promise<HTMLImageElement>>();
+
+/**
+ * Evict a URL from the image cache (call when revoking a blob URL on photo removal).
+ */
+export function evictImageCache(src: string): void {
+  _imageCache.delete(src);
+}
+
+/**
  * Convert an image file / object URL to an HTMLImageElement.
+ * Results are cached by src URL — repeat calls are instant (no re-decode).
  * Waits for full decode (not just the `load` event) so canvas draws never
  * race ahead of pixel data being ready.
  */
 export function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
+  if (_imageCache.has(src)) return _imageCache.get(src)!;
+
+  const p = new Promise<HTMLImageElement>((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
 
@@ -449,9 +475,15 @@ export function loadImage(src: string): Promise<HTMLImageElement> {
         resolve(img);
       }
     };
-    img.onerror = (err) => reject(err);
+    img.onerror = (err) => {
+      _imageCache.delete(src); // don't cache failures
+      reject(err);
+    };
     img.src = src;
   });
+
+  _imageCache.set(src, p);
+  return p;
 }
 
 /**
