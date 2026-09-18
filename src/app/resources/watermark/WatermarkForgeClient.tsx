@@ -475,15 +475,12 @@ export function WatermarkForgeClient() {
           {/* ============================================================
               LEFT / TOP COLUMN: Controls & Metadata Inscription (5 cols)
               ============================================================ */}
-          {/* ============================================================
-              LEFT / TOP COLUMN: Controls & Metadata Inscription (5 cols)
-              ============================================================ */}
           <div className="lg:col-span-5 space-y-4">
             {/* MASTER CUSTOMIZE STUDIO PANEL */}
-            <div className="bg-surface-elevated/95 dark:bg-[#0c0f18]/95 backdrop-blur-xl rounded-2xl border border-border-default/80 dark:border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.4)] overflow-hidden flex flex-col">
+            <div className="bg-surface-elevated rounded-xl border border-black shadow-[4px_4px_0px_var(--accent-primary)] overflow-hidden flex flex-col">
               
               {/* Studio Header Bar */}
-              <div className="px-4 sm:px-5 py-3.5 border-b border-border-default dark:border-white/10 flex items-center justify-between bg-surface-secondary/30 dark:bg-white/[0.02]">
+              <div className="p-4 border-b border-border-default flex items-center justify-between bg-surface-secondary/40">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 rounded-lg bg-accent-primary/15 border border-accent-primary/30 flex items-center justify-center text-accent-primary shadow-xs">
                     <Sliders className="w-4 h-4" />
