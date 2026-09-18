@@ -16,6 +16,7 @@ import {
   Award,
   FileText,
   FolderGit2,
+  GraduationCap,
 } from "lucide-react";
 
 export interface MenuItem {
@@ -48,6 +49,7 @@ export const DASHBOARD_MENU: DashboardMenuConfig = {
     { key: "blogs", label: "Blog Management", icon: BookOpen },
     { key: "page-editor", label: "Page Editor", icon: FileCode },
     { key: "roles-and-invitation", label: "Administration", icon: ShieldCheck },
+    { key: "utilities", label: "Utilities & Catalog", icon: GraduationCap },
     { key: "assets", label: "Assets & Inventory", icon: HardHat },
     { key: "sponsors", label: "Sponsors & Finance", icon: DollarSign },
     { key: "messages", label: "Contact Messages", icon: MessageSquare },
@@ -62,6 +64,7 @@ export const DASHBOARD_MENU: DashboardMenuConfig = {
     { key: "blogs", label: "Blog Management", icon: BookOpen },
     { key: "page-editor", label: "Page Editor", icon: FileCode },
     { key: "roles-and-invitation", label: "Administration", icon: ShieldCheck },
+    { key: "utilities", label: "Utilities & Catalog", icon: GraduationCap },
     { key: "assets", label: "Assets & Inventory", icon: HardHat },
     { key: "sponsors", label: "Sponsors & Finance", icon: DollarSign },
     { key: "messages", label: "Contact Messages", icon: MessageSquare },

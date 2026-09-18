@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Users, Mail, Award, Shield } from "lucide-react";
+import { Users, Mail, Award, Shield, MailCheck } from "lucide-react";
 import InvitationCodeContent from "@/components/dashboard/InvitationCodeContent";
 import RolesManagement from "@/components/dashboard/RolesManagement";
 import { DesignationManager } from "@/components/dashboard/legacy/DesignationManager";
+import EmailRoutingSettings from "@/components/dashboard/EmailRoutingSettings";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 
@@ -17,34 +18,30 @@ const TabButton: React.FC<{
 }> = ({ isActive, onClick, icon: Icon, label }) => (
   <button
     onClick={onClick}
-    className={`flex items-center px-4 py-2 text-base sm:text-lg font-medium rounded-t-lg transition-colors duration-200 ${isActive
-        ? "text-blue-600 border-b-4 border-blue-600 dark:text-blue-400 dark:border-blue-400 font-semibold"
+    className={`flex items-center px-3 py-2 text-xs sm:text-sm font-semibold rounded-t-lg transition-colors duration-200 whitespace-nowrap ${isActive
+        ? "text-blue-600 border-b-2 sm:border-b-4 border-blue-600 dark:text-blue-400 dark:border-blue-400 font-bold"
         : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
       }`}
   >
-    <Icon className="w-5 h-5 mr-2" />
+    <Icon className="w-4 h-4 mr-1.5 shrink-0" />
     {label}
   </button>
 );
 
 export default function RolesAndInvitationCodePage() {
-  const [activeTab, setActiveTab] = useState<"roles" | "invitation" | "designations">("roles");
+  const [activeTab, setActiveTab] = useState<"roles" | "invitation" | "designations" | "email-routing">("roles");
   const [designationCategory, setDesignationCategory] = useState<"executive" | "advisor">("executive");
   const { user } = useAuth();
 
   return (
-    <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
-      <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white border-b pb-4 border-gray-200 dark:border-gray-700">
-        Administration: Roles, Invitations & Designations
-      </h1>
-
+    <div className="max-w-6xl mx-auto p-4 sm:p-6 space-y-6">
       {/* --- Tabs --- */}
-      <div className="flex flex-wrap border-b border-gray-200 dark:border-gray-700 gap-2">
+      <div className="flex border-b border-gray-200 dark:border-gray-700 gap-1 sm:gap-3 overflow-x-auto no-scrollbar">
         <TabButton
           isActive={activeTab === "roles"}
           onClick={() => setActiveTab("roles")}
           icon={Users}
-          label="Role Management"
+          label="Role"
         />
         <TabButton
           isActive={activeTab === "invitation"}
@@ -58,12 +55,19 @@ export default function RolesAndInvitationCodePage() {
           icon={Award}
           label="Designations & Panels"
         />
+        <TabButton
+          isActive={activeTab === "email-routing"}
+          onClick={() => setActiveTab("email-routing")}
+          icon={MailCheck}
+          label="Email Routing"
+        />
       </div>
 
       {/* --- Content Area --- */}
       <div>
         {activeTab === "roles" && <RolesManagement />}
         {activeTab === "invitation" && <InvitationCodeContent />}
+        {activeTab === "email-routing" && <EmailRoutingSettings />}
         {activeTab === "designations" && (
           <div className="space-y-6">
             <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-800 p-2 rounded-xl border border-gray-200 dark:border-gray-700 w-fit">

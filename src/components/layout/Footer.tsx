@@ -20,6 +20,7 @@ const footerLinks = {
   resources: [
     { label: "CP Hub", href: "/cp-hub" },
     { label: "Photo Sigil", href: "/resources/watermark" },
+    { label: "Cover Page & Lab Report", href: "/resources/cover-page" },
     { label: "Blog", href: "/blog" },
     { label: "Join Us", href: "/join" },
     { label: "Contact", href: "/contact" },

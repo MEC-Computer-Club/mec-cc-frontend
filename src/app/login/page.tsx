@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Cookies from "js-cookie";
@@ -61,18 +61,45 @@ function LoginForm() {
     return () => clearInterval(timer);
   }, [rateLimitSeconds]);
 
-  // If already authenticated, redirect to destination (with loop-protection)
+  const hasRedirectedRef = useRef(false);
+
+  // Clear stale bounce loop protection when not authenticated
+  useEffect(() => {
+    if (!isAuthenticated && typeof window !== "undefined") {
+      sessionStorage.removeItem("redirect_loop_count");
+      sessionStorage.removeItem("last_auto_redirect");
+    }
+  }, [isAuthenticated]);
+
+  // If already authenticated, redirect to destination (with robust loop-protection)
   useEffect(() => {
     if (authLoading) return;
 
     if (isAuthenticated) {
-      // Loop protection: if redirected here by middleware/guard, check if we bounced
+      if (hasRedirectedRef.current) return;
+
+      const isExecutive =
+        user?.role === "admin" ||
+        user?.role === "moderator" ||
+        user?.role === "executive";
+
+      let destination = isExecutive ? "/dashboard" : "/profile";
+      if (redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")) {
+        // Prevent normal members from bouncing endlessly on executive dashboard routes
+        if (redirectParam.startsWith("/dashboard") && !isExecutive) {
+          destination = "/profile";
+        } else {
+          destination = redirectParam;
+        }
+      }
+
+      // Loop protection: only trigger if genuinely bounced 3+ times
       if (typeof window !== "undefined" && redirectParam) {
         const lastRedirect = sessionStorage.getItem("last_auto_redirect");
         const redirectCount = Number(sessionStorage.getItem("redirect_loop_count") || "0");
 
-        if (redirectCount >= 1 && lastRedirect === redirectParam) {
-          // Bounced back from protected route! Clear stale credentials to break the loop!
+        if (redirectCount >= 3 && lastRedirect === redirectParam) {
+          // Bounced back repeatedly from protected route! Clear stale credentials to break the loop!
           sessionStorage.removeItem("redirect_loop_count");
           sessionStorage.removeItem("last_auto_redirect");
           localStorage.removeItem("auth_token");
@@ -86,10 +113,8 @@ function LoginForm() {
           return;
         }
 
-        // Verify that token exists in cookies before redirecting to prevent bounce
         const token = Cookies.get("auth_token") || localStorage.getItem("auth_token");
         if (!token) {
-          // No token cookie available to authenticate with the server!
           return;
         }
 
@@ -97,16 +122,7 @@ function LoginForm() {
         sessionStorage.setItem("redirect_loop_count", String(redirectCount + 1));
       }
 
-      const isExecutive =
-        user?.role === "admin" ||
-        user?.role === "moderator" ||
-        user?.role === "executive";
-      const destination =
-        redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")
-          ? redirectParam
-          : isExecutive
-          ? "/dashboard"
-          : "/profile";
+      hasRedirectedRef.current = true;
       window.location.href = destination;
     }
   }, [authLoading, isAuthenticated, redirectParam, user]);
@@ -135,6 +151,7 @@ function LoginForm() {
     try {
       const res = await login(identifier.trim(), password, securityCode.trim());
       if (res.success) {
+        hasRedirectedRef.current = true;
         if (typeof window !== "undefined") {
           sessionStorage.removeItem("redirect_loop_count");
           sessionStorage.removeItem("last_auto_redirect");
@@ -144,12 +161,14 @@ function LoginForm() {
           res.user?.role === "admin" ||
           res.user?.role === "moderator" ||
           res.user?.role === "executive";
-        const destination =
-          redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")
-            ? redirectParam
-            : isExecutive
-            ? "/dashboard"
-            : "/profile";
+        let destination = isExecutive ? "/dashboard" : "/profile";
+        if (redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//")) {
+          if (redirectParam.startsWith("/dashboard") && !isExecutive) {
+            destination = "/profile";
+          } else {
+            destination = redirectParam;
+          }
+        }
         window.location.href = destination;
       } else {
         const isRateLimited =

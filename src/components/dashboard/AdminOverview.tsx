@@ -3,7 +3,7 @@ import React, { useEffect } from "react";
 import {
   Users, ClipboardCheck, Calendar, FileText,
   Zap, MessageSquare, GalleryHorizontal, HardHat,
-  LayoutDashboard, PenLine, FolderOpen, DollarSign,
+  LayoutDashboard, PenLine, FolderOpen, DollarSign, Wrench,
 } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "@/lib/api";
@@ -68,7 +68,7 @@ export default function AdminOverview() {
   const quickActions = [
     { href: "/dashboard/manage-events/create-event", icon: Calendar, label: "Create Event" },
     { href: "/dashboard/members", icon: Users, label: "Approve Members" },
-    { href: "/dashboard/assets", icon: GalleryHorizontal, label: "Upload Media" },
+    { href: "/dashboard/utilities", icon: Wrench, label: "Utilities" },
     { href: "/dashboard/assets", icon: HardHat, label: "Manage Assets" },
     { href: "/dashboard/overview/home-page-edit", icon: LayoutDashboard, label: "Home Page Editor" },
     { href: "/dashboard/messages", icon: MessageSquare, label: "View Messages" },
