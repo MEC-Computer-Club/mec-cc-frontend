@@ -6,6 +6,7 @@
  */
 
 export type FontCombination = "website" | "space" | "clean";
+export type ArtisticTextureType = "none" | "topographic" | "circuit" | "scribble" | "grid";
 
 export interface WatermarkConfig {
   eventName: string;
@@ -21,6 +22,8 @@ export interface WatermarkConfig {
   monogramColor: string; // hex, e.g. #FFFFFF
   monogramShadow: boolean; // default: false (no shadow/glow by default)
   fontStyle: FontCombination; // "website" | "space" | "clean"
+  artisticTexture: ArtisticTextureType; // "none" | "topographic" | "circuit" | "scribble" | "grid"
+  textureOpacity: number; // percentage 5 - 40, default: 18%
 }
 
 export const DEFAULT_WATERMARK_CONFIG: WatermarkConfig = {
@@ -37,6 +40,8 @@ export const DEFAULT_WATERMARK_CONFIG: WatermarkConfig = {
   monogramColor: "#FFFFFF",
   monogramShadow: false,
   fontStyle: "website",
+  artisticTexture: "topographic",
+  textureOpacity: 18,
 };
 
 /**
@@ -117,6 +122,225 @@ function wrapText(
 }
 
 /**
+ * 1. Topographic Waves Renderer
+ * Renders elegant, organic elevation contour curves flowing along the bottom gradient.
+ */
+function renderTopographicWaves(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  gradientStartY: number,
+  gradientHeight: number,
+  scale: number,
+  opacity: number
+) {
+  ctx.save();
+  const numContours = 6;
+  const step = gradientHeight / (numContours + 1);
+  const baseAlpha = opacity * 0.9;
+
+  ctx.lineWidth = Math.max(1, 1.2 * scale);
+  ctx.lineCap = "round";
+
+  for (let i = 0; i < numContours; i++) {
+    const yCenter = gradientStartY + step * (i + 1.2);
+    const alpha = baseAlpha * (0.3 + (i / numContours) * 0.7);
+    ctx.strokeStyle = `rgba(255, 255, 255, ${alpha.toFixed(3)})`;
+
+    ctx.beginPath();
+    const xStep = Math.max(25, Math.round(35 * scale));
+    let first = true;
+
+    for (let x = -40; x <= width + 40; x += xStep) {
+      const wave1 = Math.sin(x * 0.0028 + i * 1.15) * (22 * scale);
+      const wave2 = Math.cos(x * 0.0055 + i * 0.85) * (12 * scale);
+      const y = yCenter + wave1 + wave2;
+
+      if (first) {
+        ctx.moveTo(x, y);
+        first = false;
+      } else {
+        ctx.lineTo(x, y);
+      }
+    }
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/**
+ * 2. Cyber Circuit Traces Renderer
+ * Renders technical PCB bus traces, 45-degree angle paths, and solder pads.
+ */
+function renderCyberCircuit(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  gradientStartY: number,
+  gradientHeight: number,
+  scale: number,
+  opacity: number
+) {
+  ctx.save();
+  ctx.lineWidth = Math.max(1, 1.3 * scale);
+  ctx.lineCap = "square";
+  const baseAlpha = opacity * 1.1;
+
+  const traces = [
+    { startX: 0, startY: height - gradientHeight * 0.65, dx1: 140 * scale, dy1: -45 * scale, dx2: 120 * scale },
+    { startX: 0, startY: height - gradientHeight * 0.45, dx1: 80 * scale, dy1: -35 * scale, dx2: 90 * scale },
+    { startX: 0, startY: height - gradientHeight * 0.25, dx1: 180 * scale, dy1: -50 * scale, dx2: 100 * scale },
+    { startX: width, startY: height - gradientHeight * 0.7, dx1: -160 * scale, dy1: -40 * scale, dx2: -110 * scale },
+    { startX: width, startY: height - gradientHeight * 0.5, dx1: -90 * scale, dy1: -45 * scale, dx2: -130 * scale },
+    { startX: width, startY: height - gradientHeight * 0.28, dx1: -140 * scale, dy1: -35 * scale, dx2: -80 * scale },
+  ];
+
+  traces.forEach((t, idx) => {
+    const isLime = idx % 2 === 0;
+    const strokeColor = isLime
+      ? `rgba(212, 244, 41, ${(baseAlpha * 0.85).toFixed(3)})`
+      : `rgba(255, 255, 255, ${(baseAlpha * 0.7).toFixed(3)})`;
+    ctx.strokeStyle = strokeColor;
+    ctx.fillStyle = strokeColor;
+
+    ctx.beginPath();
+    ctx.moveTo(t.startX, t.startY);
+    const p1x = t.startX + t.dx1;
+    const p1y = t.startY;
+    const p2x = p1x + (t.dx1 > 0 ? Math.abs(t.dy1) : -Math.abs(t.dy1));
+    const p2y = p1y + t.dy1;
+    const p3x = p2x + t.dx2;
+    const p3y = p2y;
+
+    ctx.lineTo(p1x, p1y);
+    ctx.lineTo(p2x, p2y);
+    ctx.lineTo(p3x, p3y);
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(p3x, p3y, 2.8 * scale, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  ctx.restore();
+}
+
+/**
+ * 3. Handcrafted Cyber Scribble Accent Renderer
+ * Renders an organic dynamic neon stroke / scribble under the metadata divider.
+ */
+function renderScribbleAccent(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  gradientStartY: number,
+  gradientHeight: number,
+  scale: number,
+  opacity: number
+) {
+  ctx.save();
+  const baseAlpha = opacity * 1.35;
+  ctx.strokeStyle = `rgba(212, 244, 41, ${baseAlpha.toFixed(3)})`;
+  ctx.lineWidth = Math.max(1.5, 2.2 * scale);
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  const startY = height - gradientHeight * 0.38;
+  const startX = width * 0.08;
+  const endX = width * 0.92;
+  const span = endX - startX;
+
+  ctx.beginPath();
+  ctx.moveTo(startX, startY);
+
+  const points = 7;
+  for (let i = 1; i <= points; i++) {
+    const px = startX + (span / points) * i;
+    const py = startY + (i % 2 === 0 ? 8 * scale : -9 * scale) + Math.sin(i * 1.4) * (6 * scale);
+    const cpx = px - (span / points) * 0.5;
+    const cpy = startY + (i % 2 === 0 ? -12 * scale : 10 * scale);
+    ctx.quadraticCurveTo(cpx, cpy, px, py);
+  }
+  ctx.stroke();
+
+  ctx.strokeStyle = `rgba(255, 255, 255, ${(baseAlpha * 0.5).toFixed(3)})`;
+  ctx.lineWidth = Math.max(1, 1.2 * scale);
+  ctx.beginPath();
+  ctx.moveTo(startX + 40 * scale, startY + 14 * scale);
+  for (let i = 1; i <= 4; i++) {
+    const px = startX + 40 * scale + (span * 0.38 / 4) * i;
+    const py = startY + 14 * scale + (i % 2 === 0 ? 4 * scale : -4 * scale);
+    ctx.lineTo(px, py);
+  }
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+/**
+ * 4. Viewfinder / CAD HUD Grid Renderer
+ * Renders cinematic camera framing marks, coordinate crosshairs, and millimeter ticks.
+ */
+function renderViewfinderGrid(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  gradientStartY: number,
+  gradientHeight: number,
+  scale: number,
+  opacity: number
+) {
+  ctx.save();
+  const baseAlpha = opacity * 1.0;
+  ctx.strokeStyle = `rgba(255, 255, 255, ${baseAlpha.toFixed(3)})`;
+  ctx.fillStyle = `rgba(255, 255, 255, ${baseAlpha.toFixed(3)})`;
+  ctx.lineWidth = Math.max(1, 1.2 * scale);
+
+  const margin = Math.round(36 * scale);
+  const bracketSize = Math.round(28 * scale);
+
+  ctx.beginPath();
+  ctx.moveTo(margin, height - margin - bracketSize);
+  ctx.lineTo(margin, height - margin);
+  ctx.lineTo(margin + bracketSize, height - margin);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(width - margin, height - margin - bracketSize);
+  ctx.lineTo(width - margin, height - margin);
+  ctx.lineTo(width - margin - bracketSize, height - margin);
+  ctx.stroke();
+
+  const crossX = Math.round(width * 0.5);
+  const crossY = Math.round(height - gradientHeight * 0.6);
+  const chSize = Math.round(8 * scale);
+
+  ctx.beginPath();
+  ctx.moveTo(crossX - chSize, crossY);
+  ctx.lineTo(crossX + chSize, crossY);
+  ctx.moveTo(crossX, crossY - chSize);
+  ctx.lineTo(crossX, crossY + chSize);
+  ctx.stroke();
+
+  ctx.font = `500 ${Math.max(9, Math.round(10 * scale))}px "JetBrains Mono", monospace`;
+  ctx.fillText("[ 0xMEC // 4K RAW ]", margin + bracketSize + 12 * scale, height - margin);
+  ctx.fillText(`REC // ${width}×${height}`, width - margin - bracketSize - 120 * scale, height - margin);
+
+  const tickY = gradientStartY + Math.round(15 * scale);
+  const numTicks = 12;
+  const tickSpacing = (width - margin * 2) / numTicks;
+  for (let i = 0; i <= numTicks; i++) {
+    const tx = margin + tickSpacing * i;
+    ctx.beginPath();
+    ctx.moveTo(tx, tickY);
+    ctx.lineTo(tx, tickY + (i % 3 === 0 ? 8 * scale : 4 * scale));
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+/**
  * Render the watermark overlay onto the provided or newly created canvas.
  * Preserves exact original photo dimensions while scaling overlay proportionally.
  */
@@ -181,6 +405,22 @@ export async function renderWatermarkOnCanvas(
 
   ctx.fillStyle = gradient;
   ctx.fillRect(0, gradientStartY, width, gradientHeight);
+
+  // --- 1.5. Artistic Ambient Blend Layer ---
+  const texture = config.artisticTexture || "none";
+  const textureAlpha = Math.min(Math.max(config.textureOpacity ?? 18, 5), 50) / 100;
+
+  if (texture !== "none" && textureAlpha > 0) {
+    if (texture === "topographic") {
+      renderTopographicWaves(ctx, width, height, gradientStartY, gradientHeight, scale, textureAlpha);
+    } else if (texture === "circuit") {
+      renderCyberCircuit(ctx, width, height, gradientStartY, gradientHeight, scale, textureAlpha);
+    } else if (texture === "scribble") {
+      renderScribbleAccent(ctx, width, height, gradientStartY, gradientHeight, scale, textureAlpha);
+    } else if (texture === "grid") {
+      renderViewfinderGrid(ctx, width, height, gradientStartY, gradientHeight, scale, textureAlpha);
+    }
+  }
 
   // --- 2. Typography & Metadata Overlay ---
   const paddingX = Math.round(52 * scale);
