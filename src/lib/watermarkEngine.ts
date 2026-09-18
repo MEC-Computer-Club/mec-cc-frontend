@@ -5,6 +5,8 @@
  * and circular top-right monogram seal, proportionally scaled to any resolution.
  */
 
+export type FontCombination = "website" | "space" | "clean";
+
 export interface WatermarkConfig {
   eventName: string;
   date: string;
@@ -14,13 +16,16 @@ export interface WatermarkConfig {
   gradientDepth: number; // percentage 20 - 75
   gradientOpacity: number; // percentage 40 - 100
   showMonogram: boolean;
-  monogramSizeMultiplier: number; // 0.6 - 1.5
+  monogramSizeMultiplier: number; // 0.3 - 3.5
   monogramBorder: boolean;
+  monogramColor: string; // hex, e.g. #FFFFFF
+  monogramShadow: boolean; // default: false (no shadow/glow by default)
+  fontStyle: FontCombination; // "website" | "space" | "clean"
 }
 
 export const DEFAULT_WATERMARK_CONFIG: WatermarkConfig = {
   eventName: "MEC Programming Contest 2026",
-  date: "Autumn 2026",
+  date: "September 18, 2026",
   clubName: "MEC Computer Club",
   fontSizeMultiplier: 1.0,
   gradientColor: "#000000",
@@ -28,20 +33,34 @@ export const DEFAULT_WATERMARK_CONFIG: WatermarkConfig = {
   gradientOpacity: 88,
   showMonogram: true,
   monogramSizeMultiplier: 1.0,
-  monogramBorder: true,
+  monogramBorder: false,
+  monogramColor: "#FFFFFF",
+  monogramShadow: false,
+  fontStyle: "website",
 };
 
 /**
- * Ensure Space Grotesk font is loaded into the browser context.
+ * Ensure Space Grotesk, JetBrains Mono, and General Sans fonts are loaded into the browser context.
  */
 export async function ensureFontLoaded(): Promise<void> {
   if (typeof document === "undefined") return;
   try {
+    if (!document.getElementById("watermark-font-loader")) {
+      const link = document.createElement("link");
+      link.id = "watermark-font-loader";
+      link.rel = "stylesheet";
+      link.href =
+        "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap";
+      document.head.appendChild(link);
+    }
     if (document.fonts && document.fonts.load) {
       await Promise.all([
+        document.fonts.load('700 32px "General Sans"'),
+        document.fonts.load('500 20px "General Sans"'),
         document.fonts.load('700 32px "Space Grotesk"'),
         document.fonts.load('500 20px "Space Grotesk"'),
-        document.fonts.load('400 16px "Space Grotesk"'),
+        document.fonts.load('500 16px "JetBrains Mono"'),
+        document.fonts.load('700 16px "JetBrains Mono"'),
       ]);
     }
   } catch (err) {
@@ -137,10 +156,19 @@ export async function renderWatermarkOnCanvas(
   // Proportional scale factor based on minimum dimension (normalised to 1080px base)
   const baseDim = Math.min(width, height);
   const scale = Math.max(0.4, baseDim / 1080);
+  const isPortrait = height > width;
 
   // --- 1. Fade Gradient (Bottom) ---
-  const depthFactor = Math.min(Math.max(config.gradientDepth, 15), 80) / 100;
-  const gradientHeight = Math.round(height * depthFactor);
+  // Auto-adapt gradient depth: In portrait orientation (e.g. 4:5, 9:16), a flat % depth can cover half the photo.
+  // We compress the depth proportionally for tall photos while guaranteeing sufficient breathing room for text.
+  const rawDepth = Math.min(Math.max(config.gradientDepth, 15), 80) / 100;
+  const portraitCompression = isPortrait ? Math.max(0.68, Math.min(1.0, (width / height) * 1.35)) : 1.0;
+  const depthFactor = rawDepth * portraitCompression;
+
+  const gradientHeight = Math.max(
+    Math.round(height * depthFactor),
+    Math.round(180 * scale)
+  );
   const gradientStartY = height - gradientHeight;
   const maxOpacity = Math.min(Math.max(config.gradientOpacity, 10), 100) / 100;
 
@@ -163,16 +191,28 @@ export async function renderWatermarkOnCanvas(
   const subSize = Math.max(12, Math.round(21 * scale * config.fontSizeMultiplier));
   const lineSpacing = Math.round(10 * scale);
 
+  // Determine font families according to config.fontStyle
+  let titleFamily = '"General Sans", "Space Grotesk", system-ui, -apple-system, sans-serif';
+  let subtitleFamily = '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace';
+
+  if (config.fontStyle === "space") {
+    titleFamily = '"Space Grotesk", system-ui, -apple-system, sans-serif';
+    subtitleFamily = '"JetBrains Mono", ui-monospace, monospace';
+  } else if (config.fontStyle === "clean") {
+    titleFamily = '"General Sans", system-ui, -apple-system, sans-serif';
+    subtitleFamily = '"General Sans", system-ui, -apple-system, sans-serif';
+  }
+
   // Measure Subtitle line
   const clubText = (config.clubName || "MEC Computer Club").trim();
   const dateText = (config.date || "").trim();
   const subtitleLine = dateText ? `${clubText}  \u2022  ${dateText}` : clubText;
 
-  ctx.font = `500 ${subSize}px "Space Grotesk", system-ui, -apple-system, sans-serif`;
+  ctx.font = `500 ${subSize}px ${subtitleFamily}`;
   const subHeight = subSize;
 
   // Measure Title lines
-  ctx.font = `700 ${titleSize}px "Space Grotesk", system-ui, -apple-system, sans-serif`;
+  ctx.font = `700 ${titleSize}px ${titleFamily}`;
   const titleText = (config.eventName || "Event Photo").trim();
   const titleLines = wrapText(ctx, titleText, maxTextWidth);
   const titleLineHeight = Math.round(titleSize * 1.18);
@@ -180,26 +220,28 @@ export async function renderWatermarkOnCanvas(
   let currentY = height - paddingBottom;
 
   // Render Subtitle first at the bottom line
+  // NO DROP SHADOW OR GLOW ON FONT (Clean flat typography as requested by user)
   ctx.save();
-  ctx.font = `500 ${subSize}px "Space Grotesk", system-ui, -apple-system, sans-serif`;
-  ctx.fillStyle = "rgba(255, 255, 255, 0.88)";
-  ctx.shadowColor = "rgba(0, 0, 0, 0.85)";
-  ctx.shadowBlur = Math.round(5 * scale);
+  ctx.font = `500 ${subSize}px ${subtitleFamily}`;
+  ctx.fillStyle = "rgba(255, 255, 255, 0.90)";
+  ctx.shadowColor = "transparent";
+  ctx.shadowBlur = 0;
   ctx.shadowOffsetX = 0;
-  ctx.shadowOffsetY = Math.round(2 * scale);
+  ctx.shadowOffsetY = 0;
   ctx.fillText(subtitleLine, paddingX, currentY);
   ctx.restore();
 
   currentY -= subHeight + lineSpacing;
 
   // Render Title lines (stacked above subtitle)
+  // NO DROP SHADOW OR GLOW ON FONT (Clean flat typography as requested by user)
   ctx.save();
-  ctx.font = `700 ${titleSize}px "Space Grotesk", system-ui, -apple-system, sans-serif`;
+  ctx.font = `700 ${titleSize}px ${titleFamily}`;
   ctx.fillStyle = "#FFFFFF";
-  ctx.shadowColor = "rgba(0, 0, 0, 0.9)";
-  ctx.shadowBlur = Math.round(7 * scale);
+  ctx.shadowColor = "transparent";
+  ctx.shadowBlur = 0;
   ctx.shadowOffsetX = 0;
-  ctx.shadowOffsetY = Math.round(2 * scale);
+  ctx.shadowOffsetY = 0;
 
   const titleStartY = currentY - (titleLines.length - 1) * titleLineHeight;
   for (let i = 0; i < titleLines.length; i++) {
@@ -207,56 +249,72 @@ export async function renderWatermarkOnCanvas(
   }
   ctx.restore();
 
-  // --- 3. Top-Right Circular Monogram / Sigil Badge ---
+  // --- 3. Top-Right Monogram Watermark (Pure Transparent, Highly Scalable, Optional Shadow) ---
   if (config.showMonogram && sigilImage) {
-    const badgeDiameter = Math.max(
-      36,
-      Math.round(92 * scale * config.monogramSizeMultiplier)
-    );
-    const radius = badgeDiameter / 2;
-    const paddingRight = Math.round(48 * scale);
-    const paddingTop = Math.round(42 * scale);
+    const naturalW = sigilImage.naturalWidth || sigilImage.width || 1;
+    const naturalH = sigilImage.naturalHeight || sigilImage.height || 1;
+    const aspect = naturalW / naturalH;
 
-    const centerX = width - paddingRight - radius;
-    const centerY = paddingTop + radius;
+    // Highly scalable width base: 180px at 1.0x on a standard 1080p base dimension
+    const baseTargetWidth = Math.round(180 * scale * config.monogramSizeMultiplier);
+
+    let targetW = baseTargetWidth;
+    let targetH = Math.round(targetW / aspect);
+
+    // If logo is taller than wide (portrait aspect < 0.85), scale by height instead
+    if (aspect < 0.85) {
+      targetH = Math.round(130 * scale * config.monogramSizeMultiplier);
+      targetW = Math.round(targetH * aspect);
+    }
+
+    const paddingRight = Math.round(44 * scale);
+    const paddingTop = Math.round(40 * scale);
+
+    const drawX = width - paddingRight - targetW;
+    const drawY = paddingTop;
 
     ctx.save();
 
-    // Subtle drop shadow for badge
-    ctx.shadowColor = "rgba(0, 0, 0, 0.65)";
-    ctx.shadowBlur = Math.round(10 * scale);
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = Math.round(3 * scale);
+    // High quality tinting to config.monogramColor
+    const tintColor = config.monogramColor || "#FFFFFF";
 
-    // Dark circular background plate
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(18, 20, 24, 0.82)";
-    ctx.fill();
+    // Use offscreen canvas for crisp anti-aliased tinting
+    const offCanvas = document.createElement("canvas");
+    offCanvas.width = Math.max(1, Math.ceil(targetW));
+    offCanvas.height = Math.max(1, Math.ceil(targetH));
+    const offCtx = offCanvas.getContext("2d", { willReadFrequently: false });
 
-    // Outer subtle border
-    if (config.monogramBorder) {
-      ctx.lineWidth = Math.max(1.5, Math.round(2 * scale));
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.38)";
-      ctx.stroke();
+    if (offCtx) {
+      offCtx.imageSmoothingEnabled = true;
+      offCtx.imageSmoothingQuality = "high";
+
+      // 1. Draw monogram in native alpha
+      offCtx.drawImage(sigilImage, 0, 0, offCanvas.width, offCanvas.height);
+
+      // 2. Tint with monogramColor
+      offCtx.globalCompositeOperation = "source-in";
+      offCtx.fillStyle = tintColor;
+      offCtx.fillRect(0, 0, offCanvas.width, offCanvas.height);
+
+      // 3. Optional soft drop shadow / glow behind logo (Disabled by default)
+      if (config.monogramShadow) {
+        ctx.shadowColor = "rgba(0, 0, 0, 0.75)";
+        ctx.shadowBlur = Math.round(8 * scale);
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = Math.round(2 * scale);
+      } else {
+        ctx.shadowColor = "transparent";
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+      }
+
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(offCanvas, drawX, drawY, targetW, targetH);
+    } else {
+      ctx.drawImage(sigilImage, drawX, drawY, targetW, targetH);
     }
-
-    // Clip to circle and draw logo
-    ctx.shadowColor = "transparent";
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, radius - 1, 0, Math.PI * 2);
-    ctx.clip();
-
-    // Inset padding for icon
-    const iconPad = Math.round(radius * 0.22);
-    const iconSize = (radius - iconPad) * 2;
-    ctx.drawImage(
-      sigilImage,
-      centerX - radius + iconPad,
-      centerY - radius + iconPad,
-      iconSize,
-      iconSize
-    );
 
     ctx.restore();
   }

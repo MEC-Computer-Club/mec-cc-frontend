@@ -32,6 +32,7 @@ import {
 import { Select, SelectOption } from "@/components/ui/Select";
 import {
   WatermarkConfig,
+  FontCombination,
   DEFAULT_WATERMARK_CONFIG,
   renderWatermarkOnCanvas,
   loadImage,
@@ -76,20 +77,25 @@ const PRESET_OPTIONS: SelectOption[] = [
   { value: "tournament", label: "Tournament Focus (Large Titles)" },
 ];
 
+const FONT_STYLE_OPTIONS: SelectOption[] = [
+  { value: "website", label: "MEC Website Signature (General Sans + JetBrains Mono)" },
+  { value: "space", label: "Space Brutalist (Space Grotesk + JetBrains Mono)" },
+  { value: "clean", label: "Clean Modernist (General Sans Minimal)" },
+];
+
 export function WatermarkForgeClient() {
   // --- State ---
   const [photos, setPhotos] = useState<PhotoItem[]>([]);
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
   const [config, setConfig] = useState<WatermarkConfig>({
     ...DEFAULT_WATERMARK_CONFIG,
-    date: new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" }).format(new Date()),
+    date: new Intl.DateTimeFormat("en-US", { day: "numeric", month: "long", year: "numeric" }).format(new Date()),
   });
 
   const [sigils, setSigils] = useState<SigilItem[]>(DEFAULT_SIGILS);
-  const [selectedSigilId, setSelectedSigilId] = useState<string>("default-crest");
+  const [selectedSigilId, setSelectedSigilId] = useState<string>("mcc-sigil");
   const [activePreset, setActivePreset] = useState<string>("balanced");
 
-  const [isProcessingAll, setIsProcessingAll] = useState<boolean>(false);
   const [progress, setProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
   const [isExporting, setIsExporting] = useState<boolean>(false);
   const [showOriginalPreview, setShowOriginalPreview] = useState<boolean>(false);
@@ -104,9 +110,9 @@ export function WatermarkForgeClient() {
   // Load custom sigils from localStorage on mount
   useEffect(() => {
     const custom = loadCustomSigils();
-    if (custom.length > 0) {
-      setSigils([...custom, ...DEFAULT_SIGILS]);
-    }
+    const validCustom = custom.filter((s) => s.isCustom);
+    setSigils([...validCustom, ...DEFAULT_SIGILS]);
+    setSelectedSigilId("mcc-sigil");
     ensureFontLoaded();
   }, []);
 
@@ -157,7 +163,7 @@ export function WatermarkForgeClient() {
       return;
     }
 
-    const toastId = toast.loading(`Summoning ${validFiles.length} artifact photos...`);
+    const toastId = toast.loading(`Uploading ${validFiles.length} photos...`);
 
     const newItems: PhotoItem[] = [];
 
@@ -185,7 +191,7 @@ export function WatermarkForgeClient() {
         const next = [...prev, ...newItems];
         return next;
       });
-      toast.success(`Successfully forged ${newItems.length} photos into the anvil!`, {
+      toast.success(`Added ${newItems.length} photos to queue!`, {
         id: toastId,
       });
     } else {
@@ -204,7 +210,7 @@ export function WatermarkForgeClient() {
   // Load sample demo image for instant testing
   const loadSamplePhoto = async () => {
     try {
-      const toastId = toast.loading("Summoning official sample chronicle...");
+      const toastId = toast.loading("Loading sample photo...");
       const sampleUrl = "/mec-club-photo.jpg";
       const img = await loadImage(sampleUrl);
       const sampleItem: PhotoItem = {
@@ -217,9 +223,9 @@ export function WatermarkForgeClient() {
       };
       setPhotos((prev) => [sampleItem, ...prev]);
       setSelectedIndex(0);
-      toast.success("Sample chronicle placed on the anvil!", { id: toastId });
+      toast.success("Sample photo loaded!", { id: toastId });
     } catch (err) {
-      toast.error("Failed to load sample chronicle.");
+      toast.error("Failed to load sample photo.");
     }
   };
 
@@ -248,7 +254,7 @@ export function WatermarkForgeClient() {
     });
     setPhotos([]);
     setSelectedIndex(0);
-    toast.success("Anvil cleared of all artifacts.");
+    toast.success("All photos cleared.");
   };
 
   // --- Custom Sigil Upload ---
@@ -257,7 +263,7 @@ export function WatermarkForgeClient() {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      toast.error("Emblem must be a valid image file (PNG with transparency recommended)");
+      toast.error("Logo must be a valid image file (PNG or SVG with transparency recommended)");
       return;
     }
 
@@ -267,8 +273,8 @@ export function WatermarkForgeClient() {
       const cleanName = file.name.replace(/\.[^/.]+$/, "").substring(0, 18);
       const newSigil: SigilItem = {
         id: `custom-${Date.now()}`,
-        name: cleanName || "Custom Sigil",
-        subtitle: "Custom Forged Emblem",
+        name: cleanName || "Custom Logo",
+        subtitle: "Custom Club Logo",
         src: base64,
         isCustom: true,
       };
@@ -276,7 +282,7 @@ export function WatermarkForgeClient() {
       const updated = saveCustomSigil(newSigil);
       setSigils([...updated, ...DEFAULT_SIGILS]);
       setSelectedSigilId(newSigil.id);
-      toast.success(`Sigil "${newSigil.name}" enshrined into your vault!`);
+      toast.success(`Logo "${newSigil.name}" added successfully!`);
     };
     reader.readAsDataURL(file);
     e.target.value = "";
@@ -285,11 +291,12 @@ export function WatermarkForgeClient() {
   const handleDeleteCustomSigil = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     const updated = removeCustomSigil(id);
-    setSigils([...updated, ...DEFAULT_SIGILS]);
+    const validCustom = updated.filter((s) => s.isCustom);
+    setSigils([...validCustom, ...DEFAULT_SIGILS]);
     if (selectedSigilId === id) {
-      setSelectedSigilId("default-crest");
+      setSelectedSigilId("mcc-sigil");
     }
-    toast.success("Custom sigil released from vault.");
+    toast.success("Custom logo removed.");
   };
 
   // --- Presets ---
@@ -339,7 +346,7 @@ export function WatermarkForgeClient() {
   // --- Single Photo Inscribe & Download ---
   const inscribeAndDownloadSingle = async (photo: PhotoItem, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    const toastId = toast.loading(`Inscribing ${photo.name}...`);
+    const toastId = toast.loading(`Watermarking ${photo.name}...`);
     try {
       const sourceImg = await loadImage(photo.originalUrl);
       const sigilImg = selectedSigil ? await loadImage(selectedSigil.src) : null;
@@ -351,119 +358,86 @@ export function WatermarkForgeClient() {
         .substring(0, 30) || "Photo";
       const cleanBase = photo.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9_-]/g, "_");
       await downloadCanvasAsJpeg(canvas, `MEC_${cleanTitle}_${cleanBase}.jpg`);
-      toast.success(`Artifact inscribed and saved!`, { id: toastId });
+      toast.success(`Photo downloaded successfully!`, { id: toastId });
     } catch (err) {
       console.error("Single export failed:", err);
-      toast.error("Failed to inscribe artifact.", { id: toastId });
+      toast.error("Failed to export photo.", { id: toastId });
     }
   };
 
-  // --- Batch Apply to All Photos ---
-  const applyWatermarkToAll = async (): Promise<PhotoItem[]> => {
-    if (photos.length === 0) {
-      toast.error("No artifact photos in the anvil to inscribe!");
-      return [];
-    }
-
-    setIsProcessingAll(true);
-    setProgress({ current: 0, total: photos.length });
-
-    const toastId = toast.loading(`Imbuing sigils onto ${photos.length} photos...`);
-    const sigilImg = selectedSigil ? await loadImage(selectedSigil.src) : null;
-
-    const updatedPhotos: PhotoItem[] = [];
-
-    for (let i = 0; i < photos.length; i++) {
-      const photo = photos[i];
-      setProgress({ current: i + 1, total: photos.length });
-
-      try {
-        const sourceImg = await loadImage(photo.originalUrl);
-        const canvas = await renderWatermarkOnCanvas(sourceImg, sigilImg, config);
-        const blob = await canvasToBlob(canvas, "image/jpeg", 0.93);
-        const processedUrl = URL.createObjectURL(blob);
-
-        updatedPhotos.push({
-          ...photo,
-          processedBlob: blob,
-          processedUrl,
-          status: "done",
-        });
-      } catch (err: any) {
-        console.error(`Error processing photo ${photo.name}:`, err);
-        updatedPhotos.push({
-          ...photo,
-          status: "error",
-          error: err.message || "Failed to inscribe",
-        });
-      }
-
-      // Allow UI tick
-      await new Promise((r) => setTimeout(r, 10));
-    }
-
-    setPhotos(updatedPhotos);
-    setIsProcessingAll(false);
-    toast.success(`All ${photos.length} chronicles inscribed successfully!`, {
-      id: toastId,
-    });
-    return updatedPhotos;
-  };
-
-  // --- Batch Export (ZIP Archive) ---
+  // --- Streamlined Batch Export (Direct Single-Click ZIP Archive) ---
   const handleBatchExportZip = async () => {
     if (photos.length === 0) {
-      toast.error("Deposit photos before attempting archive extraction!");
+      toast.error("Upload photos before downloading ZIP archive!");
       return;
     }
 
     setIsExporting(true);
-    const toastId = toast.loading("Preparing chronicle archive...");
+    setProgress({ current: 0, total: photos.length });
+    const toastId = toast.loading(`Preparing batch archive for ${photos.length} photos...`);
 
     try {
-      // Ensure all photos have been rendered with current config
-      let currentItems = photos;
-      const needsRender = photos.some((p) => p.status !== "done" || !p.processedBlob);
-      if (needsRender) {
-        currentItems = await applyWatermarkToAll();
-      }
-
+      const sigilImg = selectedSigil ? await loadImage(selectedSigil.src) : null;
       const zip = new JSZip();
-      const folderName = `MEC_${(config.eventName || "Chronicles").replace(/[^a-zA-Z0-9_-]/g, "_")}`;
-      const zipFolder = zip.folder(folderName) || zip;
-
-      currentItems.forEach((photo, idx) => {
-        if (photo.processedBlob) {
-          const indexPrefix = String(idx + 1).padStart(2, "0");
-          const safeName = photo.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9_-]/g, "_");
-          zipFolder.file(`${indexPrefix}_${safeName}_sigil.jpg`, photo.processedBlob);
-        }
-      });
-
-      toast.loading("Compressing chronicle archive...", { id: toastId });
-
       const cleanEventName = (config.eventName || "Event")
         .trim()
         .replace(/[^a-zA-Z0-9_-]/g, "_")
         .replace(/_+/g, "_")
-        .replace(/^_|_$/g, "") || "Chronicles";
-      const zipFilename = `MEC_${cleanEventName}_${new Date().toISOString().slice(0, 10)}.zip`;
+        .replace(/^_|_$/g, "") || "Watermarked";
+      const folderName = `MEC_${cleanEventName}`;
+      const zipFolder = zip.folder(folderName) || zip;
 
+      // Reusable offscreen canvas across iterations to prevent memory leaks/bloat
+      const reuseCanvas = document.createElement("canvas");
+
+      for (let i = 0; i < photos.length; i++) {
+        const photo = photos[i];
+        setProgress({ current: i + 1, total: photos.length });
+
+        try {
+          const sourceImg = await loadImage(photo.originalUrl);
+          await renderWatermarkOnCanvas(sourceImg, sigilImg, config, reuseCanvas);
+          const blob = await canvasToBlob(reuseCanvas, "image/jpeg", 0.93);
+
+          const indexPrefix = String(i + 1).padStart(2, "0");
+          const safeName = photo.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9_-]/g, "_");
+          zipFolder.file(`${indexPrefix}_${safeName}_watermarked.jpg`, blob);
+
+          // Mark photo badge as done without clogging browser memory with 30-50 Blobs
+          setPhotos((prev) => {
+            const next = [...prev];
+            if (next[i]) {
+              next[i] = { ...next[i], status: "done" };
+            }
+            return next;
+          });
+        } catch (err) {
+          console.error(`Error watermarking photo ${photo.name}:`, err);
+        }
+
+        // Allow UI tick to keep progress bar and spinner responsive
+        await new Promise((r) => setTimeout(r, 10));
+      }
+
+      toast.loading("Compressing ZIP archive...", { id: toastId });
+
+      const zipFilename = `MEC_${cleanEventName}_${new Date().toISOString().slice(0, 10)}.zip`;
       await downloadZipArchive(zip, zipFilename);
 
       confetti({
         particleCount: 80,
         spread: 70,
         origin: { y: 0.6 },
-        colors: ["#84CC16", "#10B981", "#38BDF8", "#F59E0B"],
+        colors: ["#D4F429", "#10B981", "#00E5FF", "#F59E0B"],
       });
 
-      toast.success("Chronicle archive exported successfully!", { id: toastId });
+      toast.success(`Exported all ${photos.length} photos in ZIP!`, { id: toastId });
     } catch (err) {
       console.error("Batch archive export failed:", err);
       toast.error("Failed to build ZIP archive.", { id: toastId });
     } finally {
       setIsExporting(false);
+      setProgress({ current: 0, total: 0 });
     }
   };
 
@@ -471,12 +445,11 @@ export function WatermarkForgeClient() {
     <div className="w-full min-h-screen bg-surface-primary text-text-primary pb-24 overflow-x-hidden">
       {/* ===== HERO / RUNE BANNER ===== */}
       <section className="relative pt-8 pb-8 border-b border-border-default overflow-hidden bg-surface-secondary/40">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--accent-primary-light)_0%,transparent_60%)] opacity-30 pointer-events-none" />
         <div className="container relative z-10">
           <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-accent-primary/40 bg-accent-primary/10 text-xs font-mono font-semibold text-accent-text-on-surface">
               <Sparkles className="w-3.5 h-3.5 text-accent-primary" />
-              <span>ARCANE UTILITY // SIGIL FORGE</span>
+              <span>OFFICIAL TOOL // WATERMARK STUDIO</span>
             </div>
             <div className="flex items-center gap-3 text-xs font-mono text-text-tertiary">
               <span className="inline-block w-2 h-2 rounded-full bg-accent-success animate-pulse" />
@@ -486,12 +459,10 @@ export function WatermarkForgeClient() {
 
           <div className="max-w-3xl">
             <h1 className="font-heading font-bold text-3xl sm:text-4xl lg:text-5xl tracking-tight text-text-primary mb-3">
-              The Sigil Forge
+              Event Watermark Studio
             </h1>
             <p className="text-base sm:text-lg text-text-secondary leading-relaxed">
-              Imbue your event chronicles with the official emblem, typography, and metadata of{" "}
-              <strong className="text-text-primary">MEC Computer Club</strong> in batch. Clean, high-resolution
-              watermarks rendered locally right inside your browser.
+              Add official <strong className="text-text-primary">MEC Computer Club</strong> branding, logos, and event details to your photos in batch. Fast, clean, high-resolution watermarks rendered locally in your browser.
             </p>
           </div>
         </div>
@@ -504,23 +475,23 @@ export function WatermarkForgeClient() {
               LEFT / TOP COLUMN: Controls & Metadata Inscription (5 cols)
               ============================================================ */}
           <div className="lg:col-span-5 space-y-6">
-            {/* 1. Event Chronicle Parameters */}
-            <div className="p-5 sm:p-6 bg-surface-elevated rounded-xl border border-border-default shadow-[4px_4px_0px_var(--accent-primary)]">
+            {/* 1. Event Details Parameters */}
+            <div className="p-5 sm:p-6 bg-surface-elevated rounded-xl border border-black shadow-[4px_4px_0px_var(--accent-primary)]">
               <div className="flex items-center justify-between mb-4 border-b border-border-default pb-3">
                 <div className="flex items-center gap-2">
                   <Type className="w-4 h-4 text-accent-primary" />
                   <h2 className="font-heading font-bold text-base text-text-primary">
-                    1. Chronicle Inscription
+                    1. Event Details & Text
                   </h2>
                 </div>
-                <span className="text-[11px] font-mono uppercase text-text-tertiary">Batch Metadata</span>
+                <span className="text-[11px] font-mono uppercase text-text-tertiary">Event Info</span>
               </div>
 
               <div className="space-y-4">
                 {/* Event Name */}
                 <div>
                   <label className="block text-xs font-mono font-semibold uppercase text-text-secondary mb-1.5">
-                    Event / Quest Name <span className="text-accent-error">*</span>
+                    Event Name <span className="text-accent-error">*</span>
                   </label>
                   <input
                     type="text"
@@ -552,23 +523,120 @@ export function WatermarkForgeClient() {
                 {/* Date & Guild Name in 2 columns */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-mono font-semibold uppercase text-text-secondary mb-1.5">
-                      Inscription Date
-                    </label>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-mono font-semibold uppercase text-text-secondary">
+                        Inscription Date
+                      </label>
+                      {/* Native calendar trigger */}
+                      <label className="inline-flex items-center gap-1 text-[11px] font-mono text-accent-primary hover:underline cursor-pointer select-none">
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>Pick Date</span>
+                        <input
+                          type="date"
+                          className="sr-only"
+                          onChange={(e) => {
+                            if (!e.target.value) return;
+                            const [y, m, d] = e.target.value.split("-").map(Number);
+                            const picked = new Date(y, m - 1, d);
+                            const formatted = new Intl.DateTimeFormat("en-US", {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            }).format(picked);
+                            setConfig({ ...config, date: formatted });
+                          }}
+                        />
+                      </label>
+                    </div>
+
                     <div className="relative">
                       <input
                         type="text"
                         value={config.date}
                         onChange={(e) => setConfig({ ...config, date: e.target.value })}
-                        placeholder="e.g. September 2026"
-                        className="w-full px-3 py-2 rounded-lg border border-border-default bg-surface-primary text-text-primary text-sm font-medium focus:outline-none focus:border-accent-primary transition-all"
+                        placeholder="e.g. September 18, 2026"
+                        className="w-full px-3 py-2 rounded-lg border border-border-default bg-surface-primary text-text-primary text-sm font-medium focus:outline-none focus:border-accent-primary transition-all pr-8"
                       />
+                      {config.date && (
+                        <button
+                          type="button"
+                          onClick={() => setConfig({ ...config, date: "" })}
+                          title="Clear date"
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-text-tertiary hover:text-text-primary"
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Quick Date Presets */}
+                    <div className="flex items-center gap-1.5 flex-wrap mt-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const today = new Intl.DateTimeFormat("en-US", {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          }).format(new Date());
+                          setConfig({ ...config, date: today });
+                        }}
+                        className="text-[10px] font-mono px-2 py-0.5 rounded bg-surface-primary border border-border-default text-text-secondary hover:text-text-primary hover:border-accent-primary transition-all"
+                      >
+                        Today
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const d = new Date();
+                          d.setDate(d.getDate() - 1);
+                          const yest = new Intl.DateTimeFormat("en-US", {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                          }).format(d);
+                          setConfig({ ...config, date: yest });
+                        }}
+                        className="text-[10px] font-mono px-2 py-0.5 rounded bg-surface-primary border border-border-default text-text-secondary hover:text-text-primary hover:border-accent-primary transition-all"
+                      >
+                        Yesterday
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const monthOnly = new Intl.DateTimeFormat("en-US", {
+                            month: "long",
+                            year: "numeric",
+                          }).format(new Date());
+                          setConfig({ ...config, date: monthOnly });
+                        }}
+                        className="text-[10px] font-mono px-2 py-0.5 rounded bg-surface-primary border border-border-default text-text-secondary hover:text-text-primary hover:border-accent-primary transition-all"
+                      >
+                        Month & Year
+                      </button>
+                      {selectedPhoto?.file?.lastModified && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const photoDate = new Date(selectedPhoto.file!.lastModified);
+                            const formatted = new Intl.DateTimeFormat("en-US", {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            }).format(photoDate);
+                            setConfig({ ...config, date: formatted });
+                          }}
+                          className="text-[10px] font-mono px-2 py-0.5 rounded bg-accent-primary/10 border border-accent-primary/30 text-accent-primary hover:bg-accent-primary/20 transition-all font-semibold"
+                        >
+                          From Photo Date
+                        </button>
+                      )}
                     </div>
                   </div>
 
                   <div>
                     <label className="block text-xs font-mono font-semibold uppercase text-text-secondary mb-1.5">
-                      Guild / Club Name
+                      Club / Organization Name
                     </label>
                     <input
                       type="text"
@@ -582,13 +650,13 @@ export function WatermarkForgeClient() {
               </div>
             </div>
 
-            {/* 2. Sigil Vault (Monogram Selection & Custom Upload) */}
-            <div className="p-5 sm:p-6 bg-surface-elevated rounded-xl border border-border-default shadow-[4px_4px_0px_var(--accent-primary)]">
+            {/* 2. Logo & Monogram Selection */}
+            <div className="p-5 sm:p-6 bg-surface-elevated rounded-xl border border-black shadow-[4px_4px_0px_var(--accent-primary)]">
               <div className="flex items-center justify-between mb-4 border-b border-border-default pb-3">
                 <div className="flex items-center gap-2">
                   <Shield className="w-4 h-4 text-accent-primary" />
                   <h2 className="font-heading font-bold text-base text-text-primary">
-                    2. Sigil & Monogram Vault
+                    2. Logo & Monogram
                   </h2>
                 </div>
                 <button
@@ -597,7 +665,7 @@ export function WatermarkForgeClient() {
                   className="inline-flex items-center gap-1 text-xs font-semibold text-accent-primary hover:underline"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  <span>Upload Emblem</span>
+                  <span>Upload Logo</span>
                 </button>
                 <input
                   ref={sigilInputRef}
@@ -609,34 +677,45 @@ export function WatermarkForgeClient() {
               </div>
 
               {/* Sigil Grid Selector */}
-              <div className="grid grid-cols-4 sm:grid-cols-4 gap-2.5">
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
                 {sigils.map((sigil) => {
                   const isSelected = selectedSigilId === sigil.id;
                   return (
                     <div
                       key={sigil.id}
                       onClick={() => setSelectedSigilId(sigil.id)}
-                      className={`group relative flex flex-col items-center p-2 rounded-lg border cursor-pointer transition-all ${
+                      className={`group relative flex flex-col items-center p-2.5 rounded-xl border cursor-pointer transition-all ${
                         isSelected
-                          ? "border-accent-primary bg-accent-primary/10 shadow-sm"
-                          : "border-border-default bg-surface-primary hover:border-text-primary/40"
+                          ? "border-accent-primary bg-accent-primary/10 shadow-sm ring-1 ring-accent-primary/50"
+                          : "border-border-default bg-surface-primary hover:border-text-primary/40 hover:bg-surface-elevated"
                       }`}
                     >
-                      <div className="relative w-11 h-11 rounded-full bg-surface-elevated p-1 flex items-center justify-center border border-border-default shadow-xs overflow-hidden">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={sigil.src}
-                          alt={sigil.name}
-                          className="w-full h-full object-contain"
+                      <div className="relative w-14 h-14 rounded-lg bg-[#0a0c12] p-1.5 flex items-center justify-center border border-border-default shadow-inner overflow-hidden">
+                        <div
+                          className="w-full h-full transition-colors duration-200"
+                          style={{
+                            maskImage: `url(${sigil.src})`,
+                            WebkitMaskImage: `url(${sigil.src})`,
+                            maskSize: "contain",
+                            WebkitMaskSize: "contain",
+                            maskRepeat: "no-repeat",
+                            WebkitMaskRepeat: "no-repeat",
+                            maskPosition: "center",
+                            WebkitMaskPosition: "center",
+                            backgroundColor: config.monogramColor || "#FFFFFF",
+                          }}
                         />
                         {isSelected && (
-                          <div className="absolute inset-0 bg-accent-primary/30 flex items-center justify-center">
-                            <Check className="w-4 h-4 text-text-primary stroke-[3]" />
+                          <div className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-accent-primary flex items-center justify-center shadow-xs">
+                            <Check className="w-2.5 h-2.5 text-[#05050f] stroke-[3]" />
                           </div>
                         )}
                       </div>
-                      <span className="text-[10px] font-medium text-text-secondary text-center mt-1.5 truncate max-w-full">
+                      <span className="text-[11px] font-semibold text-text-primary text-center mt-2 truncate max-w-full">
                         {sigil.name}
+                      </span>
+                      <span className="text-[9px] font-mono text-text-tertiary text-center truncate max-w-full">
+                        {sigil.subtitle}
                       </span>
 
                       {/* Custom delete button */}
@@ -645,7 +724,7 @@ export function WatermarkForgeClient() {
                           type="button"
                           onClick={(e) => handleDeleteCustomSigil(sigil.id, e)}
                           title="Remove custom sigil"
-                          className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-accent-error text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-accent-error text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-xs"
                         >
                           ×
                         </button>
@@ -655,60 +734,209 @@ export function WatermarkForgeClient() {
                 })}
               </div>
 
+              {/* Monogram Color Picker */}
+              <div className="mt-4 pt-3.5 border-t border-border-default space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Palette className="w-4 h-4 text-accent-primary" />
+                    <span className="text-xs font-mono font-bold uppercase tracking-wider text-text-primary">
+                      Monogram Color
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex items-center">
+                      <input
+                        type="color"
+                        value={config.monogramColor}
+                        onChange={(e) =>
+                          setConfig({ ...config, monogramColor: e.target.value })
+                        }
+                        className="w-8 h-8 rounded-lg border border-border-default cursor-pointer bg-surface-primary p-0.5 shadow-xs overflow-hidden"
+                        title="Choose custom monogram color"
+                      />
+                    </div>
+                    <input
+                      type="text"
+                      value={config.monogramColor}
+                      onChange={(e) =>
+                        setConfig({ ...config, monogramColor: e.target.value })
+                      }
+                      placeholder="#FFFFFF"
+                      className="w-24 px-2 py-1 text-xs font-mono rounded-lg border border-border-default bg-surface-primary text-text-primary text-center font-bold focus:outline-none focus:border-accent-primary uppercase tracking-wide"
+                      maxLength={7}
+                    />
+                  </div>
+                </div>
+
+                {/* Preset Monogram Color Swatches */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {[
+                    { label: "White", color: "#FFFFFF" },
+                    { label: "MEC Lime", color: "#D4F429" },
+                    { label: "Amber Gold", color: "#F59E0B" },
+                    { label: "Cyber Mint", color: "#00F5A0" },
+                    { label: "Electric Cyan", color: "#00E5FF" },
+                    { label: "Crimson", color: "#FF3366" },
+                    { label: "Violet", color: "#A855F7" },
+                    { label: "Deep Obsidian", color: "#000000" },
+                  ].map((preset) => {
+                    const isActive =
+                      config.monogramColor.toUpperCase() === preset.color.toUpperCase();
+                    return (
+                      <button
+                        key={preset.color}
+                        type="button"
+                        onClick={() =>
+                          setConfig({ ...config, monogramColor: preset.color })
+                        }
+                        className={`group flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono border transition-all ${
+                          isActive
+                            ? "border-accent-primary bg-accent-primary/15 text-text-primary font-bold shadow-xs scale-102"
+                            : "border-border-default bg-surface-primary text-text-secondary hover:border-text-primary/40 hover:bg-surface-elevated"
+                        }`}
+                        title={`Select ${preset.label} (${preset.color})`}
+                      >
+                        <span
+                          className="w-3 h-3 rounded-full border border-black/20 shrink-0 shadow-xs"
+                          style={{ backgroundColor: preset.color }}
+                        />
+                        <span>{preset.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               {/* Monogram settings */}
-              <div className="mt-4 pt-3 border-t border-border-default flex items-center justify-between text-xs">
-                <label className="flex items-center gap-2 cursor-pointer select-none text-text-secondary">
-                  <input
-                    type="checkbox"
-                    checked={config.showMonogram}
-                    onChange={(e) => setConfig({ ...config, showMonogram: e.target.checked })}
-                    className="accent-accent-primary w-4 h-4 rounded"
-                  />
-                  <span>Show Top-Right Circular Seal</span>
-                </label>
+              <div className="mt-3.5 pt-3.5 border-t border-border-default space-y-2.5 text-xs">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <label className="flex items-center gap-2 cursor-pointer select-none text-text-primary font-semibold">
+                    <input
+                      type="checkbox"
+                      checked={config.showMonogram}
+                      onChange={(e) => setConfig({ ...config, showMonogram: e.target.checked })}
+                      className="accent-accent-primary w-4 h-4 rounded"
+                    />
+                    <span>Show Logo Watermark (Top-Right)</span>
+                  </label>
+
+                  {config.showMonogram && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-mono text-text-tertiary">Scale:</span>
+                      <input
+                        type="range"
+                        min="0.3"
+                        max="3.5"
+                        step="0.05"
+                        value={config.monogramSizeMultiplier}
+                        onChange={(e) =>
+                          setConfig({
+                            ...config,
+                            monogramSizeMultiplier: parseFloat(e.target.value),
+                          })
+                        }
+                        className="w-28 accent-accent-primary cursor-pointer"
+                        title="Adjust monogram scale"
+                      />
+                      <span className="text-[11px] font-mono text-text-primary w-11 text-right font-bold bg-surface-primary px-1.5 py-0.5 rounded border border-border-default">
+                        {Math.round(config.monogramSizeMultiplier * 100)}%
+                      </span>
+                    </div>
+                  )}
+                </div>
 
                 {config.showMonogram && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-mono text-text-tertiary">Scale:</span>
-                    <input
-                      type="range"
-                      min="0.7"
-                      max="1.4"
-                      step="0.05"
-                      value={config.monogramSizeMultiplier}
-                      onChange={(e) =>
-                        setConfig({
-                          ...config,
-                          monogramSizeMultiplier: parseFloat(e.target.value),
-                        })
-                      }
-                      className="w-20 accent-accent-primary cursor-pointer"
-                    />
-                    <span className="text-[11px] font-mono text-text-secondary w-7 text-right">
-                      {Math.round(config.monogramSizeMultiplier * 100)}%
-                    </span>
+                  <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                    <span className="text-[10px] font-mono text-text-tertiary mr-1">Quick Sizes:</span>
+                    {[
+                      { label: "Subtle (50%)", val: 0.5 },
+                      { label: "Standard (100%)", val: 1.0 },
+                      { label: "Prominent (150%)", val: 1.5 },
+                      { label: "Large (200%)", val: 2.0 },
+                      { label: "Heroic (280%)", val: 2.8 },
+                    ].map((preset) => (
+                      <button
+                        key={preset.label}
+                        type="button"
+                        onClick={() => setConfig({ ...config, monogramSizeMultiplier: preset.val })}
+                        className={`px-2 py-0.5 text-[10px] font-mono rounded border transition-all ${
+                          Math.abs(config.monogramSizeMultiplier - preset.val) < 0.04
+                            ? "bg-accent-primary text-black font-bold border-accent-primary shadow-xs"
+                            : "bg-surface-primary text-text-secondary border-border-default hover:border-text-primary/40 hover:text-text-primary"
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                {/* Optional Monogram Shadow Toggle (Default: Off) */}
+                {config.showMonogram && (
+                  <div className="pt-2 border-t border-border-default/60">
+                    <label className="flex items-center gap-2 cursor-pointer select-none text-text-secondary hover:text-text-primary">
+                      <input
+                        type="checkbox"
+                        checked={config.monogramShadow}
+                        onChange={(e) =>
+                          setConfig({ ...config, monogramShadow: e.target.checked })
+                        }
+                        className="accent-accent-primary w-4 h-4 rounded cursor-pointer"
+                      />
+                      <span className="text-[11px] font-mono">
+                        Soft shadow behind logo (Optional, default: off)
+                      </span>
+                    </label>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* 3. Style Forge & Gradient Controls */}
-            <div className="p-5 sm:p-6 bg-surface-elevated rounded-xl border border-border-default shadow-[4px_4px_0px_var(--accent-primary)]">
+            {/* 3. Style & Overlay Settings */}
+            <div className="p-5 sm:p-6 bg-surface-elevated rounded-xl border border-black shadow-[4px_4px_0px_var(--accent-primary)]">
               <div className="flex items-center justify-between mb-4 border-b border-border-default pb-3">
                 <div className="flex items-center gap-2">
                   <Sliders className="w-4 h-4 text-accent-primary" />
                   <h2 className="font-heading font-bold text-base text-text-primary">
-                    3. Style & Overlay Calibration
+                    3. Style & Overlay Settings
                   </h2>
                 </div>
-                <span className="text-[11px] font-mono text-text-tertiary">Space Grotesk</span>
+                <span className="text-[11px] font-mono text-text-tertiary">
+                  {config.fontStyle === "website"
+                    ? "General Sans + JetBrains Mono"
+                    : config.fontStyle === "space"
+                    ? "Space Grotesk + JetBrains Mono"
+                    : "General Sans Minimal"}
+                </span>
               </div>
 
               <div className="space-y-4">
-                {/* Preset Dropdown using custom Select */}
+                {/* Typography Style Selector */}
                 <div>
                   <label className="block text-xs font-mono font-semibold uppercase text-text-secondary mb-1.5">
-                    Overlay Preset
+                    Typography Style
+                  </label>
+                  <Select
+                    value={config.fontStyle}
+                    onChange={(val) =>
+                      setConfig({ ...config, fontStyle: val as FontCombination })
+                    }
+                    options={FONT_STYLE_OPTIONS}
+                  />
+                  <p className="text-[11px] font-mono text-text-tertiary mt-1">
+                    {config.fontStyle === "website" &&
+                      "✦ Signature pairing: General Sans Bold title + JetBrains Mono metadata (no drop shadow)."}
+                    {config.fontStyle === "space" &&
+                      "✦ Space Brutalist: Space Grotesk Bold title + JetBrains Mono metadata (no drop shadow)."}
+                    {config.fontStyle === "clean" &&
+                      "✦ Clean Modernist: General Sans throughout for ultra-clean minimalism (no drop shadow)."}
+                  </p>
+                </div>
+
+                {/* Preset Dropdown */}
+                <div>
+                  <label className="block text-xs font-mono font-semibold uppercase text-text-secondary mb-1.5">
+                    Gradient Preset
                   </label>
                   <Select
                     value={activePreset}
@@ -818,13 +1046,13 @@ export function WatermarkForgeClient() {
               RIGHT COLUMN: Live Preview Anvil & Batch Photo Grid (7 cols)
               ============================================================ */}
           <div className="lg:col-span-7 space-y-6">
-            {/* Live Sample Preview Anvil */}
-            <div className="bg-surface-elevated rounded-xl border border-border-default shadow-[4px_4px_0px_var(--accent-primary)] overflow-hidden">
+            {/* Live Photo Preview */}
+            <div className="bg-surface-elevated rounded-xl border border-black shadow-[4px_4px_0px_var(--accent-primary)] overflow-hidden">
               <div className="p-4 border-b border-border-default flex flex-wrap items-center justify-between gap-3 bg-surface-secondary/40">
                 <div className="flex items-center gap-2">
                   <Eye className="w-4 h-4 text-accent-primary" />
                   <span className="font-heading font-bold text-sm text-text-primary">
-                    Live Forge Preview Anvil
+                    Live Photo Preview
                   </span>
                   {selectedPhoto && (
                     <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-surface-primary border border-border-default text-text-secondary">
@@ -843,7 +1071,7 @@ export function WatermarkForgeClient() {
                       onTouchEnd={() => setShowOriginalPreview(false)}
                       className="text-xs px-2.5 py-1 rounded border border-border-default bg-surface-primary hover:bg-surface-secondary text-text-secondary font-medium transition-all"
                     >
-                      {showOriginalPreview ? "Peeking Original..." : "Hold to Peek Original"}
+                      {showOriginalPreview ? "Viewing Original..." : "Hold to View Original"}
                     </button>
                     <button
                       type="button"
@@ -851,7 +1079,7 @@ export function WatermarkForgeClient() {
                       className="text-xs px-2.5 py-1 rounded bg-accent-primary text-white font-bold hover:bg-accent-primary-hover transition-all flex items-center gap-1"
                     >
                       <Download className="w-3 h-3" />
-                      <span>Export Photo</span>
+                      <span>Download Photo</span>
                     </button>
                   </div>
                 )}
@@ -865,10 +1093,10 @@ export function WatermarkForgeClient() {
                       <ImageIcon className="w-8 h-8 opacity-60" />
                     </div>
                     <h3 className="font-heading font-bold text-base text-white mb-1">
-                      Anvil is Waiting for Artifacts
+                      No Photo Selected
                     </h3>
                     <p className="text-xs text-text-tertiary mb-4">
-                      Upload event photos below or summon the sample chronicle to inspect live watermarking.
+                      Upload event photos below or load a sample photo to test the watermark.
                     </p>
                     <button
                       type="button"
@@ -876,7 +1104,7 @@ export function WatermarkForgeClient() {
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent-primary text-text-inverse text-xs font-bold hover:bg-accent-primary-hover transition-all"
                     >
                       <Sparkles className="w-3.5 h-3.5" />
-                      <span>Summon Sample Chronicle</span>
+                      <span>Load Sample Photo</span>
                     </button>
                   </div>
                 ) : (
@@ -916,12 +1144,12 @@ export function WatermarkForgeClient() {
             </div>
 
             {/* Multi-Photo Upload Dropzone & Batch Thumbnail Grid */}
-            <div className="p-5 sm:p-6 bg-surface-elevated rounded-xl border border-border-default shadow-[4px_4px_0px_var(--accent-primary)]">
+            <div className="p-5 sm:p-6 bg-surface-elevated rounded-xl border border-black shadow-[4px_4px_0px_var(--accent-primary)]">
               <div className="flex flex-wrap items-center justify-between gap-3 mb-4 border-b border-border-default pb-3">
                 <div className="flex items-center gap-2">
                   <Layers className="w-4 h-4 text-accent-primary" />
                   <h2 className="font-heading font-bold text-base text-text-primary">
-                    Artifact Queue ({photos.length})
+                    Photo Queue ({photos.length})
                   </h2>
                 </div>
                 {photos.length > 0 && (
@@ -939,7 +1167,7 @@ export function WatermarkForgeClient() {
                       onClick={clearAllPhotos}
                       className="text-xs text-accent-error hover:underline font-medium"
                     >
-                      Clear Queue
+                      Clear All
                     </button>
                   </div>
                 )}
@@ -975,10 +1203,10 @@ export function WatermarkForgeClient() {
                   <Upload className="w-6 h-6" />
                 </div>
                 <h4 className="font-heading font-bold text-sm text-text-primary mb-0.5">
-                  Deposit Chronicles or Click to Summon
+                  Drag & Drop Photos Here, or Click to Browse
                 </h4>
                 <p className="text-xs text-text-secondary">
-                  Drag and drop multiple photos here (JPG, PNG, WEBP, HEIC supported)
+                  Supports multiple images (JPG, PNG, WEBP)
                 </p>
               </div>
 
@@ -1011,11 +1239,11 @@ export function WatermarkForgeClient() {
                             <div className="absolute top-1 left-1">
                               {photo.status === "done" ? (
                                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-accent-success text-white text-[9px] font-mono font-bold">
-                                  ✓ Inscribed
+                                  ✓ Ready
                                 </span>
                               ) : photo.status === "processing" ? (
                                 <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-accent-warning text-white text-[9px] font-mono font-bold animate-pulse">
-                                  Forging...
+                                  Processing...
                                 </span>
                               ) : (
                                 <span className="px-1.5 py-0.5 rounded bg-black/60 text-white text-[9px] font-mono">
@@ -1059,12 +1287,12 @@ export function WatermarkForgeClient() {
                     })}
                   </div>
 
-                  {/* Progress bar during batch processing */}
-                  {isProcessingAll && (
-                    <div className="p-3 bg-surface-secondary rounded-lg border border-border-default space-y-1.5">
+                  {/* Progress bar during batch processing & archiving */}
+                  {isExporting && progress.total > 0 && (
+                    <div className="p-3 bg-surface-secondary rounded-lg border border-border-default space-y-1.5 animate-fadeIn">
                       <div className="flex justify-between text-xs font-mono">
                         <span className="text-text-secondary">
-                          Imbuing photos... ({progress.current}/{progress.total})
+                          Watermarking & Archiving... ({progress.current}/{progress.total})
                         </span>
                         <span className="text-accent-primary font-bold">
                           {Math.round((progress.current / progress.total) * 100)}%
@@ -1081,26 +1309,29 @@ export function WatermarkForgeClient() {
                     </div>
                   )}
 
-                  {/* Batch Action Buttons */}
-                  <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                    <button
-                      type="button"
-                      disabled={isProcessingAll || photos.length === 0}
-                      onClick={applyWatermarkToAll}
-                      className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-border-default bg-surface-secondary hover:bg-surface-secondary/80 text-text-primary text-sm font-bold transition-all disabled:opacity-50"
-                    >
-                      <RefreshCw className={`w-4 h-4 ${isProcessingAll ? "animate-spin" : ""}`} />
-                      <span>Imbue All ({photos.length})</span>
-                    </button>
-
+                  {/* Batch Action Button (Unified direct ZIP archive) */}
+                  <div className="pt-2">
                     <button
                       type="button"
                       disabled={isExporting || photos.length === 0}
                       onClick={handleBatchExportZip}
-                      className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-accent-primary hover:bg-accent-primary-hover text-white text-sm font-bold shadow-[2px_2px_0px_#000] transition-all disabled:opacity-50"
+                      className="w-full inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl bg-accent-primary hover:bg-accent-primary-hover text-black text-sm font-bold shadow-[2px_2px_0px_#000] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 cursor-pointer"
                     >
-                      <FolderArchive className="w-4 h-4" />
-                      <span>{isExporting ? "Archiving..." : "Download Batch (ZIP)"}</span>
+                      {isExporting ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin text-black" />
+                          <span>
+                            {progress.total > 0
+                              ? `Watermarking & Archiving (${progress.current}/${progress.total})...`
+                              : "Compressing ZIP Archive..."}
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <FolderArchive className="w-4 h-4 text-black" />
+                          <span>Download All Photos as ZIP ({photos.length})</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -1110,7 +1341,7 @@ export function WatermarkForgeClient() {
         </div>
 
         {/* ===== FOOTER INFO & CODEX STRIP ===== */}
-        <div className="mt-12 p-6 rounded-xl border border-border-default bg-surface-secondary/40">
+        <div className="mt-12 p-6 rounded-xl border border-black bg-surface-secondary/40">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-text-secondary">
             <div className="flex gap-3">
               <div className="w-8 h-8 rounded-lg bg-accent-primary/10 text-accent-primary flex items-center justify-center shrink-0">
