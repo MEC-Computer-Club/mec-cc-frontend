@@ -1469,7 +1469,7 @@ export function CoverPageGeneratorClient() {
                   color: "#000000",
                 }}
                 className={`${formData.template === "classic-mono"
-                  ? "font-space-mono p-[56px] flex flex-col justify-between"
+                  ? `${spaceMono.className} font-space-mono pt-[68px] pb-[60px] px-[80px] flex flex-col justify-between`
                   : formData.docType === "index-table"
                     ? "font-quicksand p-[48px] sm:p-[56px] flex flex-col justify-between"
                     : "font-quicksand p-0 block relative"
@@ -2063,119 +2063,130 @@ export function CoverPageGeneratorClient() {
                     )}
                   </div>
                 ) : (
-                  /* ================= TEMPLATE 1: CLASSIC SPACE MONO ================= */
-                  <div className="flex flex-col flex-1 justify-between select-text font-space-mono text-black">
-                    <div>
-                      {/* College Header: Logo + Vertical Line + Title */}
-                      <div className="flex items-start gap-4">
-                        <div className="shrink-0 w-[84px] h-[84px] flex items-center justify-center text-black">
+                  /* ================= TEMPLATE 1: CLASSIC SPACE MONO (PREMIUM ACADEMIC) ================= */
+                  <div className={`flex flex-col flex-1 justify-between select-text ${spaceMono.className} font-space-mono text-black`}>
+                    {/* TOP SECTION: Header + Course Metadata + Student + Instructor */}
+                    <div className="space-y-[40px]">
+                      {/* College Header: Official Seal + Vertical Divider + College & Department */}
+                      <div className="flex items-center gap-4.5">
+                        <div className="shrink-0 w-[78px] h-[78px] flex items-center justify-center text-black">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src="/mec-college-seal.svg"
                             alt="Mymensingh Engineering College Seal"
-                            width={84}
-                            height={84}
-                            className="w-[84px] h-[84px] object-contain"
+                            width={78}
+                            height={78}
+                            className="w-[78px] h-[78px] object-contain"
                           />
                         </div>
 
-                        <div className="flex items-stretch gap-3.5">
-                          <div className="w-[1.5px] bg-black shrink-0" />
-                          <div className="flex flex-col justify-start select-text py-0.5">
-                            <div className="flex items-baseline leading-none">
-                              <span className="text-[38px] font-bold tracking-tight leading-none">M</span>
-                              <span className="text-[30px] font-bold tracking-tight leading-none">ymensingh</span>
-                            </div>
-                            <div className="text-[30px] font-bold leading-none tracking-tight mt-1.5">
-                              Engineering College
-                            </div>
-                            <div
-                              contentEditable
-                              suppressContentEditableWarning
-                              onBlur={(e) => handleChange("department", e.currentTarget.textContent || "")}
-                              className="inline-editable block text-[13.5px] font-normal leading-tight mt-2.5 tracking-tight text-black whitespace-nowrap"
-                              style={{ display: "block" }}
-                              title="Click to edit department"
-                            >
-                              {formData.department}
-                            </div>
+                        <div className="w-[1.5px] h-[74px] bg-black shrink-0" />
+
+                        <div className="flex flex-col justify-center select-text py-0.5">
+                          <div className="text-[31px] font-bold leading-[1.08] tracking-tight">
+                            Mymensingh
+                          </div>
+                          <div className="text-[31px] font-bold leading-[1.08] tracking-tight mt-0.5">
+                            Engineering College
+                          </div>
+                          <div
+                            contentEditable
+                            suppressContentEditableWarning
+                            onBlur={(e) => handleChange("department", e.currentTarget.textContent || "")}
+                            className="inline-editable block text-[13.5px] font-normal leading-normal mt-1.5 tracking-tight text-black"
+                            style={{ display: "block" }}
+                            title="Click to edit department"
+                          >
+                            {formData.department}
                           </div>
                         </div>
                       </div>
 
-                      {/* Document Type & Course Information block */}
-                      <div className="mt-[50px] text-[13.5px] leading-[1.4] space-y-1 text-black">
-                        <div className="font-bold pb-1 text-black">
+                      {/* Document Type & Course Information Block */}
+                      <div className="text-[14.5px] leading-[1.65] text-black">
+                        <div className="font-bold text-[15px] pb-1 text-black">
                           <span
                             contentEditable
                             suppressContentEditableWarning
                             className="inline-editable font-bold"
                             title="Click to edit document header"
-                          >{getDocTypeHeader()}</span>
+                          >
+                            {getDocTypeHeader()}
+                          </span>
                         </div>
 
                         <div className="flex items-start">
-                          <span className="font-normal shrink-0 w-[140px] whitespace-nowrap">Course Name</span>
-                          <span className="mx-1 shrink-0">:</span>
+                          <span className="font-normal shrink-0 w-[160px]">Course Name</span>
+                          <span className="shrink-0 mx-1">:</span>
                           <span
                             contentEditable
                             suppressContentEditableWarning
                             onBlur={(e) => handleChange("courseName", e.currentTarget.textContent || "")}
                             className="inline-editable font-normal flex-1"
                             title="Click to edit course name"
-                          >{formData.courseName}</span>
+                          >
+                            {formData.courseName}
+                          </span>
                         </div>
 
                         <div className="flex items-start">
-                          <span className="font-normal shrink-0 w-[140px] whitespace-nowrap">Course Code</span>
-                          <span className="mx-1 shrink-0">:</span>
+                          <span className="font-normal shrink-0 w-[160px]">Course Code</span>
+                          <span className="shrink-0 mx-1">:</span>
                           <span
                             contentEditable
                             suppressContentEditableWarning
                             onBlur={(e) => handleChange("courseCode", e.currentTarget.textContent || "")}
                             className="inline-editable font-normal flex-1"
                             title="Click to edit course code"
-                          >{formData.courseCode}</span>
+                          >
+                            {formData.courseCode}
+                          </span>
                         </div>
 
                         {formData.courseCredit?.trim() ? (
                           <div className="flex items-start">
-                            <span className="font-normal shrink-0 w-[140px] whitespace-nowrap">Course Credit</span>
-                            <span className="mx-1 shrink-0">:</span>
+                            <span className="font-normal shrink-0 w-[160px]">Course Credit</span>
+                            <span className="shrink-0 mx-1">:</span>
                             <span
                               contentEditable
                               suppressContentEditableWarning
                               onBlur={(e) => handleChange("courseCredit", e.currentTarget.textContent || "")}
                               className="inline-editable font-normal flex-1"
                               title="Click to edit course credit"
-                            >{formData.courseCredit}</span>
+                            >
+                              {formData.courseCredit}
+                            </span>
                           </div>
                         ) : null}
 
                         {/* Dynamic Lab Report Fields */}
                         {formData.docType === "lab-report" && (
                           <>
-                            <div className="flex items-start pt-0.5">
-                              <span className="font-normal shrink-0 w-[140px] whitespace-nowrap">Experiment No.</span>
-                              <span className="mx-1 shrink-0">:</span>
+                            <div className="flex items-start">
+                              <span className="font-normal shrink-0 w-[160px]">Experiment No.</span>
+                              <span className="shrink-0 mx-1">:</span>
                               <span
                                 contentEditable
                                 suppressContentEditableWarning
                                 onBlur={(e) => handleChange("experimentNo", e.currentTarget.textContent || "")}
                                 className="inline-editable font-normal flex-1"
                                 title="Click to edit experiment number"
-                              >{formData.experimentNo}</span>
+                              >
+                                {formData.experimentNo}
+                              </span>
                             </div>
                             <div className="flex items-start">
-                              <span className="font-normal shrink-0 w-[140px] whitespace-nowrap">Experiment Name</span>
-                              <span className="mx-1 shrink-0">:</span>
+                              <span className="font-normal shrink-0 w-[160px]">Exp. Name</span>
+                              <span className="shrink-0 mx-1">:</span>
                               <span
                                 contentEditable
                                 suppressContentEditableWarning
                                 onBlur={(e) => handleChange("experimentName", e.currentTarget.textContent || "")}
                                 className="inline-editable font-normal flex-1"
                                 title="Click to edit experiment name"
-                              >{formData.experimentName}</span>
+                              >
+                                {formData.experimentName}
+                              </span>
                             </div>
                           </>
                         )}
@@ -2183,104 +2194,118 @@ export function CoverPageGeneratorClient() {
                         {/* Dynamic Assignment Fields */}
                         {formData.docType === "assignment" && (
                           <>
-                            <div className="flex items-start pt-0.5">
-                              <span className="font-normal shrink-0 w-[140px] whitespace-nowrap">Assignment No.</span>
-                              <span className="mx-1 shrink-0">:</span>
+                            <div className="flex items-start">
+                              <span className="font-normal shrink-0 w-[160px]">Assignment No.</span>
+                              <span className="shrink-0 mx-1">:</span>
                               <span
                                 contentEditable
                                 suppressContentEditableWarning
                                 onBlur={(e) => handleChange("assignmentNo", e.currentTarget.textContent || "")}
                                 className="inline-editable font-normal flex-1"
                                 title="Click to edit assignment number"
-                              >{formData.assignmentNo}</span>
+                              >
+                                {formData.assignmentNo}
+                              </span>
                             </div>
                             <div className="flex items-start">
-                              <span className="font-normal shrink-0 w-[140px] whitespace-nowrap">Assign. Topic</span>
-                              <span className="mx-1 shrink-0">:</span>
+                              <span className="font-normal shrink-0 w-[160px]">Assign. Topic</span>
+                              <span className="shrink-0 mx-1">:</span>
                               <span
                                 contentEditable
                                 suppressContentEditableWarning
                                 onBlur={(e) => handleChange("assignmentTopic", e.currentTarget.textContent || "")}
                                 className="inline-editable font-normal flex-1"
                                 title="Click to edit assignment topic"
-                              >{formData.assignmentTopic}</span>
+                              >
+                                {formData.assignmentTopic}
+                              </span>
                             </div>
                           </>
                         )}
                       </div>
 
                       {/* Submitted By Block */}
-                      <div className="mt-[44px] text-[13.5px] leading-[1.4] space-y-1 text-black">
-                        <div className="font-bold pb-1 text-black">Submitted By,</div>
+                      <div className="text-[14.5px] leading-[1.65] text-black">
+                        <div className="font-bold text-[15px] pb-1 text-black">Submitted By,</div>
 
                         <div className="flex items-start">
-                          <span className="font-normal shrink-0 w-[54px] whitespace-nowrap">Name</span>
-                          <span className="mx-1 shrink-0">:</span>
+                          <span className="font-normal shrink-0 w-[64px]">Name</span>
+                          <span className="shrink-0 mx-1">:</span>
                           <span
                             contentEditable
                             suppressContentEditableWarning
                             onBlur={(e) => handleChange("studentName", e.currentTarget.textContent || "")}
                             className="inline-editable font-normal"
                             title="Click to edit student name"
-                          >{formData.studentName}</span>
+                          >
+                            {formData.studentName}
+                          </span>
                         </div>
 
                         <div className="flex items-start">
-                          <span className="font-normal shrink-0 w-[54px] whitespace-nowrap">Roll</span>
-                          <span className="mx-1 shrink-0">:</span>
+                          <span className="font-normal shrink-0 w-[64px]">Roll</span>
+                          <span className="shrink-0 mx-1">:</span>
                           <span
                             contentEditable
                             suppressContentEditableWarning
                             onBlur={(e) => handleChange("roll", e.currentTarget.textContent || "")}
                             className="inline-editable font-normal"
                             title="Click to edit roll"
-                          >{formData.roll}</span>
+                          >
+                            {formData.roll}
+                          </span>
                         </div>
 
                         <div className="flex items-start">
-                          <span className="font-normal shrink-0 w-[54px] whitespace-nowrap">Reg.</span>
-                          <span className="mx-1 shrink-0">:</span>
+                          <span className="font-normal shrink-0 w-[64px]">Reg.</span>
+                          <span className="shrink-0 mx-1">:</span>
                           <span
                             contentEditable
                             suppressContentEditableWarning
                             onBlur={(e) => handleChange("reg", e.currentTarget.textContent || "")}
                             className="inline-editable font-normal"
                             title="Click to edit registration"
-                          >{formData.reg}</span>
+                          >
+                            {formData.reg}
+                          </span>
                         </div>
 
                         <div className="flex items-start">
-                          <span className="font-normal shrink-0 w-[54px] whitespace-nowrap">Year</span>
-                          <span className="mx-1 shrink-0">:</span>
+                          <span className="font-normal shrink-0 w-[64px]">Year</span>
+                          <span className="shrink-0 mx-1">:</span>
                           <span className="font-normal">
                             <span
                               contentEditable
                               suppressContentEditableWarning
                               onBlur={(e) => handleChange("yearNumber", e.currentTarget.textContent || "")}
                               className="inline-editable font-normal"
-                            >{formData.yearNumber}</span>
-                            <sup className="text-[9px] ml-0.5">{formData.yearSuffix}</sup> Year.
+                            >
+                              {formData.yearNumber}
+                            </span>
+                            {formData.yearSuffix} Year.
                           </span>
                         </div>
 
                         <div className="flex items-start">
-                          <span className="font-normal shrink-0 w-[54px] whitespace-nowrap">Sem.</span>
-                          <span className="mx-1 shrink-0">:</span>
+                          <span className="font-normal shrink-0 w-[64px]">Sem.</span>
+                          <span className="shrink-0 mx-1">:</span>
                           <span className="font-normal">
                             <span
                               contentEditable
                               suppressContentEditableWarning
                               onBlur={(e) => handleChange("semNumber", e.currentTarget.textContent || "")}
                               className="inline-editable font-normal"
-                            >{formData.semNumber}</span>
-                            <sup className="text-[9px] ml-0.5">{formData.semSuffix}</sup> Semester.
+                            >
+                              {formData.semNumber}
+                            </span>
+                            {formData.semSuffix} Semester.
                           </span>
                         </div>
                       </div>
 
                       {/* Submitted To Block */}
-                      <div className="mt-[44px] text-[13.5px] leading-[1.4] space-y-1 text-black">
-                        <div className="font-bold pb-1 text-black">Submitted To,</div>
+                      <div className="text-[14.5px] leading-[1.65] text-black">
+                        <div className="font-bold text-[15px] pb-1 text-black">Submitted To,</div>
                         <div>
                           <span
                             contentEditable
@@ -2288,76 +2313,100 @@ export function CoverPageGeneratorClient() {
                             onBlur={(e) => handleChange("teacherName", e.currentTarget.textContent || "")}
                             className="inline-editable font-normal"
                             title="Click to edit instructor name"
-                          >{formData.teacherName}</span>
+                          >
+                            {formData.teacherName}
+                          </span>
+                          {formData.teacherName && !formData.teacherName.trim().endsWith(",") ? "," : ""}
                         </div>
-                        <div>
-                          <span
-                            contentEditable
-                            suppressContentEditableWarning
-                            onBlur={(e) => handleChange("teacherDesignation", e.currentTarget.textContent || "")}
-                            className="inline-editable font-normal"
-                            title="Click to edit instructor designation"
-                          >{formData.teacherDesignation}</span>
-                        </div>
-                        <div>
-                          <span
-                            contentEditable
-                            suppressContentEditableWarning
-                            onBlur={(e) => handleChange("teacherDepartment", e.currentTarget.textContent || "")}
-                            className="inline-editable font-normal"
-                            title="Click to edit instructor department"
-                          >{formData.teacherDepartment}</span>
-                        </div>
-                        <div>
-                          <span
-                            contentEditable
-                            suppressContentEditableWarning
-                            onBlur={(e) => handleChange("teacherInstitution", e.currentTarget.textContent || "")}
-                            className="inline-editable font-normal"
-                            title="Click to edit instructor institution"
-                          >{formData.teacherInstitution}</span>
-                        </div>
-                      </div>
-
-                      {/* Date & Signature Block */}
-                      <div className="mt-[56px] flex items-end justify-between text-[13.5px] leading-[1.4] text-black">
-                        {/* Left: Date Block */}
-                        {(formData.showExperimentDate || formData.showSubmissionDate) ? (
-                          <div className="space-y-1">
-                            <div className="font-bold pb-1 text-black">Date,</div>
-                            {formData.docType === "lab-report" && formData.showExperimentDate && (
-                              <div>
-                                <span className="font-normal">Experiment Date : </span>
-                                <span
-                                  contentEditable
-                                  suppressContentEditableWarning
-                                  onBlur={(e) => handleChange("experimentDate", e.currentTarget.textContent || "")}
-                                  className="inline-editable font-normal font-bold"
-                                  title="Click to edit experiment date"
-                                >{formData.experimentDate}</span>
-                              </div>
-                            )}
-                            {formData.showSubmissionDate && (
-                              <div>
-                                <span className="font-normal">Submission Date : </span>
-                                <span
-                                  contentEditable
-                                  suppressContentEditableWarning
-                                  onBlur={(e) => handleChange("submissionDate", e.currentTarget.textContent || "")}
-                                  className="inline-editable font-normal font-bold"
-                                  title="Click to edit submission date"
-                                >{formData.submissionDate}</span>
-                              </div>
-                            )}
+                        {formData.teacherDesignation && (
+                          <div>
+                            <span
+                              contentEditable
+                              suppressContentEditableWarning
+                              onBlur={(e) => handleChange("teacherDesignation", e.currentTarget.textContent || "")}
+                              className="inline-editable font-normal"
+                              title="Click to edit instructor designation"
+                            >
+                              {formData.teacherDesignation}
+                            </span>
+                            {formData.teacherDesignation && !formData.teacherDesignation.trim().endsWith(",") ? "," : ""}
                           </div>
-                        ) : (
-                          <div />
                         )}
+                        {formData.teacherDepartment && (
+                          <div>
+                            <span
+                              contentEditable
+                              suppressContentEditableWarning
+                              onBlur={(e) => handleChange("teacherDepartment", e.currentTarget.textContent || "")}
+                              className="inline-editable font-normal"
+                              title="Click to edit instructor department"
+                            >
+                              {formData.teacherDepartment}
+                            </span>
+                            {formData.teacherDepartment && !formData.teacherDepartment.trim().endsWith(",") ? "," : ""}
+                          </div>
+                        )}
+                        {formData.teacherInstitution && (
+                          <div>
+                            <span
+                              contentEditable
+                              suppressContentEditableWarning
+                              onBlur={(e) => handleChange("teacherInstitution", e.currentTarget.textContent || "")}
+                              className="inline-editable font-normal"
+                              title="Click to edit instructor institution"
+                            >
+                              {formData.teacherInstitution}
+                            </span>
+                            {formData.teacherInstitution && !formData.teacherInstitution.trim().endsWith(".") ? "." : ""}
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
-                        {/* Right: Signature Block */}
-                        <div className="text-right pr-4 pb-0.5">
-                          <div className="font-normal text-[13.5px] text-black">Signature</div>
+                    {/* BOTTOM SECTION: Date & Signature Block */}
+                    <div className="flex items-end justify-between text-[14.5px] leading-[1.6] text-black pt-10">
+                      {/* Left: Date Block */}
+                      {(formData.showExperimentDate || formData.showSubmissionDate) ? (
+                        <div>
+                          <div className="font-bold text-[15px] pb-1 text-black">Date,</div>
+                          {formData.docType === "lab-report" && formData.showExperimentDate && (
+                            <div className="flex items-start">
+                              <span className="font-normal shrink-0 w-[170px]">Experiment Date</span>
+                              <span className="shrink-0 mx-1">:</span>
+                              <span
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e) => handleChange("experimentDate", e.currentTarget.textContent || "")}
+                                className="inline-editable font-normal"
+                                title="Click to edit experiment date"
+                              >
+                                {formData.experimentDate || "10|01|2026"}
+                              </span>
+                            </div>
+                          )}
+                          {formData.showSubmissionDate && (
+                            <div className="flex items-start">
+                              <span className="font-normal shrink-0 w-[170px]">Submission Date</span>
+                              <span className="shrink-0 mx-1">:</span>
+                              <span
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e) => handleChange("submissionDate", e.currentTarget.textContent || "")}
+                                className="inline-editable font-normal"
+                                title="Click to edit submission date"
+                              >
+                                {formData.submissionDate || "18|01|2026"}
+                              </span>
+                            </div>
+                          )}
                         </div>
+                      ) : (
+                        <div />
+                      )}
+
+                      {/* Right: Signature */}
+                      <div className="text-right pr-2 pb-0.5">
+                        <div className="font-normal text-[15px] text-black">Signature</div>
                       </div>
                     </div>
                   </div>
