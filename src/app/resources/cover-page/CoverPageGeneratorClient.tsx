@@ -2067,36 +2067,35 @@ export function CoverPageGeneratorClient() {
                   <div className={`flex flex-col flex-1 justify-between select-text ${spaceMono.className} font-space-mono text-black`}>
                     {/* TOP SECTION: Header + Course Metadata + Student + Instructor */}
                     <div className="space-y-[40px]">
-                      {/* College Header: Official Seal + Thin Divider + Large College Name & Department */}
-                      <div className="flex items-center">
-                        {/* Large official seal */}
-                        <div className="shrink-0 w-[100px] h-[100px] flex items-center justify-center text-black mr-[6px]">
+                      {/* College Header: Official Seal + Border-Aligned Divider + Bold Typography */}
+                      <div className="flex items-stretch">
+                        {/* Official Seal aligned with header */}
+                        <div className="shrink-0 flex items-center justify-center text-black mr-[7px]">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src="/mec-college-seal.svg"
                             alt="Mymensingh Engineering College Seal"
-                            width={100}
-                            height={100}
-                            className="w-[100px] h-[100px] object-contain"
+                            width={98}
+                            height={98}
+                            className="w-[98px] h-[98px] object-contain"
                           />
                         </div>
 
-                        {/* Thin 1px vertical line with tight millimeter gap on both sides */}
-                        <div className="w-[1px] h-[92px] bg-black shrink-0" />
-
-                        {/* College name (Large, commanding typography with tight leading) */}
-                        <div className="flex flex-col justify-center select-text ml-[6px]">
-                          <div className="text-[34px] font-bold leading-[1.0] tracking-tight text-black">
-                            Mymensingh
-                          </div>
-                          <div className="text-[34px] font-bold leading-[1.0] tracking-tight text-black mt-[1px]">
-                            Engineering College
+                        {/* Text Container with Left Border: top begins at top of college name, bottom ends at bottom of department */}
+                        <div className="border-l border-black pl-[7px] flex flex-col justify-between select-text py-0">
+                          <div>
+                            <div className="text-[38px] font-bold leading-[0.93] tracking-tight text-black">
+                              Mymensingh
+                            </div>
+                            <div className="text-[38px] font-bold leading-[0.93] tracking-tight text-black mt-[1px]">
+                              Engineering College
+                            </div>
                           </div>
                           <div
                             contentEditable
                             suppressContentEditableWarning
                             onBlur={(e) => handleChange("department", e.currentTarget.textContent || "")}
-                            className="inline-editable block text-[13px] font-normal leading-tight mt-[6px] tracking-tight text-black"
+                            className="inline-editable block text-[13px] font-normal leading-none tracking-tight text-black mt-[8px]"
                             style={{ display: "block" }}
                             title="Click to edit department"
                           >
