@@ -44,3 +44,4 @@ next-env.d.ts
 # database and logs
 club.db
 *.log
+.vscode/

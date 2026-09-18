@@ -766,11 +766,6 @@
    landscape orientation, hiding all web page navigation and UI.
    ============================================================ */
 @media print {
-  @page {
-    size: landscape;
-    margin: 0;
-  }
-
   /* Reset body */
   html,
   body {
@@ -778,15 +773,8 @@
     color: #111827 !important;
     margin: 0 !important;
     padding: 0 !important;
-    width: 100% !important;
-    height: 100% !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-  }
-
-  /* Hide entire page tree by default */
-  body * {
-    visibility: hidden;
   }
 
   /* Hide common web chrome components explicitly */
@@ -799,13 +787,31 @@
     visibility: hidden !important;
   }
 
-  /* Show only the certificate canvas and all nested elements */
+  /* Certificate print isolation: only hide page tree when a certificate canvas is present */
+  body:has(#certificate-print-canvas, #cert-print-portal, #printable-certificates-hub) {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  body:has(#certificate-print-canvas, #cert-print-portal, #printable-certificates-hub) * {
+    visibility: hidden;
+  }
+
+  /* Show certificate canvas and its children */
   #certificate-print-canvas,
   #certificate-print-canvas *,
   #cert-print-portal,
   #cert-print-portal *,
   #printable-certificates-hub,
   #printable-certificates-hub * {
+    visibility: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Always keep Cover Page print root visible */
+  #print-root,
+  #print-root * {
     visibility: visible !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
@@ -951,4 +957,15 @@ body.raw-html-page-active #main-content {
   padding: 0 !important;
   min-height: 100vh !important;
 }
+
+/* Cover Page Template Typography */
+.font-quicksand,
+.font-quicksand * {
+  font-family: var(--font-quicksand), "Quicksand", "Nunito", "Segoe UI", ui-sans-serif, system-ui, sans-serif !important;
+}
+
+.font-space-mono {
+  font-family: var(--font-jetbrains-mono), "Space Mono", monospace !important;
+}
+
 
