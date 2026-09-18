@@ -95,6 +95,7 @@ export function WatermarkForgeClient() {
   const [sigils, setSigils] = useState<SigilItem[]>(DEFAULT_SIGILS);
   const [selectedSigilId, setSelectedSigilId] = useState<string>("mcc-sigil");
   const [activePreset, setActivePreset] = useState<string>("balanced");
+  const [activeControlTab, setActiveControlTab] = useState<"event" | "sigil" | "style">("event");
 
   const [progress, setProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
   const [isExporting, setIsExporting] = useState<boolean>(false);
@@ -474,570 +475,753 @@ export function WatermarkForgeClient() {
           {/* ============================================================
               LEFT / TOP COLUMN: Controls & Metadata Inscription (5 cols)
               ============================================================ */}
-          <div className="lg:col-span-5 space-y-6">
-            {/* 1. Event Details Parameters */}
-            <div className="p-5 sm:p-6 bg-surface-elevated rounded-xl border border-black shadow-[4px_4px_0px_var(--accent-primary)]">
-              <div className="flex items-center justify-between mb-4 border-b border-border-default pb-3">
-                <div className="flex items-center gap-2">
-                  <Type className="w-4 h-4 text-accent-primary" />
-                  <h2 className="font-heading font-bold text-base text-text-primary">
-                    1. Event Details & Text
-                  </h2>
-                </div>
-                <span className="text-[11px] font-mono uppercase text-text-tertiary">Event Info</span>
-              </div>
-
-              <div className="space-y-4">
-                {/* Event Name */}
-                <div>
-                  <label className="block text-xs font-mono font-semibold uppercase text-text-secondary mb-1.5">
-                    Event Name <span className="text-accent-error">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={config.eventName}
-                    onChange={(e) => setConfig({ ...config, eventName: e.target.value })}
-                    placeholder="e.g. MEC Intra Programming Contest 2026"
-                    className="w-full px-3.5 py-2.5 rounded-lg border border-border-default bg-surface-primary text-text-primary text-sm font-medium focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all"
-                  />
-                  {/* Quick Preset Tags */}
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {[
-                      "MEC Intra Contest",
-                      "ICPC Camp 2026",
-                      "WebDev Sprint",
-                      "CyberSec CTF",
-                    ].map((tag) => (
-                      <button
-                        key={tag}
-                        type="button"
-                        onClick={() => setConfig({ ...config, eventName: tag })}
-                        className="text-[11px] px-2 py-0.5 rounded bg-surface-secondary hover:bg-accent-primary-light hover:text-text-primary border border-border-default text-text-tertiary transition-all"
-                      >
-                        +{tag}
-                      </button>
-                    ))}
+          {/* ============================================================
+              LEFT / TOP COLUMN: Controls & Metadata Inscription (5 cols)
+              ============================================================ */}
+          <div className="lg:col-span-5 space-y-4">
+            {/* MASTER CUSTOMIZE STUDIO PANEL */}
+            <div className="bg-surface-elevated/95 dark:bg-[#0c0f18]/95 backdrop-blur-xl rounded-2xl border border-border-default/80 dark:border-white/10 shadow-[0_12px_40px_rgba(0,0,0,0.15)] dark:shadow-[0_20px_50px_rgba(0,0,0,0.4)] overflow-hidden flex flex-col">
+              
+              {/* Studio Header Bar */}
+              <div className="px-4 sm:px-5 py-3.5 border-b border-border-default dark:border-white/10 flex items-center justify-between bg-surface-secondary/30 dark:bg-white/[0.02]">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-accent-primary/15 border border-accent-primary/30 flex items-center justify-center text-accent-primary shadow-xs">
+                    <Sliders className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="font-heading font-bold text-sm sm:text-base text-text-primary tracking-tight">
+                        Customize Overlay
+                      </h2>
+                      <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-accent-primary/15 text-accent-text-on-surface font-semibold border border-accent-primary/30">
+                        STUDIO
+                      </span>
+                    </div>
+                    <p className="text-[11px] font-mono text-text-tertiary hidden sm:block">
+                      Fine-tune text, insignia, and lighting
+                    </p>
                   </div>
                 </div>
 
-                {/* Date & Guild Name in 2 columns */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label className="block text-xs font-mono font-semibold uppercase text-text-secondary">
-                        Inscription Date
-                      </label>
-                      {/* Native calendar trigger */}
-                      <label className="inline-flex items-center gap-1 text-[11px] font-mono text-accent-primary hover:underline cursor-pointer select-none">
-                        <Calendar className="w-3.5 h-3.5" />
-                        <span>Pick Date</span>
-                        <input
-                          type="date"
-                          className="sr-only"
-                          onChange={(e) => {
-                            if (!e.target.value) return;
-                            const [y, m, d] = e.target.value.split("-").map(Number);
-                            const picked = new Date(y, m - 1, d);
-                            const formatted = new Intl.DateTimeFormat("en-US", {
-                              day: "numeric",
-                              month: "long",
-                              year: "numeric",
-                            }).format(picked);
-                            setConfig({ ...config, date: formatted });
-                          }}
-                        />
-                      </label>
-                    </div>
+                <div className="flex items-center gap-2">
+                  <span className="hidden sm:inline-flex items-center gap-1.5 text-[10px] font-mono px-2 py-0.5 rounded-full bg-surface-primary dark:bg-white/[0.05] border border-border-default dark:border-white/10 text-text-secondary">
+                    <span className="w-1.5 h-1.5 rounded-full bg-accent-primary animate-pulse" />
+                    <span>Real-time</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setConfig({
+                        ...DEFAULT_WATERMARK_CONFIG,
+                        date: new Intl.DateTimeFormat("en-US", { day: "numeric", month: "long", year: "numeric" }).format(new Date()),
+                      });
+                      setActivePreset("balanced");
+                      toast.success("Settings reset to defaults");
+                    }}
+                    title="Reset all settings to default"
+                    className="p-1.5 rounded-lg border border-border-default dark:border-white/10 bg-surface-primary dark:bg-white/[0.04] text-text-tertiary hover:text-text-primary hover:border-accent-primary transition-all cursor-pointer"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
 
-                    <div className="relative">
+              {/* Segmented Tab Switcher (Full Width Pill Bar) */}
+              <div className="p-2 border-b border-border-default dark:border-white/10 bg-surface-primary/40 dark:bg-black/20">
+                <div className="grid grid-cols-3 gap-1.5 bg-surface-secondary/70 dark:bg-[#07090e] p-1 rounded-xl border border-border-default/50 dark:border-white/5">
+                  {/* Tab 1: Event Info */}
+                  <button
+                    type="button"
+                    onClick={() => setActiveControlTab("event")}
+                    className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-xs transition-all cursor-pointer select-none ${
+                      activeControlTab === "event"
+                        ? "bg-surface-elevated dark:bg-white/[0.12] text-text-primary shadow-sm border border-border-default dark:border-white/20 font-bold"
+                        : "text-text-secondary hover:text-text-primary hover:bg-surface-elevated/40 font-medium"
+                    }`}
+                  >
+                    <Type className={`w-3.5 h-3.5 ${activeControlTab === "event" ? "text-accent-primary" : "text-text-tertiary"}`} />
+                    <span>Event Info</span>
+                    {config.eventName ? (
+                      <span className="w-1.5 h-1.5 rounded-full bg-accent-primary shadow-[0_0_6px_var(--accent-primary)]" />
+                    ) : (
+                      <span className="text-[9px] font-mono text-accent-error">*</span>
+                    )}
+                  </button>
+
+                  {/* Tab 2: Logo Vault */}
+                  <button
+                    type="button"
+                    onClick={() => setActiveControlTab("sigil")}
+                    className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-xs transition-all cursor-pointer select-none ${
+                      activeControlTab === "sigil"
+                        ? "bg-surface-elevated dark:bg-white/[0.12] text-text-primary shadow-sm border border-border-default dark:border-white/20 font-bold"
+                        : "text-text-secondary hover:text-text-primary hover:bg-surface-elevated/40 font-medium"
+                    }`}
+                  >
+                    <Shield className={`w-3.5 h-3.5 ${activeControlTab === "sigil" ? "text-accent-primary" : "text-text-tertiary"}`} />
+                    <span>Logo Vault</span>
+                    <span className={`text-[9px] font-mono font-bold px-1.5 py-0.2 rounded-full ${
+                      config.showMonogram
+                        ? "bg-accent-primary/20 text-accent-text-on-surface border border-accent-primary/30"
+                        : "bg-surface-secondary text-text-tertiary"
+                    }`}>
+                      {config.showMonogram ? "ON" : "OFF"}
+                    </span>
+                  </button>
+
+                  {/* Tab 3: Style & FX */}
+                  <button
+                    type="button"
+                    onClick={() => setActiveControlTab("style")}
+                    className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-lg text-xs transition-all cursor-pointer select-none ${
+                      activeControlTab === "style"
+                        ? "bg-surface-elevated dark:bg-white/[0.12] text-text-primary shadow-sm border border-border-default dark:border-white/20 font-bold"
+                        : "text-text-secondary hover:text-text-primary hover:bg-surface-elevated/40 font-medium"
+                    }`}
+                  >
+                    <Sliders className={`w-3.5 h-3.5 ${activeControlTab === "style" ? "text-accent-primary" : "text-text-tertiary"}`} />
+                    <span>Style & FX</span>
+                    <span
+                      className="w-2.5 h-2.5 rounded-full border border-black/30 shadow-xs"
+                      style={{ backgroundColor: config.gradientColor }}
+                      title={`Tint: ${config.gradientColor}`}
+                    />
+                  </button>
+                </div>
+              </div>
+
+              {/* Tab Contents Area with Consistent Padding & Animations */}
+              <div className="p-4 sm:p-5">
+                {/* ============================================================
+                    TAB 1: EVENT INFO
+                    ============================================================ */}
+                {activeControlTab === "event" && (
+                  <div className="space-y-4 animate-in fade-in duration-200">
+                    {/* Event Title Card */}
+                    <div className="bg-surface-primary dark:bg-[#0f121d] rounded-xl border border-border-default/80 dark:border-white/10 p-4 space-y-2.5 shadow-xs">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-mono font-bold uppercase tracking-wider text-text-secondary">
+                          Event Title <span className="text-accent-error">*</span>
+                        </label>
+                        <span className="text-[10px] font-mono text-text-tertiary">
+                          Headline Overlay
+                        </span>
+                      </div>
                       <input
                         type="text"
-                        value={config.date}
-                        onChange={(e) => setConfig({ ...config, date: e.target.value })}
-                        placeholder="e.g. September 18, 2026"
-                        className="w-full px-3 py-2 rounded-lg border border-border-default bg-surface-primary text-text-primary text-sm font-medium focus:outline-none focus:border-accent-primary transition-all pr-8"
+                        value={config.eventName}
+                        onChange={(e) => setConfig({ ...config, eventName: e.target.value })}
+                        placeholder="e.g. MEC Intra Programming Contest 2026"
+                        className="w-full px-3.5 py-2.5 rounded-lg border border-border-default dark:border-white/15 bg-surface-elevated dark:bg-black/40 text-text-primary text-sm font-medium focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all"
                       />
-                      {config.date && (
-                        <button
-                          type="button"
-                          onClick={() => setConfig({ ...config, date: "" })}
-                          title="Clear date"
-                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs text-text-tertiary hover:text-text-primary"
-                        >
-                          ×
-                        </button>
-                      )}
+                      {/* Quick Suggestions Chips */}
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {[
+                          "MEC Intra Contest",
+                          "ICPC Camp 2026",
+                          "WebDev Sprint",
+                          "CyberSec CTF",
+                        ].map((tag) => (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() => setConfig({ ...config, eventName: tag })}
+                            className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-surface-secondary dark:bg-white/[0.05] hover:bg-accent-primary/20 hover:text-accent-text-on-surface hover:border-accent-primary/40 border border-border-default/80 dark:border-white/10 text-text-secondary transition-all cursor-pointer"
+                          >
+                            +{tag}
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
-                    {/* Quick Date Presets */}
-                    <div className="flex items-center gap-1.5 flex-wrap mt-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const today = new Intl.DateTimeFormat("en-US", {
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                          }).format(new Date());
-                          setConfig({ ...config, date: today });
-                        }}
-                        className="text-[10px] font-mono px-2 py-0.5 rounded bg-surface-primary border border-border-default text-text-secondary hover:text-text-primary hover:border-accent-primary transition-all"
-                      >
-                        Today
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const d = new Date();
-                          d.setDate(d.getDate() - 1);
-                          const yest = new Intl.DateTimeFormat("en-US", {
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                          }).format(d);
-                          setConfig({ ...config, date: yest });
-                        }}
-                        className="text-[10px] font-mono px-2 py-0.5 rounded bg-surface-primary border border-border-default text-text-secondary hover:text-text-primary hover:border-accent-primary transition-all"
-                      >
-                        Yesterday
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const monthOnly = new Intl.DateTimeFormat("en-US", {
-                            month: "long",
-                            year: "numeric",
-                          }).format(new Date());
-                          setConfig({ ...config, date: monthOnly });
-                        }}
-                        className="text-[10px] font-mono px-2 py-0.5 rounded bg-surface-primary border border-border-default text-text-secondary hover:text-text-primary hover:border-accent-primary transition-all"
-                      >
-                        Month & Year
-                      </button>
-                      {selectedPhoto?.file?.lastModified && (
+                    {/* Date & Guild Signature Card */}
+                    <div className="bg-surface-primary dark:bg-[#0f121d] rounded-xl border border-border-default/80 dark:border-white/10 p-4 space-y-3 shadow-xs">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                        {/* Inscription Date */}
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <label className="text-xs font-mono font-bold uppercase tracking-wider text-text-secondary">
+                              Date
+                            </label>
+                            {/* Calendar Trigger */}
+                            <label className="inline-flex items-center gap-1 text-[11px] font-mono text-accent-primary hover:underline cursor-pointer select-none">
+                              <Calendar className="w-3 h-3" />
+                              <span>Pick Date</span>
+                              <input
+                                type="date"
+                                className="sr-only"
+                                onChange={(e) => {
+                                  if (!e.target.value) return;
+                                  const [y, m, d] = e.target.value.split("-").map(Number);
+                                  const picked = new Date(y, m - 1, d);
+                                  const formatted = new Intl.DateTimeFormat("en-US", {
+                                    day: "numeric",
+                                    month: "long",
+                                    year: "numeric",
+                                  }).format(picked);
+                                  setConfig({ ...config, date: formatted });
+                                }}
+                              />
+                            </label>
+                          </div>
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={config.date}
+                              onChange={(e) => setConfig({ ...config, date: e.target.value })}
+                              placeholder="e.g. September 18, 2026"
+                              className="w-full px-3 py-2 rounded-lg border border-border-default dark:border-white/15 bg-surface-elevated dark:bg-black/40 text-text-primary text-xs font-medium focus:outline-none focus:border-accent-primary transition-all pr-7"
+                            />
+                            {config.date && (
+                              <button
+                                type="button"
+                                onClick={() => setConfig({ ...config, date: "" })}
+                                title="Clear date"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-text-tertiary hover:text-text-primary cursor-pointer"
+                              >
+                                ×
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Club / Org Signature */}
+                        <div>
+                          <label className="block text-xs font-mono font-bold uppercase tracking-wider text-text-secondary mb-1">
+                            Club Signature
+                          </label>
+                          <input
+                            type="text"
+                            value={config.clubName}
+                            onChange={(e) => setConfig({ ...config, clubName: e.target.value })}
+                            placeholder="MEC Computer Club"
+                            className="w-full px-3 py-2 rounded-lg border border-border-default dark:border-white/15 bg-surface-elevated dark:bg-black/40 text-text-primary text-xs font-medium focus:outline-none focus:border-accent-primary transition-all"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Quick Date Presets */}
+                      <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-border-default/60 dark:border-white/5">
+                        <span className="text-[10px] font-mono text-text-tertiary mr-0.5">Quick:</span>
                         <button
                           type="button"
                           onClick={() => {
-                            const photoDate = new Date(selectedPhoto.file!.lastModified);
-                            const formatted = new Intl.DateTimeFormat("en-US", {
+                            const today = new Intl.DateTimeFormat("en-US", {
                               day: "numeric",
                               month: "long",
                               year: "numeric",
-                            }).format(photoDate);
-                            setConfig({ ...config, date: formatted });
+                            }).format(new Date());
+                            setConfig({ ...config, date: today });
                           }}
-                          className="text-[10px] font-mono px-2 py-0.5 rounded bg-accent-primary/10 border border-accent-primary/30 text-accent-primary hover:bg-accent-primary/20 transition-all font-semibold"
+                          className="text-[10px] font-mono px-2 py-0.5 rounded bg-surface-secondary dark:bg-white/[0.04] border border-border-default/80 dark:border-white/10 text-text-secondary hover:text-text-primary hover:border-accent-primary transition-all cursor-pointer"
                         >
-                          From Photo Date
+                          Today
                         </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-mono font-semibold uppercase text-text-secondary mb-1.5">
-                      Club / Organization Name
-                    </label>
-                    <input
-                      type="text"
-                      value={config.clubName}
-                      onChange={(e) => setConfig({ ...config, clubName: e.target.value })}
-                      placeholder="MEC Computer Club"
-                      className="w-full px-3 py-2 rounded-lg border border-border-default bg-surface-primary text-text-primary text-sm font-medium focus:outline-none focus:border-accent-primary transition-all"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* 2. Logo & Monogram Selection */}
-            <div className="p-5 sm:p-6 bg-surface-elevated rounded-xl border border-black shadow-[4px_4px_0px_var(--accent-primary)]">
-              <div className="flex items-center justify-between mb-4 border-b border-border-default pb-3">
-                <div className="flex items-center gap-2">
-                  <Shield className="w-4 h-4 text-accent-primary" />
-                  <h2 className="font-heading font-bold text-base text-text-primary">
-                    2. Logo & Monogram
-                  </h2>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => sigilInputRef.current?.click()}
-                  className="inline-flex items-center gap-1 text-xs font-semibold text-accent-primary hover:underline"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                  <span>Upload Logo</span>
-                </button>
-                <input
-                  ref={sigilInputRef}
-                  type="file"
-                  accept="image/png,image/svg+xml,image/jpeg,image/webp"
-                  onChange={handleCustomSigilUpload}
-                  className="hidden"
-                />
-              </div>
-
-              {/* Sigil Grid Selector */}
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
-                {sigils.map((sigil) => {
-                  const isSelected = selectedSigilId === sigil.id;
-                  return (
-                    <div
-                      key={sigil.id}
-                      onClick={() => setSelectedSigilId(sigil.id)}
-                      className={`group relative flex flex-col items-center p-2.5 rounded-xl border cursor-pointer transition-all ${
-                        isSelected
-                          ? "border-accent-primary bg-accent-primary/10 shadow-sm ring-1 ring-accent-primary/50"
-                          : "border-border-default bg-surface-primary hover:border-text-primary/40 hover:bg-surface-elevated"
-                      }`}
-                    >
-                      <div className="relative w-14 h-14 rounded-lg bg-[#0a0c12] p-1.5 flex items-center justify-center border border-border-default shadow-inner overflow-hidden">
-                        <div
-                          className="w-full h-full transition-colors duration-200"
-                          style={{
-                            maskImage: `url(${sigil.src})`,
-                            WebkitMaskImage: `url(${sigil.src})`,
-                            maskSize: "contain",
-                            WebkitMaskSize: "contain",
-                            maskRepeat: "no-repeat",
-                            WebkitMaskRepeat: "no-repeat",
-                            maskPosition: "center",
-                            WebkitMaskPosition: "center",
-                            backgroundColor: config.monogramColor || "#FFFFFF",
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const d = new Date();
+                            d.setDate(d.getDate() - 1);
+                            const yest = new Intl.DateTimeFormat("en-US", {
+                              day: "numeric",
+                              month: "long",
+                              year: "numeric",
+                            }).format(d);
+                            setConfig({ ...config, date: yest });
                           }}
-                        />
-                        {isSelected && (
-                          <div className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-accent-primary flex items-center justify-center shadow-xs">
-                            <Check className="w-2.5 h-2.5 text-[#05050f] stroke-[3]" />
-                          </div>
+                          className="text-[10px] font-mono px-2 py-0.5 rounded bg-surface-secondary dark:bg-white/[0.04] border border-border-default/80 dark:border-white/10 text-text-secondary hover:text-text-primary hover:border-accent-primary transition-all cursor-pointer"
+                        >
+                          Yesterday
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const monthOnly = new Intl.DateTimeFormat("en-US", {
+                              month: "long",
+                              year: "numeric",
+                            }).format(new Date());
+                            setConfig({ ...config, date: monthOnly });
+                          }}
+                          className="text-[10px] font-mono px-2 py-0.5 rounded bg-surface-secondary dark:bg-white/[0.04] border border-border-default/80 dark:border-white/10 text-text-secondary hover:text-text-primary hover:border-accent-primary transition-all cursor-pointer"
+                        >
+                          Month & Year
+                        </button>
+                        {selectedPhoto?.file?.lastModified && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const photoDate = new Date(selectedPhoto.file!.lastModified);
+                              const formatted = new Intl.DateTimeFormat("en-US", {
+                                day: "numeric",
+                                month: "long",
+                                year: "numeric",
+                              }).format(photoDate);
+                              setConfig({ ...config, date: formatted });
+                            }}
+                            className="text-[10px] font-mono px-2 py-0.5 rounded bg-accent-primary/10 border border-accent-primary/30 text-accent-text-on-surface hover:bg-accent-primary/20 transition-all font-bold cursor-pointer"
+                          >
+                            From Photo EXIF
+                          </button>
                         )}
                       </div>
-                      <span className="text-[11px] font-semibold text-text-primary text-center mt-2 truncate max-w-full">
-                        {sigil.name}
-                      </span>
-                      <span className="text-[9px] font-mono text-text-tertiary text-center truncate max-w-full">
-                        {sigil.subtitle}
-                      </span>
+                    </div>
 
-                      {/* Custom delete button */}
-                      {sigil.isCustom && (
-                        <button
-                          type="button"
-                          onClick={(e) => handleDeleteCustomSigil(sigil.id, e)}
-                          title="Remove custom sigil"
-                          className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-accent-error text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-xs"
-                        >
-                          ×
-                        </button>
+                    {/* Step 1 Footer Action */}
+                    <div className="pt-2 flex items-center justify-between">
+                      <span className="text-[11px] font-mono text-text-tertiary">
+                        Step 1 of 3
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setActiveControlTab("sigil")}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-surface-secondary dark:bg-white/[0.08] hover:bg-accent-primary hover:text-black border border-border-default dark:border-white/15 text-xs font-bold text-text-primary transition-all cursor-pointer"
+                      >
+                        <span>Next: Logo Vault</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* ============================================================
+                    TAB 2: LOGO VAULT
+                    ============================================================ */}
+                {activeControlTab === "sigil" && (
+                  <div className="space-y-4 animate-in fade-in duration-200">
+                    {/* Header with Upload Logo */}
+                    <div className="flex items-center justify-between pb-1">
+                      <div>
+                        <h3 className="font-heading font-bold text-sm text-text-primary">
+                          Official Club Insignia & Seals
+                        </h3>
+                        <p className="text-[11px] font-mono text-text-tertiary">
+                          Rendered in vector-crisp resolution
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => sigilInputRef.current?.click()}
+                        className="inline-flex items-center gap-1 text-xs font-semibold text-accent-primary hover:underline bg-accent-primary/10 border border-accent-primary/30 px-2.5 py-1 rounded-lg transition-all cursor-pointer"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Upload Custom</span>
+                      </button>
+                      <input
+                        ref={sigilInputRef}
+                        type="file"
+                        accept="image/png,image/svg+xml,image/jpeg,image/webp"
+                        onChange={handleCustomSigilUpload}
+                        className="hidden"
+                      />
+                    </div>
+
+                    {/* Sigil Grid Selector */}
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
+                      {sigils.map((sigil) => {
+                        const isSelected = selectedSigilId === sigil.id;
+                        return (
+                          <div
+                            key={sigil.id}
+                            onClick={() => setSelectedSigilId(sigil.id)}
+                            className={`group relative flex flex-col items-center p-2 rounded-xl border cursor-pointer transition-all ${
+                              isSelected
+                                ? "border-accent-primary bg-accent-primary/10 shadow-sm ring-1 ring-accent-primary/50"
+                                : "border-border-default/80 dark:border-white/10 bg-surface-primary dark:bg-[#0e121e] hover:border-text-primary/40 hover:bg-surface-elevated"
+                            }`}
+                          >
+                            <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-[#07090f] p-1.5 flex items-center justify-center border border-border-default/80 dark:border-white/10 shadow-inner overflow-hidden">
+                              <div
+                                className="w-full h-full transition-colors duration-200"
+                                style={{
+                                  maskImage: `url(${sigil.src})`,
+                                  WebkitMaskImage: `url(${sigil.src})`,
+                                  maskSize: "contain",
+                                  WebkitMaskSize: "contain",
+                                  maskRepeat: "no-repeat",
+                                  WebkitMaskRepeat: "no-repeat",
+                                  maskPosition: "center",
+                                  WebkitMaskPosition: "center",
+                                  backgroundColor: config.monogramColor || "#FFFFFF",
+                                }}
+                              />
+                              {isSelected && (
+                                <div className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-accent-primary flex items-center justify-center shadow-xs">
+                                  <Check className="w-2.5 h-2.5 text-[#05050f] stroke-[3]" />
+                                </div>
+                              )}
+                            </div>
+                            <span className="text-[11px] font-semibold text-text-primary text-center mt-1.5 truncate max-w-full">
+                              {sigil.name}
+                            </span>
+                            <span className="text-[9px] font-mono text-text-tertiary text-center truncate max-w-full">
+                              {sigil.subtitle}
+                            </span>
+
+                            {/* Custom delete button */}
+                            {sigil.isCustom && (
+                              <button
+                                type="button"
+                                onClick={(e) => handleDeleteCustomSigil(sigil.id, e)}
+                                title="Remove custom sigil"
+                                className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-accent-error text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-xs cursor-pointer"
+                              >
+                                ×
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Logo Customization Card */}
+                    <div className="bg-surface-primary dark:bg-[#0f121d] rounded-xl border border-border-default/80 dark:border-white/10 p-4 space-y-3.5 shadow-xs">
+                      {/* Monogram Toggle Switch */}
+                      <div className="flex items-center justify-between">
+                        <label className="flex items-center gap-2 cursor-pointer select-none text-text-primary font-semibold text-xs">
+                          <input
+                            type="checkbox"
+                            checked={config.showMonogram}
+                            onChange={(e) => setConfig({ ...config, showMonogram: e.target.checked })}
+                            className="accent-accent-primary w-4 h-4 rounded cursor-pointer"
+                          />
+                          <span>Display Logo Seal on Photo (Top-Right)</span>
+                        </label>
+                        <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
+                          config.showMonogram
+                            ? "bg-accent-primary/20 text-accent-text-on-surface border border-accent-primary/30"
+                            : "bg-surface-secondary text-text-tertiary"
+                        }`}>
+                          {config.showMonogram ? "VISIBLE" : "HIDDEN"}
+                        </span>
+                      </div>
+
+                      {config.showMonogram && (
+                        <div className="pt-2 border-t border-border-default/60 dark:border-white/10 space-y-3">
+                          {/* Monogram Color Picker */}
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1.5">
+                                <Palette className="w-3.5 h-3.5 text-accent-primary" />
+                                <span className="text-xs font-mono font-bold uppercase tracking-wider text-text-secondary">
+                                  Monogram Color
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="color"
+                                  value={config.monogramColor}
+                                  onChange={(e) =>
+                                    setConfig({ ...config, monogramColor: e.target.value })
+                                  }
+                                  className="w-7 h-7 rounded-lg border border-border-default dark:border-white/20 cursor-pointer bg-surface-primary p-0.5 shadow-xs overflow-hidden"
+                                  title="Choose custom monogram color"
+                                />
+                                <input
+                                  type="text"
+                                  value={config.monogramColor}
+                                  onChange={(e) =>
+                                    setConfig({ ...config, monogramColor: e.target.value })
+                                  }
+                                  placeholder="#FFFFFF"
+                                  className="w-20 px-2 py-1 text-xs font-mono rounded-lg border border-border-default dark:border-white/15 bg-surface-elevated dark:bg-black/40 text-text-primary text-center font-bold focus:outline-none focus:border-accent-primary uppercase"
+                                  maxLength={7}
+                                />
+                              </div>
+                            </div>
+
+                            {/* Preset Monogram Color Swatches */}
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              {[
+                                { label: "White", color: "#FFFFFF" },
+                                { label: "MEC Lime", color: "#D4F429" },
+                                { label: "Amber Gold", color: "#F59E0B" },
+                                { label: "Cyber Mint", color: "#00F5A0" },
+                                { label: "Electric Cyan", color: "#00E5FF" },
+                                { label: "Crimson", color: "#FF3366" },
+                                { label: "Violet", color: "#A855F7" },
+                                { label: "Deep Obsidian", color: "#000000" },
+                              ].map((preset) => {
+                                const isActive =
+                                  config.monogramColor.toUpperCase() === preset.color.toUpperCase();
+                                return (
+                                  <button
+                                    key={preset.color}
+                                    type="button"
+                                    onClick={() =>
+                                      setConfig({ ...config, monogramColor: preset.color })
+                                    }
+                                    className={`group flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-mono border transition-all cursor-pointer ${
+                                      isActive
+                                        ? "border-accent-primary bg-accent-primary/15 text-text-primary font-bold shadow-xs scale-102"
+                                        : "border-border-default/80 dark:border-white/10 bg-surface-elevated dark:bg-black/30 text-text-secondary hover:border-text-primary/40"
+                                    }`}
+                                    title={`Select ${preset.label} (${preset.color})`}
+                                  >
+                                    <span
+                                      className="w-2.5 h-2.5 rounded-full border border-black/20 shrink-0 shadow-xs"
+                                      style={{ backgroundColor: preset.color }}
+                                    />
+                                    <span>{preset.label}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* Monogram Scale Slider */}
+                          <div className="space-y-1.5 pt-2 border-t border-border-default/60 dark:border-white/10">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-mono text-text-secondary uppercase">
+                                Logo Scale Multiplier
+                              </span>
+                              <span className="text-[11px] font-mono text-text-primary font-bold bg-surface-elevated dark:bg-black/40 px-2 py-0.5 rounded border border-border-default dark:border-white/15">
+                                {Math.round(config.monogramSizeMultiplier * 100)}%
+                              </span>
+                            </div>
+                            <input
+                              type="range"
+                              min="0.3"
+                              max="3.5"
+                              step="0.05"
+                              value={config.monogramSizeMultiplier}
+                              onChange={(e) =>
+                                setConfig({
+                                  ...config,
+                                  monogramSizeMultiplier: parseFloat(e.target.value),
+                                })
+                              }
+                              className="w-full accent-accent-primary cursor-pointer"
+                            />
+                            {/* Quick Sizes */}
+                            <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                              {[
+                                { label: "Subtle (50%)", val: 0.5 },
+                                { label: "Standard (100%)", val: 1.0 },
+                                { label: "Prominent (150%)", val: 1.5 },
+                                { label: "Large (200%)", val: 2.0 },
+                              ].map((preset) => (
+                                <button
+                                  key={preset.label}
+                                  type="button"
+                                  onClick={() => setConfig({ ...config, monogramSizeMultiplier: preset.val })}
+                                  className={`px-2 py-0.5 text-[10px] font-mono rounded border transition-all cursor-pointer ${
+                                    Math.abs(config.monogramSizeMultiplier - preset.val) < 0.04
+                                      ? "bg-accent-primary text-black font-bold border-accent-primary shadow-xs"
+                                      : "bg-surface-elevated dark:bg-black/30 text-text-secondary border-border-default/80 dark:border-white/10 hover:text-text-primary"
+                                  }`}
+                                >
+                                  {preset.label}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Monogram Soft Shadow Toggle */}
+                          <div className="pt-2 border-t border-border-default/60 dark:border-white/10">
+                            <label className="flex items-center gap-2 cursor-pointer select-none text-text-secondary hover:text-text-primary text-xs">
+                              <input
+                                type="checkbox"
+                                checked={config.monogramShadow}
+                                onChange={(e) =>
+                                  setConfig({ ...config, monogramShadow: e.target.checked })
+                                }
+                                className="accent-accent-primary w-4 h-4 rounded cursor-pointer"
+                              />
+                              <span className="font-mono text-[11px]">
+                                Soft shadow behind logo (enhances contrast on bright/white backgrounds)
+                              </span>
+                            </label>
+                          </div>
+                        </div>
                       )}
                     </div>
-                  );
-                })}
-              </div>
 
-              {/* Monogram Color Picker */}
-              <div className="mt-4 pt-3.5 border-t border-border-default space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Palette className="w-4 h-4 text-accent-primary" />
-                    <span className="text-xs font-mono font-bold uppercase tracking-wider text-text-primary">
-                      Monogram Color
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="relative flex items-center">
-                      <input
-                        type="color"
-                        value={config.monogramColor}
-                        onChange={(e) =>
-                          setConfig({ ...config, monogramColor: e.target.value })
-                        }
-                        className="w-8 h-8 rounded-lg border border-border-default cursor-pointer bg-surface-primary p-0.5 shadow-xs overflow-hidden"
-                        title="Choose custom monogram color"
-                      />
-                    </div>
-                    <input
-                      type="text"
-                      value={config.monogramColor}
-                      onChange={(e) =>
-                        setConfig({ ...config, monogramColor: e.target.value })
-                      }
-                      placeholder="#FFFFFF"
-                      className="w-24 px-2 py-1 text-xs font-mono rounded-lg border border-border-default bg-surface-primary text-text-primary text-center font-bold focus:outline-none focus:border-accent-primary uppercase tracking-wide"
-                      maxLength={7}
-                    />
-                  </div>
-                </div>
-
-                {/* Preset Monogram Color Swatches */}
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  {[
-                    { label: "White", color: "#FFFFFF" },
-                    { label: "MEC Lime", color: "#D4F429" },
-                    { label: "Amber Gold", color: "#F59E0B" },
-                    { label: "Cyber Mint", color: "#00F5A0" },
-                    { label: "Electric Cyan", color: "#00E5FF" },
-                    { label: "Crimson", color: "#FF3366" },
-                    { label: "Violet", color: "#A855F7" },
-                    { label: "Deep Obsidian", color: "#000000" },
-                  ].map((preset) => {
-                    const isActive =
-                      config.monogramColor.toUpperCase() === preset.color.toUpperCase();
-                    return (
+                    {/* Step 2 Footer Navigation */}
+                    <div className="pt-2 flex items-center justify-between">
                       <button
-                        key={preset.color}
                         type="button"
-                        onClick={() =>
-                          setConfig({ ...config, monogramColor: preset.color })
-                        }
-                        className={`group flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono border transition-all ${
-                          isActive
-                            ? "border-accent-primary bg-accent-primary/15 text-text-primary font-bold shadow-xs scale-102"
-                            : "border-border-default bg-surface-primary text-text-secondary hover:border-text-primary/40 hover:bg-surface-elevated"
-                        }`}
-                        title={`Select ${preset.label} (${preset.color})`}
+                        onClick={() => setActiveControlTab("event")}
+                        className="text-xs font-semibold text-text-secondary hover:text-text-primary transition-all cursor-pointer"
                       >
-                        <span
-                          className="w-3 h-3 rounded-full border border-black/20 shrink-0 shadow-xs"
-                          style={{ backgroundColor: preset.color }}
-                        />
-                        <span>{preset.label}</span>
+                        ← Back: Event Info
                       </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Monogram settings */}
-              <div className="mt-3.5 pt-3.5 border-t border-border-default space-y-2.5 text-xs">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <label className="flex items-center gap-2 cursor-pointer select-none text-text-primary font-semibold">
-                    <input
-                      type="checkbox"
-                      checked={config.showMonogram}
-                      onChange={(e) => setConfig({ ...config, showMonogram: e.target.checked })}
-                      className="accent-accent-primary w-4 h-4 rounded"
-                    />
-                    <span>Show Logo Watermark (Top-Right)</span>
-                  </label>
-
-                  {config.showMonogram && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-[11px] font-mono text-text-tertiary">Scale:</span>
-                      <input
-                        type="range"
-                        min="0.3"
-                        max="3.5"
-                        step="0.05"
-                        value={config.monogramSizeMultiplier}
-                        onChange={(e) =>
-                          setConfig({
-                            ...config,
-                            monogramSizeMultiplier: parseFloat(e.target.value),
-                          })
-                        }
-                        className="w-28 accent-accent-primary cursor-pointer"
-                        title="Adjust monogram scale"
-                      />
-                      <span className="text-[11px] font-mono text-text-primary w-11 text-right font-bold bg-surface-primary px-1.5 py-0.5 rounded border border-border-default">
-                        {Math.round(config.monogramSizeMultiplier * 100)}%
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {config.showMonogram && (
-                  <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                    <span className="text-[10px] font-mono text-text-tertiary mr-1">Quick Sizes:</span>
-                    {[
-                      { label: "Subtle (50%)", val: 0.5 },
-                      { label: "Standard (100%)", val: 1.0 },
-                      { label: "Prominent (150%)", val: 1.5 },
-                      { label: "Large (200%)", val: 2.0 },
-                      { label: "Heroic (280%)", val: 2.8 },
-                    ].map((preset) => (
                       <button
-                        key={preset.label}
                         type="button"
-                        onClick={() => setConfig({ ...config, monogramSizeMultiplier: preset.val })}
-                        className={`px-2 py-0.5 text-[10px] font-mono rounded border transition-all ${
-                          Math.abs(config.monogramSizeMultiplier - preset.val) < 0.04
-                            ? "bg-accent-primary text-black font-bold border-accent-primary shadow-xs"
-                            : "bg-surface-primary text-text-secondary border-border-default hover:border-text-primary/40 hover:text-text-primary"
-                        }`}
+                        onClick={() => setActiveControlTab("style")}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-surface-secondary dark:bg-white/[0.08] hover:bg-accent-primary hover:text-black border border-border-default dark:border-white/15 text-xs font-bold text-text-primary transition-all cursor-pointer"
                       >
-                        {preset.label}
+                        <span>Next: Style & FX</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
                       </button>
-                    ))}
+                    </div>
                   </div>
                 )}
 
-                {/* Optional Monogram Shadow Toggle (Default: Off) */}
-                {config.showMonogram && (
-                  <div className="pt-2 border-t border-border-default/60">
-                    <label className="flex items-center gap-2 cursor-pointer select-none text-text-secondary hover:text-text-primary">
-                      <input
-                        type="checkbox"
-                        checked={config.monogramShadow}
-                        onChange={(e) =>
-                          setConfig({ ...config, monogramShadow: e.target.checked })
-                        }
-                        className="accent-accent-primary w-4 h-4 rounded cursor-pointer"
-                      />
-                      <span className="text-[11px] font-mono">
-                        Soft shadow behind logo (Optional, default: off)
+                {/* ============================================================
+                    TAB 3: STYLE & FX
+                    ============================================================ */}
+                {activeControlTab === "style" && (
+                  <div className="space-y-4 animate-in fade-in duration-200">
+                    {/* Typography Style Card */}
+                    <div className="bg-surface-primary dark:bg-[#0f121d] rounded-xl border border-border-default/80 dark:border-white/10 p-4 space-y-3 shadow-xs">
+                      <div>
+                        <div className="flex items-center justify-between mb-1.5">
+                          <label className="text-xs font-mono font-bold uppercase tracking-wider text-text-secondary">
+                            Typography Pairing
+                          </label>
+                          <span className="text-[10px] font-mono text-text-tertiary">
+                            Font Metrics
+                          </span>
+                        </div>
+                        <Select
+                          value={config.fontStyle}
+                          onChange={(val) =>
+                            setConfig({ ...config, fontStyle: val as FontCombination })
+                          }
+                          options={FONT_STYLE_OPTIONS}
+                        />
+                        <p className="text-[11px] font-mono text-text-tertiary mt-1.5">
+                          {config.fontStyle === "website" &&
+                            "✦ Signature pairing: General Sans Bold title + JetBrains Mono metadata."}
+                          {config.fontStyle === "space" &&
+                            "✦ Space Brutalist: Space Grotesk Bold title + JetBrains Mono metadata."}
+                          {config.fontStyle === "clean" &&
+                            "✦ Clean Modernist: General Sans throughout for ultra-clean minimalism."}
+                        </p>
+                      </div>
+
+                      {/* Typography Scale Slider */}
+                      <div className="pt-2 border-t border-border-default/60 dark:border-white/10 space-y-1.5">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="font-mono text-text-secondary uppercase">Typography Scale</span>
+                          <span className="font-mono text-text-primary font-bold bg-surface-elevated dark:bg-black/40 px-2 py-0.5 rounded border border-border-default dark:border-white/15 text-[11px]">
+                            {Math.round(config.fontSizeMultiplier * 100)}%
+                          </span>
+                        </div>
+                        <input
+                          type="range"
+                          min="0.7"
+                          max="1.5"
+                          step="0.05"
+                          value={config.fontSizeMultiplier}
+                          onChange={(e) =>
+                            setConfig({ ...config, fontSizeMultiplier: parseFloat(e.target.value) })
+                          }
+                          className="w-full accent-accent-primary cursor-pointer"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Gradient & Lighting Card */}
+                    <div className="bg-surface-primary dark:bg-[#0f121d] rounded-xl border border-border-default/80 dark:border-white/10 p-4 space-y-3.5 shadow-xs">
+                      {/* Gradient Preset Dropdown */}
+                      <div>
+                        <label className="block text-xs font-mono font-bold uppercase tracking-wider text-text-secondary mb-1.5">
+                          Atmospheric Preset
+                        </label>
+                        <Select
+                          value={activePreset}
+                          onChange={handlePresetChange}
+                          options={PRESET_OPTIONS}
+                        />
+                      </div>
+
+                      {/* Base Tint Palette */}
+                      <div className="pt-2 border-t border-border-default/60 dark:border-white/10 space-y-2">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="font-mono text-text-secondary uppercase">Gradient Base Tint</span>
+                          <span className="font-mono text-text-primary font-bold text-[11px] bg-surface-elevated dark:bg-black/40 px-1.5 py-0.5 rounded border border-border-default dark:border-white/15">
+                            {config.gradientColor}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="flex gap-1.5 flex-1">
+                            {COLOR_PRESETS.map((preset) => (
+                              <button
+                                key={preset.color}
+                                type="button"
+                                onClick={() => setConfig({ ...config, gradientColor: preset.color })}
+                                style={{ backgroundColor: preset.color }}
+                                title={preset.label}
+                                className={`flex-1 h-7 rounded-lg border transition-all cursor-pointer ${
+                                  config.gradientColor.toLowerCase() === preset.color.toLowerCase()
+                                    ? "border-accent-primary ring-2 ring-accent-primary/40 scale-105"
+                                    : "border-border-default dark:border-white/20 hover:scale-102"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          {/* Native color picker */}
+                          <input
+                            type="color"
+                            value={config.gradientColor}
+                            onChange={(e) => setConfig({ ...config, gradientColor: e.target.value })}
+                            className="w-8 h-7 p-0 border border-border-default dark:border-white/20 rounded-lg cursor-pointer bg-transparent"
+                            title="Custom Color Picker"
+                          />
+                        </div>
+                      </div>
+
+                      {/* Gradient Depth & Intensity in 2 columns */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2 border-t border-border-default/60 dark:border-white/10">
+                        <div>
+                          <div className="flex justify-between items-center text-xs mb-1">
+                            <span className="font-mono text-text-secondary uppercase">Fade Reach</span>
+                            <span className="font-mono text-text-primary font-bold text-[11px] bg-surface-elevated dark:bg-black/40 px-1.5 py-0.2 rounded border border-border-default dark:border-white/15">
+                              {config.gradientDepth}%
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min="20"
+                            max="75"
+                            step="1"
+                            value={config.gradientDepth}
+                            onChange={(e) =>
+                              setConfig({ ...config, gradientDepth: parseInt(e.target.value, 10) })
+                            }
+                            className="w-full accent-accent-primary cursor-pointer"
+                          />
+                        </div>
+
+                        <div>
+                          <div className="flex justify-between items-center text-xs mb-1">
+                            <span className="font-mono text-text-secondary uppercase">Fade Intensity</span>
+                            <span className="font-mono text-text-primary font-bold text-[11px] bg-surface-elevated dark:bg-black/40 px-1.5 py-0.2 rounded border border-border-default dark:border-white/15">
+                              {config.gradientOpacity}%
+                            </span>
+                          </div>
+                          <input
+                            type="range"
+                            min="40"
+                            max="100"
+                            step="1"
+                            value={config.gradientOpacity}
+                            onChange={(e) =>
+                              setConfig({ ...config, gradientOpacity: parseInt(e.target.value, 10) })
+                            }
+                            className="w-full accent-accent-primary cursor-pointer"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Step 3 Footer Navigation */}
+                    <div className="pt-2 flex items-center justify-between">
+                      <button
+                        type="button"
+                        onClick={() => setActiveControlTab("sigil")}
+                        className="text-xs font-semibold text-text-secondary hover:text-text-primary transition-all cursor-pointer"
+                      >
+                        ← Back: Logo Vault
+                      </button>
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-accent-text-on-surface bg-accent-primary/10 border border-accent-primary/30 px-2.5 py-1 rounded-lg">
+                        <Check className="w-3 h-3 text-accent-primary" />
+                        <span>Live Preview Synced</span>
                       </span>
-                    </label>
+                    </div>
                   </div>
                 )}
-              </div>
-            </div>
-
-            {/* 3. Style & Overlay Settings */}
-            <div className="p-5 sm:p-6 bg-surface-elevated rounded-xl border border-black shadow-[4px_4px_0px_var(--accent-primary)]">
-              <div className="flex items-center justify-between mb-4 border-b border-border-default pb-3">
-                <div className="flex items-center gap-2">
-                  <Sliders className="w-4 h-4 text-accent-primary" />
-                  <h2 className="font-heading font-bold text-base text-text-primary">
-                    3. Style & Overlay Settings
-                  </h2>
-                </div>
-                <span className="text-[11px] font-mono text-text-tertiary">
-                  {config.fontStyle === "website"
-                    ? "General Sans + JetBrains Mono"
-                    : config.fontStyle === "space"
-                    ? "Space Grotesk + JetBrains Mono"
-                    : "General Sans Minimal"}
-                </span>
-              </div>
-
-              <div className="space-y-4">
-                {/* Typography Style Selector */}
-                <div>
-                  <label className="block text-xs font-mono font-semibold uppercase text-text-secondary mb-1.5">
-                    Typography Style
-                  </label>
-                  <Select
-                    value={config.fontStyle}
-                    onChange={(val) =>
-                      setConfig({ ...config, fontStyle: val as FontCombination })
-                    }
-                    options={FONT_STYLE_OPTIONS}
-                  />
-                  <p className="text-[11px] font-mono text-text-tertiary mt-1">
-                    {config.fontStyle === "website" &&
-                      "✦ Signature pairing: General Sans Bold title + JetBrains Mono metadata (no drop shadow)."}
-                    {config.fontStyle === "space" &&
-                      "✦ Space Brutalist: Space Grotesk Bold title + JetBrains Mono metadata (no drop shadow)."}
-                    {config.fontStyle === "clean" &&
-                      "✦ Clean Modernist: General Sans throughout for ultra-clean minimalism (no drop shadow)."}
-                  </p>
-                </div>
-
-                {/* Preset Dropdown */}
-                <div>
-                  <label className="block text-xs font-mono font-semibold uppercase text-text-secondary mb-1.5">
-                    Gradient Preset
-                  </label>
-                  <Select
-                    value={activePreset}
-                    onChange={handlePresetChange}
-                    options={PRESET_OPTIONS}
-                  />
-                </div>
-
-                {/* Font Size Multiplier Slider */}
-                <div>
-                  <div className="flex justify-between items-center text-xs mb-1">
-                    <span className="font-mono text-text-secondary uppercase">Typography Scale</span>
-                    <span className="font-mono text-text-tertiary">
-                      {Math.round(config.fontSizeMultiplier * 100)}% (Small ↔ Large)
-                    </span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0.7"
-                    max="1.5"
-                    step="0.05"
-                    value={config.fontSizeMultiplier}
-                    onChange={(e) =>
-                      setConfig({ ...config, fontSizeMultiplier: parseFloat(e.target.value) })
-                    }
-                    className="w-full accent-accent-primary cursor-pointer"
-                  />
-                </div>
-
-                {/* Shadow / Gradient Color */}
-                <div>
-                  <div className="flex justify-between items-center text-xs mb-1.5">
-                    <span className="font-mono text-text-secondary uppercase">Gradient Base Tint</span>
-                    <span className="font-mono text-text-tertiary">{config.gradientColor}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex gap-1.5 flex-1">
-                      {COLOR_PRESETS.map((preset) => (
-                        <button
-                          key={preset.color}
-                          type="button"
-                          onClick={() => setConfig({ ...config, gradientColor: preset.color })}
-                          style={{ backgroundColor: preset.color }}
-                          title={preset.label}
-                          className={`flex-1 h-7 rounded border transition-all ${
-                            config.gradientColor.toLowerCase() === preset.color.toLowerCase()
-                              ? "border-accent-primary ring-2 ring-accent-primary/40 scale-105"
-                              : "border-border-default hover:scale-102"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    {/* Native color picker */}
-                    <input
-                      type="color"
-                      value={config.gradientColor}
-                      onChange={(e) => setConfig({ ...config, gradientColor: e.target.value })}
-                      className="w-8 h-7 p-0 border border-border-default rounded cursor-pointer bg-transparent"
-                      title="Custom Color Picker"
-                    />
-                  </div>
-                </div>
-
-                {/* Gradient Depth & Intensity in 2 columns */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                  <div>
-                    <div className="flex justify-between items-center text-xs mb-1">
-                      <span className="font-mono text-text-secondary uppercase">Fade Reach</span>
-                      <span className="font-mono text-text-tertiary">{config.gradientDepth}%</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="20"
-                      max="75"
-                      step="1"
-                      value={config.gradientDepth}
-                      onChange={(e) =>
-                        setConfig({ ...config, gradientDepth: parseInt(e.target.value, 10) })
-                      }
-                      className="w-full accent-accent-primary cursor-pointer"
-                    />
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between items-center text-xs mb-1">
-                      <span className="font-mono text-text-secondary uppercase">Fade Intensity</span>
-                      <span className="font-mono text-text-tertiary">{config.gradientOpacity}%</span>
-                    </div>
-                    <input
-                      type="range"
-                      min="40"
-                      max="100"
-                      step="1"
-                      value={config.gradientOpacity}
-                      onChange={(e) =>
-                        setConfig({ ...config, gradientOpacity: parseInt(e.target.value, 10) })
-                      }
-                      className="w-full accent-accent-primary cursor-pointer"
-                    />
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -1047,7 +1231,7 @@ export function WatermarkForgeClient() {
               ============================================================ */}
           <div className="lg:col-span-7 space-y-6">
             {/* Live Photo Preview */}
-            <div className="bg-surface-elevated rounded-xl border border-black shadow-[4px_4px_0px_var(--accent-primary)] overflow-hidden">
+            <div className="bg-surface-elevated rounded-xl border border-black shadow-[4px_4px_0px_var(--accent-primary)] overflow-hidden sticky top-[84px] z-20">
               <div className="p-4 border-b border-border-default flex flex-wrap items-center justify-between gap-3 bg-surface-secondary/40">
                 <div className="flex items-center gap-2">
                   <Eye className="w-4 h-4 text-accent-primary" />
