@@ -6,7 +6,7 @@
 export interface SigilItem {
   id: string;
   name: string;
-  subtitle: string;
+  subtitle?: string;
   src: string;
   isCustom?: boolean;
 }
@@ -15,8 +15,14 @@ export const DEFAULT_SIGILS: SigilItem[] = [
   {
     id: "mcc-sigil",
     name: "MCC Emblem",
-    subtitle: "Official Monogram Vector",
+    subtitle: "",
     src: "/mcc.svg",
+  },
+  {
+    id: "mec-seal",
+    name: "MEC Emblem",
+    subtitle: "",
+    src: "/mec-emblem.png",
   },
 ];
 
@@ -28,7 +34,9 @@ export function loadCustomSigils(): SigilItem[] {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed)
+      ? parsed.filter((s) => s && s.isCustom && s.id !== "mec-seal" && s.id !== "mcc-sigil")
+      : [];
   } catch (err) {
     console.error("Failed to load custom sigils:", err);
     return [];

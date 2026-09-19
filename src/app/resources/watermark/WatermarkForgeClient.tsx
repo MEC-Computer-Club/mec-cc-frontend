@@ -24,11 +24,10 @@ import {
   Plus,
   ArrowRight,
   Palette,
-  Calendar,
   Building,
   Type,
   FileCheck2,
-  Film,
+  ExternalLink,
 } from "lucide-react";
 import { Select, SelectOption } from "@/components/ui/Select";
 import {
@@ -72,15 +71,8 @@ const COLOR_PRESETS = [
   { label: "Void Crimson", color: "#1D080C" },
 ];
 
-const PRESET_OPTIONS: SelectOption[] = [
-  { value: "balanced", label: "Balanced Standard (Recommended)" },
-  { value: "dramatic", label: "Dramatic Obsidian (Heavy Fade)" },
-  { value: "subtle", label: "Subtle Ambient (Light Fade)" },
-  { value: "tournament", label: "Tournament Focus (Large Titles)" },
-];
-
 const FONT_STYLE_OPTIONS: SelectOption[] = [
-  { value: "website", label: "MEC Website Signature (General Sans + JetBrains Mono)" },
+  { value: "website", label: "Signature (General Sans + JetBrains Mono)" },
   { value: "space", label: "Space Brutalist (Space Grotesk + JetBrains Mono)" },
   { value: "clean", label: "Clean Modernist (General Sans Minimal)" },
 ];
@@ -91,12 +83,13 @@ export function WatermarkForgeClient() {
   const [selectedIndex, setSelectedIndex] = useState<number>(0);
   const [config, setConfig] = useState<WatermarkConfig>({
     ...DEFAULT_WATERMARK_CONFIG,
+    bottomOffsetMultiplier: 0.5,
     date: new Intl.DateTimeFormat("en-US", { day: "numeric", month: "long", year: "numeric" }).format(new Date()),
   });
 
   const [sigils, setSigils] = useState<SigilItem[]>(DEFAULT_SIGILS);
   const [selectedSigilId, setSelectedSigilId] = useState<string>("mcc-sigil");
-  const [activePreset, setActivePreset] = useState<string>("balanced");
+  const [selectedSigil2Id, setSelectedSigil2Id] = useState<string>("mec-seal");
   const [activeControlTab, setActiveControlTab] = useState<"event" | "sigil" | "style">("event");
 
   const [progress, setProgress] = useState<{ current: number; total: number }>({ current: 0, total: 0 });
@@ -108,6 +101,7 @@ export function WatermarkForgeClient() {
   const previewCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const sigilInputRef = useRef<HTMLInputElement | null>(null);
+  const sigil2InputRef = useRef<HTMLInputElement | null>(null);
   const livePreviewTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   // Always-current config ref — lets updateLivePreview read fresh config
   // without being listed as a useCallback dependency (avoids function
@@ -125,6 +119,7 @@ export function WatermarkForgeClient() {
     const validCustom = custom.filter((s) => s.isCustom);
     setSigils([...validCustom, ...DEFAULT_SIGILS]);
     setSelectedSigilId("mcc-sigil");
+    setSelectedSigil2Id("mec-seal");
     ensureFontLoaded();
   }, []);
 
@@ -132,6 +127,38 @@ export function WatermarkForgeClient() {
   const selectedSigil = useMemo(
     () => sigils.find((s) => s.id === selectedSigilId) || sigils[0] || null,
     [sigils, selectedSigilId]
+  );
+  const selectedSigil2 = useMemo(
+    () =>
+      sigils.find((s) => s.id === selectedSigil2Id) ||
+      sigils.find((s) => s.id === "mec-seal") ||
+      sigils[1] ||
+      sigils[0] ||
+      null,
+    [sigils, selectedSigil2Id]
+  );
+
+  // Compute contextual config for logo tinting:
+  // - MEC Emblem: Always original colors (never tinted white/black)
+  // - MCC Emblem: Monochrome only (default white; fallback if original was set)
+  // - Custom uploads: User choice of Original / White / Black
+  const getEffectiveConfig = useCallback(
+    (baseConfig: WatermarkConfig, s1: SigilItem | null, s2: SigilItem | null): WatermarkConfig => ({
+      ...baseConfig,
+      monogramColor:
+        s1?.id === "mec-seal"
+          ? "original"
+          : s1?.id === "mcc-sigil" && baseConfig.monogramColor === "original"
+          ? "#FFFFFF"
+          : baseConfig.monogramColor,
+      secondLogoColor:
+        s2?.id === "mec-seal"
+          ? "original"
+          : s2?.id === "mcc-sigil" && (!baseConfig.secondLogoColor || baseConfig.secondLogoColor === "original")
+          ? "#FFFFFF"
+          : baseConfig.secondLogoColor || "original",
+    }),
+    []
   );
 
   // --- Live Preview Re-render ---
@@ -154,20 +181,33 @@ export function WatermarkForgeClient() {
       const sigilImg = selectedSigil ? await loadImage(selectedSigil.src) : null;
       if (gen !== renderGenRef.current) return; // stale
 
+      const sigil2Img =
+        configRef.current.showSecondLogo && selectedSigil2
+          ? await loadImage(selectedSigil2.src)
+          : null;
+      if (gen !== renderGenRef.current) return; // stale
+
+      const effectiveConfig = getEffectiveConfig(
+        configRef.current,
+        selectedSigil,
+        selectedSigil2
+      );
+
       await renderWatermarkOnCanvas(
         sourceImg,
         sigilImg,
-        configRef.current, // always latest config, no dep needed
-        previewCanvasRef.current
+        effectiveConfig, // always latest config with contextual color guards
+        previewCanvasRef.current,
+        sigil2Img
       );
     } catch (err) {
       console.error("Failed to render preview canvas:", err);
     }
-  }, [selectedPhoto, selectedSigil]); // config intentionally excluded
+  }, [selectedPhoto, selectedSigil, selectedSigil2, getEffectiveConfig]); // config intentionally excluded
 
   // Debounced preview update.
-  // Watches config, selectedPhoto, and selectedSigil directly so any change
-  // to these triggers a re-render. 180ms gives fast typists a comfortable
+  // Watches config, selectedPhoto, selectedSigil, and selectedSigil2 directly
+  // so any change triggers a re-render. 180ms gives fast typists a comfortable
   // window before the canvas updates.
   useEffect(() => {
     if (livePreviewTimeoutRef.current) clearTimeout(livePreviewTimeoutRef.current);
@@ -175,7 +215,7 @@ export function WatermarkForgeClient() {
     return () => {
       if (livePreviewTimeoutRef.current) clearTimeout(livePreviewTimeoutRef.current);
     };
-  }, [config, selectedPhoto, selectedSigil, updateLivePreview]);
+  }, [config, selectedPhoto, selectedSigil, selectedSigil2, updateLivePreview]);
 
   // --- Photo Upload Handling ---
   const handleFiles = async (files: FileList | File[]) => {
@@ -303,7 +343,7 @@ export function WatermarkForgeClient() {
       const newSigil: SigilItem = {
         id: `custom-${Date.now()}`,
         name: cleanName || "Custom Logo",
-        subtitle: "Custom Club Logo",
+        subtitle: "",
         src: base64,
         isCustom: true,
       };
@@ -323,6 +363,41 @@ export function WatermarkForgeClient() {
     e.target.value = "";
   };
 
+  const handleCustomSigil2Upload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Logo must be a valid image file (PNG or SVG with transparency recommended)");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result as string;
+      const cleanName = file.name.replace(/\.[^/.]+$/, "").substring(0, 18);
+      const newSigil: SigilItem = {
+        id: `custom-${Date.now()}`,
+        name: cleanName || "Secondary Logo",
+        subtitle: "",
+        src: base64,
+        isCustom: true,
+      };
+
+      const updated = saveCustomSigil(newSigil);
+      setSigils([...updated, ...DEFAULT_SIGILS]);
+      setSelectedSigil2Id(newSigil.id);
+      setConfig((prev) => ({
+        ...prev,
+        showSecondLogo: true,
+        secondLogoColor: "original",
+      }));
+      toast.success(`Secondary Logo "${newSigil.name}" added!`);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  };
+
   const handleDeleteCustomSigil = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     const updated = removeCustomSigil(id);
@@ -330,53 +405,16 @@ export function WatermarkForgeClient() {
     setSigils([...validCustom, ...DEFAULT_SIGILS]);
     if (selectedSigilId === id) {
       setSelectedSigilId("mcc-sigil");
+      setConfig((prev) => ({ ...prev, monogramColor: "#FFFFFF" }));
+    }
+    if (selectedSigil2Id === id) {
+      setSelectedSigil2Id("mec-seal");
+      setConfig((prev) => ({ ...prev, secondLogoColor: "original" }));
     }
     toast.success("Custom logo removed.");
   };
 
-  // --- Presets ---
-  const handlePresetChange = (presetKey: string) => {
-    setActivePreset(presetKey);
-    switch (presetKey) {
-      case "dramatic":
-        setConfig((prev) => ({
-          ...prev,
-          gradientColor: "#000000",
-          gradientDepth: 55,
-          gradientOpacity: 95,
-          fontSizeMultiplier: 1.05,
-        }));
-        break;
-      case "subtle":
-        setConfig((prev) => ({
-          ...prev,
-          gradientColor: "#0A0D14",
-          gradientDepth: 32,
-          gradientOpacity: 72,
-          fontSizeMultiplier: 0.92,
-        }));
-        break;
-      case "tournament":
-        setConfig((prev) => ({
-          ...prev,
-          gradientColor: "#000000",
-          gradientDepth: 45,
-          gradientOpacity: 90,
-          fontSizeMultiplier: 1.25,
-        }));
-        break;
-      case "balanced":
-      default:
-        setConfig((prev) => ({
-          ...prev,
-          gradientColor: "#000000",
-          gradientDepth: 42,
-          gradientOpacity: 88,
-          fontSizeMultiplier: 1.0,
-        }));
-        break;
-    }
-  };
+
 
   // --- Single Photo Inscribe & Download ---
   const inscribeAndDownloadSingle = async (photo: PhotoItem, e?: React.MouseEvent) => {
@@ -385,7 +423,16 @@ export function WatermarkForgeClient() {
     try {
       const sourceImg = await loadImage(photo.originalUrl);
       const sigilImg = selectedSigil ? await loadImage(selectedSigil.src) : null;
-      const canvas = await renderWatermarkOnCanvas(sourceImg, sigilImg, config);
+      const sigil2Img =
+        config.showSecondLogo && selectedSigil2 ? await loadImage(selectedSigil2.src) : null;
+      const effectiveConfig = getEffectiveConfig(config, selectedSigil, selectedSigil2);
+      const canvas = await renderWatermarkOnCanvas(
+        sourceImg,
+        sigilImg,
+        effectiveConfig,
+        undefined,
+        sigil2Img
+      );
       const cleanTitle = (config.eventName || "Photo")
         .trim()
         .replace(/[^a-zA-Z0-9_-]/g, "_")
@@ -413,6 +460,8 @@ export function WatermarkForgeClient() {
 
     try {
       const sigilImg = selectedSigil ? await loadImage(selectedSigil.src) : null;
+      const sigil2Img =
+        config.showSecondLogo && selectedSigil2 ? await loadImage(selectedSigil2.src) : null;
       const zip = new JSZip();
       const cleanEventName = (config.eventName || "Event")
         .trim()
@@ -425,13 +474,15 @@ export function WatermarkForgeClient() {
       // Reusable offscreen canvas across iterations to prevent memory leaks/bloat
       const reuseCanvas = document.createElement("canvas");
 
+      const effectiveConfig = getEffectiveConfig(config, selectedSigil, selectedSigil2);
+
       for (let i = 0; i < photos.length; i++) {
         const photo = photos[i];
         setProgress({ current: i + 1, total: photos.length });
 
         try {
           const sourceImg = await loadImage(photo.originalUrl);
-          await renderWatermarkOnCanvas(sourceImg, sigilImg, config, reuseCanvas);
+          await renderWatermarkOnCanvas(sourceImg, sigilImg, effectiveConfig, reuseCanvas, sigil2Img);
           const blob = await canvasToBlob(reuseCanvas, "image/jpeg", 0.93);
 
           const indexPrefix = String(i + 1).padStart(2, "0");
@@ -477,26 +528,26 @@ export function WatermarkForgeClient() {
   };
 
   return (
-    <div className="w-full min-h-screen bg-surface-primary text-text-primary pb-24 overflow-x-hidden">
+    <div className="w-full min-h-screen bg-surface-primary text-text-primary pb-24 overflow-x-clip">
       {/* ===== HERO / RUNE BANNER ===== */}
-      <section className="relative pt-8 pb-8 border-b border-border-default overflow-hidden bg-surface-secondary/40">
+      <section className="relative pt-4 pb-4 sm:pt-8 sm:pb-8 border-b border-border-default overflow-hidden bg-surface-secondary/40">
         <div className="container relative z-10">
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-accent-primary/40 bg-accent-primary/10 text-xs font-mono font-semibold text-accent-text-on-surface">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-2 sm:mb-3">
+            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border border-accent-primary/40 bg-accent-primary/10 text-xs font-mono font-semibold text-accent-text-on-surface">
               <Sparkles className="w-3.5 h-3.5 text-accent-primary" />
               <span>OFFICIAL TOOL // WATERMARK STUDIO</span>
             </div>
-            <div className="flex items-center gap-3 text-xs font-mono text-text-tertiary">
+            <div className="hidden sm:flex items-center gap-3 text-xs font-mono text-text-tertiary">
               <span className="inline-block w-2 h-2 rounded-full bg-accent-success animate-pulse" />
               <span>CLIENT-SIDE CANVAS ENGINE • 100% PRIVATE</span>
             </div>
           </div>
 
           <div className="max-w-3xl">
-            <h1 className="font-heading font-bold text-3xl sm:text-4xl lg:text-5xl tracking-tight text-text-primary mb-3">
+            <h1 className="font-heading font-bold text-2xl sm:text-4xl lg:text-5xl tracking-tight text-text-primary mb-1.5 sm:mb-3">
               Event Watermark Studio
             </h1>
-            <p className="text-base sm:text-lg text-text-secondary leading-relaxed">
+            <p className="text-xs sm:text-base text-text-secondary leading-relaxed line-clamp-2 sm:line-clamp-none">
               Add official <strong className="text-text-primary">MEC Computer Club</strong> branding, logos, and event details to your photos in batch. Fast, clean, high-resolution watermarks rendered locally in your browser.
             </p>
           </div>
@@ -504,14 +555,16 @@ export function WatermarkForgeClient() {
       </section>
 
       {/* ===== MAIN WORKSPACE ===== */}
-      <div className="container mt-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="container mt-3 sm:mt-6 lg:mt-8">
+        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-8 items-start pb-28 lg:pb-0">
+
           {/* ============================================================
-              LEFT / TOP COLUMN: Controls & Metadata Inscription (5 cols)
+              LEFT COLUMN: Controls & Metadata Inscription (5 cols on desktop, 3rd on mobile)
               ============================================================ */}
-          <div className="lg:col-span-5 space-y-4">
-            {/* MASTER CUSTOMIZE STUDIO PANEL */}
-            <div className="bg-surface-elevated rounded-xl border border-black shadow-[4px_4px_0px_var(--accent-primary)] overflow-hidden flex flex-col">
+          <div className="contents lg:block lg:col-span-5 space-y-4">
+            <div className="order-3 w-full space-y-4">
+              {/* MASTER CUSTOMIZE STUDIO PANEL */}
+              <div className="bg-surface-elevated rounded-xl border border-black shadow-[4px_4px_0px_var(--accent-primary)] overflow-hidden flex flex-col">
               
               {/* Studio Header Bar */}
               <div className="p-4 border-b border-border-default flex items-center justify-between bg-surface-secondary/40">
@@ -528,9 +581,6 @@ export function WatermarkForgeClient() {
                         STUDIO
                       </span>
                     </div>
-                    <p className="text-[11px] font-mono text-text-tertiary hidden sm:block">
-                      Fine-tune text, insignia, and lighting
-                    </p>
                   </div>
                 </div>
 
@@ -546,7 +596,6 @@ export function WatermarkForgeClient() {
                         ...DEFAULT_WATERMARK_CONFIG,
                         date: new Intl.DateTimeFormat("en-US", { day: "numeric", month: "long", year: "numeric" }).format(new Date()),
                       });
-                      setActivePreset("balanced");
                       toast.success("Settings reset to defaults");
                     }}
                     title="Reset all settings to default"
@@ -574,9 +623,7 @@ export function WatermarkForgeClient() {
                     <span>Event Info</span>
                     {config.eventName ? (
                       <span className="w-1.5 h-1.5 rounded-full bg-accent-primary shadow-[0_0_6px_var(--accent-primary)]" />
-                    ) : (
-                      <span className="text-[9px] font-mono text-accent-error">*</span>
-                    )}
+                    ) : null}
                   </button>
 
                   {/* Tab 2: Logo Vault */}
@@ -628,106 +675,87 @@ export function WatermarkForgeClient() {
                     ============================================================ */}
                 {activeControlTab === "event" && (
                   <div className="space-y-4 animate-in fade-in duration-200">
-                    {/* Event Title Card */}
-                    <div className="bg-surface-primary dark:bg-[#0f121d] rounded-xl border border-border-default/80 dark:border-white/10 p-4 space-y-2.5 shadow-xs">
-                      <div className="flex items-center justify-between">
+                    {/* Event Title & Subtitle Card (Stacked Vertically) */}
+                    <div className="bg-surface-primary dark:bg-[#0f121d] rounded-xl border border-border-default/80 dark:border-white/10 p-4 space-y-4 shadow-xs">
+                      {/* Event Title (Top) */}
+                      <div className="space-y-1.5">
                         <label className="text-xs font-mono font-bold uppercase tracking-wider text-text-secondary">
-                          Event Title <span className="text-accent-error">*</span>
+                          Event Title
                         </label>
-                        <span className="text-[10px] font-mono text-text-tertiary">
-                          Headline Overlay
-                        </span>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={config.eventName}
+                            onChange={(e) => setConfig({ ...config, eventName: e.target.value })}
+                            placeholder="Enter Event Title"
+                            className="w-full px-3.5 py-2.5 rounded-lg border border-border-default dark:border-white/15 bg-surface-elevated dark:bg-black/40 text-text-primary text-sm font-medium focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all pr-8"
+                          />
+                          {config.eventName && (
+                            <button
+                              type="button"
+                              onClick={() => setConfig({ ...config, eventName: "" })}
+                              title="Clear event title"
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-text-tertiary hover:text-text-primary cursor-pointer px-1"
+                            >
+                              ×
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <input
-                        type="text"
-                        value={config.eventName}
-                        onChange={(e) => setConfig({ ...config, eventName: e.target.value })}
-                        placeholder="e.g. MEC Intra Programming Contest 2026"
-                        className="w-full px-3.5 py-2.5 rounded-lg border border-border-default dark:border-white/15 bg-surface-elevated dark:bg-black/40 text-text-primary text-sm font-medium focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all"
-                      />
-                      {/* Quick Suggestions Chips */}
-                      <div className="flex flex-wrap gap-1.5 pt-1">
-                        {[
-                          "MEC Intra Contest",
-                          "ICPC Camp 2026",
-                          "WebDev Sprint",
-                          "CyberSec CTF",
-                        ].map((tag) => (
-                          <button
-                            key={tag}
-                            type="button"
-                            onClick={() => setConfig({ ...config, eventName: tag })}
-                            className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-surface-secondary dark:bg-white/[0.05] hover:bg-accent-primary/20 hover:text-accent-text-on-surface hover:border-accent-primary/40 border border-border-default/80 dark:border-white/10 text-text-secondary transition-all cursor-pointer"
-                          >
-                            +{tag}
-                          </button>
-                        ))}
+
+                      {/* Subtitle (Directly at bottom of Title) */}
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-mono font-bold uppercase tracking-wider text-text-secondary">
+                          Subtitle <span className="text-[10px] font-normal text-text-tertiary lowercase">(optional)</span>
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={config.subtitle !== undefined ? config.subtitle : (config.clubName || "")}
+                            onChange={(e) =>
+                              setConfig({ ...config, subtitle: e.target.value, clubName: e.target.value })
+                            }
+                            placeholder="Enter subtitle (optional)"
+                            className="w-full px-3.5 py-2.5 rounded-lg border border-border-default dark:border-white/15 bg-surface-elevated dark:bg-black/40 text-text-primary text-sm font-medium focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all pr-8"
+                          />
+                          {(config.subtitle || config.clubName) && (
+                            <button
+                              type="button"
+                              onClick={() => setConfig({ ...config, subtitle: "", clubName: "" })}
+                              title="Clear subtitle"
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-text-tertiary hover:text-text-primary cursor-pointer px-1"
+                            >
+                              ×
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
 
-                    {/* Date & Guild Signature Card */}
+                    {/* Inscription Date Card */}
                     <div className="bg-surface-primary dark:bg-[#0f121d] rounded-xl border border-border-default/80 dark:border-white/10 p-4 space-y-3 shadow-xs">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                        {/* Inscription Date */}
-                        <div>
-                          <div className="flex items-center justify-between mb-1">
-                            <label className="text-xs font-mono font-bold uppercase tracking-wider text-text-secondary">
-                              Date
-                            </label>
-                            {/* Calendar Trigger */}
-                            <label className="inline-flex items-center gap-1 text-[11px] font-mono text-accent-primary hover:underline cursor-pointer select-none">
-                              <Calendar className="w-3 h-3" />
-                              <span>Pick Date</span>
-                              <input
-                                type="date"
-                                className="sr-only"
-                                onChange={(e) => {
-                                  if (!e.target.value) return;
-                                  const [y, m, d] = e.target.value.split("-").map(Number);
-                                  const picked = new Date(y, m - 1, d);
-                                  const formatted = new Intl.DateTimeFormat("en-US", {
-                                    day: "numeric",
-                                    month: "long",
-                                    year: "numeric",
-                                  }).format(picked);
-                                  setConfig({ ...config, date: formatted });
-                                }}
-                              />
-                            </label>
-                          </div>
-                          <div className="relative">
-                            <input
-                              type="text"
-                              value={config.date}
-                              onChange={(e) => setConfig({ ...config, date: e.target.value })}
-                              placeholder="e.g. September 18, 2026"
-                              className="w-full px-3 py-2 rounded-lg border border-border-default dark:border-white/15 bg-surface-elevated dark:bg-black/40 text-text-primary text-xs font-medium focus:outline-none focus:border-accent-primary transition-all pr-7"
-                            />
-                            {config.date && (
-                              <button
-                                type="button"
-                                onClick={() => setConfig({ ...config, date: "" })}
-                                title="Clear date"
-                                className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-text-tertiary hover:text-text-primary cursor-pointer"
-                              >
-                                ×
-                              </button>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Club / Org Signature */}
-                        <div>
-                          <label className="block text-xs font-mono font-bold uppercase tracking-wider text-text-secondary mb-1">
-                            Club Signature
-                          </label>
+                      <div className="space-y-1.5">
+                        <label className="text-xs font-mono font-bold uppercase tracking-wider text-text-secondary">
+                          Date
+                        </label>
+                        <div className="relative">
                           <input
                             type="text"
-                            value={config.clubName}
-                            onChange={(e) => setConfig({ ...config, clubName: e.target.value })}
-                            placeholder="MEC Computer Club"
-                            className="w-full px-3 py-2 rounded-lg border border-border-default dark:border-white/15 bg-surface-elevated dark:bg-black/40 text-text-primary text-xs font-medium focus:outline-none focus:border-accent-primary transition-all"
+                            value={config.date}
+                            onChange={(e) => setConfig({ ...config, date: e.target.value })}
+                            placeholder="e.g. September 18, 2026"
+                            className="w-full px-3.5 py-2.5 rounded-lg border border-border-default dark:border-white/15 bg-surface-elevated dark:bg-black/40 text-text-primary text-sm font-medium focus:outline-none focus:border-accent-primary focus:ring-1 focus:ring-accent-primary transition-all pr-8"
                           />
+                          {config.date && (
+                            <button
+                              type="button"
+                              onClick={() => setConfig({ ...config, date: "" })}
+                              title="Clear date"
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-sm text-text-tertiary hover:text-text-primary cursor-pointer px-1"
+                            >
+                              ×
+                            </button>
+                          )}
                         </div>
                       </div>
 
@@ -819,57 +847,67 @@ export function WatermarkForgeClient() {
                     ============================================================ */}
                 {activeControlTab === "sigil" && (
                   <div className="space-y-4 animate-in fade-in duration-200">
-                    {/* Header with Upload Logo */}
-                    <div className="flex items-center justify-between pb-1">
-                      <div>
-                        <h3 className="font-heading font-bold text-sm text-text-primary">
-                          Official Club Insignia & Seals
-                        </h3>
-                        <p className="text-[11px] font-mono text-text-tertiary">
-                          Rendered in vector-crisp resolution
-                        </p>
+                    {/* Primary Logo (Logo 1) Section */}
+                    <div className="bg-surface-primary dark:bg-[#0f121d] rounded-xl border border-border-default/80 dark:border-white/10 p-4 space-y-3 shadow-xs">
+                      <div className="flex items-center justify-between pb-1 border-b border-border-default/60 dark:border-white/10">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-accent-primary" />
+                          <h3 className="font-heading font-bold text-xs uppercase tracking-wider text-text-primary">
+                            Primary Logo (Logo 1)
+                          </h3>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => sigilInputRef.current?.click()}
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-accent-primary hover:underline bg-accent-primary/10 border border-accent-primary/30 px-2.5 py-1 rounded-lg transition-all cursor-pointer"
+                        >
+                          <Plus className="w-3.5 h-3.5" />
+                          <span>Upload Custom</span>
+                        </button>
+                        <input
+                          ref={sigilInputRef}
+                          type="file"
+                          accept="image/png,image/svg+xml,image/jpeg,image/webp"
+                          onChange={handleCustomSigilUpload}
+                          className="hidden"
+                        />
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => sigilInputRef.current?.click()}
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-accent-primary hover:underline bg-accent-primary/10 border border-accent-primary/30 px-2.5 py-1 rounded-lg transition-all cursor-pointer"
-                      >
-                        <Plus className="w-3.5 h-3.5" />
-                        <span>Upload Custom</span>
-                      </button>
-                      <input
-                        ref={sigilInputRef}
-                        type="file"
-                        accept="image/png,image/svg+xml,image/jpeg,image/webp"
-                        onChange={handleCustomSigilUpload}
-                        className="hidden"
-                      />
-                    </div>
 
-                    {/* Sigil Grid Selector */}
-                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
-                      {sigils.map((sigil) => {
-                        const isSelected = selectedSigilId === sigil.id;
-                        return (
-                          <div
-                            key={sigil.id}
-                            onClick={() => {
-                              setSelectedSigilId(sigil.id);
-                              if (sigil.isCustom && config.monogramColor === "#FFFFFF") {
-                                setConfig((prev) => ({ ...prev, monogramColor: "original" }));
-                              } else if (!sigil.isCustom && config.monogramColor === "original") {
-                                setConfig((prev) => ({ ...prev, monogramColor: "#FFFFFF" }));
-                              }
-                            }}
-                            className={`group relative flex flex-col items-center p-2 rounded-xl border cursor-pointer transition-all ${
-                              isSelected
-                                ? "border-accent-primary bg-accent-primary/10 shadow-sm ring-1 ring-accent-primary/50"
-                                : "border-border-default/80 dark:border-white/10 bg-surface-primary dark:bg-[#0e121e] hover:border-text-primary/40 hover:bg-surface-elevated"
-                            }`}
-                          >
-                            <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-lg bg-[#07090f] p-1.5 flex items-center justify-center border border-border-default/80 dark:border-white/10 shadow-inner overflow-hidden">
-                              {sigil.isCustom ? (
-                                isSelected && config.monogramColor !== "original" ? (
+                      {/* Sigil Grid Selector 1 */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                        {sigils.map((sigil) => {
+                          const isSelected = selectedSigilId === sigil.id;
+                          return (
+                            <div
+                              key={sigil.id}
+                              onClick={() => {
+                                setSelectedSigilId(sigil.id);
+                                if (sigil.id === "mcc-sigil") {
+                                  setConfig((prev) => ({ ...prev, monogramColor: "#FFFFFF" }));
+                                } else {
+                                  setConfig((prev) => ({ ...prev, monogramColor: "original" }));
+                                }
+                              }}
+                              className={`group relative flex flex-col items-center p-2 rounded-xl border cursor-pointer transition-all ${
+                                isSelected
+                                  ? "border-accent-primary bg-accent-primary/10 shadow-sm ring-1 ring-accent-primary/50"
+                                  : "border-border-default/80 dark:border-white/10 bg-surface-primary dark:bg-[#0e121e] hover:border-text-primary/40 hover:bg-surface-elevated"
+                              }`}
+                            >
+                              <div
+                                className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-lg p-1.5 flex items-center justify-center border border-border-default/80 dark:border-white/10 shadow-inner overflow-hidden transition-colors ${
+                                  isSelected && config.monogramColor === "#000000" && sigil.id !== "mec-seal"
+                                    ? "bg-neutral-800"
+                                    : "bg-[#07090f]"
+                                }`}
+                              >
+                                {sigil.id === "mec-seal" ? (
+                                  <img
+                                    src={sigil.src}
+                                    alt={sigil.name}
+                                    className="w-full h-full object-contain pointer-events-none"
+                                  />
+                                ) : sigil.id === "mcc-sigil" ? (
                                   <div
                                     className="w-full h-full transition-colors duration-200"
                                     style={{
@@ -881,7 +919,26 @@ export function WatermarkForgeClient() {
                                       WebkitMaskRepeat: "no-repeat",
                                       maskPosition: "center",
                                       WebkitMaskPosition: "center",
-                                      backgroundColor: config.monogramColor,
+                                      backgroundColor:
+                                        isSelected && config.monogramColor === "#000000"
+                                          ? "#000000"
+                                          : "#FFFFFF",
+                                    }}
+                                  />
+                                ) : isSelected && config.monogramColor !== "original" ? (
+                                  <div
+                                    className="w-full h-full transition-colors duration-200"
+                                    style={{
+                                      maskImage: `url(${sigil.src})`,
+                                      WebkitMaskImage: `url(${sigil.src})`,
+                                      maskSize: "contain",
+                                      WebkitMaskSize: "contain",
+                                      maskRepeat: "no-repeat",
+                                      WebkitMaskRepeat: "no-repeat",
+                                      maskPosition: "center",
+                                      WebkitMaskPosition: "center",
+                                      backgroundColor:
+                                        config.monogramColor === "#000000" ? "#000000" : "#FFFFFF",
                                     }}
                                   />
                                 ) : (
@@ -890,56 +947,328 @@ export function WatermarkForgeClient() {
                                     alt={sigil.name}
                                     className="w-full h-full object-contain pointer-events-none"
                                   />
-                                )
-                              ) : (
-                                <div
-                                  className="w-full h-full transition-colors duration-200"
-                                  style={{
-                                    maskImage: `url(${sigil.src})`,
-                                    WebkitMaskImage: `url(${sigil.src})`,
-                                    maskSize: "contain",
-                                    WebkitMaskSize: "contain",
-                                    maskRepeat: "no-repeat",
-                                    WebkitMaskRepeat: "no-repeat",
-                                    maskPosition: "center",
-                                    WebkitMaskPosition: "center",
-                                    backgroundColor:
-                                      config.monogramColor === "original"
-                                        ? "#FFFFFF"
-                                        : config.monogramColor || "#FFFFFF",
-                                  }}
-                                />
-                              )}
-                              {isSelected && (
-                                <div className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-accent-primary flex items-center justify-center shadow-xs">
-                                  <Check className="w-2.5 h-2.5 text-[#05050f] stroke-[3]" />
-                                </div>
+                                )}
+                                {isSelected && (
+                                  <div className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-accent-primary flex items-center justify-center shadow-xs">
+                                    <Check className="w-2.5 h-2.5 text-[#05050f] stroke-[3]" />
+                                  </div>
+                                )}
+                              </div>
+                              <span className="text-[11px] font-semibold text-text-primary text-center mt-1.5 truncate max-w-full">
+                                {sigil.name}
+                              </span>
+
+                              {/* Custom delete button */}
+                              {sigil.isCustom && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => handleDeleteCustomSigil(sigil.id, e)}
+                                  title="Remove custom sigil"
+                                  className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-accent-error text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-xs cursor-pointer"
+                                >
+                                  ×
+                                </button>
                               )}
                             </div>
-                            <span className="text-[11px] font-semibold text-text-primary text-center mt-1.5 truncate max-w-full">
-                              {sigil.name}
-                            </span>
-                            <span className="text-[9px] font-mono text-text-tertiary text-center truncate max-w-full">
-                              {sigil.subtitle}
-                            </span>
+                          );
+                        })}
+                      </div>
 
-                            {/* Custom delete button */}
-                            {sigil.isCustom && (
-                              <button
-                                type="button"
-                                onClick={(e) => handleDeleteCustomSigil(sigil.id, e)}
-                                title="Remove custom sigil"
-                                className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-accent-error text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-xs cursor-pointer"
-                              >
-                                ×
-                              </button>
-                            )}
+                      {/* Logo 1 Color Switcher */}
+                      <div className="flex items-center justify-between pt-2.5 border-t border-border-default/60 dark:border-white/10">
+                        <div className="flex items-center gap-1.5">
+                          <Palette className="w-3.5 h-3.5 text-accent-primary" />
+                          <span className="text-xs font-mono font-bold uppercase tracking-wider text-text-secondary">
+                            Logo 1 Color
+                          </span>
+                        </div>
+                        {selectedSigil?.id === "mec-seal" ? (
+                          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono bg-surface-secondary/80 dark:bg-black/40 text-text-secondary border border-border-default/80 dark:border-white/10 select-none">
+                            <span className="w-2 h-2 rounded-full bg-gradient-to-tr from-rose-500 via-amber-400 to-cyan-400 border border-white/30 shrink-0" />
+                            <span>Original Only</span>
                           </div>
-                        );
-                      })}
+                        ) : selectedSigil?.id === "mcc-sigil" ? (
+                          <div className="inline-flex items-center bg-surface-secondary/80 dark:bg-black/50 p-0.5 rounded-lg border border-border-default/80 dark:border-white/10">
+                            {[
+                              { id: "#FFFFFF", label: "White", dot: "bg-white border-black/30" },
+                              { id: "#000000", label: "Black", dot: "bg-black border-white/30" },
+                            ].map((opt) => {
+                              const isActive =
+                                config.monogramColor.toUpperCase() === opt.id.toUpperCase() ||
+                                (opt.id === "#FFFFFF" && config.monogramColor === "original");
+                              return (
+                                <button
+                                  key={opt.id}
+                                  type="button"
+                                  onClick={() => setConfig({ ...config, monogramColor: opt.id })}
+                                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono transition-all cursor-pointer ${
+                                    isActive
+                                      ? "bg-surface-elevated dark:bg-white/20 text-text-primary font-bold shadow-xs border border-border-default dark:border-white/20"
+                                      : "text-text-secondary hover:text-text-primary hover:bg-surface-elevated/40"
+                                  }`}
+                                  title={`Set Logo 1 to ${opt.label}`}
+                                >
+                                  <span className={`w-2 h-2 rounded-full border shrink-0 ${opt.dot}`} />
+                                  <span>{opt.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <div className="inline-flex items-center bg-surface-secondary/80 dark:bg-black/50 p-0.5 rounded-lg border border-border-default/80 dark:border-white/10">
+                            {[
+                              { id: "original", label: "Original", dot: "bg-gradient-to-tr from-rose-500 via-amber-400 to-cyan-400 border-white/30" },
+                              { id: "#FFFFFF", label: "White", dot: "bg-white border-black/30" },
+                              { id: "#000000", label: "Black", dot: "bg-black border-white/30" },
+                            ].map((opt) => {
+                              const isActive =
+                                opt.id === "original"
+                                  ? config.monogramColor === "original"
+                                  : config.monogramColor.toUpperCase() === opt.id.toUpperCase();
+                              return (
+                                <button
+                                  key={opt.id}
+                                  type="button"
+                                  onClick={() => setConfig({ ...config, monogramColor: opt.id })}
+                                  className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono transition-all cursor-pointer ${
+                                    isActive
+                                      ? "bg-surface-elevated dark:bg-white/20 text-text-primary font-bold shadow-xs border border-border-default dark:border-white/20"
+                                      : "text-text-secondary hover:text-text-primary hover:bg-surface-elevated/40"
+                                  }`}
+                                  title={`Set Logo 1 to ${opt.label}`}
+                                >
+                                  <span className={`w-2 h-2 rounded-full border shrink-0 ${opt.dot}`} />
+                                  <span>{opt.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
                     </div>
 
-                    {/* Logo Customization Card */}
+                    {/* Secondary Logo (Logo 2 - Optional) Card */}
+                    <div className="bg-surface-primary dark:bg-[#0f121d] rounded-xl border border-border-default/80 dark:border-white/10 p-4 space-y-3 shadow-xs">
+                      <div className="flex items-center justify-between">
+                        <label className="flex items-center gap-2 cursor-pointer select-none text-text-primary font-semibold text-xs">
+                          <input
+                            type="checkbox"
+                            checked={config.showSecondLogo}
+                            onChange={(e) =>
+                              setConfig((prev) => ({ ...prev, showSecondLogo: e.target.checked }))
+                            }
+                            className="accent-accent-primary w-4 h-4 rounded cursor-pointer"
+                          />
+                          <span>Enable 2nd Logo</span>
+                        </label>
+                        <span
+                          className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
+                            config.showSecondLogo
+                              ? "bg-accent-primary/20 text-accent-text-on-surface border border-accent-primary/30"
+                              : "bg-surface-secondary text-text-tertiary"
+                          }`}
+                        >
+                          {config.showSecondLogo ? "ENABLED" : "OFF"}
+                        </span>
+                      </div>
+
+                      {config.showSecondLogo && (
+                        <div className="pt-2 border-t border-border-default/60 dark:border-white/10 space-y-3 animate-in fade-in duration-150">
+                          <div className="flex items-center justify-end">
+                            <button
+                              type="button"
+                              onClick={() => sigil2InputRef.current?.click()}
+                              className="inline-flex items-center gap-1 text-[11px] font-semibold text-accent-primary hover:underline bg-accent-primary/10 border border-accent-primary/30 px-2 py-0.5 rounded transition-all cursor-pointer"
+                            >
+                              <Plus className="w-3 h-3" />
+                              <span>Upload Logo 2</span>
+                            </button>
+                            <input
+                              ref={sigil2InputRef}
+                              type="file"
+                              accept="image/png,image/svg+xml,image/jpeg,image/webp"
+                              onChange={handleCustomSigil2Upload}
+                              className="hidden"
+                            />
+                          </div>
+
+                          {/* Sigil Grid Selector 2 */}
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                            {sigils.map((sigil) => {
+                              const isSelected2 = selectedSigil2Id === sigil.id;
+                              return (
+                                <div
+                                  key={`sigil2-${sigil.id}`}
+                                  onClick={() => {
+                                    setSelectedSigil2Id(sigil.id);
+                                    if (sigil.id === "mcc-sigil") {
+                                      setConfig((prev) => ({ ...prev, secondLogoColor: "#FFFFFF" }));
+                                    } else {
+                                      setConfig((prev) => ({ ...prev, secondLogoColor: "original" }));
+                                    }
+                                  }}
+                                  className={`group relative flex flex-col items-center p-2 rounded-xl border cursor-pointer transition-all ${
+                                    isSelected2
+                                      ? "border-accent-primary bg-accent-primary/10 shadow-sm ring-1 ring-accent-primary/50"
+                                      : "border-border-default/80 dark:border-white/10 bg-surface-primary dark:bg-[#0e121e] hover:border-text-primary/40 hover:bg-surface-elevated"
+                                  }`}
+                                >
+                                  <div
+                                    className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-lg p-1.5 flex items-center justify-center border border-border-default/80 dark:border-white/10 shadow-inner overflow-hidden transition-colors ${
+                                      isSelected2 && config.secondLogoColor === "#000000" && sigil.id !== "mec-seal"
+                                        ? "bg-neutral-800"
+                                        : "bg-[#07090f]"
+                                    }`}
+                                  >
+                                    {sigil.id === "mec-seal" ? (
+                                      <img
+                                        src={sigil.src}
+                                        alt={sigil.name}
+                                        className="w-full h-full object-contain pointer-events-none"
+                                      />
+                                    ) : sigil.id === "mcc-sigil" ? (
+                                      <div
+                                        className="w-full h-full transition-colors duration-200"
+                                        style={{
+                                          maskImage: `url(${sigil.src})`,
+                                          WebkitMaskImage: `url(${sigil.src})`,
+                                          maskSize: "contain",
+                                          WebkitMaskSize: "contain",
+                                          maskRepeat: "no-repeat",
+                                          WebkitMaskRepeat: "no-repeat",
+                                          maskPosition: "center",
+                                          WebkitMaskPosition: "center",
+                                          backgroundColor:
+                                            isSelected2 && config.secondLogoColor === "#000000"
+                                              ? "#000000"
+                                              : "#FFFFFF",
+                                        }}
+                                      />
+                                    ) : isSelected2 && config.secondLogoColor && config.secondLogoColor !== "original" ? (
+                                      <div
+                                        className="w-full h-full transition-colors duration-200"
+                                        style={{
+                                          maskImage: `url(${sigil.src})`,
+                                          WebkitMaskImage: `url(${sigil.src})`,
+                                          maskSize: "contain",
+                                          WebkitMaskSize: "contain",
+                                          maskRepeat: "no-repeat",
+                                          WebkitMaskRepeat: "no-repeat",
+                                          maskPosition: "center",
+                                          WebkitMaskPosition: "center",
+                                          backgroundColor:
+                                            config.secondLogoColor === "#000000" ? "#000000" : "#FFFFFF",
+                                        }}
+                                      />
+                                    ) : (
+                                      <img
+                                        src={sigil.src}
+                                        alt={sigil.name}
+                                        className="w-full h-full object-contain pointer-events-none"
+                                      />
+                                    )}
+                                    {isSelected2 && (
+                                      <div className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-accent-primary flex items-center justify-center shadow-xs">
+                                        <Check className="w-2.5 h-2.5 text-[#05050f] stroke-[3]" />
+                                      </div>
+                                    )}
+                                  </div>
+                                  <span className="text-[11px] font-semibold text-text-primary text-center mt-1.5 truncate max-w-full">
+                                    {sigil.name}
+                                  </span>
+
+                                  {/* Custom delete button */}
+                                  {sigil.isCustom && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => handleDeleteCustomSigil(sigil.id, e)}
+                                      title="Remove custom sigil"
+                                      className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-accent-error text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-xs cursor-pointer"
+                                    >
+                                      ×
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* Smartly Compact Contextual Color Switcher for Logo 2 */}
+                          <div className="flex items-center justify-between pt-2.5 border-t border-border-default/60 dark:border-white/10">
+                            <div className="flex items-center gap-1.5">
+                              <Palette className="w-3.5 h-3.5 text-accent-primary" />
+                              <span className="text-xs font-mono font-bold uppercase tracking-wider text-text-secondary">
+                                Logo 2 Color
+                              </span>
+                            </div>
+                            {selectedSigil2?.id === "mec-seal" ? (
+                              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono bg-surface-secondary/80 dark:bg-black/40 text-text-secondary border border-border-default/80 dark:border-white/10 select-none">
+                                <span className="w-2 h-2 rounded-full bg-gradient-to-tr from-rose-500 via-amber-400 to-cyan-400 border border-white/30 shrink-0" />
+                                <span>Original Only</span>
+                              </div>
+                            ) : selectedSigil2?.id === "mcc-sigil" ? (
+                              <div className="inline-flex items-center bg-surface-secondary/80 dark:bg-black/50 p-0.5 rounded-lg border border-border-default/80 dark:border-white/10">
+                                {[
+                                  { id: "#FFFFFF", label: "White", dot: "bg-white border-black/30" },
+                                  { id: "#000000", label: "Black", dot: "bg-black border-white/30" },
+                                ].map((opt) => {
+                                  const isActive =
+                                    (config.secondLogoColor || "").toUpperCase() === opt.id.toUpperCase() ||
+                                    (opt.id === "#FFFFFF" && (!config.secondLogoColor || config.secondLogoColor === "original"));
+                                  return (
+                                    <button
+                                      key={opt.id}
+                                      type="button"
+                                      onClick={() => setConfig({ ...config, secondLogoColor: opt.id })}
+                                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono transition-all cursor-pointer ${
+                                        isActive
+                                          ? "bg-surface-elevated dark:bg-white/20 text-text-primary font-bold shadow-xs border border-border-default dark:border-white/20"
+                                          : "text-text-secondary hover:text-text-primary hover:bg-surface-elevated/40"
+                                      }`}
+                                      title={`Set Logo 2 to ${opt.label}`}
+                                    >
+                                      <span className={`w-2 h-2 rounded-full border shrink-0 ${opt.dot}`} />
+                                      <span>{opt.label}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <div className="inline-flex items-center bg-surface-secondary/80 dark:bg-black/50 p-0.5 rounded-lg border border-border-default/80 dark:border-white/10">
+                                {[
+                                  { id: "original", label: "Original", dot: "bg-gradient-to-tr from-rose-500 via-amber-400 to-cyan-400 border-white/30" },
+                                  { id: "#FFFFFF", label: "White", dot: "bg-white border-black/30" },
+                                  { id: "#000000", label: "Black", dot: "bg-black border-white/30" },
+                                ].map((opt) => {
+                                  const isActive =
+                                    opt.id === "original"
+                                      ? !config.secondLogoColor || config.secondLogoColor === "original"
+                                      : (config.secondLogoColor || "").toUpperCase() === opt.id.toUpperCase();
+                                  return (
+                                    <button
+                                      key={opt.id}
+                                      type="button"
+                                      onClick={() => setConfig({ ...config, secondLogoColor: opt.id })}
+                                      className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-mono transition-all cursor-pointer ${
+                                        isActive
+                                          ? "bg-surface-elevated dark:bg-white/20 text-text-primary font-bold shadow-xs border border-border-default dark:border-white/20"
+                                          : "text-text-secondary hover:text-text-primary hover:bg-surface-elevated/40"
+                                      }`}
+                                      title={`Set Logo 2 to ${opt.label}`}
+                                    >
+                                      <span className={`w-2 h-2 rounded-full border shrink-0 ${opt.dot}`} />
+                                      <span>{opt.label}</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Logo Display & Size Card */}
                     <div className="bg-surface-primary dark:bg-[#0f121d] rounded-xl border border-border-default/80 dark:border-white/10 p-4 space-y-3.5 shadow-xs">
                       {/* Monogram Toggle Switch */}
                       <div className="flex items-center justify-between">
@@ -950,7 +1279,7 @@ export function WatermarkForgeClient() {
                             onChange={(e) => setConfig({ ...config, showMonogram: e.target.checked })}
                             className="accent-accent-primary w-4 h-4 rounded cursor-pointer"
                           />
-                          <span>Display Logo Seal on Photo (Top-Right)</span>
+                          <span>Display Primary Logo in Badge</span>
                         </label>
                         <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
                           config.showMonogram
@@ -961,181 +1290,52 @@ export function WatermarkForgeClient() {
                         </span>
                       </div>
 
-                      {config.showMonogram && (
-                        <div className="pt-2 border-t border-border-default/60 dark:border-white/10 space-y-3">
-                          {/* Monogram Color Picker */}
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-1.5">
-                                <Palette className="w-3.5 h-3.5 text-accent-primary" />
-                                <span className="text-xs font-mono font-bold uppercase tracking-wider text-text-secondary">
-                                  Monogram Color
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <input
-                                  type="color"
-                                  value={
-                                    config.monogramColor.startsWith("#")
-                                      ? config.monogramColor
-                                      : "#FFFFFF"
-                                  }
-                                  onChange={(e) =>
-                                    setConfig({ ...config, monogramColor: e.target.value })
-                                  }
-                                  className="w-7 h-7 rounded-lg border border-border-default dark:border-white/20 cursor-pointer bg-surface-primary p-0.5 shadow-xs overflow-hidden"
-                                  title="Choose custom monogram color tint"
-                                />
-                                <input
-                                  type="text"
-                                  value={
-                                    config.monogramColor === "original"
-                                      ? "ORIGINAL"
-                                      : config.monogramColor
-                                  }
-                                  onChange={(e) => {
-                                    const val = e.target.value.trim();
-                                    if (val.toLowerCase() === "original") {
-                                      setConfig({ ...config, monogramColor: "original" });
-                                    } else {
-                                      setConfig({ ...config, monogramColor: val });
-                                    }
-                                  }}
-                                  placeholder="#FFFFFF"
-                                  className="w-20 px-2 py-1 text-xs font-mono rounded-lg border border-border-default dark:border-white/15 bg-surface-elevated dark:bg-black/40 text-text-primary text-center font-bold focus:outline-none focus:border-accent-primary uppercase"
-                                  maxLength={8}
-                                />
-                              </div>
-                            </div>
-
-                            {/* Preset Monogram Color Swatches */}
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              {/* Option 0: Original Full Color */}
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setConfig({ ...config, monogramColor: "original" })
-                                }
-                                className={`group flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-mono border transition-all cursor-pointer ${
-                                  config.monogramColor === "original"
-                                    ? "border-accent-primary bg-accent-primary/15 text-text-primary font-bold shadow-xs scale-102 ring-1 ring-accent-primary/40"
-                                    : "border-border-default/80 dark:border-white/10 bg-surface-elevated dark:bg-black/30 text-text-secondary hover:border-text-primary/40"
-                                }`}
-                                title="Preserve authentic multi-color emblem (Untinted / Native)"
-                              >
-                                <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-rose-500 via-amber-400 to-cyan-400 shrink-0 shadow-xs border border-white/20" />
-                                <span>✦ Full Color (Original)</span>
-                              </button>
-
-                              {[
-                                { label: "White", color: "#FFFFFF" },
-                                { label: "MEC Lime", color: "#D4F429" },
-                                { label: "Amber Gold", color: "#F59E0B" },
-                                { label: "Cyber Mint", color: "#00F5A0" },
-                                { label: "Electric Cyan", color: "#00E5FF" },
-                                { label: "Crimson", color: "#FF3366" },
-                                { label: "Violet", color: "#A855F7" },
-                                { label: "Deep Obsidian", color: "#000000" },
-                              ].map((preset) => {
-                                const isActive =
-                                  config.monogramColor !== "original" &&
-                                  config.monogramColor.toUpperCase() === preset.color.toUpperCase();
-                                return (
-                                  <button
-                                    key={preset.color}
-                                    type="button"
-                                    onClick={() =>
-                                      setConfig({ ...config, monogramColor: preset.color })
-                                    }
-                                    className={`group flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-mono border transition-all cursor-pointer ${
-                                      isActive
-                                        ? "border-accent-primary bg-accent-primary/15 text-text-primary font-bold shadow-xs scale-102"
-                                        : "border-border-default/80 dark:border-white/10 bg-surface-elevated dark:bg-black/30 text-text-secondary hover:border-text-primary/40"
-                                    }`}
-                                    title={`Tint logo to ${preset.label} (${preset.color})`}
-                                  >
-                                    <span
-                                      className="w-2.5 h-2.5 rounded-full border border-black/20 shrink-0 shadow-xs"
-                                      style={{ backgroundColor: preset.color }}
-                                    />
-                                    <span>{preset.label}</span>
-                                  </button>
-                                );
-                              })}
-                            </div>
-                            <p className="text-[11px] font-mono text-text-tertiary pt-0.5">
-                              {config.monogramColor === "original"
-                                ? "✦ Preserving original uploaded colors. Click any color above to tint into a single-color silhouette."
-                                : `✦ Single-color silhouette active (${config.monogramColor}). Click "Full Color" to restore original colors.`}
-                            </p>
-                          </div>
-
-                          {/* Monogram Scale Slider */}
-                          <div className="space-y-1.5 pt-2 border-t border-border-default/60 dark:border-white/10">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-mono text-text-secondary uppercase">
-                                Logo Scale Multiplier
-                              </span>
-                              <span className="text-[11px] font-mono text-text-primary font-bold bg-surface-elevated dark:bg-black/40 px-2 py-0.5 rounded border border-border-default dark:border-white/15">
-                                {Math.round(config.monogramSizeMultiplier * 100)}%
-                              </span>
-                            </div>
-                            <input
-                              type="range"
-                              min="0.3"
-                              max="3.5"
-                              step="0.05"
-                              value={config.monogramSizeMultiplier}
-                              onChange={(e) =>
-                                setConfig({
-                                  ...config,
-                                  monogramSizeMultiplier: parseFloat(e.target.value),
-                                })
-                              }
-                              className="w-full accent-accent-primary cursor-pointer"
-                            />
-                            {/* Quick Sizes */}
-                            <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                              {[
-                                { label: "Subtle (50%)", val: 0.5 },
-                                { label: "Standard (100%)", val: 1.0 },
-                                { label: "Prominent (150%)", val: 1.5 },
-                                { label: "Large (200%)", val: 2.0 },
-                              ].map((preset) => (
-                                <button
-                                  key={preset.label}
-                                  type="button"
-                                  onClick={() => setConfig({ ...config, monogramSizeMultiplier: preset.val })}
-                                  className={`px-2 py-0.5 text-[10px] font-mono rounded border transition-all cursor-pointer ${
-                                    Math.abs(config.monogramSizeMultiplier - preset.val) < 0.04
-                                      ? "bg-accent-primary text-black font-bold border-accent-primary shadow-xs"
-                                      : "bg-surface-elevated dark:bg-black/30 text-text-secondary border-border-default/80 dark:border-white/10 hover:text-text-primary"
-                                  }`}
-                                >
-                                  {preset.label}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          {/* Monogram Soft Shadow Toggle */}
-                          <div className="pt-2 border-t border-border-default/60 dark:border-white/10">
-                            <label className="flex items-center gap-2 cursor-pointer select-none text-text-secondary hover:text-text-primary text-xs">
-                              <input
-                                type="checkbox"
-                                checked={config.monogramShadow}
-                                onChange={(e) =>
-                                  setConfig({ ...config, monogramShadow: e.target.checked })
-                                }
-                                className="accent-accent-primary w-4 h-4 rounded cursor-pointer"
-                              />
-                              <span className="font-mono text-[11px]">
-                                Soft shadow behind logo (enhances contrast on bright/white backgrounds)
-                              </span>
-                            </label>
-                          </div>
+                      {/* Monogram Scale Slider */}
+                      <div className="space-y-1.5 pt-2 border-t border-border-default/60 dark:border-white/10">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-mono text-text-secondary uppercase">
+                            Logo Height
+                          </span>
+                          <span className="text-[11px] font-mono text-text-primary font-bold bg-surface-elevated dark:bg-black/40 px-2 py-0.5 rounded border border-border-default dark:border-white/15">
+                            {Math.round(config.monogramSizeMultiplier * 100)}%
+                          </span>
                         </div>
-                      )}
+                        <input
+                          type="range"
+                          min="0.4"
+                          max="1.2"
+                          step="0.05"
+                          value={config.monogramSizeMultiplier}
+                          onChange={(e) =>
+                            setConfig({
+                              ...config,
+                              monogramSizeMultiplier: parseFloat(e.target.value),
+                            })
+                          }
+                          className="w-full accent-accent-primary cursor-pointer"
+                        />
+                        {/* Quick Sizes */}
+                        <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                          {[
+                            { label: "Adaptive (80%)", val: 0.8 },
+                            { label: "Subtle (60%)", val: 0.6 },
+                            { label: "Full (100%)", val: 1.0 },
+                          ].map((preset) => (
+                            <button
+                              key={preset.label}
+                              type="button"
+                              onClick={() => setConfig({ ...config, monogramSizeMultiplier: preset.val })}
+                              className={`px-2 py-0.5 text-[10px] font-mono rounded border transition-all cursor-pointer ${
+                                Math.abs(config.monogramSizeMultiplier - preset.val) < 0.04
+                                  ? "bg-accent-primary text-black font-bold border-accent-primary shadow-xs"
+                                  : "bg-surface-elevated dark:bg-black/30 text-text-secondary border-border-default/80 dark:border-white/10 hover:text-text-primary"
+                              }`}
+                            >
+                              {preset.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
                     </div>
 
                     {/* Step 2 Footer Navigation */}
@@ -1167,13 +1367,10 @@ export function WatermarkForgeClient() {
                     {/* Typography Style Card */}
                     <div className="bg-surface-primary dark:bg-[#0f121d] rounded-xl border border-border-default/80 dark:border-white/10 p-4 space-y-3 shadow-xs">
                       <div>
-                        <div className="flex items-center justify-between mb-1.5">
+                        <div className="mb-1.5">
                           <label className="text-xs font-mono font-bold uppercase tracking-wider text-text-secondary">
                             Typography Pairing
                           </label>
-                          <span className="text-[10px] font-mono text-text-tertiary">
-                            Font Metrics
-                          </span>
                         </div>
                         <Select
                           value={config.fontStyle}
@@ -1182,238 +1379,165 @@ export function WatermarkForgeClient() {
                           }
                           options={FONT_STYLE_OPTIONS}
                         />
-                        <p className="text-[11px] font-mono text-text-tertiary mt-1.5">
-                          {config.fontStyle === "website" &&
-                            "✦ Signature pairing: General Sans Bold title + JetBrains Mono metadata."}
-                          {config.fontStyle === "space" &&
-                            "✦ Space Brutalist: Space Grotesk Bold title + JetBrains Mono metadata."}
-                          {config.fontStyle === "clean" &&
-                            "✦ Clean Modernist: General Sans throughout for ultra-clean minimalism."}
-                        </p>
-                      </div>
-
-                      {/* Typography Scale Slider */}
-                      <div className="pt-2 border-t border-border-default/60 dark:border-white/10 space-y-1.5">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="font-mono text-text-secondary uppercase">Typography Scale</span>
-                          <span className="font-mono text-text-primary font-bold bg-surface-elevated dark:bg-black/40 px-2 py-0.5 rounded border border-border-default dark:border-white/15 text-[11px]">
-                            {Math.round(config.fontSizeMultiplier * 100)}%
-                          </span>
-                        </div>
-                        <input
-                          type="range"
-                          min="0.7"
-                          max="1.5"
-                          step="0.05"
-                          value={config.fontSizeMultiplier}
-                          onChange={(e) =>
-                            setConfig({ ...config, fontSizeMultiplier: parseFloat(e.target.value) })
-                          }
-                          className="w-full accent-accent-primary cursor-pointer"
-                        />
                       </div>
                     </div>
 
-                    {/* Gradient & Lighting Card */}
-                    <div className="bg-surface-primary dark:bg-[#0f121d] rounded-xl border border-border-default/80 dark:border-white/10 p-4 space-y-3.5 shadow-xs">
-                      {/* Gradient Preset Dropdown */}
-                      <div>
-                        <label className="block text-xs font-mono font-bold uppercase tracking-wider text-text-secondary mb-1.5">
-                          Atmospheric Preset
-                        </label>
-                        <Select
-                          value={activePreset}
-                          onChange={handlePresetChange}
-                          options={PRESET_OPTIONS}
-                        />
-                      </div>
-
-                      {/* Base Tint Palette */}
-                      <div className="pt-2 border-t border-border-default/60 dark:border-white/10 space-y-2">
-                        <div className="flex justify-between items-center text-xs">
-                          <span className="font-mono text-text-secondary uppercase">Gradient Base Tint</span>
-                          <span className="font-mono text-text-primary font-bold text-[11px] bg-surface-elevated dark:bg-black/40 px-1.5 py-0.5 rounded border border-border-default dark:border-white/15">
-                            {config.gradientColor}
+                    {/* Apple Liquid Glass Optics Card */}
+                    <div className="bg-surface-primary dark:bg-[#0f121d] rounded-xl border border-border-default/80 dark:border-white/10 p-4 space-y-3.5 shadow-xs animate-in fade-in duration-150">
+                        <div className="flex items-center justify-between pb-1 border-b border-border-default/60 dark:border-white/10">
+                          <div className="flex items-center gap-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-accent-primary" />
+                            <h3 className="font-heading font-bold text-xs uppercase tracking-wider text-text-primary">
+                              Liquid Glass Mode
+                            </h3>
+                          </div>
+                          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-accent-primary/20 text-accent-text-on-surface font-bold border border-accent-primary/30">
+                            GLASS ENGINE
                           </span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <div className="flex gap-1.5 flex-1">
-                            {COLOR_PRESETS.map((preset) => (
+
+                        {/* Glass Mode Variant (Dark / Frosted) */}
+                        <div>
+                          <label className="block text-xs font-mono font-bold uppercase tracking-wider text-text-secondary mb-1.5">
+                            Glass Theme Variant
+                          </label>
+                          <div className="grid grid-cols-2 gap-2">
+                            {[
+                              {
+                                id: "dark",
+                                label: "Dark Glass",
+                                badge: "Default",
+                                apply: () => setConfig({ ...config, glassTheme: "dark" }),
+                                active: (config.glassTheme === "dark" || config.glassTheme === "obsidian" || !config.glassTheme),
+                              },
+                              {
+                                id: "frosted",
+                                label: "Frosted Glass",
+                                badge: "Diffusion",
+                                apply: () => setConfig({ ...config, glassTheme: "frosted" }),
+                                active: config.glassTheme === "frosted",
+                              },
+                            ].map((p) => (
                               <button
-                                key={preset.color}
+                                key={p.id}
                                 type="button"
-                                onClick={() => setConfig({ ...config, gradientColor: preset.color })}
-                                style={{ backgroundColor: preset.color }}
-                                title={preset.label}
-                                className={`flex-1 h-7 rounded-lg border transition-all cursor-pointer ${
-                                  config.gradientColor.toLowerCase() === preset.color.toLowerCase()
-                                    ? "border-accent-primary ring-2 ring-accent-primary/40 scale-105"
-                                    : "border-border-default dark:border-white/20 hover:scale-102"
+                                onClick={p.apply}
+                                className={`p-2.5 rounded-lg border text-left transition-all cursor-pointer ${
+                                  p.active
+                                    ? "border-accent-primary bg-accent-primary/10 font-bold shadow-xs ring-1 ring-accent-primary/40"
+                                    : "border-border-default/80 dark:border-white/10 bg-surface-elevated dark:bg-black/30 hover:border-text-primary/30 text-text-secondary"
                                 }`}
-                              />
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="text-xs text-text-primary font-bold">{p.label}</span>
+                                  <span className="text-[8px] font-mono uppercase px-1 py-0.2 rounded bg-accent-primary/20 text-accent-text-on-surface font-bold">
+                                    {p.badge}
+                                  </span>
+                                </div>
+                              </button>
                             ))}
                           </div>
-                          {/* Native color picker */}
-                          <input
-                            type="color"
-                            value={config.gradientColor}
-                            onChange={(e) => setConfig({ ...config, gradientColor: e.target.value })}
-                            className="w-8 h-7 p-0 border border-border-default dark:border-white/20 rounded-lg cursor-pointer bg-transparent"
-                            title="Custom Color Picker"
-                          />
                         </div>
-                      </div>
 
-                      {/* Gradient Depth & Intensity in 2 columns */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2 border-t border-border-default/60 dark:border-white/10">
-                        <div>
-                          <div className="flex justify-between items-center text-xs mb-1">
-                            <span className="font-mono text-text-secondary uppercase">Fade Reach</span>
-                            <span className="font-mono text-text-primary font-bold text-[11px] bg-surface-elevated dark:bg-black/40 px-1.5 py-0.2 rounded border border-border-default dark:border-white/15">
-                              {config.gradientDepth}%
+                        {/* 2025 Optical Physics Suite: Displacement, Chromatic Aberration & Refraction Mode */}
+                        <div className="pt-3 border-t border-border-default/60 dark:border-white/10 space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-mono font-bold uppercase tracking-wider text-text-secondary">
+                              Liquid Glass Refraction Optics
+                            </span>
+                            <span className="text-[10px] font-mono text-accent-primary font-bold">
+                              DISPLACEMENT MAP
                             </span>
                           </div>
-                          <input
-                            type="range"
-                            min="20"
-                            max="75"
-                            step="1"
-                            value={config.gradientDepth}
-                            onChange={(e) =>
-                              setConfig({ ...config, gradientDepth: parseInt(e.target.value, 10) })
-                            }
-                            className="w-full accent-accent-primary cursor-pointer"
-                          />
-                        </div>
 
-                        <div>
-                          <div className="flex justify-between items-center text-xs mb-1">
-                            <span className="font-mono text-text-secondary uppercase">Fade Intensity</span>
-                            <span className="font-mono text-text-primary font-bold text-[11px] bg-surface-elevated dark:bg-black/40 px-1.5 py-0.2 rounded border border-border-default dark:border-white/15">
-                              {config.gradientOpacity}%
-                            </span>
-                          </div>
-                          <input
-                            type="range"
-                            min="40"
-                            max="100"
-                            step="1"
-                            value={config.gradientOpacity}
-                            onChange={(e) =>
-                              setConfig({ ...config, gradientOpacity: parseInt(e.target.value, 10) })
-                            }
-                            className="w-full accent-accent-primary cursor-pointer"
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Analog Film Grain & Matte Finish Card */}
-                    <div className="bg-surface-primary dark:bg-[#0f121d] rounded-xl border border-border-default/80 dark:border-white/10 p-4 space-y-3 shadow-xs">
-                      <div className="flex items-center justify-between">
-                        <label className="flex items-center gap-2 cursor-pointer select-none text-text-primary font-semibold text-xs">
-                          <Film className="w-3.5 h-3.5 text-accent-primary shrink-0" />
-                          <span>35mm Analog Film Grain & Matte Finish</span>
-                        </label>
-                        <span
-                          className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
-                            config.filmGrain
-                              ? "bg-accent-primary/20 text-accent-text-on-surface border border-accent-primary/30"
-                              : "bg-surface-secondary text-text-tertiary"
-                          }`}
-                        >
-                          {config.filmGrain ? "ACTIVE" : "MUTED"}
-                        </span>
-                      </div>
-
-                      <div className="pt-2 border-t border-border-default/60 dark:border-white/10 space-y-3">
-                        {/* Film Grain Toggle Checkbox */}
-                        <label className="flex items-center gap-2 cursor-pointer select-none text-text-secondary hover:text-text-primary text-xs">
-                          <input
-                            type="checkbox"
-                            checked={config.filmGrain}
-                            onChange={(e) =>
-                              setConfig({ ...config, filmGrain: e.target.checked })
-                            }
-                            className="accent-accent-primary w-4 h-4 rounded cursor-pointer"
-                          />
-                          <span className="font-mono text-[11px]">
-                            Enable authentic tactile film grain inside the bottom scrim
-                          </span>
-                        </label>
-
-                        {config.filmGrain && (
-                          <div className="space-y-2 pt-2 border-t border-border-default/40 dark:border-white/5 animate-in fade-in duration-150">
-                            {/* Grain Intensity Slider */}
-                            <div className="space-y-1.5">
-                              <div className="flex justify-between items-center text-xs">
-                                <span className="font-mono text-text-secondary uppercase">
-                                  Grain Intensity
-                                </span>
-                                <span className="font-mono text-text-primary font-bold text-[11px] bg-surface-elevated dark:bg-black/40 px-2 py-0.5 rounded border border-border-default dark:border-white/15">
-                                  {config.filmGrainIntensity}%{" "}
-                                  <span className="text-accent-primary font-normal">
-                                    {config.filmGrainIntensity <= 18
-                                      ? "• Subtle"
-                                      : config.filmGrainIntensity <= 35
-                                      ? "• Velvet"
-                                      : config.filmGrainIntensity <= 52
-                                      ? "• Cinematic"
-                                      : "• Gritty"}
-                                  </span>
-                                </span>
-                              </div>
-                              <input
-                                type="range"
-                                min="5"
-                                max="70"
-                                step="1"
-                                value={config.filmGrainIntensity}
-                                onChange={(e) =>
-                                  setConfig({
-                                    ...config,
-                                    filmGrainIntensity: parseInt(e.target.value, 10),
-                                  })
-                                }
-                                className="w-full accent-accent-primary cursor-pointer"
-                              />
-
-                              {/* Quick Grain Presets */}
-                              <div className="flex items-center gap-1.5 flex-wrap pt-1">
-                                {[
-                                  { label: "Subtle (14%)", val: 14 },
-                                  { label: "Velvet (28%)", val: 28 },
-                                  { label: "Cinematic (42%)", val: 42 },
-                                  { label: "Gritty (58%)", val: 58 },
-                                ].map((preset) => (
+                          {/* Refraction Mode Selection */}
+                          <div>
+                            <div className="flex justify-between items-center text-xs mb-1.5">
+                              <span className="font-mono text-text-secondary uppercase">Refraction Map Mode</span>
+                              <span className="font-mono text-text-primary font-bold text-[10px] uppercase bg-surface-elevated dark:bg-black/40 px-1.5 py-0.2 rounded border border-border-default dark:border-white/15">
+                                {config.refractionMode || "prominent"}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2">
+                              {[
+                                { id: "prominent", label: "Prominent", badge: "Default" },
+                                { id: "standard", label: "Standard", badge: "Subtle" },
+                                { id: "polar", label: "Polar", badge: "Radial" },
+                              ].map((m) => {
+                                const isCur = (config.refractionMode || "prominent") === m.id;
+                                return (
                                   <button
-                                    key={preset.label}
+                                    key={m.id}
                                     type="button"
-                                    onClick={() =>
-                                      setConfig({
-                                        ...config,
-                                        filmGrainIntensity: preset.val,
-                                      })
-                                    }
-                                    className={`px-2 py-0.5 text-[10px] font-mono rounded border transition-all cursor-pointer ${
-                                      Math.abs(config.filmGrainIntensity - preset.val) < 4
-                                        ? "bg-accent-primary text-black font-bold border-accent-primary shadow-xs"
-                                        : "bg-surface-elevated dark:bg-black/30 text-text-secondary border-border-default/80 dark:border-white/10 hover:text-text-primary"
+                                    onClick={() => setConfig({ ...config, refractionMode: m.id as any })}
+                                    className={`p-2 rounded-lg border text-left transition-all cursor-pointer ${
+                                      isCur
+                                        ? "border-accent-primary bg-accent-primary/10 ring-1 ring-accent-primary/30 font-bold"
+                                        : "border-border-default/80 dark:border-white/10 bg-surface-secondary dark:bg-white/[0.03] text-text-secondary"
                                     }`}
                                   >
-                                    {preset.label}
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-[11px] font-bold text-text-primary">{m.label}</span>
+                                      <span className="text-[8px] font-mono uppercase px-1 rounded bg-accent-primary/20 text-accent-text-on-surface">
+                                        {m.badge}
+                                      </span>
+                                    </div>
                                   </button>
-                                ))}
-                              </div>
+                                );
+                              })}
                             </div>
-
-                            <p className="text-[11px] font-mono text-text-tertiary leading-relaxed pt-1">
-                              ✦ Fine-grain 35mm physical film simulation. Procedurally masked to the shadow zone with non-linear cubic falloff to guarantee 0% interference with subjects or faces.
-                            </p>
                           </div>
-                        )}
+
+                          {/* Chromatic Aberration Customizer Slider */}
+                          <div className="space-y-1.5 pt-1">
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="font-mono text-text-secondary uppercase">Chromatic Aberration</span>
+                              <span className="font-mono text-text-primary font-bold text-[11px] bg-surface-elevated dark:bg-black/40 px-2 py-0.5 rounded border border-border-default dark:border-white/15">
+                                {(config.aberrationIntensity ?? 4).toFixed(1)}
+                              </span>
+                            </div>
+                            <input
+                              type="range"
+                              min="0"
+                              max="8"
+                              step="0.5"
+                              value={config.aberrationIntensity ?? 4}
+                              onChange={(e) =>
+                                setConfig({
+                                  ...config,
+                                  aberrationIntensity: parseFloat(e.target.value),
+                                })
+                              }
+                              className="w-full accent-accent-primary cursor-pointer"
+                            />
+                          </div>
+
+                          {/* Displacement Scale Slider */}
+                          <div className="space-y-1.5 pt-1">
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="font-mono text-text-secondary uppercase">Displacement Scale</span>
+                              <span className="font-mono text-text-primary font-bold text-[11px] bg-surface-elevated dark:bg-black/40 px-2 py-0.5 rounded border border-border-default dark:border-white/15">
+                                {config.displacementScale ?? 50}px
+                              </span>
+                            </div>
+                            <input
+                              type="range"
+                              min="0"
+                              max="80"
+                              step="1"
+                              value={config.displacementScale ?? 50}
+                              onChange={(e) =>
+                                setConfig({
+                                  ...config,
+                                  displacementScale: parseInt(e.target.value, 10),
+                                })
+                              }
+                              className="w-full accent-accent-primary cursor-pointer"
+                            />
+                          </div>
+                        </div>
                       </div>
-                    </div>
+
 
                     {/* Step 3 Footer Navigation */}
                     <div className="pt-2 flex items-center justify-between">
@@ -1434,110 +1558,181 @@ export function WatermarkForgeClient() {
               </div>
             </div>
           </div>
+        </div>
 
-          {/* ============================================================
-              RIGHT COLUMN: Live Preview Anvil & Batch Photo Grid (7 cols)
-              ============================================================ */}
-          <div className="lg:col-span-7 space-y-6">
-            {/* Live Photo Preview */}
-            <div className="bg-surface-elevated rounded-xl border border-black shadow-[4px_4px_0px_var(--accent-primary)] overflow-hidden sticky top-[84px] z-20">
-              <div className="p-4 border-b border-border-default flex flex-wrap items-center justify-between gap-3 bg-surface-secondary/40">
-                <div className="flex items-center gap-2">
-                  <Eye className="w-4 h-4 text-accent-primary" />
-                  <span className="font-heading font-bold text-sm text-text-primary">
-                    Live Photo Preview
-                  </span>
-                  {selectedPhoto && (
-                    <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-surface-primary border border-border-default text-text-secondary">
-                      {selectedPhoto.width} × {selectedPhoto.height} px
-                    </span>
-                  )}
-                </div>
+        {/* ============================================================
+            RIGHT COLUMN: Live Preview Anvil & Batch Photo Grid (7 cols on desktop)
+            ============================================================ */}
+        <div className="contents lg:block lg:col-span-7 space-y-6">
 
+          {/* 1. Live Photo Preview Card (1st on mobile sticky, static on laptop) */}
+          <div className="order-1 w-full bg-surface-elevated rounded-xl border border-black shadow-[4px_4px_0px_var(--accent-primary)] overflow-hidden sticky top-[var(--nav-height,64px)] lg:static lg:top-auto z-30 lg:z-auto">
+            <div className="p-2.5 sm:p-4 border-b border-border-default flex items-center justify-between gap-2 bg-surface-secondary/40">
+              <div className="flex items-center gap-2 min-w-0">
+                <Eye className="w-4 h-4 text-accent-primary shrink-0" />
+                <span className="font-heading font-bold text-xs sm:text-sm text-text-primary truncate">
+                  Live Photo Preview
+                </span>
                 {selectedPhoto && (
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onMouseDown={() => setShowOriginalPreview(true)}
-                      onMouseUp={() => setShowOriginalPreview(false)}
-                      onTouchStart={() => setShowOriginalPreview(true)}
-                      onTouchEnd={() => setShowOriginalPreview(false)}
-                      className="text-xs px-2.5 py-1 rounded border border-border-default bg-surface-primary hover:bg-surface-secondary text-text-secondary font-medium transition-all"
-                    >
-                      {showOriginalPreview ? "Viewing Original..." : "Hold to View Original"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => inscribeAndDownloadSingle(selectedPhoto)}
-                      className="text-xs px-2.5 py-1 rounded bg-accent-primary text-white font-bold hover:bg-accent-primary-hover transition-all flex items-center gap-1"
-                    >
-                      <Download className="w-3 h-3" />
-                      <span>Download Photo</span>
-                    </button>
-                  </div>
+                  <span className="text-[10px] sm:text-[11px] font-mono px-1.5 py-0.5 rounded bg-surface-primary border border-border-default text-text-secondary shrink-0">
+                    {selectedPhoto.width} × {selectedPhoto.height} px
+                  </span>
                 )}
               </div>
 
-              {/* Anvil Viewport */}
-              <div className="relative min-h-[320px] sm:min-h-[380px] bg-black/90 flex items-center justify-center p-4 overflow-hidden">
-                {photos.length === 0 ? (
-                  <div className="text-center py-12 px-4 max-w-sm">
-                    <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-surface-secondary/20 border border-border-default flex items-center justify-center text-text-tertiary">
-                      <ImageIcon className="w-8 h-8 opacity-60" />
-                    </div>
-                    <h3 className="font-heading font-bold text-base text-white mb-1">
-                      No Photo Selected
-                    </h3>
-                    <p className="text-xs text-text-tertiary mb-4">
-                      Upload event photos below or load a sample photo to test the watermark.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={loadSamplePhoto}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent-primary text-text-inverse text-xs font-bold hover:bg-accent-primary-hover transition-all"
-                    >
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>Load Sample Photo</span>
-                    </button>
-                  </div>
-                ) : (
-                  <div className="relative max-w-full max-h-[500px] flex items-center justify-center">
-                    {/* Live Watermarked Canvas */}
-                    <canvas
-                      ref={previewCanvasRef}
-                      className={`max-w-full max-h-[480px] object-contain rounded shadow-lg transition-opacity duration-150 ${
-                        showOriginalPreview ? "opacity-0 absolute" : "opacity-100"
-                      }`}
-                    />
-
-                    {/* Original Photo Preview (Shown when Peeking) */}
-                    {showOriginalPreview && selectedPhoto && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={selectedPhoto.originalUrl}
-                        alt="Original"
-                        className="max-w-full max-h-[480px] object-contain rounded shadow-lg"
-                      />
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Status footer for preview */}
               {selectedPhoto && (
-                <div className="p-2.5 px-4 bg-surface-secondary/60 border-t border-border-default flex items-center justify-between text-xs text-text-secondary">
-                  <span className="truncate max-w-[280px]">
-                    Previewing: <strong className="text-text-primary">{selectedPhoto.name}</strong>
-                  </span>
-                  <span className="font-mono text-[11px] text-accent-text-on-surface">
-                    Style: Fade + Split • Space Grotesk
-                  </span>
+                <div className="hidden sm:flex items-center gap-2">
+                  <button
+                    type="button"
+                    onMouseDown={() => setShowOriginalPreview(true)}
+                    onMouseUp={() => setShowOriginalPreview(false)}
+                    onTouchStart={() => setShowOriginalPreview(true)}
+                    onTouchEnd={() => setShowOriginalPreview(false)}
+                    className="text-xs px-2.5 py-1 rounded border border-border-default bg-surface-primary hover:bg-surface-secondary text-text-secondary font-medium transition-all cursor-pointer select-none"
+                  >
+                    {showOriginalPreview ? "Viewing Original..." : "Hold to View Original"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => inscribeAndDownloadSingle(selectedPhoto)}
+                    className="text-xs px-2.5 py-1 rounded bg-accent-primary text-black font-bold hover:bg-accent-primary-hover transition-all flex items-center gap-1 cursor-pointer"
+                  >
+                    <Download className="w-3 h-3" />
+                    <span>Download Photo</span>
+                  </button>
                 </div>
               )}
             </div>
 
-            {/* Multi-Photo Upload Dropzone & Batch Thumbnail Grid */}
-            <div className="p-5 sm:p-6 bg-surface-elevated rounded-xl border border-black shadow-[4px_4px_0px_var(--accent-primary)]">
+            {/* Anvil Viewport (Compact max-height on mobile so controls remain visible underneath) */}
+            <div className="relative min-h-[190px] max-h-[32vh] sm:min-h-[280px] sm:max-h-[44vh] lg:min-h-[380px] lg:max-h-[500px] bg-black/90 flex items-center justify-center p-2 sm:p-4 overflow-hidden">
+              {photos.length === 0 ? (
+                <div className="text-center py-6 px-3 sm:py-12 sm:px-4 max-w-sm">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-2 sm:mb-3 rounded-full bg-surface-secondary/20 border border-border-default flex items-center justify-center text-text-tertiary">
+                    <ImageIcon className="w-6 h-6 sm:w-8 sm:h-8 opacity-60" />
+                  </div>
+                  <h3 className="font-heading font-bold text-sm sm:text-base text-white mb-1">
+                    No Photo Selected
+                  </h3>
+                  <p className="text-xs text-text-tertiary mb-3 sm:mb-4">
+                    Upload event photos below or load a sample photo to test the watermark.
+                  </p>
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={loadSamplePhoto}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-accent-primary text-black text-xs font-bold hover:bg-accent-primary-hover transition-all cursor-pointer"
+                    >
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Load Sample Photo</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="inline-flex sm:hidden items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-secondary border border-border-default text-text-primary text-xs font-medium hover:bg-surface-elevated transition-all cursor-pointer"
+                    >
+                      <Upload className="w-3.5 h-3.5 text-accent-primary" />
+                      <span>Upload Photo</span>
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="relative max-w-full max-h-[30vh] sm:max-h-[42vh] lg:max-h-[500px] flex items-center justify-center">
+                  {/* Live Watermarked Canvas */}
+                  <canvas
+                    ref={previewCanvasRef}
+                    className={`max-w-full max-h-[28vh] sm:max-h-[40vh] lg:max-h-[480px] object-contain rounded shadow-lg transition-opacity duration-150 ${
+                      showOriginalPreview ? "opacity-0 absolute" : "opacity-100"
+                    }`}
+                  />
+
+                  {/* Original Photo Preview (Shown when Peeking) */}
+                  {showOriginalPreview && selectedPhoto && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={selectedPhoto.originalUrl}
+                      alt="Original"
+                      className="max-w-full max-h-[28vh] sm:max-h-[40vh] lg:max-h-[480px] object-contain rounded shadow-lg"
+                    />
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Status footer for preview - hidden on mobile to conserve screen height */}
+            {selectedPhoto && (
+              <div className="hidden sm:flex p-2.5 px-4 bg-surface-secondary/60 border-t border-border-default items-center justify-between text-xs text-text-secondary">
+                <span className="truncate max-w-[280px]">
+                  Previewing: <strong className="text-text-primary">{selectedPhoto.name}</strong>
+                </span>
+                <span className="font-mono text-[11px] text-accent-text-on-surface font-semibold">
+                  Apple Liquid Glass • Frosted Capsule
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* 2. Mobile Filmstrip Reel (2nd on mobile, hidden on desktop) */}
+          <div className="order-2 w-full lg:hidden bg-surface-elevated rounded-xl border border-black p-2 shadow-[2px_2px_0px_#000]">
+            <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar py-0.5">
+              {/* Quick Add Button */}
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex flex-col items-center justify-center shrink-0 w-14 h-14 rounded-lg border-2 border-dashed border-accent-primary/60 bg-accent-primary/5 hover:bg-accent-primary/10 text-accent-primary transition-all active:scale-95 cursor-pointer"
+                title="Add photo"
+              >
+                <Upload className="w-4 h-4 mb-0.5" />
+                <span className="text-[9px] font-bold">+ Add</span>
+              </button>
+
+              {/* Photo Thumbnails */}
+              {photos.map((photo, idx) => {
+                const isSelected = selectedIndex === idx;
+                return (
+                  <button
+                    key={photo.id}
+                    type="button"
+                    onClick={() => setSelectedIndex(idx)}
+                    className={`relative shrink-0 w-14 h-14 rounded-lg border-2 overflow-hidden transition-all active:scale-95 cursor-pointer ${
+                      isSelected
+                        ? "border-accent-primary ring-2 ring-accent-primary/50 shadow-sm"
+                        : "border-border-default opacity-75 hover:opacity-100"
+                    }`}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={photo.processedUrl || photo.originalUrl}
+                      alt={photo.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute bottom-0 inset-x-0 bg-black/75 py-0.2 text-center">
+                      <span className="text-[8px] font-mono text-white block truncate px-0.5">
+                        #{idx + 1}
+                      </span>
+                    </div>
+                    {isSelected && (
+                      <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-accent-primary shadow-[0_0_6px_var(--accent-primary)] animate-pulse" />
+                    )}
+                  </button>
+                );
+              })}
+
+              {photos.length === 0 && (
+                <button
+                  type="button"
+                  onClick={loadSamplePhoto}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-surface-secondary border border-border-default text-text-secondary text-xs shrink-0 active:scale-95 cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-accent-primary" />
+                  <span>Load Sample Photo</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* 3. Multi-Photo Upload Dropzone & Batch Thumbnail Grid (4th on mobile) */}
+          <div className="order-4 w-full p-5 sm:p-6 bg-surface-elevated rounded-xl border border-black shadow-[4px_4px_0px_var(--accent-primary)]">
               <div className="flex flex-wrap items-center justify-between gap-3 mb-4 border-b border-border-default pb-3">
                 <div className="flex items-center gap-2">
                   <Layers className="w-4 h-4 text-accent-primary" />
@@ -1702,32 +1897,96 @@ export function WatermarkForgeClient() {
                     </div>
                   )}
 
-                  {/* Batch Action Button (Unified direct ZIP archive) */}
+                  {/* Action Button: Single Photo Download or Multi-Photo ZIP Archive */}
                   <div className="pt-2">
                     <button
                       type="button"
                       disabled={isExporting || photos.length === 0}
-                      onClick={handleBatchExportZip}
+                      onClick={() => {
+                        if (photos.length > 1) {
+                          handleBatchExportZip();
+                        } else if (selectedPhoto) {
+                          inscribeAndDownloadSingle(selectedPhoto);
+                        }
+                      }}
                       className="w-full inline-flex items-center justify-center gap-2.5 px-5 py-3 rounded-xl bg-accent-primary hover:bg-accent-primary-hover text-black text-sm font-bold shadow-[2px_2px_0px_#000] hover:translate-x-[-1px] hover:translate-y-[-1px] transition-all disabled:opacity-50 disabled:hover:translate-x-0 disabled:hover:translate-y-0 cursor-pointer"
                     >
-                      {isExporting ? (
-                        <>
-                          <RefreshCw className="w-4 h-4 animate-spin text-black" />
-                          <span>
-                            {progress.total > 0
-                              ? `Watermarking & Archiving (${progress.current}/${progress.total})...`
-                              : "Compressing ZIP Archive..."}
-                          </span>
-                        </>
+                      {photos.length > 1 ? (
+                        isExporting ? (
+                          <>
+                            <RefreshCw className="w-4 h-4 animate-spin text-black" />
+                            <span>
+                              {progress.total > 0
+                                ? `Watermarking & Archiving (${progress.current}/${progress.total})...`
+                                : "Compressing ZIP Archive..."}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <FolderArchive className="w-4 h-4 text-black" />
+                            <span>Download All Photos as ZIP ({photos.length})</span>
+                          </>
+                        )
                       ) : (
                         <>
-                          <FolderArchive className="w-4 h-4 text-black" />
-                          <span>Download All Photos as ZIP ({photos.length})</span>
+                          <Download className="w-4 h-4 text-black" />
+                          <span>Download Photo</span>
                         </>
                       )}
                     </button>
                   </div>
                 </div>
+              )}
+            </div>
+          </div>
+
+          {/* ============================================================
+              CHILD 5: Mobile Sticky Bottom Action Bar (lg:hidden)
+              ============================================================ */}
+          <div className="order-5 lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface-elevated/95 backdrop-blur-md border-t border-black p-3 shadow-[0_-4px_16px_rgba(0,0,0,0.2)]">
+            <div className="container max-w-lg mx-auto flex items-center gap-3">
+              <button
+                type="button"
+                disabled={!selectedPhoto}
+                onMouseDown={() => setShowOriginalPreview(true)}
+                onMouseUp={() => setShowOriginalPreview(false)}
+                onTouchStart={() => setShowOriginalPreview(true)}
+                onTouchEnd={() => setShowOriginalPreview(false)}
+                className="flex-1 py-2.5 px-3 rounded-xl border border-border-default bg-surface-secondary text-text-primary text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95 transition-all disabled:opacity-40 select-none cursor-pointer"
+              >
+                <Eye className="w-3.5 h-3.5 text-accent-primary" />
+                <span>{showOriginalPreview ? "Viewing Original..." : "Hold to Peek"}</span>
+              </button>
+
+              {photos.length > 1 ? (
+                <button
+                  type="button"
+                  disabled={isExporting || photos.length === 0}
+                  onClick={handleBatchExportZip}
+                  className="flex-1 py-2.5 px-3 rounded-xl bg-accent-primary hover:bg-accent-primary-hover text-black text-xs font-bold shadow-[2px_2px_0px_#000] flex items-center justify-center gap-1.5 active:scale-95 transition-all disabled:opacity-40 cursor-pointer"
+                >
+                  {isExporting ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin text-black" />
+                      <span>{progress.total > 0 ? `Exporting (${progress.current}/${progress.total})...` : "Packaging ZIP..."}</span>
+                    </>
+                  ) : (
+                    <>
+                      <FolderArchive className="w-3.5 h-3.5 text-black" />
+                      <span>Download All as ZIP ({photos.length})</span>
+                    </>
+                  )}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled={!selectedPhoto}
+                  onClick={() => selectedPhoto && inscribeAndDownloadSingle(selectedPhoto)}
+                  className="flex-1 py-2.5 px-3 rounded-xl bg-accent-primary hover:bg-accent-primary-hover text-black text-xs font-bold shadow-[2px_2px_0px_#000] flex items-center justify-center gap-1.5 active:scale-95 transition-all disabled:opacity-40 cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5 text-black" />
+                  <span>Download Photo</span>
+                </button>
               )}
             </div>
           </div>
