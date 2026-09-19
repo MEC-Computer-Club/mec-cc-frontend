@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { JetBrains_Mono, Quicksand } from "next/font/google";
+import { JetBrains_Mono, Quicksand, Space_Mono } from "next/font/google";
 import { GeistSans } from "geist/font/sans";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
@@ -21,6 +21,13 @@ const quicksand = Quicksand({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-quicksand",
+  display: "swap",
+});
+
+const spaceMono = Space_Mono({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--font-space-mono",
   display: "swap",
 });
 
@@ -189,7 +196,7 @@ export default async function RootLayout({
   const initialThemeCss = getInitialThemeCss(initialVibe);
 
   return (
-    <html lang="en" className={`${GeistSans.variable} ${jetbrainsMono.variable} ${quicksand.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${GeistSans.variable} ${jetbrainsMono.variable} ${quicksand.variable} ${spaceMono.variable}`} suppressHydrationWarning>
       <head>
         <style
           id="initial-accent-theme"

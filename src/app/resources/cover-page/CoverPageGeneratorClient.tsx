@@ -33,6 +33,7 @@ import {
   Table,
   ListOrdered,
 } from "lucide-react";
+import { MecHeaderVector } from "./MecHeaderVector";
 
 const spaceMono = Space_Mono({
   subsets: ["latin"],
@@ -196,7 +197,7 @@ interface FormData {
 const DEFAULT_DATA: FormData = {
   template: "modern-clean",
   docType: "lab-report",
-  department: "Department of Computer Science and Engineering",
+  department: "Department of Computer Science & Engineering",
   studentDepartment: "CSE",
   institution: "Mymensingh Engineering College",
   courseName: "Database Management Systems - I Lab",
@@ -269,6 +270,27 @@ export function CoverPageGeneratorClient() {
   const [zoomLevel, setZoomLevel] = useState<number>(0.85);
   const [isSavedLocally, setIsSavedLocally] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<"document" | "index" | "student" | "instructor">("document");
+
+  // Mobile Responsiveness States
+  const [mobileViewMode, setMobileViewMode] = useState<"edit" | "preview">("edit");
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [containerWidth, setContainerWidth] = useState<number>(390);
+  const [mobileFitMode, setMobileFitMode] = useState<boolean>(true);
+
+  useEffect(() => {
+    const updateDimensions = () => {
+      const w = window.innerWidth;
+      setIsMobile(w < 1024);
+      const available = Math.min(Math.max(w - 32, 280), 794);
+      setContainerWidth(available);
+    };
+
+    updateDimensions();
+    window.addEventListener("resize", updateDimensions);
+    return () => window.removeEventListener("resize", updateDimensions);
+  }, []);
+
+  const mobileScale = Math.min(1.0, Math.max(0.35, containerWidth / 794));
 
   // Load saved student data on mount & auto-fill from user profile
   useEffect(() => {
@@ -595,7 +617,7 @@ export function CoverPageGeneratorClient() {
         /* PRINT STYLESHEET */
         @media print {
           @page {
-            size: letter portrait;
+            size: A4 portrait;
             margin: 0;
           }
           html, body {
@@ -619,7 +641,8 @@ export function CoverPageGeneratorClient() {
           main,
           .grid,
           .lg\:col-span-7,
-          [data-preview-wrapper] {
+          [data-preview-wrapper],
+          [data-scaled-wrapper] {
             display: block !important;
             margin: 0 !important;
             padding: 0 !important;
@@ -638,10 +661,10 @@ export function CoverPageGeneratorClient() {
             margin: 0 auto !important;
             top: 0 !important;
             left: 0 !important;
-            width: 816px !important;
-            height: 1056px !important;
-            max-width: 816px !important;
-            max-height: 1056px !important;
+            width: 794px !important;
+            height: 1123px !important;
+            max-width: 794px !important;
+            max-height: 1123px !important;
             box-shadow: none !important;
             border: none !important;
             background: #ffffff !important;
@@ -656,6 +679,14 @@ export function CoverPageGeneratorClient() {
           }
           #print-root * {
             visibility: visible !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          table {
+            border-collapse: collapse !important;
+          }
+          th, td {
+            box-sizing: border-box !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
           }
@@ -715,7 +746,7 @@ export function CoverPageGeneratorClient() {
                 onClick={handlePrint}
                 icon={<Printer size={16} />}
                 title="Open browser print dialog / save as PDF"
-                className="shadow-[4px_4px_0px_0px_var(--text-primary)] dark:shadow-[4px_4px_0px_0px_var(--accent-primary)] font-bold"
+                className="border border-black shadow-[3px_3px_0px_var(--accent-primary)] font-bold"
               >
                 Print
               </Button>
@@ -725,12 +756,46 @@ export function CoverPageGeneratorClient() {
       </section>
 
       {/* Main Workspace: Left Controls + Right Preview */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-28 lg:pb-8">
+        {/* Mobile View Switcher (lg:hidden) */}
+        <div className="no-print lg:hidden mb-6">
+          <div className="grid grid-cols-2 p-1 bg-surface-elevated border border-black rounded-xl shadow-[3px_3px_0px_var(--accent-primary)] text-xs font-mono font-bold uppercase">
+            <button
+              type="button"
+              onClick={() => {
+                setMobileViewMode("edit");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg transition-all ${
+                mobileViewMode === "edit"
+                  ? "bg-accent-primary text-white shadow-sm"
+                  : "text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              <FileText size={15} /> Edit Form
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMobileViewMode("preview");
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
+              className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg transition-all ${
+                mobileViewMode === "preview"
+                  ? "bg-accent-primary text-white shadow-sm"
+                  : "text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              <Printer size={15} /> Live Preview
+            </button>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* ================= LEFT CONTROLS (5 cols on lg) ================= */}
-          <div className="no-print lg:col-span-5 space-y-6">
+          {/* ================= LEFT CONTROLS (5 cols on lg, 4 cols on xl) ================= */}
+          <div className={`no-print lg:col-span-5 xl:col-span-4 space-y-6 ${mobileViewMode === "preview" ? "hidden lg:block" : "block"}`}>
             {/* Document Type Selector Card */}
-            <div className="p-5 bg-surface-elevated border-2 border-text-primary dark:border-border-default rounded-xl shadow-[4px_4px_0px_0px_var(--text-primary)] dark:shadow-[4px_4px_0px_0px_var(--accent-primary)]">
+            <div className="p-5 bg-surface-elevated border border-black rounded-xl shadow-[4px_4px_0px_var(--accent-primary)]">
               <label className="block text-xs font-mono font-bold uppercase tracking-wider text-text-secondary mb-2">
                 Document Type
               </label>
@@ -751,7 +816,7 @@ export function CoverPageGeneratorClient() {
             </div>
 
             {/* Tab Navigation for Controls */}
-            <div className="flex items-center border-b-2 border-border-default gap-1">
+            <div className="flex items-center border-b-2 border-border-default gap-1 overflow-x-auto no-scrollbar">
               {formData.docType === "index-table" ? (
                 <button
                   onClick={() => setActiveTab("index")}
@@ -796,7 +861,7 @@ export function CoverPageGeneratorClient() {
             </div>
 
             {/* TAB CONTENT */}
-            <div className="bg-surface-elevated border-2 border-text-primary dark:border-border-default rounded-xl p-5 shadow-[4px_4px_0px_0px_var(--text-primary)] dark:shadow-[4px_4px_0px_0px_var(--accent-primary)] space-y-4">
+            <div className="bg-surface-elevated border border-black rounded-xl p-5 shadow-[4px_4px_0px_var(--accent-primary)] space-y-4">
               {/* TAB 0: Index Table Rows & Visibility Controls */}
               {activeTab === "index" && (
                 <div className="space-y-4">
@@ -833,7 +898,7 @@ export function CoverPageGeneratorClient() {
                     <button
                       type="button"
                       onClick={handleAddIndexRow}
-                      className="flex-1 flex items-center justify-center gap-1 px-2.5 py-1.5 bg-accent-primary text-white text-xs font-mono font-bold rounded shadow-[2px_2px_0px_0px_var(--text-primary)] dark:shadow-[2px_2px_0px_0px_var(--border-default)] hover:opacity-95"
+                      className="flex-1 flex items-center justify-center gap-1 px-2.5 py-1.5 bg-accent-primary text-white text-xs font-mono font-bold rounded border border-black shadow-[2px_2px_0px_var(--accent-primary)] hover:opacity-95"
                     >
                       <Plus size={13} /> Add Row
                     </button>
@@ -959,7 +1024,7 @@ export function CoverPageGeneratorClient() {
                         secondary: course.courseCredit ? `Credit: ${course.courseCredit}` : "",
                         meta: course.courseCode,
                       })}
-                      className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-sm font-mono focus:border-accent-primary focus:outline-none"
+                      className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
                     />
                   </div>
 
@@ -987,7 +1052,7 @@ export function CoverPageGeneratorClient() {
                           secondary: course.courseName,
                           meta: course.courseCredit ? `${course.courseCredit} cr` : "",
                         })}
-                        className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-sm font-mono focus:border-accent-primary focus:outline-none"
+                        className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
                       />
                     </div>
                     <div>
@@ -999,7 +1064,7 @@ export function CoverPageGeneratorClient() {
                         value={formData.courseCredit}
                         onChange={(e) => handleChange("courseCredit", e.target.value)}
                         placeholder="e.g. 1.5"
-                        className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-sm font-mono focus:border-accent-primary focus:outline-none"
+                        className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
                       />
                     </div>
                   </div>
@@ -1019,7 +1084,7 @@ export function CoverPageGeneratorClient() {
                           value={formData.experimentNo}
                           onChange={(e) => handleChange("experimentNo", e.target.value)}
                           placeholder="e.g. 01"
-                          className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-sm font-mono focus:border-accent-primary focus:outline-none"
+                          className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
                         />
                       </div>
                       <div>
@@ -1031,7 +1096,7 @@ export function CoverPageGeneratorClient() {
                           value={formData.experimentName}
                           onChange={(e) => handleChange("experimentName", e.target.value)}
                           placeholder="e.g. Implementation of Relational Database Queries..."
-                          className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-sm font-mono focus:border-accent-primary focus:outline-none resize-none"
+                          className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none resize-none"
                         />
                       </div>
 
@@ -1067,7 +1132,7 @@ export function CoverPageGeneratorClient() {
                           onChange={(e) => handleChange("experimentDate", e.target.value)}
                           placeholder="e.g. 11/01/2026"
                           disabled={!formData.showExperimentDate}
-                          className={`w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-sm font-mono focus:border-accent-primary focus:outline-none ${!formData.showExperimentDate ? "opacity-40 cursor-not-allowed" : ""
+                          className={`w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none ${!formData.showExperimentDate ? "opacity-40 cursor-not-allowed" : ""
                             }`}
                         />
                       </div>
@@ -1104,7 +1169,7 @@ export function CoverPageGeneratorClient() {
                           onChange={(e) => handleChange("submissionDate", e.target.value)}
                           placeholder="e.g. 18/01/2026"
                           disabled={!formData.showSubmissionDate}
-                          className={`w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-sm font-mono focus:border-accent-primary focus:outline-none ${!formData.showSubmissionDate ? "opacity-40 cursor-not-allowed" : ""
+                          className={`w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none ${!formData.showSubmissionDate ? "opacity-40 cursor-not-allowed" : ""
                             }`}
                         />
                       </div>
@@ -1126,7 +1191,7 @@ export function CoverPageGeneratorClient() {
                           value={formData.assignmentNo}
                           onChange={(e) => handleChange("assignmentNo", e.target.value)}
                           placeholder="e.g. 01"
-                          className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-sm font-mono focus:border-accent-primary focus:outline-none"
+                          className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
                         />
                       </div>
                       <div>
@@ -1138,7 +1203,7 @@ export function CoverPageGeneratorClient() {
                           value={formData.assignmentTopic}
                           onChange={(e) => handleChange("assignmentTopic", e.target.value)}
                           placeholder="e.g. Pipeline Hazard Resolution and Branch Prediction..."
-                          className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-sm font-mono focus:border-accent-primary focus:outline-none resize-none"
+                          className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none resize-none"
                         />
                       </div>
                     </div>
@@ -1176,7 +1241,7 @@ export function CoverPageGeneratorClient() {
                         onChange={(e) => handleChange("submissionDate", e.target.value)}
                         placeholder="e.g. 18/01/2026"
                         disabled={!formData.showSubmissionDate}
-                        className={`w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-sm font-mono focus:border-accent-primary focus:outline-none ${!formData.showSubmissionDate ? "opacity-40 cursor-not-allowed" : ""
+                        className={`w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none ${!formData.showSubmissionDate ? "opacity-40 cursor-not-allowed" : ""
                           }`}
                       />
                     </div>
@@ -1216,7 +1281,7 @@ export function CoverPageGeneratorClient() {
                       value={formData.studentName}
                       onChange={(e) => handleChange("studentName", e.target.value)}
                       placeholder="e.g. Twahid Ahmmed."
-                      className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-sm font-mono focus:border-accent-primary focus:outline-none"
+                      className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
                     />
                   </div>
 
@@ -1230,7 +1295,7 @@ export function CoverPageGeneratorClient() {
                         value={formData.roll}
                         onChange={(e) => handleChange("roll", e.target.value)}
                         placeholder="e.g. 210347"
-                        className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-sm font-mono focus:border-accent-primary focus:outline-none"
+                        className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
                       />
                     </div>
                     <div>
@@ -1242,7 +1307,7 @@ export function CoverPageGeneratorClient() {
                         value={formData.reg}
                         onChange={(e) => handleChange("reg", e.target.value)}
                         placeholder="e.g. 1335"
-                        className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-sm font-mono focus:border-accent-primary focus:outline-none"
+                        className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
                       />
                     </div>
                   </div>
@@ -1257,7 +1322,7 @@ export function CoverPageGeneratorClient() {
                         value={formData.studentDepartment}
                         onChange={(e) => handleChange("studentDepartment", e.target.value)}
                         placeholder="e.g. CSE"
-                        className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-sm font-mono focus:border-accent-primary focus:outline-none"
+                        className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
                       />
                     </div>
                     <div>
@@ -1269,7 +1334,7 @@ export function CoverPageGeneratorClient() {
                         value={formData.session}
                         onChange={(e) => handleChange("session", e.target.value)}
                         placeholder="e.g. 2021-2022"
-                        className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-sm font-mono focus:border-accent-primary focus:outline-none"
+                        className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
                       />
                     </div>
                   </div>
@@ -1340,7 +1405,7 @@ export function CoverPageGeneratorClient() {
                         secondary: `${inst.designation || "Lecturer"} • ${inst.department || "CSE"}`,
                         meta: inst.department,
                       })}
-                      className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-sm font-mono focus:border-accent-primary focus:outline-none"
+                      className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
                     />
                   </div>
 
@@ -1353,7 +1418,7 @@ export function CoverPageGeneratorClient() {
                       value={formData.teacherDesignation}
                       onChange={(e) => handleChange("teacherDesignation", e.target.value)}
                       placeholder="e.g. Adjunct Lecturer,"
-                      className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-sm font-mono focus:border-accent-primary focus:outline-none"
+                      className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
                     />
                   </div>
 
@@ -1366,7 +1431,7 @@ export function CoverPageGeneratorClient() {
                       value={formData.teacherDepartment}
                       onChange={(e) => handleChange("teacherDepartment", e.target.value)}
                       placeholder="e.g. Department of Computer Science & Engineering,"
-                      className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-sm font-mono focus:border-accent-primary focus:outline-none"
+                      className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
                     />
                   </div>
 
@@ -1379,7 +1444,7 @@ export function CoverPageGeneratorClient() {
                       value={formData.teacherInstitution}
                       onChange={(e) => handleChange("teacherInstitution", e.target.value)}
                       placeholder="e.g. Mymensingh Engineering College."
-                      className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-sm font-mono focus:border-accent-primary focus:outline-none"
+                      className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
                     />
                   </div>
                 </div>
@@ -1387,7 +1452,7 @@ export function CoverPageGeneratorClient() {
             </div>
 
             {/* Quick Tips */}
-            <div className="p-4 bg-surface-secondary/40 border border-border-default rounded-xl text-xs font-mono text-text-secondary space-y-1">
+            <div className="p-4 bg-surface-secondary/40 border border-black rounded-xl text-xs font-mono text-text-secondary space-y-1">
               <div className="font-bold text-text-primary uppercase flex items-center gap-1.5">
                 <Sparkles size={13} className="text-accent-primary" /> Pro Tip: Inline Canvas Editing
               </div>
@@ -1396,12 +1461,26 @@ export function CoverPageGeneratorClient() {
                 with the controls.
               </p>
             </div>
+
+            {/* Mobile-Only: Jump to Preview Button */}
+            <div className="lg:hidden pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setMobileViewMode("preview");
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className="w-full py-3 px-4 bg-accent-primary text-white font-mono font-bold text-sm uppercase rounded-xl border border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-2 hover:opacity-95 active:translate-y-0.5 transition-all"
+              >
+                <Printer size={16} /> View A4 Preview & Print
+              </button>
+            </div>
           </div>
 
-          {/* ================= RIGHT PREVIEW CANVAS (7 cols on lg) ================= */}
-          <div className="lg:col-span-7 flex flex-col items-center">
-            {/* Top Toolbar: Template Dropdown + Zoom / Viewport Controls (No-Print) */}
-            <div className="no-print w-full max-w-[794px] flex flex-wrap items-center justify-between gap-3 pb-3 px-2">
+          {/* ================= RIGHT PREVIEW CANVAS (7 cols on lg, 8 cols on xl) ================= */}
+          <div className={`lg:col-span-7 xl:col-span-8 flex flex-col items-center w-full ${mobileViewMode === "edit" ? "hidden lg:flex" : "flex"}`}>
+            {/* Desktop Top Toolbar: Template Dropdown + Zoom / Viewport Controls (No-Print) */}
+            <div className="no-print w-full max-w-[794px] hidden lg:flex flex-wrap items-center justify-between gap-3 pb-3 px-2">
               {/* Template Dropdown Selector */}
               <div className="flex items-center gap-2 flex-1 min-w-[240px] max-w-sm">
                 <span className="text-xs font-mono font-bold uppercase tracking-wider text-text-secondary whitespace-nowrap flex items-center gap-1.5">
@@ -1419,7 +1498,7 @@ export function CoverPageGeneratorClient() {
               {/* Viewport Badge & Zoom Controls */}
               <div className="flex items-center gap-2">
                 <span className="text-[11px] bg-accent-primary/10 text-accent-primary px-2 py-1 rounded font-mono font-bold hidden sm:inline-block">
-                  210 × 297 mm
+                  210 × 297 mm (A4)
                 </span>
 
                 <div className="flex items-center gap-1 bg-surface-elevated border border-border-default rounded-lg p-1">
@@ -1441,9 +1520,16 @@ export function CoverPageGeneratorClient() {
                     <ZoomIn size={14} />
                   </button>
                   <button
+                    onClick={() => setZoomLevel(1.0)}
+                    className={`px-1.5 py-0.5 text-[11px] font-mono font-bold rounded hover:text-accent-primary transition-colors border-l border-border-default cursor-pointer ${zoomLevel === 1.0 ? "text-accent-primary bg-accent-primary/10" : ""}`}
+                    title="100% (Actual A4 Size)"
+                  >
+                    100%
+                  </button>
+                  <button
                     onClick={() => setZoomLevel(0.85)}
-                    className="p-1 hover:text-accent-primary transition-colors border-l border-border-default pl-1.5 cursor-pointer"
-                    title="Reset Zoom"
+                    className={`p-1 hover:text-accent-primary transition-colors border-l border-border-default pl-1.5 cursor-pointer ${zoomLevel === 0.85 ? "text-accent-primary" : ""}`}
+                    title="Fit Preview (85%)"
                   >
                     <Maximize2 size={13} />
                   </button>
@@ -1451,28 +1537,93 @@ export function CoverPageGeneratorClient() {
               </div>
             </div>
 
-            {/* Canvas Outer Container with Shadow and Neo-Brutalist Frame */}
+            {/* Mobile Top Toolbar (lg:hidden) */}
+            <div className="no-print w-full flex flex-col gap-2.5 pb-3 px-1 lg:hidden">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <Select
+                    value={formData.template}
+                    onChange={(val) => handleChange("template", val as CoverTemplate)}
+                    options={TEMPLATE_SELECT_OPTIONS}
+                  />
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setMobileFitMode(true)}
+                    className={`px-2.5 py-1.5 text-xs font-mono font-bold rounded border transition-all ${
+                      mobileFitMode
+                        ? "bg-accent-primary text-white border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+                        : "bg-surface-elevated text-text-secondary border-border-default hover:text-text-primary"
+                    }`}
+                    title="Fit to mobile screen width"
+                  >
+                    Fit
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMobileFitMode(false)}
+                    className={`px-2.5 py-1.5 text-xs font-mono font-bold rounded border transition-all ${
+                      !mobileFitMode
+                        ? "bg-accent-primary text-white border-black shadow-[2px_2px_0px_rgba(0,0,0,1)]"
+                        : "bg-surface-elevated text-text-secondary border-border-default hover:text-text-primary"
+                    }`}
+                    title="100% Actual Size (Scroll to inspect)"
+                  >
+                    100%
+                  </button>
+                </div>
+              </div>
+
+              {/* Mobile View Mode Info Helper */}
+              <div className="flex items-center justify-between text-[11px] font-mono text-text-muted px-1">
+                <span>{mobileFitMode ? "Auto-fitted A4 sheet" : "Actual 1:1 scale (scroll horizontally)"}</span>
+                <span className="text-accent-primary font-bold">210 × 297 mm</span>
+              </div>
+            </div>
+
+            {/* Canvas Outer Container with Shadow and Frame */}
             <div
               data-preview-wrapper
-              className="w-full flex justify-center overflow-x-auto pb-8 pt-2"
+              className={`w-full flex justify-center pb-8 pt-2 ${
+                isMobile && !mobileFitMode ? "overflow-x-auto" : "overflow-hidden lg:overflow-x-auto"
+              }`}
             >
-              {/* THE EXACT US LETTER (8.5" x 11" @ 96 DPI) PRINT SHEET */}
               <div
-                id="print-root"
-                style={{
-                  width: "816px",
-                  height: "1056px",
-                  minHeight: "1056px",
-                  transform: `scale(${zoomLevel})`,
-                  transformOrigin: "top center",
-                  backgroundColor: "#FFFFFF",
-                  color: "#000000",
-                }}
+                data-scaled-wrapper
+                style={
+                  isMobile && mobileFitMode
+                    ? {
+                        width: `${Math.round(794 * mobileScale)}px`,
+                        height: `${Math.round(1123 * mobileScale)}px`,
+                        position: "relative",
+                        overflow: "hidden",
+                        margin: "0 auto",
+                      }
+                    : undefined
+                }
+              >
+                {/* THE EXACT A4 (210mm x 297mm @ 96 DPI: 794px x 1123px) PRINT SHEET */}
+                <div
+                  id="print-root"
+                  style={{
+                    width: "794px",
+                    minWidth: "794px",
+                    maxWidth: "794px",
+                    height: "1123px",
+                    minHeight: "1123px",
+                    maxHeight: "1123px",
+                    transform: `scale(${isMobile ? (mobileFitMode ? mobileScale : 1.0) : zoomLevel})`,
+                    transformOrigin: isMobile && mobileFitMode ? "top left" : "top center",
+                    backgroundColor: "#FFFFFF",
+                    color: "#000000",
+                  }}
                 className={`${formData.template === "classic-mono"
-                  ? `${spaceMono.className} font-space-mono pt-[68px] pb-[60px] px-[80px] flex flex-col justify-between`
+                  ? `${spaceMono.className} font-space-mono pt-[81px] pb-[80px] px-[64px] flex flex-col justify-start shrink-0`
                   : formData.docType === "index-table"
-                    ? "font-quicksand p-[48px] sm:p-[56px] flex flex-col justify-between"
-                    : "font-quicksand p-0 block relative"
+                    ? "font-quicksand p-[48px] sm:p-[56px] flex flex-col justify-between shrink-0"
+                    : "font-quicksand p-0 block relative shrink-0"
                   } text-black shadow-2xl border border-neutral-300 transition-transform duration-150 relative box-border select-text`}
               >
                 {/* ----------------- IF INDEX TABLE ----------------- */}
@@ -1514,162 +1665,236 @@ export function CoverPageGeneratorClient() {
                           </div>
                         </div>
                       ) : (
-                        <div className="flex items-center gap-4 pb-4 border-b border-black">
-                          <div className="shrink-0 w-[72px] h-[72px] flex items-center justify-center text-black">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src="/mec-college-seal.svg"
-                              alt="Mymensingh Engineering College Seal"
-                              width={72}
-                              height={72}
-                              className="w-[72px] h-[72px] object-contain"
-                            />
-                          </div>
-                          <div className="w-[1.5px] h-[70px] bg-black shrink-0" />
-                          <div className="flex flex-col justify-center select-text">
-                            <div className="text-[26px] font-bold leading-none tracking-tight block">
-                              Mymensingh Engineering College
-                            </div>
-                            <div
-                              contentEditable
-                              suppressContentEditableWarning
-                              onBlur={(e) => handleChange("department", e.currentTarget.textContent || "")}
-                              className="inline-editable block text-[13px] font-normal leading-none mt-1.5 tracking-tight"
-                              style={{ display: "block" }}
-                              title="Click to edit department"
-                            >
-                              {formData.department}
-                            </div>
-                          </div>
+                        <div className="w-full pb-2">
+                          <MecHeaderVector
+                            department={formData.department}
+                            onDepartmentChange={(dept) => handleChange("department", dept)}
+                          />
                         </div>
                       )}
 
                       {/* Centered Title */}
                       <div className="text-center my-6">
-                        <span
-                          contentEditable
-                          suppressContentEditableWarning
-                          className="inline-editable text-[18px] font-bold tracking-widest uppercase border-b-2 border-black pb-1 px-4 inline-block"
-                          title="Click to edit table title"
+                        <div
+                          className="inline-block border-b-2 border-black pb-1 px-4"
+                          style={{
+                            borderBottom: "2px solid #000000",
+                            paddingBottom: "4px",
+                            paddingLeft: "16px",
+                            paddingRight: "16px",
+                          }}
                         >
-                          INDEX / TABLE OF CONTENTS
-                        </span>
+                          <span
+                            contentEditable
+                            suppressContentEditableWarning
+                            className="inline-editable text-[18px] font-bold tracking-widest uppercase inline-block"
+                            title="Click to edit table title"
+                          >
+                            INDEX / TABLE OF CONTENTS
+                          </span>
+                        </div>
                       </div>
 
                       {/* NO COURSE OR STUDENT INFO BOX HERE (Clean Table Focus) */}
 
                       {/* THE INDEX TABLE */}
-                      <div className="w-full border-2 border-black overflow-hidden mt-2">
-                        {/* Table Header */}
-                        <div className="flex items-stretch bg-black text-white font-bold text-[12px] uppercase tracking-wider text-center border-b-2 border-black">
-                          <div className="w-[58px] py-2.5 px-1.5 border-r border-white/40 shrink-0 flex items-center justify-center">
-                            SL No.
-                          </div>
-                          <div
-                            className={`flex-1 py-2.5 px-3 text-left flex items-center ${showPageNoColumn || showRemarksColumn ? "border-r border-white/40" : ""
-                              }`}
-                          >
-                            Experiment Name
-                          </div>
-                          {showPageNoColumn && (
-                            <div
-                              className={`w-[84px] py-2.5 px-1 shrink-0 flex items-center justify-center ${showRemarksColumn ? "border-r border-white/40" : ""
-                                }`}
+                      <div className="w-full mt-2">
+                        <table
+                          className="w-full border-collapse border-2 border-black font-space-mono"
+                          style={{
+                            width: "100%",
+                            borderCollapse: "collapse",
+                            border: "2px solid #000000",
+                            tableLayout: "fixed",
+                          }}
+                        >
+                          {/* Table Header */}
+                          <thead>
+                            <tr
+                              className="bg-black text-white font-bold text-[12px] uppercase tracking-wider text-center"
+                              style={{
+                                backgroundColor: "#000000",
+                                color: "#FFFFFF",
+                                borderBottom: "2px solid #000000",
+                              }}
                             >
-                              Page
-                            </div>
-                          )}
-                          {showRemarksColumn && (
-                            <div className="w-[96px] py-2.5 px-1 shrink-0 flex items-center justify-center">
-                              Remarks
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Table Rows with Alternating White & Light Ash background */}
-                        <div>
-                          {indexRows.map((row, idx) => {
-                            const isWhite = idx % 2 === 0;
-                            const rowBg = isWhite ? "#FFFFFF" : "#F3F4F6";
-                            const isLast = idx === indexRows.length - 1;
-                            return (
-                              <div
-                                key={row.id || idx}
-                                style={{ backgroundColor: rowBg }}
-                                className={`flex items-stretch text-[12.5px] min-h-[38px] ${!isLast ? "border-b border-black" : ""
-                                  }`}
+                              <th
+                                style={{
+                                  width: "60px",
+                                  borderRight: "1px solid rgba(255, 255, 255, 0.4)",
+                                  borderBottom: "2px solid #000000",
+                                  padding: "8px 4px",
+                                  textAlign: "center",
+                                  verticalAlign: "middle",
+                                }}
                               >
-                                {/* SL Column */}
-                                <div className="w-[58px] py-2 px-1.5 border-r border-black shrink-0 flex items-center justify-center font-bold text-center">
-                                  <span
-                                    contentEditable
-                                    suppressContentEditableWarning
-                                    onBlur={(e) => handleUpdateIndexRow(row.id, "sl", e.currentTarget.textContent || "")}
-                                    className="inline-editable text-center"
-                                    title="Click to edit SL"
-                                  >
-                                    {row.sl}
-                                  </span>
+                                <div className="flex flex-col items-center justify-center leading-tight">
+                                  <span>SL</span>
+                                  <span>NO.</span>
                                 </div>
-
-                                {/* Experiment Name Column */}
-                                <div
-                                  className={`flex-1 py-2 px-3 flex items-center text-left leading-snug ${showPageNoColumn || showRemarksColumn ? "border-r border-black" : ""
-                                    }`}
+                              </th>
+                              <th
+                                style={{
+                                  borderRight: showPageNoColumn || showRemarksColumn ? "1px solid rgba(255, 255, 255, 0.4)" : "none",
+                                  borderBottom: "2px solid #000000",
+                                  padding: "10px 14px",
+                                  textAlign: "left",
+                                  verticalAlign: "middle",
+                                }}
+                              >
+                                EXPERIMENT NAME
+                              </th>
+                              {showPageNoColumn && (
+                                <th
+                                  style={{
+                                    width: "84px",
+                                    borderRight: showRemarksColumn ? "1px solid rgba(255, 255, 255, 0.4)" : "none",
+                                    borderBottom: "2px solid #000000",
+                                    padding: "10px 4px",
+                                    textAlign: "center",
+                                    verticalAlign: "middle",
+                                  }}
                                 >
-                                  <span
-                                    contentEditable
-                                    suppressContentEditableWarning
-                                    onBlur={(e) =>
-                                      handleUpdateIndexRow(row.id, "experimentName", e.currentTarget.textContent || "")
-                                    }
-                                    className="inline-editable w-full"
-                                    title="Click to edit experiment name"
-                                  >
-                                    {row.experimentName}
-                                  </span>
-                                </div>
+                                  PAGE
+                                </th>
+                              )}
+                              {showRemarksColumn && (
+                                <th
+                                  style={{
+                                    width: "96px",
+                                    borderBottom: "2px solid #000000",
+                                    padding: "10px 4px",
+                                    textAlign: "center",
+                                    verticalAlign: "middle",
+                                  }}
+                                >
+                                  REMARKS
+                                </th>
+                              )}
+                            </tr>
+                          </thead>
 
-                                {/* Page No Column (Optional) */}
-                                {showPageNoColumn && (
-                                  <div
-                                    className={`w-[84px] py-2 px-1 shrink-0 flex items-center justify-center text-center ${showRemarksColumn ? "border-r border-black" : ""
-                                      }`}
+                          {/* Table Rows with Alternating White & Light Ash background */}
+                          <tbody>
+                            {indexRows.map((row, idx) => {
+                              const isWhite = idx % 2 === 0;
+                              const rowBg = isWhite ? "#FFFFFF" : "#e6e7e7";
+                              const isLast = idx === indexRows.length - 1;
+                              return (
+                                <tr
+                                  key={row.id || idx}
+                                  style={{
+                                    backgroundColor: rowBg,
+                                    borderBottom: !isLast ? "1px solid #000000" : "none",
+                                  }}
+                                  className="text-[12.5px]"
+                                >
+                                  {/* SL Column */}
+                                  <td
+                                    style={{
+                                      width: "60px",
+                                      borderRight: "1px solid #000000",
+                                      borderBottom: !isLast ? "1px solid #000000" : "none",
+                                      padding: "8px 4px",
+                                      textAlign: "center",
+                                      verticalAlign: "middle",
+                                      fontWeight: "bold",
+                                      backgroundColor: rowBg,
+                                    }}
+                                  >
+                                    <span
+                                      contentEditable
+                                      suppressContentEditableWarning
+                                      onBlur={(e) => handleUpdateIndexRow(row.id, "sl", e.currentTarget.textContent || "")}
+                                      className="inline-editable block text-center"
+                                      title="Click to edit SL"
+                                    >
+                                      {row.sl}
+                                    </span>
+                                  </td>
+
+                                  {/* Experiment Name Column */}
+                                  <td
+                                    style={{
+                                      borderRight: showPageNoColumn || showRemarksColumn ? "1px solid #000000" : "none",
+                                      borderBottom: !isLast ? "1px solid #000000" : "none",
+                                      padding: "8px 14px",
+                                      textAlign: "left",
+                                      verticalAlign: "middle",
+                                      lineHeight: "1.35",
+                                      backgroundColor: rowBg,
+                                    }}
                                   >
                                     <span
                                       contentEditable
                                       suppressContentEditableWarning
                                       onBlur={(e) =>
-                                        handleUpdateIndexRow(row.id, "pageNo", e.currentTarget.textContent || "")
+                                        handleUpdateIndexRow(row.id, "experimentName", e.currentTarget.textContent || "")
                                       }
-                                      className="inline-editable text-center"
-                                      title="Click to edit page"
+                                      className="inline-editable block w-full text-left"
+                                      title="Click to edit experiment name"
                                     >
-                                      {row.pageNo}
+                                      {row.experimentName}
                                     </span>
-                                  </div>
-                                )}
+                                  </td>
 
-                                {/* Remarks Column (Optional) */}
-                                {showRemarksColumn && (
-                                  <div className="w-[96px] py-2 px-1 shrink-0 flex items-center justify-center text-center">
-                                    <span
-                                      contentEditable
-                                      suppressContentEditableWarning
-                                      onBlur={(e) =>
-                                        handleUpdateIndexRow(row.id, "remarks", e.currentTarget.textContent || "")
-                                      }
-                                      className="inline-editable text-center"
-                                      title="Click to edit remarks"
+                                  {/* Page No Column (Optional) */}
+                                  {showPageNoColumn && (
+                                    <td
+                                      style={{
+                                        width: "84px",
+                                        borderRight: showRemarksColumn ? "1px solid #000000" : "none",
+                                        borderBottom: !isLast ? "1px solid #000000" : "none",
+                                        padding: "8px 4px",
+                                        textAlign: "center",
+                                        verticalAlign: "middle",
+                                        backgroundColor: rowBg,
+                                      }}
                                     >
-                                      {row.remarks}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
+                                      <span
+                                        contentEditable
+                                        suppressContentEditableWarning
+                                        onBlur={(e) =>
+                                          handleUpdateIndexRow(row.id, "pageNo", e.currentTarget.textContent || "")
+                                        }
+                                        className="inline-editable block text-center"
+                                        title="Click to edit page"
+                                      >
+                                        {row.pageNo}
+                                      </span>
+                                    </td>
+                                  )}
+
+                                  {/* Remarks Column (Optional) */}
+                                  {showRemarksColumn && (
+                                    <td
+                                      style={{
+                                        width: "96px",
+                                        borderBottom: !isLast ? "1px solid #000000" : "none",
+                                        padding: "8px 4px",
+                                        textAlign: "center",
+                                        verticalAlign: "middle",
+                                        backgroundColor: rowBg,
+                                      }}
+                                    >
+                                      <span
+                                        contentEditable
+                                        suppressContentEditableWarning
+                                        onBlur={(e) =>
+                                          handleUpdateIndexRow(row.id, "remarks", e.currentTarget.textContent || "")
+                                        }
+                                        className="inline-editable block text-center"
+                                        title="Click to edit remarks"
+                                      >
+                                        {row.remarks}
+                                      </span>
+                                    </td>
+                                  )}
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
 
@@ -1704,7 +1929,7 @@ export function CoverPageGeneratorClient() {
                   </div>
                 ) : formData.template === "modern-clean" ? (
                   /* ================= TEMPLATE 2: MODERN CENTERED (hehe.pdf, Lab Report & Assignment) ================= */
-                  <div className="relative h-[1056px] w-[816px] overflow-hidden bg-white text-black select-text font-quicksand">
+                  <div className="relative min-h-[1123px] w-[794px] overflow-hidden bg-white text-black select-text font-quicksand">
                     {/* Institution name (fully centered across 816px sheet) */}
                     <div
                       className={`${formData.docType === "lab-report" || formData.docType === "assignment"
@@ -2064,314 +2289,287 @@ export function CoverPageGeneratorClient() {
                   </div>
                 ) : (
                   /* ================= TEMPLATE 1: CLASSIC SPACE MONO (PREMIUM ACADEMIC) ================= */
-                  <div className={`flex flex-col flex-1 justify-between select-text ${spaceMono.className} font-space-mono text-black`}>
-                    {/* TOP SECTION: Header + Course Metadata + Student + Instructor */}
-                    <div className="space-y-[40px]">
-                      {/* College Header: Official Seal + Equal-Length Line + Top-Aligned Typography */}
-                      <div className="flex items-start">
-                        {/* Official Seal */}
-                        <div className="shrink-0 w-[108px] h-[108px] flex items-center justify-center text-black mr-[5px]">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src="/mec-college-seal.svg"
-                            alt="Mymensingh Engineering College Seal"
-                            width={108}
-                            height={108}
-                            className="w-[108px] h-[108px] object-contain"
-                          />
-                        </div>
+                  <div className={`flex flex-col flex-1 w-full justify-start select-text ${spaceMono.className} font-space-mono text-[#030202]`}>
+                    {/* Official Adobe Illustrator Vector Header (Exact Seal, Line, and Overlapping Typography) */}
+                    <MecHeaderVector
+                      department={formData.department}
+                      onDepartmentChange={(dept) => handleChange("department", dept)}
+                    />
 
-                        {/* Thin vertical line: exact same length as logo (108px) */}
-                        <div className="w-[1px] h-[108px] bg-black shrink-0" />
-
-                        {/* College name and department: starts right from the top, tight millimeter gap, single lines */}
-                        <div className="flex flex-col justify-start select-text ml-[5px]">
-                          <div className="text-[42px] font-bold leading-none tracking-tight text-black whitespace-nowrap">
-                            Mymensingh
-                          </div>
-                          <div className="text-[42px] font-bold leading-none tracking-tight text-black whitespace-nowrap mt-[3px]">
-                            Engineering College
-                          </div>
-                          <div
-                            contentEditable
-                            suppressContentEditableWarning
-                            onBlur={(e) => handleChange("department", e.currentTarget.textContent || "")}
-                            className="inline-editable block text-[13px] font-normal leading-tight mt-[8px] tracking-tight text-black whitespace-nowrap"
-                            style={{ display: "block" }}
-                            title="Click to edit department"
-                          >
-                            {formData.department}
-                          </div>
-                        </div>
+                    {/* Section 1: Document Type & Course Information Block (108px gap from header) */}
+                    <div className="mt-[108px] text-[17.3px] leading-[1.2] text-[#030202]">
+                      <div className="font-bold text-[17.3px] leading-[1.2] mb-[2px] text-[#030202]">
+                        <span
+                          contentEditable
+                          suppressContentEditableWarning
+                          className="inline-editable font-bold"
+                          title="Click to edit document header"
+                        >
+                          {getDocTypeHeader()}
+                        </span>
                       </div>
 
-                      {/* Document Type & Course Information Block */}
-                      <div className="text-[14.5px] leading-[1.65] text-black">
-                        <div className="font-bold text-[15px] pb-1 text-black">
-                          <span
-                            contentEditable
-                            suppressContentEditableWarning
-                            className="inline-editable font-bold"
-                            title="Click to edit document header"
-                          >
-                            {getDocTypeHeader()}
-                          </span>
-                        </div>
+                      <div className="flex items-start">
+                        <span className="font-normal shrink-0 w-[140px] whitespace-nowrap">Course Name</span>
+                        <span className="shrink-0 mx-1">:</span>
+                        <span
+                          contentEditable
+                          suppressContentEditableWarning
+                          onBlur={(e) => handleChange("courseName", e.currentTarget.textContent || "")}
+                          className="inline-editable font-normal flex-1"
+                          title="Click to edit course name"
+                        >
+                          {formData.courseName}
+                        </span>
+                      </div>
 
+                      <div className="flex items-start">
+                        <span className="font-normal shrink-0 w-[140px] whitespace-nowrap">Course Code</span>
+                        <span className="shrink-0 mx-1">:</span>
+                        <span
+                          contentEditable
+                          suppressContentEditableWarning
+                          onBlur={(e) => handleChange("courseCode", e.currentTarget.textContent || "")}
+                          className="inline-editable font-normal flex-1"
+                          title="Click to edit course code"
+                        >
+                          {formData.courseCode}
+                        </span>
+                      </div>
+
+                      {formData.courseCredit?.trim() ? (
                         <div className="flex items-start">
-                          <span className="font-normal shrink-0 w-[160px]">Course Name</span>
+                          <span className="font-normal shrink-0 w-[140px] whitespace-nowrap">Course Credit</span>
                           <span className="shrink-0 mx-1">:</span>
                           <span
                             contentEditable
                             suppressContentEditableWarning
-                            onBlur={(e) => handleChange("courseName", e.currentTarget.textContent || "")}
+                            onBlur={(e) => handleChange("courseCredit", e.currentTarget.textContent || "")}
                             className="inline-editable font-normal flex-1"
-                            title="Click to edit course name"
+                            title="Click to edit course credit"
                           >
-                            {formData.courseName}
+                            {formData.courseCredit}
                           </span>
                         </div>
+                      ) : null}
 
-                        <div className="flex items-start">
-                          <span className="font-normal shrink-0 w-[160px]">Course Code</span>
-                          <span className="shrink-0 mx-1">:</span>
-                          <span
-                            contentEditable
-                            suppressContentEditableWarning
-                            onBlur={(e) => handleChange("courseCode", e.currentTarget.textContent || "")}
-                            className="inline-editable font-normal flex-1"
-                            title="Click to edit course code"
-                          >
-                            {formData.courseCode}
-                          </span>
-                        </div>
-
-                        {formData.courseCredit?.trim() ? (
+                      {/* Dynamic Lab Report Fields */}
+                      {formData.docType === "lab-report" && (
+                        <>
                           <div className="flex items-start">
-                            <span className="font-normal shrink-0 w-[160px]">Course Credit</span>
+                            <span className="font-normal shrink-0 w-[140px] whitespace-nowrap">Exp. No.</span>
                             <span className="shrink-0 mx-1">:</span>
                             <span
                               contentEditable
                               suppressContentEditableWarning
-                              onBlur={(e) => handleChange("courseCredit", e.currentTarget.textContent || "")}
+                              onBlur={(e) => handleChange("experimentNo", e.currentTarget.textContent || "")}
                               className="inline-editable font-normal flex-1"
-                              title="Click to edit course credit"
+                              title="Click to edit experiment number"
                             >
-                              {formData.courseCredit}
+                              {formData.experimentNo}
                             </span>
                           </div>
-                        ) : null}
+                          <div className="flex items-start">
+                            <span className="font-normal shrink-0 w-[140px] whitespace-nowrap">Exp. Name</span>
+                            <span className="shrink-0 mx-1">:</span>
+                            <span
+                              contentEditable
+                              suppressContentEditableWarning
+                              onBlur={(e) => handleChange("experimentName", e.currentTarget.textContent || "")}
+                              className="inline-editable font-normal flex-1"
+                              title="Click to edit experiment name"
+                            >
+                              {formData.experimentName}
+                            </span>
+                          </div>
+                        </>
+                      )}
 
-                        {/* Dynamic Lab Report Fields */}
-                        {formData.docType === "lab-report" && (
-                          <>
-                            <div className="flex items-start">
-                              <span className="font-normal shrink-0 w-[160px]">Experiment No.</span>
-                              <span className="shrink-0 mx-1">:</span>
-                              <span
-                                contentEditable
-                                suppressContentEditableWarning
-                                onBlur={(e) => handleChange("experimentNo", e.currentTarget.textContent || "")}
-                                className="inline-editable font-normal flex-1"
-                                title="Click to edit experiment number"
-                              >
-                                {formData.experimentNo}
-                              </span>
-                            </div>
-                            <div className="flex items-start">
-                              <span className="font-normal shrink-0 w-[160px]">Exp. Name</span>
-                              <span className="shrink-0 mx-1">:</span>
-                              <span
-                                contentEditable
-                                suppressContentEditableWarning
-                                onBlur={(e) => handleChange("experimentName", e.currentTarget.textContent || "")}
-                                className="inline-editable font-normal flex-1"
-                                title="Click to edit experiment name"
-                              >
-                                {formData.experimentName}
-                              </span>
-                            </div>
-                          </>
-                        )}
+                      {/* Dynamic Assignment Fields */}
+                      {formData.docType === "assignment" && (
+                        <>
+                          <div className="flex items-start">
+                            <span className="font-normal shrink-0 w-[140px] whitespace-nowrap">Assign. No.</span>
+                            <span className="shrink-0 mx-1">:</span>
+                            <span
+                              contentEditable
+                              suppressContentEditableWarning
+                              onBlur={(e) => handleChange("assignmentNo", e.currentTarget.textContent || "")}
+                              className="inline-editable font-normal flex-1"
+                              title="Click to edit assignment number"
+                            >
+                              {formData.assignmentNo}
+                            </span>
+                          </div>
+                          <div className="flex items-start">
+                            <span className="font-normal shrink-0 w-[140px] whitespace-nowrap">Assign. Topic</span>
+                            <span className="shrink-0 mx-1">:</span>
+                            <span
+                              contentEditable
+                              suppressContentEditableWarning
+                              onBlur={(e) => handleChange("assignmentTopic", e.currentTarget.textContent || "")}
+                              className="inline-editable font-normal flex-1"
+                              title="Click to edit assignment topic"
+                            >
+                              {formData.assignmentTopic}
+                            </span>
+                          </div>
+                        </>
+                      )}
+                    </div>
 
-                        {/* Dynamic Assignment Fields */}
-                        {formData.docType === "assignment" && (
-                          <>
-                            <div className="flex items-start">
-                              <span className="font-normal shrink-0 w-[160px]">Assignment No.</span>
-                              <span className="shrink-0 mx-1">:</span>
-                              <span
-                                contentEditable
-                                suppressContentEditableWarning
-                                onBlur={(e) => handleChange("assignmentNo", e.currentTarget.textContent || "")}
-                                className="inline-editable font-normal flex-1"
-                                title="Click to edit assignment number"
-                              >
-                                {formData.assignmentNo}
-                              </span>
-                            </div>
-                            <div className="flex items-start">
-                              <span className="font-normal shrink-0 w-[160px]">Assign. Topic</span>
-                              <span className="shrink-0 mx-1">:</span>
-                              <span
-                                contentEditable
-                                suppressContentEditableWarning
-                                onBlur={(e) => handleChange("assignmentTopic", e.currentTarget.textContent || "")}
-                                className="inline-editable font-normal flex-1"
-                                title="Click to edit assignment topic"
-                              >
-                                {formData.assignmentTopic}
-                              </span>
-                            </div>
-                          </>
-                        )}
+                    {/* Section 2: Submitted By Block (93px gap from Section 1) */}
+                    <div className="mt-[93px] text-[17.3px] leading-[1.2] text-[#030202]">
+                      <div className="font-bold text-[17.3px] leading-[1.2] mb-[2px] text-[#030202]">Submitted By,</div>
+
+                      <div className="flex items-start">
+                        <span className="font-normal shrink-0 w-[62px]">Name</span>
+                        <span className="shrink-0 mx-1">:</span>
+                        <span
+                          contentEditable
+                          suppressContentEditableWarning
+                          onBlur={(e) => handleChange("studentName", e.currentTarget.textContent || "")}
+                          className="inline-editable font-normal"
+                          title="Click to edit student name"
+                        >
+                          {formData.studentName}
+                        </span>
                       </div>
 
-                      {/* Submitted By Block */}
-                      <div className="text-[14.5px] leading-[1.65] text-black">
-                        <div className="font-bold text-[15px] pb-1 text-black">Submitted By,</div>
-
-                        <div className="flex items-start">
-                          <span className="font-normal shrink-0 w-[64px]">Name</span>
-                          <span className="shrink-0 mx-1">:</span>
-                          <span
-                            contentEditable
-                            suppressContentEditableWarning
-                            onBlur={(e) => handleChange("studentName", e.currentTarget.textContent || "")}
-                            className="inline-editable font-normal"
-                            title="Click to edit student name"
-                          >
-                            {formData.studentName}
-                          </span>
-                        </div>
-
-                        <div className="flex items-start">
-                          <span className="font-normal shrink-0 w-[64px]">Roll</span>
-                          <span className="shrink-0 mx-1">:</span>
-                          <span
-                            contentEditable
-                            suppressContentEditableWarning
-                            onBlur={(e) => handleChange("roll", e.currentTarget.textContent || "")}
-                            className="inline-editable font-normal"
-                            title="Click to edit roll"
-                          >
-                            {formData.roll}
-                          </span>
-                        </div>
-
-                        <div className="flex items-start">
-                          <span className="font-normal shrink-0 w-[64px]">Reg.</span>
-                          <span className="shrink-0 mx-1">:</span>
-                          <span
-                            contentEditable
-                            suppressContentEditableWarning
-                            onBlur={(e) => handleChange("reg", e.currentTarget.textContent || "")}
-                            className="inline-editable font-normal"
-                            title="Click to edit registration"
-                          >
-                            {formData.reg}
-                          </span>
-                        </div>
-
-                        <div className="flex items-start">
-                          <span className="font-normal shrink-0 w-[64px]">Year</span>
-                          <span className="shrink-0 mx-1">:</span>
-                          <span className="font-normal">
-                            <span
-                              contentEditable
-                              suppressContentEditableWarning
-                              onBlur={(e) => handleChange("yearNumber", e.currentTarget.textContent || "")}
-                              className="inline-editable font-normal"
-                            >
-                              {formData.yearNumber}
-                            </span>
-                            {formData.yearSuffix} Year.
-                          </span>
-                        </div>
-
-                        <div className="flex items-start">
-                          <span className="font-normal shrink-0 w-[64px]">Sem.</span>
-                          <span className="shrink-0 mx-1">:</span>
-                          <span className="font-normal">
-                            <span
-                              contentEditable
-                              suppressContentEditableWarning
-                              onBlur={(e) => handleChange("semNumber", e.currentTarget.textContent || "")}
-                              className="inline-editable font-normal"
-                            >
-                              {formData.semNumber}
-                            </span>
-                            {formData.semSuffix} Semester.
-                          </span>
-                        </div>
+                      <div className="flex items-start">
+                        <span className="font-normal shrink-0 w-[62px]">Roll</span>
+                        <span className="shrink-0 mx-1">:</span>
+                        <span
+                          contentEditable
+                          suppressContentEditableWarning
+                          onBlur={(e) => handleChange("roll", e.currentTarget.textContent || "")}
+                          className="inline-editable font-normal"
+                          title="Click to edit roll"
+                        >
+                          {formData.roll}
+                        </span>
                       </div>
 
-                      {/* Submitted To Block */}
-                      <div className="text-[14.5px] leading-[1.65] text-black">
-                        <div className="font-bold text-[15px] pb-1 text-black">Submitted To,</div>
-                        <div>
+                      <div className="flex items-start">
+                        <span className="font-normal shrink-0 w-[62px]">Reg.</span>
+                        <span className="shrink-0 mx-1">:</span>
+                        <span
+                          contentEditable
+                          suppressContentEditableWarning
+                          onBlur={(e) => handleChange("reg", e.currentTarget.textContent || "")}
+                          className="inline-editable font-normal"
+                          title="Click to edit registration"
+                        >
+                          {formData.reg}
+                        </span>
+                      </div>
+
+                      <div className="flex items-start">
+                        <span className="font-normal shrink-0 w-[62px]">Year</span>
+                        <span className="shrink-0 mx-1">:</span>
+                        <span className="font-normal flex items-baseline">
                           <span
                             contentEditable
                             suppressContentEditableWarning
-                            onBlur={(e) => handleChange("teacherName", e.currentTarget.textContent || "")}
+                            onBlur={(e) => handleChange("yearNumber", e.currentTarget.textContent || "")}
                             className="inline-editable font-normal"
-                            title="Click to edit instructor name"
+                            title="Click to edit year"
                           >
-                            {formData.teacherName}
+                            {formData.yearNumber}
                           </span>
-                          {formData.teacherName && !formData.teacherName.trim().endsWith(",") ? "," : ""}
-                        </div>
-                        {formData.teacherDesignation && (
-                          <div>
-                            <span
-                              contentEditable
-                              suppressContentEditableWarning
-                              onBlur={(e) => handleChange("teacherDesignation", e.currentTarget.textContent || "")}
-                              className="inline-editable font-normal"
-                              title="Click to edit instructor designation"
-                            >
-                              {formData.teacherDesignation}
-                            </span>
-                            {formData.teacherDesignation && !formData.teacherDesignation.trim().endsWith(",") ? "," : ""}
-                          </div>
-                        )}
-                        {formData.teacherDepartment && (
-                          <div>
-                            <span
-                              contentEditable
-                              suppressContentEditableWarning
-                              onBlur={(e) => handleChange("teacherDepartment", e.currentTarget.textContent || "")}
-                              className="inline-editable font-normal"
-                              title="Click to edit instructor department"
-                            >
-                              {formData.teacherDepartment}
-                            </span>
-                            {formData.teacherDepartment && !formData.teacherDepartment.trim().endsWith(",") ? "," : ""}
-                          </div>
-                        )}
-                        {formData.teacherInstitution && (
-                          <div>
-                            <span
-                              contentEditable
-                              suppressContentEditableWarning
-                              onBlur={(e) => handleChange("teacherInstitution", e.currentTarget.textContent || "")}
-                              className="inline-editable font-normal"
-                              title="Click to edit instructor institution"
-                            >
-                              {formData.teacherInstitution}
-                            </span>
-                            {formData.teacherInstitution && !formData.teacherInstitution.trim().endsWith(".") ? "." : ""}
-                          </div>
-                        )}
+                          <sup className="text-[10px] font-normal leading-none ml-[1px]">
+                            {formData.yearSuffix || "rd"}
+                          </sup>
+                          <span className="ml-[1px]"> Year.</span>
+                        </span>
+                      </div>
+
+                      <div className="flex items-start">
+                        <span className="font-normal shrink-0 w-[62px]">Sem.</span>
+                        <span className="shrink-0 mx-1">:</span>
+                        <span className="font-normal flex items-baseline">
+                          <span
+                            contentEditable
+                            suppressContentEditableWarning
+                            onBlur={(e) => handleChange("semNumber", e.currentTarget.textContent || "")}
+                            className="inline-editable font-normal"
+                            title="Click to edit semester"
+                          >
+                            {formData.semNumber}
+                          </span>
+                          <sup className="text-[10px] font-normal leading-none ml-[1px]">
+                            {formData.semSuffix || "nd"}
+                          </sup>
+                          <span className="ml-[1px]"> Semester.</span>
+                        </span>
                       </div>
                     </div>
 
-                    {/* BOTTOM SECTION: Date & Signature Block */}
-                    <div className="flex items-end justify-between text-[14.5px] leading-[1.6] text-black pt-10">
-                      {/* Left: Date Block */}
+                    {/* Section 3: Submitted To Block (90px gap from Section 2) */}
+                    <div className="mt-[90px] text-[17.3px] leading-[1.2] text-[#030202]">
+                      <div className="font-bold text-[17.3px] leading-[1.2] mb-[2px] text-[#030202]">Submitted To,</div>
+                      <div>
+                        <span
+                          contentEditable
+                          suppressContentEditableWarning
+                          onBlur={(e) => handleChange("teacherName", e.currentTarget.textContent || "")}
+                          className="inline-editable font-normal"
+                          title="Click to edit instructor name"
+                        >
+                          {formData.teacherName}
+                        </span>
+                        {formData.teacherName && !formData.teacherName.trim().endsWith(",") ? "," : ""}
+                      </div>
+                      {formData.teacherDesignation && (
+                        <div>
+                          <span
+                            contentEditable
+                            suppressContentEditableWarning
+                            onBlur={(e) => handleChange("teacherDesignation", e.currentTarget.textContent || "")}
+                            className="inline-editable font-normal"
+                            title="Click to edit instructor designation"
+                          >
+                            {formData.teacherDesignation}
+                          </span>
+                          {formData.teacherDesignation && !formData.teacherDesignation.trim().endsWith(",") ? "," : ""}
+                        </div>
+                      )}
+                      {formData.teacherDepartment && (
+                        <div>
+                          <span
+                            contentEditable
+                            suppressContentEditableWarning
+                            onBlur={(e) => handleChange("teacherDepartment", e.currentTarget.textContent || "")}
+                            className="inline-editable font-normal"
+                            title="Click to edit instructor department"
+                          >
+                            {formData.teacherDepartment}
+                          </span>
+                          {formData.teacherDepartment && !formData.teacherDepartment.trim().endsWith(",") ? "," : ""}
+                        </div>
+                      )}
+                      {formData.teacherInstitution && (
+                        <div>
+                          <span
+                            contentEditable
+                            suppressContentEditableWarning
+                            onBlur={(e) => handleChange("teacherInstitution", e.currentTarget.textContent || "")}
+                            className="inline-editable font-normal"
+                            title="Click to edit instructor institution"
+                          >
+                            {formData.teacherInstitution}
+                          </span>
+                          {formData.teacherInstitution && !formData.teacherInstitution.trim().endsWith(".") ? "." : ""}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Section 4: Date & Signature Block (Placed at bottom, right-aligned signature at exact Illustrator coordinate) */}
+                    <div className="mt-auto pt-[40px] w-full flex items-end justify-between text-[17.3px] leading-[1.2] text-[#030202]">
+                      {/* Left: Date Block (for lab report or if enabled) */}
                       {(formData.showExperimentDate || formData.showSubmissionDate) ? (
                         <div>
-                          <div className="font-bold text-[15px] pb-1 text-black">Date,</div>
+                          <div className="font-bold text-[17.3px] leading-[1.2] mb-[2px] text-[#030202]">Date,</div>
                           {formData.docType === "lab-report" && formData.showExperimentDate && (
                             <div className="flex items-start">
                               <span className="font-normal shrink-0 w-[170px]">Experiment Date</span>
@@ -2407,20 +2605,70 @@ export function CoverPageGeneratorClient() {
                         <div />
                       )}
 
-                      {/* Right: Signature */}
-                      <div className="text-right pr-2 pb-0.5">
-                        <div className="font-normal text-[15px] text-black">Signature</div>
+                      {/* Right: Signature Label (exact position matching Illustrator setu.pdf) */}
+                      <div className="text-right pr-2 pb-0.5 ml-auto">
+                        <div className="font-normal text-[17.3px] leading-none text-[#030202]">
+                          Signature
+                        </div>
                       </div>
                     </div>
                   </div>
                 )}
               </div>
             </div>
+          </div>
 
 
           </div>
         </div>
       </main>
+
+      {/* Mobile Sticky Bottom Action Bar (No-Print, lg:hidden) */}
+      <div className="no-print lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-surface-elevated/95 backdrop-blur-md border-t border-black px-4 py-2.5 shadow-[0px_-4px_16px_rgba(0,0,0,0.15)] flex items-center justify-between gap-3">
+        {/* Left: Mode Switcher */}
+        <div className="flex items-center bg-surface-primary border border-border-default rounded-lg p-0.5">
+          <button
+            type="button"
+            onClick={() => {
+              setMobileViewMode("edit");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            className={`px-3 py-1.5 rounded-md text-xs font-mono font-bold uppercase transition-all flex items-center gap-1.5 ${
+              mobileViewMode === "edit"
+                ? "bg-accent-primary text-white shadow-sm"
+                : "text-text-secondary hover:text-text-primary"
+            }`}
+          >
+            <FileText size={13} /> Edit
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setMobileViewMode("preview");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            className={`px-3 py-1.5 rounded-md text-xs font-mono font-bold uppercase transition-all flex items-center gap-1.5 ${
+              mobileViewMode === "preview"
+                ? "bg-accent-primary text-white shadow-sm"
+                : "text-text-secondary hover:text-text-primary"
+            }`}
+          >
+            <Printer size={13} /> Preview
+          </button>
+        </div>
+
+        {/* Right: Print / Save PDF Button */}
+        <Button
+          variant="primary"
+          size="sm"
+          onClick={handlePrint}
+          icon={<Printer size={15} />}
+          className="border border-black shadow-[2px_2px_0px_var(--accent-primary)] font-bold text-xs uppercase px-4 py-2 shrink-0"
+          title="Print or Save as PDF"
+        >
+          Print / PDF
+        </Button>
+      </div>
     </div>
   );
 }
