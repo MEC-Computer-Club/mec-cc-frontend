@@ -176,7 +176,7 @@ export const AutoSuggestInput: React.FC<AutoSuggestInputProps> = ({
           autoComplete="off"
           className={
             className ||
-            "w-full px-3 py-2 text-sm bg-surface-primary border border-border-default rounded-md focus:outline-none focus:ring-1 focus:ring-accent-primary focus:border-accent-primary transition-colors text-text-primary placeholder:text-text-muted"
+            "w-full px-3 py-2 text-base sm:text-sm bg-surface-primary border border-border-default rounded-md focus:outline-none focus:ring-1 focus:ring-accent-primary focus:border-accent-primary transition-colors text-text-primary placeholder:text-text-muted"
           }
         />
         <div className="absolute right-2.5 flex items-center pointer-events-none text-text-muted">
