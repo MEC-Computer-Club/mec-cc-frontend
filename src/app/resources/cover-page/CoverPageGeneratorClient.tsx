@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Space_Mono } from "next/font/google";
+import { Space_Mono, EB_Garamond } from "next/font/google";
 import { printCoverPage } from "./coverPageExportEngine";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
@@ -32,6 +32,10 @@ import {
   Trash2,
   Table,
   ListOrdered,
+  FileCode,
+  Users,
+  User,
+  Download,
 } from "lucide-react";
 import { MecHeaderVector } from "./MecHeaderVector";
 
@@ -41,7 +45,13 @@ const spaceMono = Space_Mono({
   display: "swap",
 });
 
-export type CoverTemplate = "modern-clean" | "classic-mono";
+const ebGaramond = EB_Garamond({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
+});
+
+export type CoverTemplate = "modern-clean" | "classic-mono" | "latex-academic";
 export type DocType = "cover-page" | "lab-report" | "assignment" | "index-table";
 
 export interface TemplateOption {
@@ -64,11 +74,18 @@ export const TEMPLATE_OPTIONS: TemplateOption[] = [
     badge: "Retro Monospace",
     description: "Left-aligned crest, vertical divider line, authentic monospace typewriter type.",
   },
+  {
+    id: "latex-academic",
+    name: "Project Report Cover",
+    badge: "Official Clean",
+    description: "Authentic project report cover page with Computer Modern typography, double horizontal rules, solo or group members, and date stamp.",
+  },
 ];
 
 export const TEMPLATE_SELECT_OPTIONS = [
   { value: "modern-clean", label: "Modern Centered" },
   { value: "classic-mono", label: "Classic Space Mono" },
+  { value: "latex-academic", label: "Project Report Cover" },
 ];
 
 export interface IndexRow {
@@ -163,12 +180,20 @@ const COURSE_EXPERIMENTS: Record<string, string[]> = {
   ],
 };
 
+export interface GroupMember {
+  id: string;
+  name: string;
+  roll: string;
+  reg: string;
+}
+
 interface FormData {
   template: CoverTemplate;
   docType: DocType;
   department: string;
   studentDepartment: string;
   institution: string;
+  university: string;
   courseName: string;
   courseCode: string;
   courseCredit: string;
@@ -178,6 +203,8 @@ interface FormData {
   showExperimentDate: boolean;
   assignmentNo: string;
   assignmentTopic: string;
+  isGroupSubmission: boolean;
+  groupMembers: GroupMember[];
   studentName: string;
   roll: string;
   reg: string;
@@ -200,6 +227,7 @@ const DEFAULT_DATA: FormData = {
   department: "Department of Computer Science & Engineering",
   studentDepartment: "CSE",
   institution: "Mymensingh Engineering College",
+  university: "University of Dhaka",
   courseName: "Database Management Systems - I Lab",
   courseCode: "CSE-2211",
   courseCredit: "1.5",
@@ -209,6 +237,12 @@ const DEFAULT_DATA: FormData = {
   showExperimentDate: true,
   assignmentNo: "01",
   assignmentTopic: "Algorithm Time and Space Complexity Analysis",
+  isGroupSubmission: false,
+  groupMembers: [
+    { id: "1", name: "Khokamoni", roll: "210342", reg: "1330" },
+    { id: "2", name: "Md Sazid Al Hasan", roll: "210344", reg: "1332" },
+    { id: "3", name: "Sadid Abrar", roll: "210323", reg: "1312" },
+  ],
   studentName: "Md. Nasir Ahmed",
   roll: "210347",
   reg: "1335",
@@ -260,6 +294,129 @@ const QUICK_COURSES = [
   { name: "Operating Systems Lab.", code: "CSE-3206.", credit: "1.5" },
   { name: "Software Engineering & Information System Design Lab.", code: "CSE-4102.", credit: "1.5" },
 ];
+
+function generateLatexCode(data: FormData): string {
+  const preparedByLatex = data.isGroupSubmission
+    ? data.groupMembers
+        .map(
+          (m) =>
+            `            ${m.name || "Student Name"} & (Roll: ${m.roll || "000000"}, Reg: ${m.reg || "0000"}) \\\\`
+        )
+        .join("\n")
+    : `            ${data.studentName || "Student Name"} & (Roll: ${data.roll || "000000"}, Reg: ${data.reg || "0000"}) \\\\`;
+
+  const docHeader =
+    data.docType === "lab-report"
+      ? "Lab Reports"
+      : data.docType === "assignment"
+      ? "Assignment"
+      : "Project Report";
+
+  const courseTitle = data.courseName || "Course Name";
+  const courseCode = data.courseCode || "";
+
+  return `\\documentclass{scrreprt}
+\\usepackage{listings}
+\\usepackage{underscore}
+\\usepackage{graphicx}
+\\usepackage[bookmarks=true]{hyperref}
+\\usepackage[utf8]{inputenc}
+\\usepackage[english]{babel}
+\\usepackage{geometry}
+\\geometry{margin=1in}
+
+\\def\\projectname{${courseTitle}}
+\\def\\projectsubtitle{${courseCode}}
+\\def\\institution{${data.institution}}
+\\def\\university{${data.university || "University of Dhaka"}}
+\\def\\department{${data.department}}
+
+\\begin{document}
+
+\\begin{titlepage}
+    \\centering
+    
+    % College Logo
+    \\IfFileExists{mec-logo.png}{
+        \\includegraphics[width=0.20\\textwidth]{mec-logo.png}
+        \\vspace{.5cm}
+    }{
+        \\IfFileExists{logomec.jpg}{
+            \\includegraphics[width=0.19\\textwidth]{logomec.jpg}
+            \\vspace{.5cm}
+        }{
+            \\vspace*{2cm}
+        }
+    }
+    
+    % Institution and Department
+    {\\Large \\textbf{\\institution}} \\\\
+    \\vspace{0.2cm}
+    {\\large \\department} \\\\
+    \\vspace{0.2cm}
+    {\\large \\university} \\\\
+    
+    \\vspace{1cm}
+    
+    % Title
+    \\rule{\\textwidth}{1pt}\\\\
+    \\vspace{0.5cm}
+    {\\Huge \\textbf{${docHeader}}} \\\\
+    \\vspace{0.5cm}
+    \\rule{\\textwidth}{1pt}\\\\
+    
+    \\vspace{1.5cm}
+    
+    % Course Info
+    {\\LARGE \\textbf{${courseTitle}}} \\\\
+    ${courseCode ? `\\vspace{0.4cm}\n    {\\large ${courseCode}} \\\\` : ""}
+    
+    \\vspace{1cm}
+    
+    % Author Information
+    \\begin{minipage}{0.85\\textwidth}
+        \\centering
+        \\textbf{Prepared by:} \\\\
+        \\vspace{0.3cm}
+        \\begin{tabular}{l l}
+${preparedByLatex}
+        \\end{tabular}
+    \\end{minipage}
+    
+    \\vspace{1cm}
+    
+    % Supervisor Information
+    \\begin{minipage}{0.85\\textwidth}
+        \\centering
+        \\textbf{Submitted to:} \\\\
+        \\vspace{0.3cm}
+        \\textbf{${data.teacherName}} \\\\
+        ${data.teacherDesignation} \\\\
+        ${data.teacherDepartment} \\\\
+        ${data.teacherInstitution} \\\\
+        ${data.university || "University of Dhaka"}
+    \\end{minipage}
+    
+    \\vspace{2.5cm}
+    
+    % Date on Left and Signature on Right (same line)
+    \\vfill
+    \\noindent
+    \\begin{minipage}[b]{0.5\\textwidth}
+        \\raggedright
+        \\textbf{Date:} ${data.submissionDate || "January 19, 2026"}
+    \\end{minipage}%
+    \\begin{minipage}[b]{0.5\\textwidth}
+        \\raggedleft
+        \\rule{4cm}{0.4pt} \\\\
+        \\small\\textit{Signature}
+    \\end{minipage}
+    
+\\end{titlepage}
+
+\\end{document}
+`;
+}
 
 export function CoverPageGeneratorClient() {
   const { user, isAuthenticated } = useAuth();
@@ -379,14 +536,89 @@ export function CoverPageGeneratorClient() {
     toast.success("Synchronized with your MEC CC account profile!");
   };
 
-  const handleChange = (field: keyof FormData, value: string | boolean) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+  const handleChange = (field: keyof FormData, value: any) => {
+    setFormData((prev) => {
+      const next = { ...prev, [field]: value };
+      if (field === "studentName" && next.groupMembers?.length > 0) {
+        next.groupMembers = next.groupMembers.map((m, i) => (i === 0 ? { ...m, name: String(value) } : m));
+      }
+      if (field === "roll" && next.groupMembers?.length > 0) {
+        next.groupMembers = next.groupMembers.map((m, i) => (i === 0 ? { ...m, roll: String(value) } : m));
+      }
+      if (field === "reg" && next.groupMembers?.length > 0) {
+        next.groupMembers = next.groupMembers.map((m, i) => (i === 0 ? { ...m, reg: String(value) } : m));
+      }
+      // When switching to LaTeX Academic, force Project Report mode (no doc type switching)
+      if (field === "template" && value === "latex-academic") {
+        next.docType = "cover-page";
+      }
+      if (field === "template" && value !== "latex-academic") {
+        next.isGroupSubmission = false;
+      }
+      return next;
+    });
     if (field === "docType") {
       if (value === "index-table") {
         setActiveTab("index");
       } else if (activeTab === "index") {
         setActiveTab("document");
       }
+    }
+  };
+
+  const handleAddGroupMember = () => {
+    const newId = Date.now().toString();
+    setFormData((prev) => ({
+      ...prev,
+      groupMembers: [
+        ...prev.groupMembers,
+        { id: newId, name: "", roll: "", reg: "" },
+      ],
+    }));
+    toast.success("Added new team member");
+  };
+
+  const handleRemoveGroupMember = (index: number) => {
+    if (formData.groupMembers.length <= 1) {
+      toast.error("Group must contain at least one student");
+      return;
+    }
+    setFormData((prev) => ({
+      ...prev,
+      groupMembers: prev.groupMembers.filter((_, i) => i !== index),
+    }));
+    toast.success("Team member removed");
+  };
+
+  const handleGroupMemberChange = (index: number, field: keyof GroupMember, val: string) => {
+    setFormData((prev) => {
+      const updated = prev.groupMembers.map((m, i) => (i === index ? { ...m, [field]: val } : m));
+      const patch: Partial<FormData> = { groupMembers: updated };
+      if (index === 0) {
+        if (field === "name") patch.studentName = val;
+        if (field === "roll") patch.roll = val;
+        if (field === "reg") patch.reg = val;
+      }
+      return { ...prev, ...patch };
+    });
+  };
+
+  const handleDownloadLatex = () => {
+    try {
+      const code = generateLatexCode(formData);
+      const blob = new Blob([code], { type: "text/x-tex;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${(formData.courseCode || "report").toLowerCase().replace(/[^a-z0-9_-]/g, "_")}_cover.tex`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      toast.success("LaTeX (.tex) template downloaded!");
+    } catch {
+      navigator.clipboard?.writeText(generateLatexCode(formData));
+      toast.success("LaTeX code copied to clipboard!");
     }
   };
 
@@ -591,6 +823,11 @@ export function CoverPageGeneratorClient() {
         }
 
         /* Editable inline field styling */
+        .latex-instructor-block > .inline-editable,
+        .latex-course-block > .inline-editable {
+          display: block !important;
+        }
+
         .inline-editable {
           cursor: text;
           border-radius: 2px;
@@ -713,7 +950,7 @@ export function CoverPageGeneratorClient() {
               Resources
             </Link>
             <ChevronRight size={13} />
-            <span className="text-text-primary font-bold">Cover Page & Lab Report Generator</span>
+            <span className="text-text-primary font-bold">Cover Page</span>
           </div>
 
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -722,7 +959,7 @@ export function CoverPageGeneratorClient() {
                 <FileText size={13} /> Official MEC Templates
               </div>
               <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
-                MEC Cover Page & Lab Report Builder
+                MEC Cover Page Builder
               </h1>
               <p className="text-sm text-text-secondary mt-1 max-w-2xl">
                 Select your desired template, edit directly on the canvas or customize via the control deck. Formatted with authentic Mymensingh Engineering College typography, high-resolution crest, and instant 1-page A4 print export.
@@ -794,7 +1031,8 @@ export function CoverPageGeneratorClient() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* ================= LEFT CONTROLS (5 cols on lg, 4 cols on xl) ================= */}
           <div className={`no-print lg:col-span-5 xl:col-span-4 space-y-6 ${mobileViewMode === "preview" ? "hidden lg:block" : "block"}`}>
-            {/* Document Type Selector Card */}
+            {/* Document Type Selector Card (hidden for LaTeX Academic — always Project Report) */}
+            {formData.template !== "latex-academic" && (
             <div className="p-5 bg-surface-elevated border border-black rounded-xl shadow-[4px_4px_0px_var(--accent-primary)]">
               <label className="block text-xs font-mono font-bold uppercase tracking-wider text-text-secondary mb-2">
                 Document Type
@@ -814,6 +1052,7 @@ export function CoverPageGeneratorClient() {
                 </span>
               </div>
             </div>
+            )}
 
             {/* Tab Navigation for Controls */}
             <div className="flex items-center border-b-2 border-border-default gap-1 overflow-x-auto no-scrollbar">
@@ -1028,7 +1267,48 @@ export function CoverPageGeneratorClient() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
+                  {formData.template === "classic-mono" ? (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-mono font-bold uppercase text-text-secondary mb-1">
+                          Course Code
+                        </label>
+                        <AutoSuggestInput
+                          value={formData.courseCode}
+                          onChange={(val) => handleChange("courseCode", val)}
+                          onSelect={(course) => {
+                            setFormData((prev) => ({
+                              ...prev,
+                              courseName: course.courseName || prev.courseName,
+                              courseCode: course.courseCode || prev.courseCode,
+                              courseCredit: course.courseCredit || prev.courseCredit,
+                            }));
+                          }}
+                          placeholder="e.g. CSE-3113"
+                          searchEndpoint="/api/courses/search"
+                          department={formData.department}
+                          formatSuggestion={(course) => ({
+                            primary: course.courseCode,
+                            secondary: course.courseName,
+                            meta: course.courseCredit ? `${course.courseCredit} cr` : "",
+                          })}
+                          className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-mono font-bold uppercase text-text-secondary mb-1">
+                          Course Credit (Optional)
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.courseCredit}
+                          onChange={(e) => handleChange("courseCredit", e.target.value)}
+                          placeholder="e.g. 1.5"
+                          className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                  ) : (
                     <div>
                       <label className="block text-xs font-mono font-bold uppercase text-text-secondary mb-1">
                         Course Code
@@ -1041,7 +1321,6 @@ export function CoverPageGeneratorClient() {
                             ...prev,
                             courseName: course.courseName || prev.courseName,
                             courseCode: course.courseCode || prev.courseCode,
-                            courseCredit: course.courseCredit || prev.courseCredit,
                           }));
                         }}
                         placeholder="e.g. CSE-3113"
@@ -1050,24 +1329,11 @@ export function CoverPageGeneratorClient() {
                         formatSuggestion={(course) => ({
                           primary: course.courseCode,
                           secondary: course.courseName,
-                          meta: course.courseCredit ? `${course.courseCredit} cr` : "",
                         })}
                         className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
                       />
                     </div>
-                    <div>
-                      <label className="block text-xs font-mono font-bold uppercase text-text-secondary mb-1">
-                        Course Credit (Optional)
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.courseCredit}
-                        onChange={(e) => handleChange("courseCredit", e.target.value)}
-                        placeholder="e.g. 1.5"
-                        className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
-                      />
-                    </div>
-                  </div>
+                  )}
 
                   {/* If Lab Report, show Experiment fields */}
                   {formData.docType === "lab-report" && (
@@ -1272,47 +1538,176 @@ export function CoverPageGeneratorClient() {
                     </div>
                   )}
 
-                  <div>
-                    <label className="block text-xs font-mono font-bold uppercase text-text-secondary mb-1">
-                      Student Full Name
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.studentName}
-                      onChange={(e) => handleChange("studentName", e.target.value)}
-                      placeholder="e.g. Twahid Ahmmed."
-                      className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-mono font-bold uppercase text-text-secondary mb-1">
-                        Class Roll
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.roll}
-                        onChange={(e) => handleChange("roll", e.target.value)}
-                        placeholder="e.g. 210347"
-                        className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
-                      />
+                  {/* Solo vs Group Toggle (Only for Project Report Cover) */}
+                  {formData.template === "latex-academic" && (
+                    <div className="flex items-center justify-between p-2.5 bg-surface-secondary/50 border border-border-default rounded-lg">
+                      <div>
+                        <div className="text-xs font-mono font-bold uppercase text-text-primary flex items-center gap-1.5">
+                          {formData.isGroupSubmission ? <Users size={13} className="text-accent-primary" /> : <User size={13} className="text-accent-primary" />}
+                          <span>Submission Mode</span>
+                        </div>
+                        <div className="text-[11px] text-text-secondary">
+                          {formData.isGroupSubmission ? "Group report (multiple students)" : "Individual submission (solo)"}
+                        </div>
+                      </div>
+                      <div className="flex rounded-md p-0.5 bg-surface-primary border border-border-default text-xs font-mono">
+                        <button
+                          type="button"
+                          onClick={() => handleChange("isGroupSubmission", false)}
+                          className={`px-3 py-1 rounded transition-colors ${
+                            !formData.isGroupSubmission
+                              ? "bg-accent-primary text-white font-bold shadow-sm"
+                              : "text-text-secondary hover:text-text-primary"
+                          }`}
+                        >
+                          Solo
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleChange("isGroupSubmission", true)}
+                          className={`px-3 py-1 rounded transition-colors ${
+                            formData.isGroupSubmission
+                              ? "bg-accent-primary text-white font-bold shadow-sm"
+                              : "text-text-secondary hover:text-text-primary"
+                          }`}
+                        >
+                          Group
+                        </button>
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-xs font-mono font-bold uppercase text-text-secondary mb-1">
-                        Registration No.
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.reg}
-                        onChange={(e) => handleChange("reg", e.target.value)}
-                        placeholder="e.g. 1335"
-                        className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
-                      />
-                    </div>
-                  </div>
+                  )}
 
-                  <div className="grid grid-cols-2 gap-3">
+                  {/* If Solo Student */}
+                  {!formData.isGroupSubmission || formData.template !== "latex-academic" ? (
+                    <>
+                      <div>
+                        <label className="block text-xs font-mono font-bold uppercase text-text-secondary mb-1">
+                          Student Full Name
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.studentName}
+                          onChange={(e) => handleChange("studentName", e.target.value)}
+                          placeholder="e.g. Twahid Ahmmed."
+                          className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-mono font-bold uppercase text-text-secondary mb-1">
+                            Class Roll
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.roll}
+                            onChange={(e) => handleChange("roll", e.target.value)}
+                            placeholder="e.g. 210347"
+                            className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-mono font-bold uppercase text-text-secondary mb-1">
+                            Registration No.
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.reg}
+                            onChange={(e) => handleChange("reg", e.target.value)}
+                            placeholder="e.g. 1335"
+                            className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
+                          />
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    /* If Group Submission */
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-mono font-bold uppercase text-text-secondary flex items-center gap-1.5">
+                          <Users size={13} className="text-accent-primary" /> Team Members ({formData.groupMembers.length})
+                        </label>
+                        <button
+                          type="button"
+                          onClick={handleAddGroupMember}
+                          className="text-xs font-mono text-accent-primary font-bold hover:underline flex items-center gap-1"
+                        >
+                          <Plus size={12} /> Add Member
+                        </button>
+                      </div>
+
+                      {formData.groupMembers.map((member, idx) => (
+                        <div key={member.id || idx} className="p-3 bg-surface-primary border border-border-default rounded-lg space-y-2 relative">
+                          <div className="flex items-center justify-between text-[11px] font-mono font-bold text-text-secondary">
+                            <span>Member #{idx + 1} {idx === 0 ? "(Lead)" : ""}</span>
+                            {formData.groupMembers.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveGroupMember(idx)}
+                                className="text-red-500 hover:text-red-700 transition-colors p-0.5"
+                                title="Remove member"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            )}
+                          </div>
+                          <input
+                            type="text"
+                            value={member.name}
+                            onChange={(e) => handleGroupMemberChange(idx, "name", e.target.value)}
+                            placeholder="Full Name"
+                            className="w-full px-2.5 py-1.5 bg-surface-elevated border border-border-default rounded text-xs font-mono focus:border-accent-primary focus:outline-none"
+                          />
+                          <div className="grid grid-cols-2 gap-2">
+                            <input
+                              type="text"
+                              value={member.roll}
+                              onChange={(e) => handleGroupMemberChange(idx, "roll", e.target.value)}
+                              placeholder="Roll (e.g. 210342)"
+                              className="w-full px-2.5 py-1.5 bg-surface-elevated border border-border-default rounded text-xs font-mono focus:border-accent-primary focus:outline-none"
+                            />
+                            <input
+                              type="text"
+                              value={member.reg}
+                              onChange={(e) => handleGroupMemberChange(idx, "reg", e.target.value)}
+                              placeholder="Reg (e.g. 1330)"
+                              className="w-full px-2.5 py-1.5 bg-surface-elevated border border-border-default rounded text-xs font-mono focus:border-accent-primary focus:outline-none"
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {formData.template !== "latex-academic" && (<>
+                  {formData.template === "modern-clean" ? (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-mono font-bold uppercase text-text-secondary mb-1">
+                          Dept. Code (Short)
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.studentDepartment}
+                          onChange={(e) => handleChange("studentDepartment", e.target.value)}
+                          placeholder="e.g. CSE"
+                          className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-mono font-bold uppercase text-text-secondary mb-1">
+                          Academic Session
+                        </label>
+                        <input
+                          type="text"
+                          value={formData.session}
+                          onChange={(e) => handleChange("session", e.target.value)}
+                          placeholder="e.g. 2021-2022"
+                          className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                  ) : (
                     <div>
                       <label className="block text-xs font-mono font-bold uppercase text-text-secondary mb-1">
                         Dept. Code (Short)
@@ -1325,19 +1720,7 @@ export function CoverPageGeneratorClient() {
                         className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
                       />
                     </div>
-                    <div>
-                      <label className="block text-xs font-mono font-bold uppercase text-text-secondary mb-1">
-                        Academic Session
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.session}
-                        onChange={(e) => handleChange("session", e.target.value)}
-                        placeholder="e.g. 2021-2022"
-                        className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
-                      />
-                    </div>
-                  </div>
+                  )}
 
                   <div className="grid grid-cols-2 gap-3">
                     <div>
@@ -1361,6 +1744,7 @@ export function CoverPageGeneratorClient() {
                       />
                     </div>
                   </div>
+                  </>)}
 
                   <div className="pt-2">
                     <Button
@@ -1444,6 +1828,19 @@ export function CoverPageGeneratorClient() {
                       value={formData.teacherInstitution}
                       onChange={(e) => handleChange("teacherInstitution", e.target.value)}
                       placeholder="e.g. Mymensingh Engineering College."
+                      className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-mono font-bold uppercase text-text-secondary mb-1">
+                      Affiliated University
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.university}
+                      onChange={(e) => handleChange("university", e.target.value)}
+                      placeholder="e.g. University of Dhaka"
                       className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
                     />
                   </div>
@@ -1618,13 +2015,17 @@ export function CoverPageGeneratorClient() {
                     transformOrigin: isMobile && mobileFitMode ? "top left" : "top center",
                     backgroundColor: "#FFFFFF",
                     color: "#000000",
+                    border: "1px solid #000000",
+                    boxSizing: "border-box",
                   }}
                 className={`${formData.template === "classic-mono"
                   ? `${spaceMono.className} font-space-mono pt-[81px] pb-[80px] px-[64px] flex flex-col justify-start shrink-0`
-                  : formData.docType === "index-table"
-                    ? "font-quicksand p-[48px] sm:p-[56px] flex flex-col justify-between shrink-0"
-                    : "font-quicksand p-0 block relative shrink-0"
-                  } text-black shadow-2xl border border-neutral-300 transition-transform duration-150 relative box-border select-text`}
+                  : formData.template === "latex-academic"
+                    ? `${ebGaramond.className} font-latex font-serif p-0 flex flex-col justify-between shrink-0`
+                    : formData.docType === "index-table"
+                      ? "font-quicksand p-[48px] sm:p-[56px] flex flex-col justify-between shrink-0"
+                      : "font-quicksand p-0 block relative shrink-0"
+                  } text-black border border-black shadow-none transition-transform duration-150 relative box-border select-text`}
               >
                 {/* ----------------- IF INDEX TABLE ----------------- */}
                 {formData.docType === "index-table" ? (
@@ -1927,9 +2328,256 @@ export function CoverPageGeneratorClient() {
                       </div>
                     </div>
                   </div>
+                ) : formData.template === "latex-academic" ? (
+                  /* ================= TEMPLATE 3: LATEX ACADEMIC (srs.tex) ================= */
+                  <div className={`relative w-full h-full min-h-[1121px] overflow-hidden text-black select-text p-[64px] flex flex-col justify-between ${ebGaramond.className} font-latex font-serif`}>
+                    {/* Top Content Block */}
+                    <div className="w-full flex flex-col items-center">
+                      {/* Crest */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/mec-logo.png"
+                        alt="Mymensingh Engineering College Crest"
+                        width={96}
+                        height={96}
+                        className="w-[96px] h-[96px] object-contain mx-auto mb-4"
+                      />
+
+                      {/* Institution & Hierarchy */}
+                      <h1
+                        contentEditable
+                        suppressContentEditableWarning
+                        onBlur={(e) => handleChange("institution", e.currentTarget.textContent || "")}
+                        className="inline-editable text-center text-[26px] font-bold tracking-tight text-neutral-900 leading-snug"
+                        title="Click to edit institution"
+                      >
+                        {formData.institution}
+                      </h1>
+                      <div
+                        contentEditable
+                        suppressContentEditableWarning
+                        onBlur={(e) => handleChange("department", e.currentTarget.textContent || "")}
+                        className="inline-editable text-center text-[19px] font-normal text-neutral-800 mt-1"
+                        title="Click to edit department"
+                      >
+                        {formData.department}
+                      </div>
+                      <div
+                        contentEditable
+                        suppressContentEditableWarning
+                        onBlur={(e) => handleChange("university", e.currentTarget.textContent || "")}
+                        className="inline-editable text-center text-[19px] font-normal text-neutral-800 mt-0.5"
+                        title="Click to edit university"
+                      >
+                        {formData.university || "University of Dhaka"}
+                      </div>
+
+                      {/* LaTeX Double Horizontal Rules with Huge Title */}
+                      <div className="w-full my-6 text-center">
+                        <div className="w-full border-t border-black mb-3" style={{ borderWidth: "1.2px" }} />
+                        <div
+                          contentEditable
+                          suppressContentEditableWarning
+                          className="inline-editable text-[36px] font-bold tracking-normal text-neutral-900 py-1"
+                          title="Click to edit header"
+                        >
+                          {formData.docType === "lab-report"
+                            ? "Lab Reports"
+                            : formData.docType === "assignment"
+                            ? "Assignment"
+                            : "Project Report"}
+                        </div>
+                        <div className="w-full border-b border-black mt-3" style={{ borderWidth: "1.2px" }} />
+                      </div>
+
+                      {/* Course Name (bold) & Course Code */}
+                      <div className="text-center max-w-[660px] mx-auto mb-6 latex-course-block">
+                        <div
+                          contentEditable
+                          suppressContentEditableWarning
+                          onBlur={(e) => handleChange("courseName", e.currentTarget.textContent || "")}
+                          className="inline-editable block text-[24px] font-bold text-neutral-900 leading-snug"
+                          style={{ display: "block" }}
+                          title="Click to edit course name"
+                        >
+                          {formData.courseName || "Course Name"}
+                        </div>
+                        <div
+                          contentEditable
+                          suppressContentEditableWarning
+                          onBlur={(e) => handleChange("courseCode", e.currentTarget.textContent || "")}
+                          className="inline-editable block text-[18px] text-neutral-800 mt-2"
+                          style={{ display: "block" }}
+                          title="Click to edit course code"
+                        >
+                          {formData.courseCode || "Course Code"}
+                        </div>
+                      </div>
+
+                      {/* Author / Prepared by Section */}
+                      <div className="w-[85%] mx-auto text-center my-3">
+                        <div className="font-bold text-[17px] mb-2.5 text-neutral-900">Prepared by:</div>
+                        {!formData.isGroupSubmission ? (
+                          /* Solo Student */
+                          <div className="text-center space-y-0.5">
+                            <div
+                              contentEditable
+                              suppressContentEditableWarning
+                              onBlur={(e) => handleChange("studentName", e.currentTarget.textContent || "")}
+                              className="inline-editable text-[16.5px] font-bold text-neutral-900"
+                              title="Click to edit student name"
+                            >
+                              {formData.studentName}
+                            </div>
+                            <div className="text-[15.5px] text-neutral-800">
+                              (Roll:{" "}
+                              <span
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e) => handleChange("roll", e.currentTarget.textContent || "")}
+                                className="inline-editable font-medium"
+                                title="Click to edit roll"
+                              >
+                                {formData.roll}
+                              </span>
+                              , Reg:{" "}
+                              <span
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={(e) => handleChange("reg", e.currentTarget.textContent || "")}
+                                className="inline-editable font-medium"
+                                title="Click to edit registration"
+                              >
+                                {formData.reg}
+                              </span>
+                              )
+                            </div>
+
+                          </div>
+                        ) : (
+                          /* Group Submission Table */
+                          <table className="mx-auto text-left text-[15.5px] border-collapse">
+                            <tbody>
+                              {formData.groupMembers.map((member, idx) => (
+                                <tr key={member.id || idx}>
+                                  <td className="pr-6 py-0.5 font-medium whitespace-nowrap text-neutral-900">
+                                    <span
+                                      contentEditable
+                                      suppressContentEditableWarning
+                                      onBlur={(e) => handleGroupMemberChange(idx, "name", e.currentTarget.textContent || "")}
+                                      className="inline-editable"
+                                      title="Click to edit member name"
+                                    >
+                                      {member.name || `Student ${idx + 1}`}
+                                    </span>
+                                  </td>
+                                  <td className="py-0.5 text-neutral-800 whitespace-nowrap">
+                                    (Roll:{" "}
+                                    <span
+                                      contentEditable
+                                      suppressContentEditableWarning
+                                      onBlur={(e) => handleGroupMemberChange(idx, "roll", e.currentTarget.textContent || "")}
+                                      className="inline-editable font-medium"
+                                      title="Click to edit member roll"
+                                    >
+                                      {member.roll || "------"}
+                                    </span>
+                                    , Reg:{" "}
+                                    <span
+                                      contentEditable
+                                      suppressContentEditableWarning
+                                      onBlur={(e) => handleGroupMemberChange(idx, "reg", e.currentTarget.textContent || "")}
+                                      className="inline-editable font-medium"
+                                      title="Click to edit member registration"
+                                    >
+                                      {member.reg || "----"}
+                                    </span>
+                                    )
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        )}
+                      </div>
+
+                      {/* Supervisor / Submitted to Section */}
+                      <div className="w-[85%] mx-auto text-center my-3 latex-instructor-block">
+                        <div className="font-bold text-[17px] mb-2 text-neutral-900">Submitted to:</div>
+                        <div
+                          contentEditable
+                          suppressContentEditableWarning
+                          onBlur={(e) => handleChange("teacherName", e.currentTarget.textContent || "")}
+                          className="inline-editable font-bold text-[17px] text-neutral-900"
+                          title="Click to edit teacher name"
+                        >
+                          {formData.teacherName}
+                        </div>
+                        <div
+                          contentEditable
+                          suppressContentEditableWarning
+                          onBlur={(e) => handleChange("teacherDesignation", e.currentTarget.textContent || "")}
+                          className="inline-editable text-[15.5px] text-neutral-800 mt-0.5"
+                          title="Click to edit teacher designation"
+                        >
+                          {formData.teacherDesignation}
+                        </div>
+                        <div
+                          contentEditable
+                          suppressContentEditableWarning
+                          onBlur={(e) => handleChange("teacherDepartment", e.currentTarget.textContent || "")}
+                          className="inline-editable text-[15.5px] text-neutral-800"
+                          title="Click to edit teacher department"
+                        >
+                          {formData.teacherDepartment}
+                        </div>
+                        <div
+                          contentEditable
+                          suppressContentEditableWarning
+                          onBlur={(e) => handleChange("teacherInstitution", e.currentTarget.textContent || "")}
+                          className="inline-editable text-[15.5px] text-neutral-800"
+                          title="Click to edit teacher institution"
+                        >
+                          {formData.teacherInstitution}
+                        </div>
+                        <div
+                          contentEditable
+                          suppressContentEditableWarning
+                          onBlur={(e) => handleChange("university", e.currentTarget.textContent || "")}
+                          className="inline-editable text-[15.5px] text-neutral-800"
+                          title="Click to edit university"
+                        >
+                          {formData.university || "University of Dhaka"}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Bottom Area: Date on Left & Signature on Right in the same horizontal line */}
+                    <div className="w-full mt-auto pt-4 flex items-end justify-between">
+                      {/* Date Stamp on Left */}
+                      <div className="text-left pb-1">
+                        <span className="font-bold text-[15px] text-neutral-900">Date: </span>
+                        <span
+                          contentEditable
+                          suppressContentEditableWarning
+                          onBlur={(e) => handleChange("submissionDate", e.currentTarget.textContent || "")}
+                          className="inline-editable text-[15px] text-neutral-800"
+                          title="Click to edit date"
+                        >
+                          {formData.submissionDate || "January 19, 2026"}
+                        </span>
+                      </div>
+
+                      {/* Instructor's Signature Line on Right */}
+                      <div className="w-[170px] text-center">
+                        <div className="w-full border-t border-black mb-1" style={{ borderWidth: "0.8px" }} />
+                        <p className="text-[13px] italic text-neutral-800">Signature</p>
+                      </div>
+                    </div>
+                  </div>
                 ) : formData.template === "modern-clean" ? (
                   /* ================= TEMPLATE 2: MODERN CENTERED (hehe.pdf, Lab Report & Assignment) ================= */
-                  <div className="relative min-h-[1123px] w-[794px] overflow-hidden bg-white text-black select-text font-quicksand">
+                  <div className="relative w-full h-full min-h-[1121px] overflow-hidden text-black select-text font-quicksand">
                     {/* Institution name (fully centered across 816px sheet) */}
                     <div
                       className={`${formData.docType === "lab-report" || formData.docType === "assignment"
@@ -2657,17 +3305,19 @@ export function CoverPageGeneratorClient() {
           </button>
         </div>
 
-        {/* Right: Print / Save PDF Button */}
-        <Button
-          variant="primary"
-          size="sm"
-          onClick={handlePrint}
-          icon={<Printer size={15} />}
-          className="border border-black shadow-[2px_2px_0px_var(--accent-primary)] font-bold text-xs uppercase px-4 py-2 shrink-0"
-          title="Print or Save as PDF"
-        >
-          Print / PDF
-        </Button>
+        {/* Right: Actions */}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={handlePrint}
+            icon={<Printer size={15} />}
+            className="border border-black shadow-[2px_2px_0px_var(--accent-primary)] font-bold text-xs uppercase px-3 py-2 shrink-0"
+            title="Print or Save as PDF"
+          >
+            Print / PDF
+          </Button>
+        </div>
       </div>
     </div>
   );
