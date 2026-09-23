@@ -54,7 +54,7 @@ function populateIsolatedIframe(
   <title>MEC Document Print</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Quicksand:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <style>
     @page {
       size: A4 portrait;
@@ -85,6 +85,9 @@ function populateIsolatedIframe(
     }
     .font-space-mono, .font-space-mono * {
       font-family: 'Space Mono', monospace !important;
+    }
+    .font-latex, .font-latex * {
+      font-family: 'EB Garamond', 'Latin Modern Roman', 'Computer Modern', 'Times New Roman', Times, serif !important;
     }
     table {
       border-collapse: collapse !important;
