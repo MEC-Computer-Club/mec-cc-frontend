@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
-import { JetBrains_Mono, Quicksand } from "next/font/google";
+import { JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { GeistSans } from "geist/font/sans";
 import dynamic from "next/dynamic";
 import { Navbar } from "@/components/layout/Navbar";
@@ -24,10 +25,25 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-const quicksand = Quicksand({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-quicksand",
+const generalSans = localFont({
+  src: [
+    {
+      path: "../../public/fonts/general-sans/GeneralSans-Medium.woff2",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/general-sans/GeneralSans-Semibold.woff2",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/general-sans/GeneralSans-Bold.woff2",
+      weight: "700",
+      style: "normal",
+    },
+  ],
+  variable: "--font-heading",
   display: "swap",
 });
 
@@ -190,7 +206,7 @@ export default function RootLayout({
   const initialThemeCss = getInitialThemeCss(initialVibe);
 
   return (
-    <html lang="en" className={`${GeistSans.variable} ${jetbrainsMono.variable} ${quicksand.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${GeistSans.variable} ${jetbrainsMono.variable} ${generalSans.variable}`} suppressHydrationWarning>
       <head>
         <style
           id="initial-accent-theme"
