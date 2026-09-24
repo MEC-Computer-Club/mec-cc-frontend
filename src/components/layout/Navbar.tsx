@@ -39,16 +39,23 @@ const navItems = [
     ],
   },
   { label: "Events", href: "/events" },
-  { label: "Blog", href: "/blog" },
   {
     label: "Resources",
     href: "#",
     children: [
-      { label: "CP Hub", href: "/cp-hub" },
+      { label: "Blog", href: "/blog" },
       { label: "Projects", href: "/projects" },
+      { label: "CP Hub", href: "/cp-hub" },
       { label: "Verify & Lookup", href: "/verify" },
+    ],
+  },
+  {
+    label: "Utilities",
+    href: "#",
+    children: [
       { label: "Photo Sigil", href: "/resources/watermark" },
       { label: "Cover Page", href: "/resources/cover-page" },
+      { label: "CGPA Calculator", href: "/utilities/cgpa" },
     ],
   },
   {
