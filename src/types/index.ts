@@ -217,6 +217,8 @@ export interface LeaderboardEntry {
   maxRating?: number;
   tier?: string;
   solved: number;
+  sheetSolved?: number;
+  sheetTotal?: number;
   image?: string;
   imageUrl?: string;
   avatar?: string;

@@ -30,6 +30,7 @@ import toast from "react-hot-toast";
 import { LeaderboardEntry, CPResource, CPAchievement } from "@/types";
 import LeaderboardTable from "./LeaderboardTable";
 import RoadmapView from "./RoadmapView";
+import CPSheetView from "./CPSheetView";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/context/AuthContext";
@@ -58,41 +59,69 @@ const TABS = [
 
 
 
-const problemSets = [
-  { title: "Dynamic Programming", count: 50, tag: "CSES + CF", desc: "Classic memoization, tabulation, knapsack, and grid paths.", link: "https://cses.fi/problemset/list/#dynamic" },
-  { title: "Graph Theory", count: 35, tag: "BFS/DFS", desc: "Traversal, shortest paths, topological sort, and cycles.", link: "https://cses.fi/problemset/list/#graph" },
-  { title: "Range Queries & Trees", count: 40, tag: "SegTree", desc: "Segment trees, fenwick trees, and LCA operations.", link: "https://cses.fi/problemset/list/#range" },
-  { title: "Mathematics & Number Theory", count: 25, tag: "Sieve & Mod", desc: "Primes, modular arithmetic, matrix exponentiation.", link: "https://cses.fi/problemset/list/#math" },
-  { title: "Binary Search & Two Pointers", count: 30, tag: "Technique", desc: "Searching answer space, interval merging, prefix ranges.", link: "https://codeforces.com/problemset?tags=binary%20search" },
-  { title: "Greedy & Constructive", count: 45, tag: "Invariants", desc: "Sorting strategies, interval scheduling, and constructive proofs.", link: "https://codeforces.com/problemset?tags=greedy" },
-  { title: "String Algorithms", count: 20, tag: "Hashing & Trie", desc: "String hashing, KMP, Z-algorithm, and Tries.", link: "https://cses.fi/problemset/list/#string" },
-  { title: "Tree Algorithms", count: 25, tag: "Subtree DP", desc: "Tree diameter, tree distance, and path queries.", link: "https://cses.fi/problemset/list/#tree" },
-];
+
 
 const resourceCategories = [
   {
-    name: "Websites & Problem Archives",
+    name: "Online Judges & Contest Platforms",
     items: [
       { name: "Codeforces", desc: "The premier competitive programming platform with bi-weekly rated rounds.", url: "https://codeforces.com" },
+      { name: "AtCoder", desc: "High-quality, mathematically elegant educational problems (ABC, ARC, AGC).", url: "https://atcoder.jp" },
+      { name: "CodeChef", desc: "Great practice ladders (500-1000+) and rated contests with rich editorials.", url: "https://www.codechef.com" },
       { name: "CSES Problem Set", desc: "Curated collection of 300 classic algorithmic problems covering all core topics.", url: "https://cses.fi/problemset/" },
-      { name: "AtCoder", desc: "High-quality, elegant educational problems (AtCoder Beginner & Regular Contests).", url: "https://atcoder.jp" },
-      { name: "CP-Algorithms", desc: "Comprehensive tutorials and implementations on data structures and algorithms.", url: "https://cp-algorithms.com" },
-      { name: "USACO Guide", desc: "Free, curated roadmap and practice curriculum maintained by top competitive programmers.", url: "https://usaco.guide" },
+      { name: "Virtual Judge (VJudge)", desc: "Unified practice platform aggregating POJ, SPOJ, Codeforces, and UVa problems.", url: "https://vjudge.net" },
+      { name: "Open Kattis", desc: "Official practice judge and past archives for ICPC World Finals and regional contests.", url: "https://open.kattis.com" },
+    ],
+  },
+  {
+    name: "Curated Sheets & Roadmaps",
+    items: [
+      { name: "TLE-31 Practice Sheet", desc: "Targeted problem ladders from 800 to 1900 rating designed for rapid rating climbs.", url: "https://www.tle-eliminators.com/cp-sheet" },
+      { name: "USACO Guide", desc: "World-class curriculum and roadmap from Bronze to Platinum maintained by top competitors.", url: "https://usaco.guide" },
+      { name: "AtCoder Educational DP Contest", desc: "The 26 standard dynamic programming archetype problems (Tasks A to Z).", url: "https://atcoder.jp/contests/dp" },
+      { name: "Striver's CP Sheet & A2Z DSA", desc: "Structured roadmap covering foundational patterns, trees, and dynamic programming.", url: "https://takeuforward.org/strivers-a2z-dsa-course/strivers-a2z-dsa-course-sheet-2/" },
+      { name: "NeetCode 150", desc: "Curated list of essential interview and problem-solving algorithmic archetypes.", url: "https://neetcode.io/practice" },
+    ],
+  },
+  {
+    name: "Algorithms Portals & Cheat Sheets",
+    items: [
+      { name: "CP-Algorithms", desc: "Comprehensive tutorials and C++ implementations on data structures and algorithms.", url: "https://cp-algorithms.com" },
+      { name: "Stanford ACM Team Notebook", desc: "Battle-tested reference implementations used by Stanford's ICPC World Finals team.", url: "https://github.com/jaehyunp/stanfordacm" },
+      { name: "KACTL Algorithm Library", desc: "KTH Royal Institute of Technology's ultra-dense, 25-page ICPC code library.", url: "https://github.com/kth-competitive-programming/kactl" },
+      { name: "LearnCpp.com", desc: "Gold-standard modern C++ guide for foundational syntax, memory, and performance.", url: "https://www.learncpp.com" },
+      { name: "Cppreference.com", desc: "The definitive reference manual for the modern C++ Standard Template Library (STL).", url: "https://en.cppreference.com/w/cpp" },
+    ],
+  },
+  {
+    name: "Interactive Visualizers & Tools",
+    items: [
+      { name: "VisuAlgo", desc: "Visualising data structures and algorithms through rich interactive step-by-step animations.", url: "https://visualgo.net/en" },
+      { name: "Algorithm Visualizer", desc: "Interactive code engine that visualizes graph traversals, DP, and trees in real time.", url: "https://algorithm-visualizer.org" },
+      { name: "CS Academy Graph Editor", desc: "Interactive visual tool to draw, edit, and export graphs for test case debugging.", url: "https://csacademy.com/app/graph_editor/" },
+      { name: "CF-Predictor", desc: "Browser extension providing live rating change forecasts during and after contests.", url: "https://cf-predictor.wasyl.net" },
+      { name: "Codeforces Visualizer (CFViz)", desc: "Rich charts tracking solved problems, tag distribution, and rating history.", url: "https://cfviz.netlify.app" },
+      { name: "OEIS (Integer Sequences)", desc: "Essential database for identifying mysterious mathematical sequences in contest problems.", url: "https://oeis.org" },
+    ],
+  },
+  {
+    name: "Top YouTube Channels & Video Courses",
+    items: [
+      { name: "Colin Galen", desc: "Intuitive CP topic tutorials, contest live solves, and rating improvement guides.", url: "https://www.youtube.com/@ColinGalen" },
+      { name: "Errichto Algorithms", desc: "World-class competitive programmer explaining hard algorithms, bitmask DP, and contest strategy.", url: "https://www.youtube.com/@Errichto" },
+      { name: "Luv (Competitive Programming & STL)", desc: "Master C++ STL and CP fundamentals from scratch with clear step-by-step tutorials.", url: "https://www.youtube.com/@LuvMaths" },
+      { name: "Take U Forward (Striver)", desc: "Deep-dive video series on Dynamic Programming, Graphs, and Trees with clean intuition.", url: "https://www.youtube.com/@takeUforward" },
+      { name: "Abdul Bari", desc: "Master algorithm design paradigms (Divide & Conquer, Greedy, DP) with unmatched visual clarity.", url: "https://www.youtube.com/@abdul_bari" },
+      { name: "William Lin", desc: "Speed problem-solving walkthroughs, Google Code Jam, and IOI insights.", url: "https://www.youtube.com/@tmwilliamlin168" },
     ],
   },
   {
     name: "Standard Literature & Books",
     items: [
+      { name: "Guide to Competitive Programming", desc: "By Antti Laaksonen (CSES creator) — rigorous, concise CS foundations for contest coders.", url: "https://link.springer.com/book/10.1007/978-3-319-72547-5" },
       { name: "Competitive Programming 4 (CP4)", desc: "By Steven & Felix Halim — the definitive ICPC handbook covering all algorithmic archetypes.", url: "https://cpbook.net" },
-      { name: "Guide to Competitive Programming", desc: "By Antti Laaksonen — rigorous, concise computer science foundations for contest coders.", url: "https://link.springer.com/book/10.1007/978-3-319-72547-5" },
-    ],
-  },
-  {
-    name: "Productivity Tools & Visualizers",
-    items: [
-      { name: "CF-Predictor", desc: "Browser extension to see live rating changes during and immediately after contests.", url: "https://cf-predictor.wasyl.net" },
-      { name: "Codeforces Visualizer", desc: "Track solved problems, tag distribution, and rating history with rich charts.", url: "https://cfviz.netlify.app" },
-      { name: "Virtual Judge (VJudge)", desc: "Unified practice platform aggregating POJ, SPOJ, Codeforces, and UVa problems.", url: "https://vjudge.net" },
+      { name: "Introduction to Algorithms (CLRS)", desc: "The authoritative reference textbook on algorithm analysis, graph theory, and dynamic programming.", url: "https://mitpress.mit.edu/9780262046305/introduction-to-algorithms/" },
+      { name: "Competitive Programmer's Handbook", desc: "Free comprehensive CSES handbook detailing standard techniques, time complexities, and C++ tricks.", url: "https://cses.fi/book/book.pdf" },
     ],
   },
 ];
@@ -661,51 +690,7 @@ function CPHubViewContent({
       {activeTab === "roadmaps" && <RoadmapView />}
 
       {/* Tab 3: Problem Sets */}
-      {activeTab === "problem-sets" && (
-        <section className="container mx-auto px-4 md:px-8 max-w-6xl space-y-6">
-          <div className="p-6 bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl shadow-[4px_4px_0px_var(--accent-primary)]">
-            <h2 className="text-xl sm:text-2xl font-bold text-text-primary mb-2 flex items-center gap-2">
-              <Code2 className="text-accent-primary" /> Topic-Wise Problem Sets
-            </h2>
-            <p className="text-sm text-text-secondary leading-relaxed">
-              Target your algorithmic weaknesses with curated problem collections from CSES, Codeforces, and AtCoder.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {problemSets.map((ps) => (
-              <a
-                key={ps.title}
-                href={ps.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex flex-col justify-between p-5 bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl transition-all duration-200 hover:shadow-[6px_6px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5 no-underline text-inherit"
-              >
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <span className="font-mono text-[11px] font-bold uppercase px-2 py-0.5 rounded bg-accent-primary-light text-text-primary">
-                      {ps.tag}
-                    </span>
-                    <span className="font-mono text-xs text-text-tertiary font-bold">
-                      {ps.count} Problems
-                    </span>
-                  </div>
-                  <h3 className="font-heading text-lg font-bold text-text-primary mb-2 group-hover:text-accent-primary transition-colors">
-                    {ps.title}
-                  </h3>
-                  <p className="text-xs text-text-secondary leading-relaxed mb-4">
-                    {ps.desc}
-                  </p>
-                </div>
-                <div className="pt-3 border-t border-border-default flex items-center justify-between text-xs font-bold text-accent-primary">
-                  <span>Start Practicing</span>
-                  <ExternalLink size={13} />
-                </div>
-              </a>
-            ))}
-          </div>
-        </section>
-      )}
+      {activeTab === "problem-sets" && <CPSheetView />}
 
       {/* Tab 4: Resources & Club Docs */}
       {activeTab === "resources" && (
@@ -862,7 +847,7 @@ function CPHubViewContent({
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {resourceCategories.map((cat) => (
                 <div
                   key={cat.name}
