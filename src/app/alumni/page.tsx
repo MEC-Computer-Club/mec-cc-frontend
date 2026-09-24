@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { getAlumniMembers } from "@/data/alumni";
 import PeopleDirectory from "@/components/people/PeopleDirectory";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 120;
 
 export const metadata: Metadata = {
   title: "Alumni | Legacy Code",

@@ -1,13 +1,18 @@
 "use client";
 
-import { useState, useEffect, Fragment } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useAccent } from "@/components/AccentProvider";
 import { useAuth } from "@/context/AuthContext";
-import { NotificationCenter } from "@/components/layout/NotificationCenter";
+
+const NotificationCenter = dynamic(
+  () => import("@/components/layout/NotificationCenter").then((m) => m.NotificationCenter),
+  { ssr: false }
+);
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -57,37 +62,7 @@ const navItems = [
   { label: "Gallery", href: "/gallery" },
 ];
 
-const VIBES = ["lime", "mint", "sky", "amber", "rose", "violet", "slate"];
-const MODES = ["light", "dark"];
 
-function LogoPreloader() {
-  return (
-    <div style={{ position: "absolute", opacity: 0, pointerEvents: "none", width: 0, height: 0, overflow: "hidden" }} aria-hidden="true">
-      {VIBES.map((vibe) =>
-        MODES.map((mode) => (
-          <Fragment key={`${vibe}-${mode}`}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={`/logo-${vibe}-${mode}.png`}
-              alt=""
-              width={160}
-              height={40}
-              loading="eager"
-            />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={`/logo-icon-${vibe}-${mode}.png`}
-              alt=""
-              width={32}
-              height={32}
-              loading="eager"
-            />
-          </Fragment>
-        ))
-      )}
-    </div>
-  );
-}
 
 export function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -267,7 +242,6 @@ export function Navbar() {
           }
         `
       }} />
-      <LogoPreloader />
       <nav className="navbar__inner container" aria-label="Main navigation">
 
         {/* Hamburger toggle button — LEFT side on mobile/tablet */}

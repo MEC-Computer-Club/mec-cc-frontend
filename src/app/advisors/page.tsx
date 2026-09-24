@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 import { ProfileCard, ProfileGrid } from "@/components/ui/ProfileCard";
 import { getAdvisors } from "@/data/advisors";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 120;
 
 export const metadata: Metadata = {
   title: "Advisory Board & Faculty Mentors | MEC Computer Club",
