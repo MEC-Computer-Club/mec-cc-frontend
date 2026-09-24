@@ -1,0 +1,1072 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Apple Liquid Glass (2025 Optics Engine)</title>
+  <meta name="description" content="Production-quality Apple-style Liquid Glass UI component simulating real optical glass with edge-weighted refraction, chromatic aberration, and squircle continuous curvature." />
+
+  <!-- Google Fonts: Inter & JetBrains Mono for pristine typographic vibrancy -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ═══════════════════════════════════════════════════════════════════
+       SECTION 12: CONSISTENCY RULES & CSS CUSTOM PROPERTY SYSTEM
+       Reusable optics, elevation, tint, and lighting tokens
+       ═══════════════════════════════════════════════════════════════════ */
+    :root {
+      /* Optics & Fixed Light Direction */
+      --glass-light-angle: 135deg;
+      --glass-border-width: 1.25px;
+      --glass-saturation: 180%;
+      --glass-brightness: 1.05;
+
+      /* Specular Light Tokens (Fixed Top-Left Source) */
+      --glass-specular-top: rgba(255, 255, 255, 0.88);
+      --glass-specular-mid: rgba(255, 255, 255, 0.32);
+      --glass-specular-faint: rgba(255, 255, 255, 0.06);
+      --glass-specular-bounce: rgba(255, 255, 255, 0.28);
+
+      /* Section 6: Base Tint (Adaptive Light/Dark Modes, 12-20% Opacity) */
+      --glass-tint: rgba(255, 255, 255, 0.16);
+      --glass-surface-overlay: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.22) 0%,
+        rgba(255, 255, 255, 0.05) 50%,
+        rgba(255, 255, 255, 0.14) 100%
+      );
+      --text-primary: #0b0f19;
+      --text-secondary: rgba(11, 15, 25, 0.72);
+      --text-tertiary: rgba(11, 15, 25, 0.46);
+      --sheen-opacity: 0.22;
+
+      /* Elevation System: Tier 1 (Buttons / Controls) */
+      --glass-elevation-1-blur: 14px;
+      --glass-elevation-1-radius: 20px;
+      --glass-elevation-1-shadow: 
+        0 6px 20px -4px rgba(0, 0, 0, 0.20),
+        0 2px 6px -1px rgba(0, 0, 0, 0.12),
+        inset 0 1px 1px 0 rgba(255, 255, 255, 0.55),
+        inset 0 -1px 1px 0 rgba(255, 255, 255, 0.15);
+
+      /* Elevation System: Tier 2 (Panels / Dock / Cards) */
+      --glass-elevation-2-blur: 24px;
+      --glass-elevation-2-radius: 34px;
+      --glass-elevation-2-shadow: 
+        0 20px 48px -8px rgba(0, 0, 0, 0.28),
+        0 6px 18px -2px rgba(0, 0, 0, 0.14),
+        inset 0 1.2px 1.5px 0 rgba(255, 255, 255, 0.65),
+        inset 0 -1px 1px 0 rgba(255, 255, 255, 0.20);
+
+      /* Elevation System: Tier 3 (Modal / Floating Sheet) */
+      --glass-elevation-3-blur: 38px;
+      --glass-elevation-3-radius: 44px;
+      --glass-elevation-3-shadow: 
+        0 36px 80px -12px rgba(0, 0, 0, 0.42),
+        0 14px 30px -4px rgba(0, 0, 0, 0.22),
+        inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.75),
+        inset 0 -1.5px 1.5px 0 rgba(255, 255, 255, 0.25);
+    }
+
+    /* Dark Mode Tint Switcher (prefers-color-scheme & data-theme) */
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --glass-tint: rgba(18, 22, 34, 0.22);
+        --glass-surface-overlay: linear-gradient(
+          135deg,
+          rgba(255, 255, 255, 0.12) 0%,
+          rgba(255, 255, 255, 0.02) 50%,
+          rgba(255, 255, 255, 0.08) 100%
+        );
+        --text-primary: #f8fafc;
+        --text-secondary: rgba(248, 250, 252, 0.75);
+        --text-tertiary: rgba(248, 250, 252, 0.48);
+        --sheen-opacity: 0.15;
+      }
+    }
+
+    [data-theme="dark"] {
+      --glass-tint: rgba(18, 22, 34, 0.22);
+      --glass-surface-overlay: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.12) 0%,
+        rgba(255, 255, 255, 0.02) 50%,
+        rgba(255, 255, 255, 0.08) 100%
+      );
+      --text-primary: #f8fafc;
+      --text-secondary: rgba(248, 250, 252, 0.75);
+      --text-tertiary: rgba(248, 250, 252, 0.48);
+      --sheen-opacity: 0.15;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       SECTION 1: BASE STRUCTURE & RESET
+       Colorful test background with vibrant image/gradients
+       ═══════════════════════════════════════════════════════════════════ */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 2.5rem 1.5rem 5rem;
+      color: var(--text-primary);
+      overflow-x: hidden;
+      position: relative;
+      background-color: #0d1117;
+      transition: background 0.4s ease;
+    }
+
+    /* Dynamic Colorful Background Canvas */
+    .test-background-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-size: cover;
+      background-position: center;
+      transition: opacity 0.5s ease;
+    }
+
+    /* Background 1: Apple VisionOS Liquid Bloom Wallpaper */
+    .bg-nebula {
+      background: radial-gradient(circle at 15% 20%, #ff2d55 0%, transparent 45%),
+                  radial-gradient(circle at 85% 25%, #5856d6 0%, transparent 50%),
+                  radial-gradient(circle at 50% 80%, #007aff 0%, transparent 55%),
+                  radial-gradient(circle at 80% 85%, #ff9500 0%, transparent 40%),
+                  linear-gradient(135deg, #1c102a 0%, #0a1128 50%, #050b14 100%);
+    }
+
+    /* Background 2: Vibrant Geometric Prism Mesh */
+    .bg-prism {
+      background: conic-gradient(from 45deg at 30% 40%, #ff3b30, #ff9500, #ffcc00, #34c759, #007aff, #af52de, #ff2d55, #ff3b30),
+                  radial-gradient(circle at 75% 65%, #5ac8fa 0%, transparent 60%),
+                  #0a0e1a;
+      filter: contrast(1.15) saturate(1.4);
+    }
+
+    /* Background 3: Cyber Spectrum Mesh */
+    .bg-cyber {
+      background: linear-gradient(45deg, #4f46e5 0%, #ec4899 30%, #f59e0b 60%, #10b981 100%);
+      background-size: 300% 300%;
+      animation: gradientShift 18s ease infinite;
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Floating Ambient Mesh Orbs for testing lensing over sharp geometric objects */
+    .ambient-orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(1px);
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0.85;
+      animation: floatOrb 12s ease-in-out infinite alternate;
+    }
+    .orb-1 {
+      width: 280px;
+      height: 280px;
+      background: linear-gradient(135deg, #ff007a, #7928ca);
+      top: 18%;
+      left: 10%;
+    }
+    .orb-2 {
+      width: 340px;
+      height: 340px;
+      background: linear-gradient(135deg, #00dfd8, #007cf0);
+      bottom: 12%;
+      right: 12%;
+      animation-delay: -5s;
+    }
+    .orb-grid {
+      position: fixed;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+      background-size: 32px 32px;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    @keyframes floatOrb {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(40px, -30px) scale(1.1); }
+    }
+
+    /* Main Container */
+    .stage {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 960px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2.25rem;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       SECTION 2: SHAPE — SQUIRCLE CORNERS (Superellipse n≈4.5)
+       Continuous-curve squircle geometry with corner-shape: squircle
+       ═══════════════════════════════════════════════════════════════════ */
+    .squircle-card {
+      border-radius: var(--glass-elevation-2-radius);
+      /* Progressive enhancement: Chromium 130+ squircle corner-shape */
+      corner-shape: squircle;
+    }
+    .squircle-button {
+      border-radius: var(--glass-elevation-1-radius);
+      corner-shape: squircle;
+    }
+    .squircle-dock {
+      border-radius: var(--glass-elevation-2-radius);
+      corner-shape: squircle;
+    }
+    .squircle-modal {
+      border-radius: var(--glass-elevation-3-radius);
+      corner-shape: squircle;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       SECTION 5 & 8: BLUR, BACKDROP & DEPTH SHADOWS
+       Elevation scaling, multi-stop backdrop filter, and depth feel
+       ═══════════════════════════════════════════════════════════════════ */
+    .liquid-glass {
+      position: relative;
+      background: var(--glass-tint);
+      /* Section 11: Containment and compositing isolation for high frame rates */
+      contain: layout paint;
+      will-change: transform;
+      isolation: isolate;
+      transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                  box-shadow 0.22s ease,
+                  background 0.3s ease;
+    }
+
+    .liquid-glass[data-elevation="1"] {
+      backdrop-filter: blur(var(--glass-elevation-1-blur)) saturate(var(--glass-saturation)) brightness(var(--glass-brightness));
+      -webkit-backdrop-filter: blur(var(--glass-elevation-1-blur)) saturate(var(--glass-saturation)) brightness(var(--glass-brightness));
+      box-shadow: var(--glass-elevation-1-shadow);
+    }
+
+    .liquid-glass[data-elevation="2"] {
+      backdrop-filter: blur(var(--glass-elevation-2-blur)) saturate(var(--glass-saturation)) brightness(var(--glass-brightness));
+      -webkit-backdrop-filter: blur(var(--glass-elevation-2-blur)) saturate(var(--glass-saturation)) brightness(var(--glass-brightness));
+      box-shadow: var(--glass-elevation-2-shadow);
+    }
+
+    .liquid-glass[data-elevation="3"] {
+      backdrop-filter: blur(var(--glass-elevation-3-blur)) saturate(var(--glass-saturation)) brightness(var(--glass-brightness));
+      -webkit-backdrop-filter: blur(var(--glass-elevation-3-blur)) saturate(var(--glass-saturation)) brightness(var(--glass-brightness));
+      box-shadow: var(--glass-elevation-3-shadow);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       SECTION 3 & 4: OPTICS — EDGE-WEIGHTED REFRACTION & CHROMATIC ABERRATION
+       SVG Displacement Filter Layer attached to a dedicated pseudo-layer
+       ═══════════════════════════════════════════════════════════════════ */
+    .glass-optical-lens {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+      /* Apply SVG refraction and chromatic aberration */
+      filter: url(#liquid-glass-optical-refraction);
+      opacity: 0.95;
+    }
+
+    /* Secondary Internal Glass Material Surface */
+    .glass-substrate {
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: var(--glass-surface-overlay);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       SECTION 7: LIGHT — SPECULAR RIM HIGHLIGHT (Fixed Top-Left at 135°)
+       Directional gradient rim with mask-composite: exclude
+       ═══════════════════════════════════════════════════════════════════ */
+    .liquid-glass::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      padding: var(--glass-border-width);
+      background: linear-gradient(
+        var(--glass-light-angle),
+        var(--glass-specular-top) 0%,
+        var(--glass-specular-mid) 28%,
+        var(--glass-specular-faint) 58%,
+        var(--glass-specular-bounce) 100%
+      );
+      -webkit-mask: 
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+      z-index: 10;
+      opacity: 0.85;
+      transition: opacity 0.2s ease;
+    }
+
+    /* Top-face subtle parabolic sheen reflection */
+    .glass-sheen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 48%;
+      border-radius: inherit;
+      background: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, var(--sheen-opacity)) 0%,
+        rgba(255, 255, 255, 0.04) 40%,
+        rgba(255, 255, 255, 0.0) 100%
+      );
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       SECTION 9: TEXT & ICON LEGIBILITY (VIBRANCY)
+       WCAG contrast enforcement and optical text enhancement
+       ═══════════════════════════════════════════════════════════════════ */
+    .glass-content {
+      position: relative;
+      z-index: 12;
+      width: 100%;
+    }
+
+    .vibrant-title {
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      color: var(--text-primary);
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    }
+
+    .vibrant-meta {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      letter-spacing: 0.02em;
+    }
+
+    .vibrant-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      color: var(--text-primary);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       SECTION 10: MOTION & INTERACTION STATES
+       Hover expansion & liquid press compression simulation
+       ═══════════════════════════════════════════════════════════════════ */
+    .interactive-glass {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .interactive-glass:hover {
+      transform: translateY(-2px) scale(1.015);
+    }
+
+    .interactive-glass:hover::after {
+      opacity: 1.0; /* +15% highlight intensity on hover */
+    }
+
+    .interactive-glass:active {
+      transform: scale(0.975);
+      transition: transform 0.15s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       DEMO COMPONENT 1: FLOATING GLASS NAVIGATION DOCK
+       ═══════════════════════════════════════════════════════════════════ */
+    .dock-container {
+      width: 100%;
+      max-width: 760px;
+      padding: 0.65rem 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .dock-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    .dock-sigil {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(255,255,255,0.3);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .dock-nav {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .dock-pill {
+      padding: 0.45rem 0.9rem;
+      border-radius: 14px;
+      font-size: 0.825rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: all 0.18s ease;
+      cursor: pointer;
+    }
+
+    .dock-pill:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .dock-pill.active {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.24);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+      font-weight: 600;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       DEMO COMPONENT 2: APPLE-STYLE VISIONOS MEDIA / FEATURE CARD
+       ═══════════════════════════════════════════════════════════════════ */
+    .card-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      width: 100%;
+      max-width: 760px;
+      gap: 1.5rem;
+    }
+
+    @media (min-width: 640px) {
+      .card-grid {
+        grid-template-columns: 1.4fr 1fr;
+      }
+    }
+
+    .feature-card {
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .card-badge-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .media-preview-box {
+      width: 100%;
+      height: 180px;
+      border-radius: 20px;
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(135deg, #2b1055, #7597de);
+      display: flex;
+      align-items: flex-end;
+      padding: 1rem;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+    }
+
+    .media-preview-box img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.88;
+    }
+
+    .media-float-badge {
+      position: relative;
+      z-index: 2;
+      padding: 0.4rem 0.8rem;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    /* Track / Slider Bar */
+    .glass-scrubber-track {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 9999px;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .glass-scrubber-fill {
+      width: 65%;
+      height: 100%;
+      background: linear-gradient(90deg, #007aff, #5ac8fa);
+      border-radius: 9999px;
+      position: relative;
+    }
+
+    .glass-scrubber-thumb {
+      position: absolute;
+      right: -6px;
+      top: -5px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+      border: 2px solid #007aff;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       DEMO COMPONENT 3: INTERACTIVE GLASS ACTION BUTTONS & CONTROLS
+       ═══════════════════════════════════════════════════════════════════ */
+    .controls-panel {
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.15rem;
+      justify-content: space-between;
+    }
+
+    .button-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .glass-btn {
+      width: 100%;
+      padding: 0.85rem 1.25rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      text-decoration: none;
+      border: none;
+      outline: none;
+    }
+
+    .glass-btn-primary {
+      background: linear-gradient(135deg, rgba(0, 122, 255, 0.4), rgba(0, 122, 255, 0.2));
+    }
+
+    .glass-btn-secondary {
+      background: var(--glass-tint);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       TOOLBAR & PLAYGROUND CONTROLS
+       ═══════════════════════════════════════════════════════════════════ */
+    .top-toolbar {
+      width: 100%;
+      max-width: 760px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.5rem 0.75rem;
+    }
+
+    .pill-group {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .tool-chip {
+      padding: 0.35rem 0.7rem;
+      border-radius: 12px;
+      font-size: 0.725rem;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--text-secondary);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .tool-chip.active, .tool-chip:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.35);
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════
+       SECTION 11: ACCESSIBILITY & PERFORMANCE MEDIA QUERIES
+       ═══════════════════════════════════════════════════════════════════ */
+    /* Reduced Transparency: Solid fallback, disable blur */
+    @media (prefers-reduced-transparency: reduce) {
+      .liquid-glass {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        background: #1e293b !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+      }
+      .glass-optical-lens, .glass-sheen {
+        display: none !important;
+      }
+    }
+
+    /* Reduced Motion: Disable hover animations and transforms */
+    @media (prefers-reduced-motion: reduce) {
+      .liquid-glass, .interactive-glass, .ambient-orb {
+        transition: none !important;
+        transform: none !important;
+        animation: none !important;
+      }
+    }
+
+    /* Modal Overlay (Elevation 3 Demo) */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-window {
+      width: 100%;
+      max-width: 480px;
+      padding: 2.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      transform: scale(0.94);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .modal-overlay.open .modal-window {
+      transform: scale(1);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       SECTION 3 & 4: SVG OPTICAL REFRACTION & CHROMATIC ABERRATION FILTER
+       Simulates real glass lensing via feDisplacementMap + feTurbulence
+       with edge-weighted falloff and RGB channel dispersion.
+       ═══════════════════════════════════════════════════════════════════ -->
+  <svg width="0" height="0" class="svg-filters" style="position: absolute; pointer-events: none;" aria-hidden="true">
+    <defs>
+      <!-- Optical Refraction Filter with Edge-Weighted Falloff & Subtle Chromatic Aberration -->
+      <filter id="liquid-glass-optical-refraction" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+        <!-- 1. Turbulence Noise: Base frequency ~0.012, 2 octaves -->
+        <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="2" result="rawTurbulence" />
+
+        <!-- 2. Edge-Weighting Mask: Radial gradient (Black in center = 0 displacement; White at perimeter = max displacement) -->
+        <feImage id="edgeMaskImage" xlink:href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><radialGradient id='g' cx='50%' cy='50%' r='50%'><stop offset='0%' stop-color='black'/><stop offset='55%' stop-color='black'/><stop offset='85%' stop-color='%23888888'/><stop offset='100%' stop-color='white'/></radialGradient><rect width='200' height='200' fill='url(%23g)'/></svg>" result="edgeWeight" preserveAspectRatio="none" />
+
+        <!-- Multiply turbulence noise by the edge mask so center stays crystal clear -->
+        <feComposite in="rawTurbulence" in2="edgeWeight" operator="arithmetic" k1="1" k2="0" k3="0" k4="0" result="edgeDisplacementNoise" />
+
+        <!-- 3. Chromatic Aberration: Split RGB channels with subtle differential offset/scale -->
+        <!-- Red Channel: Displaced with scale 18, shifted +1.5px outward -->
+        <feColorMatrix in="SourceGraphic" type="matrix"
+          values="1 0 0 0 0
+                  0 0 0 0 0
+                  0 0 0 0 0
+                  0 0 0 1 0" result="channelRed" />
+        <feDisplacementMap in="channelRed" in2="edgeDisplacementNoise" scale="18" xChannelSelector="R" yChannelSelector="G" result="dispRed" />
+        <feOffset in="dispRed" dx="1.5" dy="0.8" result="redAberrated" />
+
+        <!-- Green Channel: Reference center channel (scale 15, zero offset) -->
+        <feColorMatrix in="SourceGraphic" type="matrix"
+          values="0 0 0 0 0
+                  0 1 0 0 0
+                  0 0 0 0 0
+                  0 0 0 1 0" result="channelGreen" />
+        <feDisplacementMap in="channelGreen" in2="edgeDisplacementNoise" scale="15" xChannelSelector="R" yChannelSelector="G" result="greenAberrated" />
+
+        <!-- Blue Channel: Displaced with scale 12, shifted -1.5px inward -->
+        <feColorMatrix in="SourceGraphic" type="matrix"
+          values="0 0 0 0 0
+                  0 0 0 0 0
+                  0 0 1 0 0
+                  0 0 0 1 0" result="channelBlue" />
+        <feDisplacementMap in="channelBlue" in2="edgeDisplacementNoise" scale="12" xChannelSelector="R" yChannelSelector="G" result="dispBlue" />
+        <feOffset in="dispBlue" dx="-1.5" dy="-0.8" result="blueAberrated" />
+
+        <!-- 4. Channel Merge: Reconstruct pure additive RGB light -->
+        <feComposite in="redAberrated" in2="greenAberrated" operator="arithmetic" k2="1" k3="1" result="rgMerged" />
+        <feComposite in="rgMerged" in2="blueAberrated" operator="arithmetic" k2="1" k3="1" result="finalLiquidGlassOptics" />
+      </filter>
+    </defs>
+  </svg>
+
+  <!-- Background Canvas & Animated Ambient Spheres -->
+  <div id="bgCanvas" class="test-background-canvas bg-nebula"></div>
+  <div class="ambient-orb orb-1"></div>
+  <div class="ambient-orb orb-2"></div>
+  <div class="orb-grid"></div>
+
+  <!-- Stage Container -->
+  <main class="stage">
+
+    <!-- Top Controls Toolbar (Wallpaper & Mode Switcher) -->
+    <header class="top-toolbar liquid-glass squircle-dock" data-elevation="1">
+      <div class="glass-optical-lens"></div>
+      <div class="glass-substrate"></div>
+      <div class="glass-sheen"></div>
+      <div class="glass-content" style="display: flex; width: 100%; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+        <div class="pill-group">
+          <span class="vibrant-meta" style="font-weight: 700; margin-right: 0.25rem;">OPTICS 2025</span>
+          <button type="button" class="tool-chip active" onclick="switchBackground('nebula')">Nebula Bloom</button>
+          <button type="button" class="tool-chip" onclick="switchBackground('prism')">Prism Mesh</button>
+          <button type="button" class="tool-chip" onclick="switchBackground('cyber')">Cyber Flow</button>
+        </div>
+        <div class="pill-group">
+          <button type="button" class="tool-chip" onclick="toggleTheme()" id="themeBtn">🌙 Dark Glass</button>
+          <button type="button" class="tool-chip" onclick="openModal()" style="background: rgba(0,122,255,0.3); border-color: rgba(0,122,255,0.5);">Elevation 3 Sheet</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- ═════════════════════════════════════════════════════════════════
+         DEMO 1: FLOATING GLASS NAVIGATION BAR / CAPSULE DOCK
+         Elevation: Tier 2 (24px blur, squircle continuous curvature)
+         ═════════════════════════════════════════════════════════════════ -->
+    <nav class="dock-container liquid-glass squircle-dock" data-elevation="2" role="navigation" aria-label="Liquid Glass Dock">
+      <div class="glass-optical-lens"></div>
+      <div class="glass-substrate"></div>
+      <div class="glass-sheen"></div>
+
+      <div class="glass-content dock-container" style="padding: 0;">
+        <div class="dock-brand">
+          <div class="dock-sigil">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+              <polyline points="2 17 12 22 22 17"></polyline>
+              <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
+          </div>
+          <div>
+            <h1 class="vibrant-title" style="font-size: 0.95rem; line-height: 1.1;">Liquid Glass</h1>
+            <p class="vibrant-meta" style="font-size: 0.65rem;">Optical Refraction</p>
+          </div>
+        </div>
+
+        <div class="dock-nav">
+          <a class="dock-pill active" href="#overview">Overview</a>
+          <a class="dock-pill" href="#refraction">Refraction</a>
+          <a class="dock-pill" href="#optics">Optics</a>
+          <a class="dock-pill" href="#specs">Metrics</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ═════════════════════════════════════════════════════════════════
+         DEMO 2 & 3: VISIONOS LIQUID GLASS CARD & INTERACTIVE CONTROLS
+         Elevation: Tier 2 (Card) & Tier 1 (Action Button Pill)
+         ═════════════════════════════════════════════════════════════════ -->
+    <div class="card-grid">
+
+      <!-- Left Column: Feature Media Glass Card -->
+      <section class="liquid-glass squircle-card feature-card" data-elevation="2" aria-labelledby="card-title">
+        <div class="glass-optical-lens"></div>
+        <div class="glass-substrate"></div>
+        <div class="glass-sheen"></div>
+
+        <div class="glass-content" style="display: flex; flex-direction: column; gap: 1.25rem;">
+          <!-- Badge Row -->
+          <div class="card-badge-row">
+            <div class="vibrant-tag">
+              <span style="width: 6px; height: 6px; border-radius: 50%; background: #34c759; display: inline-block;"></span>
+              <span>LENS ACTIVE</span>
+            </div>
+            <span class="vibrant-meta">n = 4.5 SQUIRCLE</span>
+          </div>
+
+          <!-- Glass Lensed Visual Graphic -->
+          <div class="media-preview-box">
+            <div style="position: absolute; inset: 0; background: radial-gradient(circle at 70% 30%, rgba(255, 255, 255, 0.4), transparent 50%); mix-blend-mode: overlay;"></div>
+            <div class="liquid-glass squircle-button media-float-badge" data-elevation="1">
+              <div class="glass-optical-lens"></div>
+              <div class="glass-substrate"></div>
+              <div class="glass-sheen"></div>
+              <span class="glass-content vibrant-meta" style="font-weight: 700; color: #fff;">
+                Chromatic Dispersion ±1.5px
+              </span>
+            </div>
+          </div>
+
+          <!-- Card Content -->
+          <div>
+            <h2 id="card-title" class="vibrant-title" style="font-size: 1.35rem; margin-bottom: 0.35rem;">
+              VisionOS Physical Lensing
+            </h2>
+            <p class="vibrant-meta" style="font-size: 0.8rem; line-height: 1.5; color: var(--text-secondary);">
+              Simulates real mineral crystal optics with edge-concentrated Snell refraction, subtle chromatic aberration, and a fixed 135° top-left specular ray.
+            </p>
+          </div>
+
+          <!-- Interactive Scrubber -->
+          <div style="space-y: 0.5rem;">
+            <div style="display: flex; justify-content: space-between; font-size: 0.72rem; margin-bottom: 0.35rem;" class="vibrant-meta">
+              <span>Refraction Index</span>
+              <span>1.52 (Crown Glass)</span>
+            </div>
+            <div class="glass-scrubber-track" onclick="moveScrubber(event)">
+              <div class="glass-scrubber-fill" id="scrubberFill">
+                <div class="glass-scrubber-thumb"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Interactive Buttons & Optics Inspector -->
+      <section class="liquid-glass squircle-card controls-panel" data-elevation="2">
+        <div class="glass-optical-lens"></div>
+        <div class="glass-substrate"></div>
+        <div class="glass-sheen"></div>
+
+        <div class="glass-content" style="display: flex; flex-direction: column; gap: 1.25rem;">
+          <div>
+            <div class="vibrant-tag" style="margin-bottom: 0.75rem;">TIER 1 CONTROLS</div>
+            <h3 class="vibrant-title" style="font-size: 1.1rem; margin-bottom: 0.25rem;">Interaction States</h3>
+            <p class="vibrant-meta">Test liquid hover expansion & press compression:</p>
+          </div>
+
+          <!-- Stack of Interactive Buttons -->
+          <div class="button-stack">
+            <!-- Primary Action Button with Elevation Tier 1 -->
+            <button type="button" class="liquid-glass squircle-button interactive-glass glass-btn glass-btn-primary" data-elevation="1" onclick="triggerLiquidRipple(this)">
+              <div class="glass-optical-lens"></div>
+              <div class="glass-substrate"></div>
+              <div class="glass-sheen"></div>
+              <div class="glass-content" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polygon points="10 8 16 12 10 16 10 8"></polygon>
+                </svg>
+                <span>Compress Lens</span>
+              </div>
+            </button>
+
+            <!-- Secondary Toggle Button -->
+            <button type="button" class="liquid-glass squircle-button interactive-glass glass-btn glass-btn-secondary" data-elevation="1" onclick="toggleAberration(this)">
+              <div class="glass-optical-lens"></div>
+              <div class="glass-substrate"></div>
+              <div class="glass-sheen"></div>
+              <div class="glass-content" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                <span id="aberrationStatus">✦ Dispersion: ON</span>
+              </div>
+            </button>
+          </div>
+
+          <!-- Optics Telemetry Grid -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; padding-top: 0.5rem; border-top: 1px solid rgba(255,255,255,0.1);">
+            <div style="background: rgba(255,255,255,0.06); padding: 0.5rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+              <div class="vibrant-meta" style="font-size: 0.65rem;">RAY ANGLE</div>
+              <div class="vibrant-title" style="font-size: 0.85rem;">135° Fixed</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.06); padding: 0.5rem; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+              <div class="vibrant-meta" style="font-size: 0.65rem;">FALLOFF</div>
+              <div class="vibrant-title" style="font-size: 0.85rem;">Radial 85%</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- Footnote Meta -->
+    <footer class="vibrant-meta" style="text-align: center; opacity: 0.7; max-width: 600px; font-size: 0.7rem; line-height: 1.6;">
+      Apple-style 2025 Liquid Glass Optics Engine. Respects <code>prefers-reduced-transparency</code> & <code>prefers-reduced-motion</code>. Continuous-curvature squircle geometry with fixed directional specular highlight.
+    </footer>
+
+  </main>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       DEMO 4: ELEVATION TIER 3 GLASS MODAL SHEET
+       Blur: 38px, Deep Multi-Tier Ambient Shadow, Edge Lensing
+       ═══════════════════════════════════════════════════════════════════ -->
+  <div id="modalOverlay" class="modal-overlay" onclick="closeModal(event)">
+    <div class="liquid-glass squircle-modal modal-window" data-elevation="3" onclick="event.stopPropagation()">
+      <div class="glass-optical-lens"></div>
+      <div class="glass-substrate"></div>
+      <div class="glass-sheen"></div>
+
+      <div class="glass-content" style="display: flex; flex-direction: column; gap: 1.25rem;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <div>
+            <div class="vibrant-tag" style="margin-bottom: 0.5rem; background: rgba(0,122,255,0.2); border-color: rgba(0,122,255,0.4);">
+              ELEVATION 3 • 38PX BLUR
+            </div>
+            <h2 class="vibrant-title" style="font-size: 1.4rem;">Topmost Glass Layer</h2>
+          </div>
+          <button type="button" onclick="closeModal()" class="tool-chip" style="font-size: 1rem; padding: 0.25rem 0.6rem;">×</button>
+        </div>
+
+        <p class="vibrant-meta" style="font-size: 0.825rem; line-height: 1.6; color: var(--text-secondary);">
+          This modal layer demonstrates the highest tier in our elevation system. With 38px frosted backdrop blur and edge-weighted refraction lensing, content below remains diffused while the glass capsule floats with palpable optical weight.
+        </p>
+
+        <div style="display: flex; gap: 0.75rem; justify-content: flex-end; padding-top: 0.5rem;">
+          <button type="button" class="liquid-glass squircle-button interactive-glass glass-btn glass-btn-secondary" data-elevation="1" onclick="closeModal()" style="width: auto; padding: 0.6rem 1.2rem;">
+            <div class="glass-optical-lens"></div>
+            <div class="glass-substrate"></div>
+            <div class="glass-sheen"></div>
+            <span class="glass-content">Dismiss</span>
+          </button>
+          <button type="button" class="liquid-glass squircle-button interactive-glass glass-btn glass-btn-primary" data-elevation="1" onclick="closeModal()" style="width: auto; padding: 0.6rem 1.4rem;">
+            <div class="glass-optical-lens"></div>
+            <div class="glass-substrate"></div>
+            <div class="glass-sheen"></div>
+            <span class="glass-content">Acknowledge</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════
+       INTERACTIVE JAVASCRIPT CONTROLLER
+       ═══════════════════════════════════════════════════════════════════ -->
+  <script>
+    // 1. Wallpaper Switcher
+    function switchBackground(theme) {
+      const bg = document.getElementById('bgCanvas');
+      bg.className = 'test-background-canvas bg-' + theme;
+      document.querySelectorAll('.pill-group .tool-chip').forEach(btn => {
+        if (btn.textContent.toLowerCase().includes(theme.substring(0, 3))) {
+          btn.classList.add('active');
+        } else if (!btn.id && !btn.textContent.includes('Sheet')) {
+          btn.classList.remove('active');
+        }
+      });
+    }
+
+    // 2. Light / Dark Mode Toggle
+    let isDark = true;
+    function toggleTheme() {
+      isDark = !isDark;
+      const html = document.documentElement;
+      const btn = document.getElementById('themeBtn');
+      if (isDark) {
+        html.setAttribute('data-theme', 'dark');
+        btn.textContent = '🌙 Dark Glass';
+      } else {
+        html.setAttribute('data-theme', 'light');
+        btn.textContent = '☀️ Light Glass';
+      }
+    }
+
+    // 3. Chromatic Aberration Toggle
+    let aberrationOn = true;
+    function toggleAberration(btn) {
+      aberrationOn = !aberrationOn;
+      const filter = document.getElementById('liquid-glass-optical-refraction');
+      const label = document.getElementById('aberrationStatus');
+      
+      if (!aberrationOn) {
+        // Disable offset
+        filter.querySelectorAll('feOffset').forEach(el => {
+          el.setAttribute('dx', '0');
+          el.setAttribute('dy', '0');
+        });
+        filter.querySelectorAll('feDisplacementMap').forEach(el => {
+          el.setAttribute('scale', '0');
+        });
+        label.textContent = '✦ Dispersion: OFF';
+      } else {
+        // Re-enable optical chromatic dispersion
+        const offsets = filter.querySelectorAll('feOffset');
+        if (offsets[0]) { offsets[0].setAttribute('dx', '1.5'); offsets[0].setAttribute('dy', '0.8'); }
+        if (offsets[1]) { offsets[1].setAttribute('dx', '-1.5'); offsets[1].setAttribute('dy', '-0.8'); }
+        
+        const disps = filter.querySelectorAll('feDisplacementMap');
+        if (disps[0]) disps[0].setAttribute('scale', '18');
+        if (disps[1]) disps[1].setAttribute('scale', '15');
+        if (disps[2]) disps[2].setAttribute('scale', '12');
+        label.textContent = '✦ Dispersion: ON';
+      }
+    }
+
+    // 4. Scrubber Interaction
+    function moveScrubber(e) {
+      const track = e.currentTarget;
+      const rect = track.getBoundingClientRect();
+      const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+      document.getElementById('scrubberFill').style.width = (pos * 100) + '%';
+    }
+
+    // 5. Liquid Press Compression Effect
+    function triggerLiquidRipple(btn) {
+      btn.style.filter = 'blur(2px)';
+      setTimeout(() => {
+        btn.style.filter = '';
+      }, 160);
+    }
+
+    // 6. Modal Sheet Open/Close
+    function openModal() {
+      document.getElementById('modalOverlay').classList.add('open');
+    }
+    function closeModal(e) {
+      document.getElementById('modalOverlay').classList.remove('open');
+    }
+  </script>
+</body>
+</html>

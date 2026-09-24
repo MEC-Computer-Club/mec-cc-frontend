@@ -48,7 +48,7 @@ const navItems = [
       { label: "Projects", href: "/projects" },
       { label: "Verify & Lookup", href: "/verify" },
       { label: "Photo Sigil", href: "/resources/watermark" },
-      { label: "Cover Page & Lab Report", href: "/resources/cover-page" },
+      { label: "Cover Page", href: "/resources/cover-page" },
     ],
   },
   {

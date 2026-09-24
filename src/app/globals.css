@@ -35,6 +35,10 @@
   --color-grid-lines: var(--grid-lines);
 }
 
+.font-space-mono {
+  font-family: var(--font-space-mono), 'Space Mono', monospace;
+}
+
 /* ============================================================
    MEC Computer Club — Design System
    Single source of truth for all design tokens and base styles.
