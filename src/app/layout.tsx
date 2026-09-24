@@ -1,12 +1,19 @@
 import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Quicksand, Space_Mono } from "next/font/google";
 import { GeistSans } from "geist/font/sans";
+import dynamic from "next/dynamic";
 import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { AccentIndicator } from "@/components/AccentIndicator";
 import { ScaleWrapper } from "@/components/ScaleWrapper";
 import { Toaster } from "react-hot-toast";
+
+const Footer = dynamic(
+  () => import("@/components/layout/Footer").then((m) => m.Footer)
+);
+
+const AccentIndicator = dynamic(
+  () => import("@/components/AccentIndicator").then((m) => m.AccentIndicator)
+);
 import { AuthProvider } from "@/context/AuthContext";
 import { SiteSettingsProvider } from "@/context/SiteSettingsContext";
 import "./globals.css";
@@ -179,20 +186,14 @@ const jsonLdOrg = {
   ]
 };
 
-export const dynamic = "force-dynamic";
+import { getInitialThemeCss, type VibeName } from "@/lib/accent-themes";
 
-import { headers } from "next/headers";
-import { VIBE_ORDER, getInitialThemeCss, type VibeName } from "@/lib/accent-themes";
-
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Opt-in to per-request dynamic rendering so every refresh generates a random vibe
-  await headers();
-  const randomVibeIndex = Math.floor(Math.random() * VIBE_ORDER.length);
-  const initialVibe: VibeName = VIBE_ORDER[randomVibeIndex];
+  const initialVibe: VibeName = "lime";
   const initialThemeCss = getInitialThemeCss(initialVibe);
 
   return (

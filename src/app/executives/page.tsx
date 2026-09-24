@@ -3,8 +3,7 @@ import { ProfileCard, ProfileGrid } from "@/components/ui/ProfileCard";
 import { getExecutives } from "@/data/executives";
 import { groupPeopleByBatch } from "@/lib/batchUtils";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 120;
 
 export const metadata: Metadata = {
   title: "Executive Committee & Student Leaders | MEC Computer Club",

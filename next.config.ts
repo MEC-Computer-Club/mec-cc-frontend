@@ -45,6 +45,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "api.microlink.io",
       },
+      {
+        protocol: "https",
+        hostname: "api.dicebear.com",
+      },
     ],
   },
   async redirects() {
