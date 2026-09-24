@@ -1,12 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { JetBrains_Mono, Quicksand, Space_Mono } from "next/font/google";
+import { JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { GeistSans } from "geist/font/sans";
+import dynamic from "next/dynamic";
 import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { AccentIndicator } from "@/components/AccentIndicator";
 import { ScaleWrapper } from "@/components/ScaleWrapper";
 import { Toaster } from "react-hot-toast";
+
+const Footer = dynamic(
+  () => import("@/components/layout/Footer").then((m) => m.Footer)
+);
+
+const AccentIndicator = dynamic(
+  () => import("@/components/AccentIndicator").then((m) => m.AccentIndicator)
+);
 import { AuthProvider } from "@/context/AuthContext";
 import { SiteSettingsProvider } from "@/context/SiteSettingsContext";
 import "./globals.css";
@@ -17,19 +25,28 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-const quicksand = Quicksand({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-quicksand",
+const generalSans = localFont({
+  src: [
+    {
+      path: "../../public/fonts/general-sans/GeneralSans-Medium.woff2",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/general-sans/GeneralSans-Semibold.woff2",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/general-sans/GeneralSans-Bold.woff2",
+      weight: "700",
+      style: "normal",
+    },
+  ],
+  variable: "--font-heading",
   display: "swap",
 });
 
-const spaceMono = Space_Mono({
-  subsets: ["latin"],
-  weight: ["400", "700"],
-  variable: "--font-space-mono",
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://meccomputerclub.org"),
@@ -179,24 +196,18 @@ const jsonLdOrg = {
   ]
 };
 
-export const dynamic = "force-dynamic";
+import { getInitialThemeCss, type VibeName } from "@/lib/accent-themes";
 
-import { headers } from "next/headers";
-import { VIBE_ORDER, getInitialThemeCss, type VibeName } from "@/lib/accent-themes";
-
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Opt-in to per-request dynamic rendering so every refresh generates a random vibe
-  await headers();
-  const randomVibeIndex = Math.floor(Math.random() * VIBE_ORDER.length);
-  const initialVibe: VibeName = VIBE_ORDER[randomVibeIndex];
+  const initialVibe: VibeName = "lime";
   const initialThemeCss = getInitialThemeCss(initialVibe);
 
   return (
-    <html lang="en" className={`${GeistSans.variable} ${jetbrainsMono.variable} ${quicksand.variable} ${spaceMono.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${GeistSans.variable} ${jetbrainsMono.variable} ${generalSans.variable}`} suppressHydrationWarning>
       <head>
         <style
           id="initial-accent-theme"

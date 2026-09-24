@@ -1,9 +1,6 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 @source "../";
-@source "../../src";
-@source "../components";
-@source "../app";
 
 @theme {
   --color-surface-primary: var(--surface-primary);
@@ -48,32 +45,7 @@
    Light theme. Token architecture supports future dark mode swap.
    ============================================================ */
 
-/* --- Local Fonts & Typography --- */
-@import url('https://fonts.cdnfonts.com/css/product-sans');
 
-@font-face {
-  font-family: 'General Sans';
-  src: url('/fonts/general-sans/GeneralSans-Medium.woff2') format('woff2');
-  font-weight: 500;
-  font-display: swap;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'General Sans';
-  src: url('/fonts/general-sans/GeneralSans-Semibold.woff2') format('woff2');
-  font-weight: 600;
-  font-display: swap;
-  font-style: normal;
-}
-
-@font-face {
-  font-family: 'General Sans';
-  src: url('/fonts/general-sans/GeneralSans-Bold.woff2') format('woff2');
-  font-weight: 700;
-  font-display: swap;
-  font-style: normal;
-}
 
 /* --- Design Tokens --- */
 :root {
@@ -176,7 +148,7 @@
 
   /* Typography — 5-step scale (§8.1) */
   --font-body: var(--font-geist-sans, system-ui, sans-serif);
-  --font-heading: "General Sans", system-ui, sans-serif;
+  --font-heading: var(--font-heading), "General Sans", system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono, ui-monospace, SFMono-Regular, monospace);
 
   --text-xs: 0.75rem;
@@ -974,4 +946,4 @@ body.raw-html-page-active #main-content {
   font-family: var(--font-jetbrains-mono), "Space Mono", monospace !important;
 }
 
-
+
