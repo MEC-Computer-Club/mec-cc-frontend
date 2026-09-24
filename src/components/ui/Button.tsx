@@ -20,13 +20,13 @@ interface ButtonProps {
 
 const BUTTON_VARIANTS: Record<string, string> = {
   primary:
-    "bg-accent-primary !text-accent-primary-text font-bold border-2 border-text-primary dark:border-border-default shadow-[3px_3px_0px_0px_var(--text-primary)] dark:shadow-[3px_3px_0px_0px_var(--accent-primary)] hover:not-disabled:bg-accent-primary-hover hover:not-disabled:shadow-[4px_4px_0px_0px_var(--text-primary)] dark:hover:not-disabled:shadow-[4px_4px_0px_0px_var(--accent-primary)] hover:not-disabled:-translate-x-0.5 hover:not-disabled:-translate-y-0.5 active:not-disabled:translate-x-0 active:not-disabled:translate-y-0 active:not-disabled:shadow-none",
+    "bg-black text-white border-0 hover:not-disabled:bg-neutral-800 hover:not-disabled:shadow-[4px_4px_0px_0px_var(--accent-primary)] dark:bg-white dark:text-black dark:hover:not-disabled:bg-neutral-200 dark:hover:not-disabled:shadow-[4px_4px_0px_0px_var(--accent-primary)] hover:not-disabled:-translate-x-0.5 hover:not-disabled:-translate-y-0.5 active:not-disabled:translate-x-0 active:not-disabled:translate-y-0 active:not-disabled:shadow-none",
   secondary:
-    "bg-surface-elevated !text-text-primary font-bold border-2 border-text-primary dark:border-border-default shadow-[3px_3px_0px_0px_var(--text-primary)] dark:shadow-[3px_3px_0px_0px_var(--border-default)] hover:not-disabled:bg-surface-secondary hover:not-disabled:shadow-[4px_4px_0px_0px_var(--accent-primary)] hover:not-disabled:border-accent-primary hover:not-disabled:-translate-x-0.5 hover:not-disabled:-translate-y-0.5 active:not-disabled:translate-x-0 active:not-disabled:translate-y-0 active:not-disabled:shadow-none",
+    "bg-transparent text-black border border-black hover:not-disabled:bg-neutral-100 hover:not-disabled:shadow-[4px_4px_0px_0px_black] dark:bg-transparent dark:text-white dark:border-white dark:hover:not-disabled:bg-neutral-900 dark:hover:not-disabled:shadow-[4px_4px_0px_0px_white] hover:not-disabled:-translate-x-0.5 hover:not-disabled:-translate-y-0.5 active:not-disabled:translate-x-0 active:not-disabled:translate-y-0 active:not-disabled:shadow-none",
   outline:
-    "bg-transparent text-text-primary font-bold border-2 border-text-primary dark:border-border-default hover:not-disabled:bg-surface-secondary hover:not-disabled:shadow-[3px_3px_0px_0px_var(--accent-primary)] hover:not-disabled:border-accent-primary hover:not-disabled:-translate-x-0.5 hover:not-disabled:-translate-y-0.5 active:not-disabled:translate-x-0 active:not-disabled:translate-y-0 active:not-disabled:shadow-none",
+    "bg-transparent text-black border border-black hover:not-disabled:bg-neutral-100 hover:not-disabled:shadow-[4px_4px_0px_0px_black] dark:bg-transparent dark:text-white dark:border-white dark:hover:not-disabled:bg-neutral-900 dark:hover:not-disabled:shadow-[4px_4px_0px_0px_white] hover:not-disabled:-translate-x-0.5 hover:not-disabled:-translate-y-0.5 active:not-disabled:translate-x-0 active:not-disabled:translate-y-0 active:not-disabled:shadow-none",
   ghost:
-    "bg-transparent text-text-secondary font-semibold border-2 border-transparent hover:not-disabled:text-text-primary hover:not-disabled:bg-surface-secondary",
+    "bg-transparent text-text-secondary font-semibold hover:not-disabled:text-text-primary hover:not-disabled:bg-surface-secondary",
 };
 
 const BUTTON_SIZES: Record<string, string> = {
@@ -57,7 +57,7 @@ export function Button({
   const widthClass = fullWidth ? "w-full" : "";
 
   const classes = [
-    "inline-flex items-center justify-center gap-2 font-sans font-bold border-2 rounded-md cursor-pointer transition-all duration-150 no-underline whitespace-nowrap leading-none focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed",
+    "inline-flex items-center justify-center gap-2 font-sans font-bold rounded-md cursor-pointer transition-all duration-150 no-underline whitespace-nowrap leading-none focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed",
     variantClass,
     sizeClass,
     widthClass,

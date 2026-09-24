@@ -39,7 +39,7 @@ export function HomeGallery({ items }: HomeGalleryProps) {
             >
               <div
                 onClick={() => setActiveItem(item)}
-                className="group relative aspect-[4/3] rounded-2xl overflow-hidden border-2 border-border-brutalist bg-surface-secondary cursor-pointer shadow-[4px_4px_0px_0px_var(--border-brutalist)] hover:shadow-[6px_6px_0px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-200"
+                className="group relative aspect-[4/3] rounded-2xl overflow-hidden border border-black dark:border-border-default bg-surface-secondary cursor-pointer hover:shadow-[6px_6px_0px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-200"
               >
                 {/* Media preview */}
                 {item.type === "image" ? (
