@@ -53,741 +53,1055 @@ export type RoadmapGroup = {
 
 export const roadmapGroups: RoadmapGroup[] = [
   {
-    id: "beginner",
-    title: "Beginner",
-    description: "Syntax fundamentals, basic math & problem-solving habits",
-    stages: [
+    "id": "beginner",
+    "title": "Beginner",
+    "description": "Syntax fundamentals, basic math & problem-solving habits",
+    "stages": [
       {
-        slug: "newbie",
-        number: "01",
-        title: "Newbie",
-        subtitle: "Build your programming foundation",
-        description:
-          "Start with programming fundamentals, problem-solving habits, implementation, and basic mathematics.",
-        level: "Codeforces Newbie (< 1200)",
-        target: "Solve around 100 problems",
-        advice:
-          "Focus heavily on syntax fluency and converting plain English problems into working code without bugs. Do not worry about advanced algorithms yet.",
-        topics: [
+        "slug": "newbie",
+        "number": "01",
+        "title": "Newbie",
+        "subtitle": "Build your programming foundation",
+        "description": "Start with programming fundamentals, problem-solving habits, implementation, and basic mathematics.",
+        "level": "Codeforces Newbie (< 1200)",
+        "target": "Solve around 100 problems",
+        "advice": "Focus heavily on syntax fluency and converting plain English problems into working code without bugs. Do not worry about advanced algorithms yet.",
+        "topics": [
           {
-            title: "Programming Fundamentals",
-            description:
-              "Master syntax, variables, conditional statements, loops, functions, arrays, strings, and standard input/output formatting in C++.",
-            resources: [
+            "title": "Programming Fundamentals",
+            "description": "Master syntax, variables, conditional statements, loops, functions, arrays, strings, and standard input/output formatting in C++.",
+            "resources": [
               {
-                title: "C++ Language Reference (cppreference)",
-                url: "https://en.cppreference.com/w/cpp",
-                type: "documentation",
+                "title": "HackerRank C++ Language Proficiency Track",
+                "url": "https://www.hackerrank.com/domains/cpp",
+                "type": "problemset"
               },
               {
-                title: "Basic Programming Problems (Codeforces Div. 4)",
-                url: "https://codeforces.com/problemset?tags=implementation",
-                type: "problemset",
+                "title": "CodeChef 500-1000 Beginner Difficulty Ladder",
+                "url": "https://www.codechef.com/practice/beginner",
+                "type": "problemset"
               },
               {
-                title: "Python Programming Language Documentation",
-                url: "https://docs.python.org/3/",
-                type: "documentation",
-              },
-            ],
+                "title": "Codeforces Div. 4 Implementation Problems",
+                "url": "https://codeforces.com/problemset?tags=implementation&order=BY_SOLVED_DESC",
+                "type": "problemset"
+              }
+            ]
           },
           {
-            title: "Implementation",
-            description:
-              "Practice converting problem statements into clean, bug-free, and straightforward code without overcomplicating logic.",
-            resources: [
+            "title": "Implementation",
+            "description": "Practice converting problem statements into clean, bug-free, and straightforward code without overcomplicating logic.",
+            "resources": [
               {
-                title: "Codeforces Implementation Tag (Sorted by Solved)",
-                url: "https://codeforces.com/problemset?tags=implementation",
-                type: "problemset",
+                "title": "Codeforces Implementation Tag (Sorted by Solved)",
+                "url": "https://codeforces.com/problemset?tags=implementation&order=BY_SOLVED_DESC",
+                "type": "problemset"
               },
               {
-                title: "Div. 3 & Div. 4 Problems A and B",
-                url: "https://codeforces.com/problemset?order=BY_SOLVED_DESC",
-                type: "problemset",
+                "title": "AtCoder Beginner Contest Tasks A & B Collection",
+                "url": "https://kenkoooo.com/atcoder/#/table/",
+                "type": "problemset"
               },
-            ],
+              {
+                "title": "CSES Introductory Section Drills",
+                "url": "https://cses.fi/problemset/list/#introductory",
+                "type": "problemset"
+              },
+              {
+                "title": "Div. 3 & Div. 4 Problems A and B (Codeforces)",
+                "url": "https://codeforces.com/problemset?order=BY_SOLVED_DESC",
+                "type": "problemset"
+              }
+            ]
           },
           {
-            title: "Basic Mathematics",
-            description:
-              "Learn divisibility, prime numbers, factors, GCD, LCM, and simple arithmetic techniques.",
-            resources: [
+            "title": "Basic Mathematics",
+            "description": "Learn divisibility, prime numbers, factors, GCD, LCM, modular arithmetic, and simple arithmetic techniques.",
+            "resources": [
               {
-                title: "Number Theory & Math Problems",
-                url: "https://codeforces.com/problemset?tags=number%20theory",
-                type: "problemset",
+                "title": "CP-Algorithms: Euclidean Algorithm for GCD",
+                "url": "https://cp-algorithms.com/algebra/euclid-algorithm.html",
+                "type": "guide"
               },
               {
-                title: "Euclidean Algorithm for GCD (CP-Algorithms)",
-                url: "https://cp-algorithms.com/algebra/euclid-algorithm.html",
-                type: "guide",
+                "title": "Maths for Competitive Programming",
+                "url": "https://www.youtube.com/playlist?list=PLtfqa971vD5FT6gYRxs0BDH-0WRz1FdCL",
+                "type": "problemset"
               },
-            ],
+              {
+                "title": "Number Theory & Math Problems (Codeforces)",
+                "url": "https://codeforces.com/problemset?tags=math,number%20theory,900-1000",
+                "type": "problemset"
+              }
+            ]
           },
           {
-            title: "Basic Data Structures",
-            description:
-              "Become comfortable with arrays, strings, vectors, pairs, sets, and maps in the C++ Standard Template Library (STL).",
-            resources: [
+            "title": "Basic Data Structures",
+            "description": "Become comfortable with arrays, strings, vectors, pairs, sets, and maps in the C++ Standard Template Library (STL).",
+            "resources": [
               {
-                title: "C++ STL Containers Documentation",
-                url: "https://en.cppreference.com/w/cpp/container",
-                type: "documentation",
+                "title": "USACO Guide Bronze: Introduction to Data Structures",
+                "url": "https://usaco.guide/bronze/intro-ds",
+                "type": "guide"
               },
               {
-                title: "GeeksforGeeks C++ STL Guide",
-                url: "https://www.geeksforgeeks.org/the-c-standard-template-library-stl/",
-                type: "guide",
+                "title": "C++ STL Containers Documentation (cppreference)",
+                "url": "https://en.cppreference.com/w/cpp/container",
+                "type": "documentation"
               },
-            ],
-          },
-        ],
+              {
+                "title": "GeeksforGeeks C++ STL Guide & Cheat Sheet",
+                "url": "https://www.geeksforgeeks.org/the-c-standard-template-library-stl/",
+                "type": "guide"
+              },
+              {
+                "title": "CSES Distinct Numbers (Set/Map Drill)",
+                "url": "https://cses.fi/problemset/task/1621",
+                "type": "problemset"
+              }
+            ]
+          }
+        ]
       },
       {
-        slug: "beginner",
-        number: "02",
-        title: "Beginner",
-        subtitle: "Develop problem-solving confidence",
-        description:
-          "Move beyond basic implementation and start recognizing common patterns in competitive programming.",
-        level: "Codeforces Pupil (1200 - 1399)",
-        target: "Solve around 200 problems",
-        advice:
-          "Start participating in Codeforces Div. 3 contests regularly. Analyze test cases, write edge-case tests before submitting, and learn the power of prefix sums.",
-        topics: [
+        "slug": "beginner",
+        "number": "02",
+        "title": "Beginner",
+        "subtitle": "Develop problem-solving confidence",
+        "description": "Move beyond basic implementation and start recognizing common patterns in competitive programming.",
+        "level": "Codeforces Pupil (1200 - 1399)",
+        "target": "Solve around 200 problems",
+        "advice": "Start participating in Codeforces Div. 3 contests regularly. Analyze test cases, write edge-case tests before submitting, and learn the power of prefix sums.",
+        "topics": [
           {
-            title: "Sorting and Searching",
-            description:
-              "Learn sorting techniques, binary search, lower_bound, upper_bound, and custom comparators.",
-            resources: [
+            "title": "Sorting and Searching",
+            "description": "Learn sorting techniques, binary search, lower_bound, upper_bound, and custom comparators.",
+            "resources": [
               {
-                title: "Binary Search Problems (Codeforces)",
-                url: "https://codeforces.com/problemset?tags=binary%20search",
-                type: "problemset",
+                "title": "USACO Guide Silver: Binary Search & Custom Comparators",
+                "url": "https://usaco.guide/silver/binary-search",
+                "type": "guide"
               },
               {
-                title: "Sorting Problems (Codeforces)",
-                url: "https://codeforces.com/problemset?tags=sortings",
-                type: "problemset",
+                "title": "CP-Algorithms: Binary Search Tutorial",
+                "url": "https://cp-algorithms.com/num_methods/binary_search.html",
+                "type": "guide"
               },
               {
-                title: "Binary Search Tutorial on CP-Algorithms",
-                url: "https://cp-algorithms.com/num_methods/binary_search.html",
-                type: "guide",
+                "title": "CSES Sorting and Searching Section",
+                "url": "https://cses.fi/problemset/list/#sorting",
+                "type": "problemset"
               },
-            ],
+              {
+                "title": "Codeforces Binary Search Tag",
+                "url": "https://codeforces.com/problemset?tags=binary%20search,1000-1400",
+                "type": "problemset"
+              }
+            ]
           },
           {
-            title: "Prefix Sum & Difference Arrays",
-            description:
-              "Use prefix sums to answer range queries in O(1) and difference arrays for range update optimizations.",
-            resources: [
+            "title": "Prefix Sum & Difference Arrays",
+            "description": "Use prefix sums to answer range queries in O(1) and difference arrays for range update optimizations.",
+            "resources": [
               {
-                title: "Prefix Sum Problems",
-                url: "https://codeforces.com/problemset?tags=prefix%20sums",
-                type: "problemset",
+                "title": "USACO Guide Silver: Introduction to Prefix Sums",
+                "url": "https://usaco.guide/silver/prefix-sums",
+                "type": "guide"
               },
               {
-                title: "CSES Static Range Sum Queries",
-                url: "https://cses.fi/problemset/task/1646",
-                type: "problemset",
+                "title": "CSES Static Range Sum Queries",
+                "url": "https://cses.fi/problemset/task/1646",
+                "type": "problemset"
               },
-            ],
+              {
+                "title": "CSES Subarray Sums I & II",
+                "url": "https://cses.fi/problemset/task/1660",
+                "type": "problemset"
+              },
+              {
+                "title": "Prefix Sum Technique",
+                "url": "https://www.geeksforgeeks.org/dsa/understanding-prefix-sums/",
+                "type": "guide"
+              }
+            ]
           },
           {
-            title: "Two Pointers Technique",
-            description:
-              "Learn how to process arrays and strings using two moving indices for subarray optimization and sliding windows.",
-            resources: [
+            "title": "Two Pointers Technique",
+            "description": "Learn how to process arrays and strings using two moving indices for subarray optimization and sliding windows.",
+            "resources": [
               {
-                title: "Two Pointers Problems",
-                url: "https://codeforces.com/problemset?tags=two%20pointers",
-                type: "problemset",
+                "title": "USACO Guide Silver: Two Pointers Technique",
+                "url": "https://usaco.guide/silver/two-pointers",
+                "type": "guide"
               },
               {
-                title: "USACO Guide: Two Pointers Tutorial",
-                url: "https://usaco.guide/silver/two-pointers",
-                type: "guide",
+                "title": "CSES Sum of Two Values",
+                "url": "https://cses.fi/problemset/task/1640",
+                "type": "problemset"
               },
-            ],
+              {
+                "title": "CSES Subarray Distinct Values (Sliding Window)",
+                "url": "https://cses.fi/problemset/task/2428",
+                "type": "problemset"
+              },
+              {
+                "title": "Codeforces Two Pointers Problems",
+                "url": "https://codeforces.com/problemset?tags=two%20pointers,1000-1400",
+                "type": "problemset"
+              }
+            ]
           },
           {
-            title: "Greedy Techniques",
-            description:
-              "Identify situations where making the best local choice leads to an optimal answer, and prove invariants.",
-            resources: [
+            "title": "Greedy Techniques",
+            "description": "Identify situations where making the best local choice leads to an optimal answer, and prove invariants.",
+            "resources": [
               {
-                title: "Greedy Problems Collection",
-                url: "https://codeforces.com/problemset?tags=greedy",
-                type: "problemset",
+                "title": "USACO Guide Silver: Greedy Algorithms with Sorting",
+                "url": "https://usaco.guide/silver/greedy-sorting",
+                "type": "guide"
               },
               {
-                title: "CSES Movie Festival (Classic Greedy)",
-                url: "https://cses.fi/problemset/task/1629",
-                type: "problemset",
+                "title": "CSES Movie Festival (Classic Interval Scheduling)",
+                "url": "https://cses.fi/problemset/task/1629",
+                "type": "problemset"
               },
-            ],
+              {
+                "title": "CSES Tasks and Deadlines",
+                "url": "https://cses.fi/problemset/task/1630",
+                "type": "problemset"
+              },
+              {
+                "title": "Codeforces Greedy Problems Collection",
+                "url": "https://codeforces.com/problemset?tags=greedy,900-1400",
+                "type": "problemset"
+              }
+            ]
           },
           {
-            title: "Basic Recursion & Backtracking",
-            description:
-              "Understand recursive thinking, call stacks, base cases, state transitions, and simple backtracking.",
-            resources: [
+            "title": "Basic Recursion & Backtracking",
+            "description": "Understand recursive thinking, call stacks, base cases, state transitions, and simple backtracking.",
+            "resources": [
               {
-                title: "CSES Generating Subsets & Permutations",
-                url: "https://cses.fi/problemset/list/",
-                type: "problemset",
+                "title": "CSES Apple Division (Classic Subset Backtracking)",
+                "url": "https://cses.fi/problemset/task/1623",
+                "type": "problemset"
               },
               {
-                title: "Recursion & Backtracking Drills",
-                type: "guide",
+                "title": "CSES Chessboard and Queens (N-Queens Backtracking)",
+                "url": "https://cses.fi/problemset/task/1624",
+                "type": "problemset"
               },
-            ],
-          },
-        ],
-      },
-    ],
+              {
+                "title": "CSES Creating Strings (Permutation Generation)",
+                "url": "https://cses.fi/problemset/task/1622",
+                "type": "problemset"
+              },
+              {
+                "title": "GeeksforGeeks Recursion & Backtracking Tutorial",
+                "url": "https://www.geeksforgeeks.org/backtracking-algorithms/",
+                "type": "guide"
+              }
+            ]
+          }
+        ]
+      }
+    ]
   },
   {
-    id: "intermediate",
-    title: "Intermediate",
-    description: "Standard algorithmic paradigms, graphs & dynamic programming",
-    stages: [
+    "id": "intermediate",
+    "title": "Intermediate",
+    "description": "Standard algorithmic paradigms, graphs & dynamic programming",
+    "stages": [
       {
-        slug: "pre-intermediate",
-        number: "03",
-        title: "Pre-Intermediate",
-        subtitle: "Learn standard competitive programming techniques",
-        description:
-          "Begin combining multiple ideas and solving problems that require more structured thinking.",
-        level: "Codeforces Specialist (1400 - 1599)",
-        target: "Solve around 300 problems",
-        advice:
-          "This is where competitive programming starts getting mathematical and algorithmic. Pay close attention to time complexity constraints and bit manipulation.",
-        topics: [
+        "slug": "pre-intermediate",
+        "number": "03",
+        "title": "Pre-Intermediate",
+        "subtitle": "Learn standard competitive programming techniques",
+        "description": "Begin combining multiple ideas and solving problems that require more structured thinking.",
+        "level": "Codeforces Specialist (1400 - 1599)",
+        "target": "Solve around 300 problems",
+        "advice": "This is where competitive programming starts getting mathematical and algorithmic. Pay close attention to time complexity constraints and bit manipulation.",
+        "topics": [
           {
-            title: "Advanced Binary Search",
-            description:
-              "Apply binary search on monotonic answer spaces, predicate functions, and continuous conditions.",
-            resources: [
+            "title": "Advanced Binary Search",
+            "description": "Apply binary search on monotonic answer spaces, predicate functions, and continuous conditions.",
+            "resources": [
               {
-                title: "Binary Search on Answer Range",
-                url: "https://codeforces.com/problemset?tags=binary%20search",
-                type: "problemset",
+                "title": "USACO Guide Silver: Binary Search on Monotonic Answers",
+                "url": "https://usaco.guide/silver/binary-search",
+                "type": "guide"
               },
               {
-                title: "CSES Factory Machines",
-                url: "https://cses.fi/problemset/task/1620",
-                type: "problemset",
+                "title": "CSES Factory Machines",
+                "url": "https://cses.fi/problemset/task/1620",
+                "type": "problemset"
               },
-            ],
+              {
+                "title": "CSES Array Division",
+                "url": "https://cses.fi/problemset/task/1085",
+                "type": "problemset"
+              },
+              {
+                "title": "Codeforces Binary Search Tag",
+                "url": "https://codeforces.com/problemset?tags=binary%20search,1300-1600",
+                "type": "problemset"
+              }
+            ]
           },
           {
-            title: "Bit Manipulation & Bitmasks",
-            description:
-              "Work with bitwise operators, masks, subsets, power sets, XOR properties, and binary representations.",
-            resources: [
+            "title": "Bit Manipulation & Bitmasks",
+            "description": "Work with bitwise operators, masks, subsets, power sets, XOR properties, and binary representations.",
+            "resources": [
               {
-                title: "Bitmask Problems",
-                url: "https://codeforces.com/problemset?tags=bitmasks",
-                type: "problemset",
+                "title": "CP-Algorithms: Bit Manipulation & Submask Enumeration",
+                "url": "https://cp-algorithms.com/algebra/all-submasks.html",
+                "type": "guide"
               },
               {
-                title: "Bit Manipulation on CP-Algorithms",
-                url: "https://cp-algorithms.com/algebra/all-submasks.html",
-                type: "guide",
+                "title": "USACO Guide Silver: Bitwise Operations & Subsets",
+                "url": "https://usaco.guide/silver/intro-bitwise",
+                "type": "guide"
               },
-            ],
+              {
+                "title": "CSES Counting Tilings (Bitmask Practice)",
+                "url": "https://cses.fi/problemset/task/2181",
+                "type": "problemset"
+              },
+              {
+                "title": "Basics of Bit Manipulation",
+                "url": "https://www.hackerearth.com/practice/basic-programming/bit-manipulation/basics-of-bit-manipulation/practice-problems/",
+                "type": "problemset"
+              }
+            ]
           },
           {
-            title: "Basic Dynamic Programming",
-            description:
-              "Learn states, transitions, base cases, and 1D / 2D DP (Coin Change, 0/1 Knapsack, LIS, Grid Paths).",
-            resources: [
+            "title": "Basic Dynamic Programming",
+            "description": "Learn states, transitions, base cases, and 1D / 2D DP (Coin Change, 0/1 Knapsack, LIS, Grid Paths).",
+            "resources": [
               {
-                title: "Dynamic Programming Problems",
-                url: "https://codeforces.com/problemset?tags=dp",
-                type: "problemset",
+                "title": "AtCoder Educational DP Contest (Tasks A through H)",
+                "url": "https://atcoder.jp/contests/dp",
+                "type": "contest"
               },
               {
-                title: "CSES Dynamic Programming Section",
-                url: "https://cses.fi/problemset/list/#dynamic",
-                type: "problemset",
+                "title": "CSES Dynamic Programming Section (Coin Combinations, Grid Paths)",
+                "url": "https://cses.fi/problemset/list/#dynamic",
+                "type": "problemset"
               },
-            ],
+              {
+                "title": "USACO Guide Gold: Introduction to Dynamic Programming",
+                "url": "https://usaco.guide/gold/intro-dp",
+                "type": "guide"
+              },
+              {
+                "title": "CP-Algorithms: Introduction to Dynamic Programming",
+                "url": "https://cp-algorithms.com/dynamic_programming/intro-to-dp.html",
+                "type": "guide"
+              }
+            ]
           },
           {
-            title: "Graph Fundamentals",
-            description:
-              "Understand graphs, adjacency lists, Breadth-First Search (BFS), Depth-First Search (DFS), and connected components.",
-            resources: [
+            "title": "Graph Fundamentals",
+            "description": "Understand graphs, adjacency lists, Breadth-First Search (BFS), Depth-First Search (DFS), and connected components.",
+            "resources": [
               {
-                title: "Graph Problems",
-                url: "https://codeforces.com/problemset?tags=graphs",
-                type: "problemset",
+                "title": "USACO Guide Silver: Graph Traversal (DFS & BFS)",
+                "url": "https://usaco.guide/silver/graph-traversal",
+                "type": "guide"
               },
               {
-                title: "CSES Building Roads & Labyrinth",
-                url: "https://cses.fi/problemset/list/#graph",
-                type: "problemset",
+                "title": "CSES Building Roads & Labyrinth",
+                "url": "https://cses.fi/problemset/list/#graph",
+                "type": "problemset"
               },
-            ],
+              {
+                "title": "CP-Algorithms: Breadth-First Search (BFS)",
+                "url": "https://cp-algorithms.com/graph/breadth-first-search.html",
+                "type": "guide"
+              },
+              {
+                "title": "CP-Algorithms: Depth-First Search (DFS)",
+                "url": "https://cp-algorithms.com/graph/depth-first-search.html",
+                "type": "guide"
+              }
+            ]
           },
           {
-            title: "Disjoint Set Union (DSU)",
-            description:
-              "Learn DSU with path compression and union by rank for connected components and Kruskal-style problems.",
-            resources: [
+            "title": "Disjoint Set Union (DSU)",
+            "description": "Learn DSU with path compression and union by rank for connected components and Kruskal-style problems.",
+            "resources": [
               {
-                title: "DSU Problems",
-                url: "https://codeforces.com/problemset?tags=dsu",
-                type: "problemset",
+                "title": "CP-Algorithms: Disjoint Set Union (DSU)",
+                "url": "https://cp-algorithms.com/data_structures/disjoint_set_union.html",
+                "type": "guide"
               },
               {
-                title: "Disjoint Set Union on CP-Algorithms",
-                url: "https://cp-algorithms.com/data_structures/disjoint_set_union.html",
-                type: "guide",
+                "title": "USACO Guide Gold: Disjoint Set Union",
+                "url": "https://usaco.guide/gold/dsu",
+                "type": "guide"
               },
-            ],
-          },
-        ],
+              {
+                "title": "CSES Road Construction",
+                "url": "https://cses.fi/problemset/task/1676",
+                "type": "problemset"
+              },
+              {
+                "title": "AtCoder Library Practice Contest: Disjoint Set Union",
+                "url": "https://atcoder.jp/contests/practice2/tasks/practice2_a",
+                "type": "problemset"
+              }
+            ]
+          }
+        ]
       },
       {
-        slug: "intermediate",
-        number: "04",
-        title: "Intermediate",
-        subtitle: "Combine algorithms and data structures",
-        description:
-          "Start solving problems where the main challenge is choosing and combining the right techniques.",
-        level: "Codeforces Expert (1600 - 1899)",
-        target: "Solve around 400 problems",
-        advice:
-          "At this stage, you must master the classic trees and range query data structures (Segment Trees, Fenwick Trees) and understand Dijkstra thoroughly.",
-        topics: [
+        "slug": "intermediate",
+        "number": "04",
+        "title": "Intermediate",
+        "subtitle": "Combine algorithms and data structures",
+        "description": "Start solving problems where the main challenge is choosing and combining the right techniques.",
+        "level": "Codeforces Expert (1600 - 1899)",
+        "target": "Solve around 400 problems",
+        "advice": "At this stage, you must master the classic trees and range query data structures (Segment Trees, Fenwick Trees) and understand Dijkstra thoroughly.",
+        "topics": [
           {
-            title: "Advanced Dynamic Programming",
-            description:
-              "Practice knapsack variations, Longest Increasing Subsequence in O(N log N), interval DP, digit DP, and bitmask DP.",
-            resources: [
+            "title": "Advanced Dynamic Programming",
+            "description": "Practice knapsack variations, Longest Increasing Subsequence in O(N log N), interval DP, digit DP, and bitmask DP.",
+            "resources": [
               {
-                title: "Advanced DP Problems",
-                url: "https://codeforces.com/problemset?tags=dp",
-                type: "problemset",
+                "title": "AtCoder Educational DP Contest (Tasks I to Z)",
+                "url": "https://atcoder.jp/contests/dp",
+                "type": "contest"
               },
               {
-                title: "AtCoder Educational DP Contest",
-                url: "https://atcoder.jp/contests/dp",
-                type: "contest",
+                "title": "USACO Guide Gold: DP with Bitmasks",
+                "url": "https://usaco.guide/gold/dp-bitmasks",
+                "type": "guide"
               },
-            ],
+              {
+                "title": "CP-Algorithms: Divide and Conquer DP Optimization",
+                "url": "https://cp-algorithms.com/dynamic_programming/divide-and-conquer-dp.html",
+                "type": "guide"
+              },
+              {
+                "title": "Codeforces Dynamic Programming Tag",
+                "url": "https://codeforces.com/problemset?tags=dp",
+                "type": "problemset"
+              }
+            ]
           },
           {
-            title: "Shortest Path Algorithms",
-            description:
-              "Learn Dijkstra with priority queue, Bellman-Ford for negative weights, Floyd-Warshall for all pairs, and 0-1 BFS.",
-            resources: [
+            "title": "Shortest Path Algorithms",
+            "description": "Learn Dijkstra with priority queue, Bellman-Ford for negative weights, Floyd-Warshall for all pairs, and 0-1 BFS.",
+            "resources": [
               {
-                title: "Shortest Path Problems",
-                url: "https://codeforces.com/problemset?tags=shortest%20paths",
-                type: "problemset",
+                "title": "CP-Algorithms: Dijkstra Algorithm with Priority Queue",
+                "url": "https://cp-algorithms.com/graph/dijkstra.html",
+                "type": "guide"
               },
               {
-                title: "Dijkstra on CP-Algorithms",
-                url: "https://cp-algorithms.com/graph/dijkstra.html",
-                type: "guide",
+                "title": "CP-Algorithms: Bellman-Ford & Negative Cycles",
+                "url": "https://cp-algorithms.com/graph/bellman_ford.html",
+                "type": "guide"
               },
-            ],
+              {
+                "title": "CP-Algorithms: Floyd-Warshall for All-Pairs Shortest Paths",
+                "url": "https://cp-algorithms.com/graph/all-pair-shortest-path-floyd-warshall.html",
+                "type": "guide"
+              },
+              {
+                "title": "CSES Shortest Routes I & II",
+                "url": "https://cses.fi/problemset/task/1671",
+                "type": "problemset"
+              }
+            ]
           },
           {
-            title: "Trees",
-            description:
-              "Understand tree traversals, subtree sizes, tree diameter, tree Euler tours, and dynamic programming on trees.",
-            resources: [
+            "title": "Trees",
+            "description": "Understand tree traversals, subtree sizes, tree diameter, tree Euler tours, and dynamic programming on trees.",
+            "resources": [
               {
-                title: "Tree Problems",
-                url: "https://codeforces.com/problemset?tags=trees",
-                type: "problemset",
+                "title": "CSES Tree Algorithms Section (Subtree Queries, Tree Diameter)",
+                "url": "https://cses.fi/problemset/list/#tree",
+                "type": "problemset"
               },
               {
-                title: "CSES Tree Algorithms Section",
-                url: "https://cses.fi/problemset/list/#tree",
-                type: "problemset",
+                "title": "USACO Guide Gold: Tree Euler Tour Technique",
+                "url": "https://usaco.guide/gold/tree-euler",
+                "type": "guide"
               },
-            ],
+              {
+                "title": "CP-Algorithms: Tree Diameter and Centroids",
+                "url": "https://cp-algorithms.com/graph/tree_diameter.html",
+                "type": "guide"
+              },
+              {
+                "title": "Codeforces Tree Problems Collection",
+                "url": "https://codeforces.com/problemset?tags=trees",
+                "type": "problemset"
+              }
+            ]
           },
           {
-            title: "Segment Tree",
-            description:
-              "Master range queries, point updates, lazy propagation, range updates, and custom merge functions.",
-            resources: [
+            "title": "Segment Tree",
+            "description": "Master range queries, point updates, lazy propagation, range updates, and custom merge functions.",
+            "resources": [
               {
-                title: "Segment Tree Problems",
-                url: "https://codeforces.com/problemset?tags=segment%20tree",
-                type: "problemset",
+                "title": "CP-Algorithms: Segment Tree with Point & Range Updates",
+                "url": "https://cp-algorithms.com/data_structures/segment_tree.html",
+                "type": "guide"
               },
               {
-                title: "Segment Tree Guide on CP-Algorithms",
-                url: "https://cp-algorithms.com/data_structures/segment_tree.html",
-                type: "guide",
+                "title": "USACO Guide Gold: Point Update Range Sum / Min",
+                "url": "https://usaco.guide/gold/PURS",
+                "type": "guide"
               },
-            ],
+              {
+                "title": "CSES Range Queries Section",
+                "url": "https://cses.fi/problemset/list/#range",
+                "type": "problemset"
+              },
+              {
+                "title": "AtCoder Library Practice Contest: Segment Tree",
+                "url": "https://atcoder.jp/contests/practice2/tasks/practice2_j",
+                "type": "problemset"
+              }
+            ]
           },
           {
-            title: "Fenwick Tree (BIT)",
-            description:
-              "Use Binary Indexed Trees for concise, high-speed prefix and range query implementations with low overhead.",
-            resources: [
+            "title": "Fenwick Tree (BIT)",
+            "description": "Use Binary Indexed Trees for concise, high-speed prefix and range query implementations with low overhead.",
+            "resources": [
               {
-                title: "Fenwick Tree Problems",
-                url: "https://codeforces.com/problemset?tags=trees",
-                type: "problemset",
+                "title": "CP-Algorithms: Fenwick Tree (Binary Indexed Tree)",
+                "url": "https://cp-algorithms.com/data_structures/fenwick.html",
+                "type": "guide"
               },
               {
-                title: "Fenwick Tree on CP-Algorithms",
-                url: "https://cp-algorithms.com/data_structures/fenwick.html",
-                type: "guide",
+                "title": "CSES Dynamic Range Sum Queries",
+                "url": "https://cses.fi/problemset/task/1648",
+                "type": "problemset"
               },
-            ],
-          },
-        ],
-      },
-    ],
+              {
+                "title": "AtCoder Library Practice Contest: Fenwick Tree",
+                "url": "https://atcoder.jp/contests/practice2/tasks/practice2_b",
+                "type": "problemset"
+              },
+              {
+                "title": "USACO Guide Gold: Point Update Range Sum with BIT",
+                "url": "https://usaco.guide/gold/purs",
+                "type": "guide"
+              }
+            ]
+          }
+        ]
+      }
+    ]
   },
   {
-    id: "advanced",
-    title: "Advanced",
-    description: "Complex tree queries, flows, combinatorics & Div. 1 problems",
-    stages: [
+    "id": "advanced",
+    "title": "Advanced",
+    "description": "Complex tree queries, flows, combinatorics & Div. 1 problems",
+    "stages": [
       {
-        slug: "advanced",
-        number: "05",
-        title: "Advanced",
-        subtitle: "Handle complex algorithmic problems",
-        description:
-          "Build deeper knowledge of advanced data structures, graph algorithms, and mathematical techniques.",
-        level: "Codeforces Candidate Master (1900 - 2099)",
-        target: "Solve around 500 problems",
-        advice:
-          "Focus on LCA, strongly connected components, string algorithms like KMP, and modular inverse mathematics.",
-        topics: [
+        "slug": "advanced",
+        "number": "05",
+        "title": "Advanced",
+        "subtitle": "Handle complex algorithmic problems",
+        "description": "Build deeper knowledge of advanced data structures, graph algorithms, and mathematical techniques.",
+        "level": "Codeforces Candidate Master (1900 - 2099)",
+        "target": "Solve around 500 problems",
+        "advice": "Focus on LCA, strongly connected components, string algorithms like KMP, and modular inverse mathematics.",
+        "topics": [
           {
-            title: "Lowest Common Ancestor (LCA)",
-            description:
-              "Learn binary lifting, sparse tables for trees, distance between arbitrary nodes, and path queries.",
-            resources: [
+            "title": "Lowest Common Ancestor (LCA)",
+            "description": "Learn binary lifting, sparse tables for trees, distance between arbitrary nodes, and path queries.",
+            "resources": [
               {
-                title: "LCA Problems",
-                url: "https://codeforces.com/problemset?tags=trees",
-                type: "problemset",
+                "title": "CP-Algorithms: LCA Binary Lifting",
+                "url": "https://cp-algorithms.com/graph/lca.html",
+                "type": "guide"
               },
               {
-                title: "LCA on CP-Algorithms",
-                url: "https://cp-algorithms.com/graph/lca.html",
-                type: "guide",
+                "title": "CSES Company Queries I & II",
+                "url": "https://cses.fi/problemset/task/1687",
+                "type": "problemset"
               },
-            ],
+              {
+                "title": "USACO Guide Platinum: Lowest Common Ancestor",
+                "url": "https://usaco.guide/plat/lca",
+                "type": "guide"
+              },
+              {
+                "title": "CSES Distance Queries",
+                "url": "https://cses.fi/problemset/task/1135",
+                "type": "problemset"
+              }
+            ]
           },
           {
-            title: "Strongly Connected Components",
-            description:
-              "Understand Kosaraju's and Tarjan's algorithms for condensing directed graphs into Directed Acyclic Graphs (DAGs).",
-            resources: [
+            "title": "Strongly Connected Components",
+            "description": "Understand Kosaraju's and Tarjan's algorithms for condensing directed graphs into Directed Acyclic Graphs (DAGs).",
+            "resources": [
               {
-                title: "SCC Problems",
-                url: "https://codeforces.com/problemset?tags=graphs",
-                type: "problemset",
+                "title": "CP-Algorithms: Strongly Connected Components (Kosaraju & Tarjan)",
+                "url": "https://cp-algorithms.com/graph/strongly-connected-components.html",
+                "type": "guide"
               },
               {
-                title: "Strongly Connected Components Tutorial",
-                url: "https://cp-algorithms.com/graph/strongly-connected-components.html",
-                type: "guide",
+                "title": "CSES Planets and Kingdoms",
+                "url": "https://cses.fi/problemset/task/1683",
+                "type": "problemset"
               },
-            ],
+              {
+                "title": "USACO Guide Platinum: Strongly Connected Components",
+                "url": "https://usaco.guide/plat/scc",
+                "type": "guide"
+              },
+              {
+                "title": "CSES Flight Routes Check",
+                "url": "https://cses.fi/problemset/task/1682",
+                "type": "problemset"
+              }
+            ]
           },
           {
-            title: "Minimum Spanning Tree",
-            description:
-              "Learn Kruskal's, Prim's, and Boruvka's algorithms alongside DSU-based graph construction.",
-            resources: [
+            "title": "Minimum Spanning Tree",
+            "description": "Learn Kruskal's, Prim's, and Boruvka's algorithms alongside DSU-based graph construction.",
+            "resources": [
               {
-                title: "MST Problems",
-                url: "https://codeforces.com/problemset?tags=graphs",
-                type: "problemset",
+                "title": "CP-Algorithms: Minimum Spanning Tree (Kruskal & Prim)",
+                "url": "https://cp-algorithms.com/graph/mst_kruskal.html",
+                "type": "guide"
               },
               {
-                title: "Minimum Spanning Tree on CP-Algorithms",
-                url: "https://cp-algorithms.com/graph/mst_kruskal.html",
-                type: "guide",
+                "title": "CSES Road Reparation",
+                "url": "https://cses.fi/problemset/task/1675",
+                "type": "problemset"
               },
-            ],
+              {
+                "title": "USACO Guide Gold: Minimum Spanning Trees",
+                "url": "https://usaco.guide/gold/mst",
+                "type": "guide"
+              },
+              {
+                "title": "Codeforces MST Problems",
+                "url": "https://codeforces.com/problemset?tags=graphs",
+                "type": "problemset"
+              }
+            ]
           },
           {
-            title: "String Algorithms",
-            description:
-              "Study prefix function, Knuth-Morris-Pratt (KMP), Z-function, polynomial string hashing, and trie structures.",
-            resources: [
+            "title": "String Algorithms",
+            "description": "Study prefix function, Knuth-Morris-Pratt (KMP), Z-function, polynomial string hashing, and trie structures.",
+            "resources": [
               {
-                title: "String Algorithms Problems",
-                url: "https://codeforces.com/problemset?tags=strings",
-                type: "problemset",
+                "title": "CP-Algorithms: Prefix Function & KMP Algorithm",
+                "url": "https://cp-algorithms.com/string/prefix-func.html",
+                "type": "guide"
               },
               {
-                title: "Prefix Function & KMP on CP-Algorithms",
-                url: "https://cp-algorithms.com/string/prefix-func.html",
-                type: "guide",
+                "title": "CP-Algorithms: Z-function for String Matching",
+                "url": "https://cp-algorithms.com/string/z-function.html",
+                "type": "guide"
               },
-            ],
+              {
+                "title": "CSES String Algorithms Section (Word Combinations, Finding Patterns)",
+                "url": "https://cses.fi/problemset/list/#string",
+                "type": "problemset"
+              },
+              {
+                "title": "USACO Guide Gold: String Hashing",
+                "url": "https://usaco.guide/gold/string-hashing",
+                "type": "guide"
+              }
+            ]
           },
           {
-            title: "Number Theory",
-            description:
-              "Explore modular inverse, Chinese Remainder Theorem, Euler's totient function, and linear Diophantine equations.",
-            resources: [
+            "title": "Number Theory",
+            "description": "Explore modular inverse, Chinese Remainder Theorem, Euler's totient function, and linear Diophantine equations.",
+            "resources": [
               {
-                title: "Number Theory Problems",
-                url: "https://codeforces.com/problemset?tags=number%20theory",
-                type: "problemset",
+                "title": "CP-Algorithms: Modular Multiplicative Inverse",
+                "url": "https://cp-algorithms.com/algebra/module-inverse.html",
+                "type": "guide"
               },
               {
-                title: "Modular Multiplicative Inverse on CP-Algorithms",
-                url: "https://cp-algorithms.com/algebra/module-inverse.html",
-                type: "guide",
+                "title": "CP-Algorithms: Extended Euclidean Algorithm",
+                "url": "https://cp-algorithms.com/algebra/extended-euclid-algorithm.html",
+                "type": "guide"
               },
-            ],
-          },
-        ],
+              {
+                "title": "CP-Algorithms: Chinese Remainder Theorem",
+                "url": "https://cp-algorithms.com/algebra/chinese-remainder-theorem.html",
+                "type": "guide"
+              },
+              {
+                "title": "CSES Exponentiation & Counting Divisors",
+                "url": "https://cses.fi/problemset/list/#math",
+                "type": "problemset"
+              }
+            ]
+          }
+        ]
       },
       {
-        slug: "advanced-1",
-        number: "06",
-        title: "Advanced 1",
-        subtitle: "Master deeper problem-solving patterns",
-        description:
-          "Focus on advanced combinations of techniques and harder implementation details for Div. 1 contests.",
-        level: "Codeforces Master (2100 - 2299)",
-        target: "Solve around 600 problems",
-        advice:
-          "Upsolve Div. 1 Problem B/C. Implement Heavy-Light Decomposition and persistent segment trees from scratch until fluent.",
-        topics: [
+        "slug": "advanced-1",
+        "number": "06",
+        "title": "Advanced 1",
+        "subtitle": "Master deeper problem-solving patterns",
+        "description": "Focus on advanced combinations of techniques and harder implementation details for Div. 1 contests.",
+        "level": "Codeforces Master (2100 - 2299)",
+        "target": "Solve around 600 problems",
+        "advice": "Upsolve Div. 1 Problem B/C. Implement Heavy-Light Decomposition and persistent segment trees from scratch until fluent.",
+        "topics": [
           {
-            title: "Heavy-Light Decomposition (HLD)",
-            description:
-              "Decompose trees into heavy and light paths to process path queries and subtree updates in O(log² N).",
-            resources: [
+            "title": "Heavy-Light Decomposition (HLD)",
+            "description": "Decompose trees into heavy and light paths to process path queries and subtree updates in O(log² N).",
+            "resources": [
               {
-                title: "Heavy-Light Decomposition Guide",
-                url: "https://cp-algorithms.com/graph/hld.html",
-                type: "guide",
+                "title": "CP-Algorithms: Heavy-Light Decomposition Guide",
+                "url": "https://cp-algorithms.com/graph/hld.html",
+                "type": "guide"
               },
-            ],
+              {
+                "title": "USACO Guide Platinum: Heavy-Light Decomposition",
+                "url": "https://usaco.guide/plat/hld",
+                "type": "guide"
+              },
+              {
+                "title": "CSES Distinct Colors & Subtree Queries",
+                "url": "https://cses.fi/problemset/list/#tree",
+                "type": "problemset"
+              },
+              {
+                "title": "SPOJ QTREE - Query on a Tree (Classic HLD Benchmark)",
+                "url": "https://www.spoj.com/problems/QTREE/",
+                "type": "problemset"
+              }
+            ]
           },
           {
-            title: "Advanced Segment Trees",
-            description:
-              "Study dynamic segment trees, segment tree beats, persistent segment trees, and complex node merging.",
-            resources: [
+            "title": "Advanced Segment Trees",
+            "description": "Study dynamic segment trees, segment tree beats, persistent segment trees, and complex node merging.",
+            "resources": [
               {
-                title: "Persistent Segment Trees on CP-Algorithms",
-                url: "https://cp-algorithms.com/data_structures/segment_tree.html#persistent-segment-tree",
-                type: "guide",
+                "title": "CP-Algorithms: Persistent Segment Trees",
+                "url": "https://cp-algorithms.com/data_structures/segment_tree.html#persistent-segment-tree",
+                "type": "guide"
               },
-            ],
+              {
+                "title": "USACO Guide Platinum: Persistent Segment Trees",
+                "url": "https://usaco.guide/plat/persistent-segtree",
+                "type": "guide"
+              },
+              {
+                "title": "CSES Range Queries and Copies (Persistent Segment Tree)",
+                "url": "https://cses.fi/problemset/task/1737",
+                "type": "problemset"
+              },
+              {
+                "title": "AtCoder Library: Lazy Segment Tree (Range Updates)",
+                "url": "https://atcoder.jp/contests/practice2/tasks/practice2_k",
+                "type": "problemset"
+              }
+            ]
           },
           {
-            title: "Advanced Graph Algorithms",
-            description:
-              "Explore bridges, articulation points, 2-SAT, Eulerian circuits, and biconnected component decomposition.",
-            resources: [
+            "title": "Advanced Graph Algorithms",
+            "description": "Explore bridges, articulation points, 2-SAT, Eulerian circuits, and biconnected component decomposition.",
+            "resources": [
               {
-                title: "Advanced Graph Problems",
-                url: "https://codeforces.com/problemset?tags=graphs",
-                type: "problemset",
+                "title": "CP-Algorithms: 2-SAT Problem Tutorial & Implementation",
+                "url": "https://cp-algorithms.com/graph/2SAT.html",
+                "type": "guide"
               },
               {
-                title: "2-SAT on CP-Algorithms",
-                url: "https://cp-algorithms.com/graph/2SAT.html",
-                type: "guide",
+                "title": "CP-Algorithms: Finding Bridges & Articulation Points",
+                "url": "https://cp-algorithms.com/graph/bridge-searching.html",
+                "type": "guide"
               },
-            ],
+              {
+                "title": "CSES Eulerian Subgraphs & Coin Collector",
+                "url": "https://cses.fi/problemset/list/#graph",
+                "type": "problemset"
+              },
+              {
+                "title": "AtCoder Library Practice Contest: 2-SAT",
+                "url": "https://atcoder.jp/contests/practice2/tasks/practice2_h",
+                "type": "problemset"
+              }
+            ]
           },
           {
-            title: "Advanced String Algorithms",
-            description:
-              "Learn suffix arrays with LCP, suffix automaton, Aho-Corasick automaton, and palindromic trees.",
-            resources: [
+            "title": "Advanced String Algorithms",
+            "description": "Learn suffix arrays with LCP, suffix automaton, Aho-Corasick automaton, and palindromic trees.",
+            "resources": [
               {
-                title: "Advanced String Problems",
-                url: "https://codeforces.com/problemset?tags=strings",
-                type: "problemset",
+                "title": "CP-Algorithms: Suffix Array O(N log N) Construction & LCP",
+                "url": "https://cp-algorithms.com/string/suffix-array.html",
+                "type": "guide"
               },
               {
-                title: "Suffix Array on CP-Algorithms",
-                url: "https://cp-algorithms.com/string/suffix-array.html",
-                type: "guide",
+                "title": "CP-Algorithms: Suffix Automaton Theory & Practice",
+                "url": "https://cp-algorithms.com/string/suffix-automaton.html",
+                "type": "guide"
               },
-            ],
-          },
-        ],
+              {
+                "title": "CP-Algorithms: Aho-Corasick Multi-Pattern Matching",
+                "url": "https://cp-algorithms.com/string/aho_corasick.html",
+                "type": "guide"
+              },
+              {
+                "title": "CSES Finding Patterns & Pattern Positions",
+                "url": "https://cses.fi/problemset/task/2102",
+                "type": "problemset"
+              }
+            ]
+          }
+        ]
       },
       {
-        slug: "advanced-2",
-        number: "07",
-        title: "Advanced 2",
-        subtitle: "Explore specialized competitive programming topics",
-        description:
-          "Focus on advanced structures and techniques commonly used in ICPC Regional & National level contests.",
-        level: "Codeforces Grandmaster (2400+)",
-        target: "Solve around 700 problems",
-        advice:
-          "Network flows and game theory (Sprague-Grundy) frequently appear in high-stakes regional contests. Practice modeling techniques.",
-        topics: [
+        "slug": "advanced-2",
+        "number": "07",
+        "title": "Advanced 2",
+        "subtitle": "Explore specialized competitive programming topics",
+        "description": "Focus on advanced structures and techniques commonly used in ICPC Regional & National level contests.",
+        "level": "Codeforces Grandmaster (2400+)",
+        "target": "Solve around 700 problems",
+        "advice": "Network flows and game theory (Sprague-Grundy) frequently appear in high-stakes regional contests. Practice modeling techniques.",
+        "topics": [
           {
-            title: "Network Flow",
-            description:
-              "Study maximum flow (Edmonds-Karp, Dinic), minimum cut, min-cost max-flow, and flow-based modeling reductions.",
-            resources: [
+            "title": "Network Flow",
+            "description": "Study maximum flow (Edmonds-Karp, Dinic), minimum cut, min-cost max-flow, and flow-based modeling reductions.",
+            "resources": [
               {
-                title: "Flow Problems",
-                url: "https://codeforces.com/problemset?tags=flows",
-                type: "problemset",
+                "title": "CP-Algorithms: Maximum Flow with Dinic's Algorithm",
+                "url": "https://cp-algorithms.com/graph/dinic.html",
+                "type": "guide"
               },
               {
-                title: "Dinic's Algorithm on CP-Algorithms",
-                url: "https://cp-algorithms.com/graph/dinic.html",
-                type: "guide",
+                "title": "USACO Guide Platinum: Maximum Flow & Min Cut",
+                "url": "https://usaco.guide/plat/maxflow",
+                "type": "guide"
               },
-            ],
+              {
+                "title": "CSES Download Speed (Maximum Flow)",
+                "url": "https://cses.fi/problemset/task/1694",
+                "type": "problemset"
+              },
+              {
+                "title": "CSES Police Chase (Minimum Cut)",
+                "url": "https://cses.fi/problemset/task/1695",
+                "type": "problemset"
+              },
+              {
+                "title": "AtCoder Library Practice Contest: Max Flow",
+                "url": "https://atcoder.jp/contests/practice2/tasks/practice2_d",
+                "type": "problemset"
+              }
+            ]
           },
           {
-            title: "Matching",
-            description:
-              "Learn Hopcroft-Karp for maximum bipartite matching, Konig's theorem, and minimum path covers in DAGs.",
-            resources: [
+            "title": "Matching",
+            "description": "Learn Hopcroft-Karp for maximum bipartite matching, Konig's theorem, and minimum path covers in DAGs.",
+            "resources": [
               {
-                title: "Kuhn's & Hopcroft-Karp Matching",
-                url: "https://cp-algorithms.com/graph/kuhn_maximum_bipartite_matching.html",
-                type: "guide",
+                "title": "CP-Algorithms: Maximum Bipartite Matching (Kuhn's Algorithm)",
+                "url": "https://cp-algorithms.com/graph/kuhn_maximum_bipartite_matching.html",
+                "type": "guide"
               },
-            ],
+              {
+                "title": "CP-Algorithms: Hopcroft-Karp Algorithm for Faster Matching",
+                "url": "https://cp-algorithms.com/graph/hopcroft_karp.html",
+                "type": "guide"
+              },
+              {
+                "title": "CSES School Dance (Bipartite Matching)",
+                "url": "https://cses.fi/problemset/task/1696",
+                "type": "problemset"
+              }
+            ]
           },
           {
-            title: "Advanced Combinatorics",
-            description:
-              "Practice combinatorial counting, Burnside's lemma, inclusion-exclusion, Lucas' theorem, and generating functions.",
-            resources: [
+            "title": "Advanced Combinatorics",
+            "description": "Practice combinatorial counting, Burnside's lemma, inclusion-exclusion, Lucas' theorem, and generating functions.",
+            "resources": [
               {
-                title: "Combinatorics Problems",
-                url: "https://codeforces.com/problemset?tags=combinatorics",
-                type: "problemset",
+                "title": "CP-Algorithms: Burnside's Lemma & Polya Enumeration",
+                "url": "https://cp-algorithms.com/combinatorics/burnside.html",
+                "type": "guide"
               },
-            ],
+              {
+                "title": "CP-Algorithms: Inclusion-Exclusion Principle",
+                "url": "https://cp-algorithms.com/combinatorics/inclusion-exclusion.html",
+                "type": "guide"
+              },
+              {
+                "title": "CSES Creating Strings II & Distributing Apples",
+                "url": "https://cses.fi/problemset/task/1715",
+                "type": "problemset"
+              },
+              {
+                "title": "Codeforces Combinatorics Tag",
+                "url": "https://codeforces.com/problemset?tags=combinatorics",
+                "type": "problemset"
+              }
+            ]
           },
           {
-            title: "Game Theory",
-            description:
-              "Understand impartial games, Nim-sum, Sprague-Grundy theorem, and winning/losing state DAG analysis.",
-            resources: [
+            "title": "Game Theory",
+            "description": "Understand impartial games, Nim-sum, Sprague-Grundy theorem, and winning/losing state DAG analysis.",
+            "resources": [
               {
-                title: "Game Theory Problems",
-                url: "https://codeforces.com/problemset?tags=games",
-                type: "problemset",
+                "title": "CP-Algorithms: Sprague-Grundy Theorem & Game of Nim",
+                "url": "https://cp-algorithms.com/game_theory/sprague-grundy-nim.html",
+                "type": "guide"
               },
               {
-                title: "Sprague-Grundy Theorem on CP-Algorithms",
-                url: "https://cp-algorithms.com/game_theory/sprague-grundy-nim.html",
-                type: "guide",
+                "title": "USACO Guide Gold: Game Theory",
+                "url": "https://usaco.guide/gold/game-theory",
+                "type": "guide"
               },
-            ],
-          },
-        ],
-      },
-    ],
+              {
+                "title": "CSES Nim Game I & II",
+                "url": "https://cses.fi/problemset/task/1730",
+                "type": "problemset"
+              },
+              {
+                "title": "CSES Stair Game & Grundy's Game",
+                "url": "https://cses.fi/problemset/task/2207",
+                "type": "problemset"
+              }
+            ]
+          }
+        ]
+      }
+    ]
   },
   {
-    id: "beyond",
-    title: "Beyond",
-    description: "Research-level algorithms, World Finals preparation & specialized DS",
-    stages: [
+    "id": "beyond",
+    "title": "Beyond",
+    "description": "Research-level algorithms, World Finals preparation & specialized DS",
+    "stages": [
       {
-        slug: "beyond",
-        number: "08",
-        title: "Beyond",
-        subtitle: "Develop your own advanced specialization",
-        description:
-          "After completing the main roadmap, choose specialized topics based on your interests, research, and ICPC World Finals goals.",
-        level: "Beyond the Roadmap (World Finalist)",
-        target: "Build depth through contest simulations and research",
-        advice:
-          "Simulate full 5-hour 3-person team contests, master quick paper debugging, and maintain team code notebooks.",
-        topics: [
+        "slug": "beyond",
+        "number": "08",
+        "title": "Beyond",
+        "subtitle": "Develop your own advanced specialization",
+        "description": "After completing the main roadmap, choose specialized topics based on your interests, research, and ICPC World Finals goals.",
+        "level": "Beyond the Roadmap (World Finalist)",
+        "target": "Build depth through contest simulations and research",
+        "advice": "Simulate full 5-hour 3-person team contests, master quick paper debugging, and maintain team code notebooks.",
+        "topics": [
           {
-            title: "Research-Level Algorithms",
-            description:
-              "Explore cutting-edge algorithmic techniques, papers, contest editorials, and unconventional problem formulations.",
-            resources: [
+            "title": "Research-Level Algorithms",
+            "description": "Explore cutting-edge algorithmic techniques, papers, contest editorials, and unconventional problem formulations.",
+            "resources": [
               {
-                title: "CP-Algorithms Hub",
-                url: "https://cp-algorithms.com/",
-                type: "guide",
+                "title": "CP-Algorithms Hub & Encyclopedia",
+                "url": "https://cp-algorithms.com/",
+                "type": "guide"
               },
               {
-                title: "Codeforces Catalog of Advanced Editorials",
-                url: "https://codeforces.com/catalog",
-                type: "documentation",
+                "title": "Stanford ACM-ICPC Team Notebook",
+                "url": "https://github.com/jaehyunp/stanfordacm",
+                "type": "documentation"
               },
-            ],
+              {
+                "title": "KACTL Algorithm Library (KTH Royal Institute)",
+                "url": "https://github.com/kth-competitive-programming/kactl",
+                "type": "documentation"
+              },
+              {
+                "title": "Codeforces Catalog of Advanced Editorials",
+                "url": "https://codeforces.com/catalog",
+                "type": "documentation"
+              }
+            ]
           },
           {
-            title: "ICPC Preparation & Strategy",
-            description:
-              "Practice 3-person team contests, virtual contest simulations, problem distribution, upsolving, and debugging on paper.",
-            resources: [
+            "title": "ICPC Preparation & Strategy",
+            "description": "Practice 3-person team contests, virtual contest simulations, problem distribution, upsolving, and debugging on paper.",
+            "resources": [
               {
-                title: "Official ICPC Global Website",
-                url: "https://icpc.global/",
-                type: "contest",
+                "title": "Official ICPC Global Website & Archives",
+                "url": "https://icpc.global/",
+                "type": "contest"
               },
               {
-                title: "Open Kattis (ICPC Archives)",
-                url: "https://open.kattis.com/",
-                type: "problemset",
+                "title": "Open Kattis (ICPC World Finals & Regional Problems)",
+                "url": "https://open.kattis.com/",
+                "type": "problemset"
               },
-            ],
+              {
+                "title": "Virtual Judge (VJudge ICPC Regional Archives)",
+                "url": "https://vjudge.net/",
+                "type": "problemset"
+              },
+              {
+                "title": "Codeforces Gym (Past Regional & National Contests)",
+                "url": "https://codeforces.com/gyms",
+                "type": "contest"
+              }
+            ]
           },
           {
-            title: "Specialized Data Structures",
-            description:
-              "Study link-cut trees, treaps (implicit and explicit), splay trees, KD-trees, and persistent data structures.",
-            resources: [
+            "title": "Specialized Data Structures",
+            "description": "Study link-cut trees, treaps (implicit and explicit), splay trees, KD-trees, and persistent data structures.",
+            "resources": [
               {
-                title: "Treap and Cartesian Trees on CP-Algorithms",
-                url: "https://cp-algorithms.com/data_structures/treap.html",
-                type: "guide",
+                "title": "CP-Algorithms: Treap and Cartesian Trees",
+                "url": "https://cp-algorithms.com/data_structures/treap.html",
+                "type": "guide"
               },
-            ],
+              {
+                "title": "CP-Algorithms: Randomized Heap",
+                "url": "https://cp-algorithms.com/data_structures/randomized_heap.html",
+                "type": "guide"
+              },
+              {
+                "title": "USACO Guide Platinum: Treaps & Balanced BSTs",
+                "url": "https://usaco.guide/plat/treaps",
+                "type": "guide"
+              },
+              {
+                "title": "CSES Reversals and Sums (Implicit Treap)",
+                "url": "https://cses.fi/problemset/task/2074",
+                "type": "problemset"
+              }
+            ]
           },
           {
-            title: "Contest Practice & Upsolving",
-            description:
-              "Regularly participate in Codeforces Div. 1/2, AtCoder Grand Contests (AGC), ICPC regional past contests, and virtual rounds.",
-            resources: [
+            "title": "Contest Practice & Upsolving",
+            "description": "Regularly participate in Codeforces Div. 1/2, AtCoder Grand Contests (AGC), ICPC regional past contests, and virtual rounds.",
+            "resources": [
               {
-                title: "Codeforces Contests Schedule",
-                url: "https://codeforces.com/contests",
-                type: "contest",
+                "title": "Codeforces Contests Schedule & Calendar",
+                "url": "https://codeforces.com/contests",
+                "type": "contest"
               },
               {
-                title: "AtCoder Contests",
-                url: "https://atcoder.jp/contests/",
-                type: "contest",
+                "title": "AtCoder Contests Calendar",
+                "url": "https://atcoder.jp/contests/",
+                "type": "contest"
               },
-            ],
-          },
-        ],
-      },
-    ],
-  },
+              {
+                "title": "CodeChef Contests Calendar",
+                "url": "https://www.codechef.com/contests",
+                "type": "contest"
+              },
+              {
+                "title": "CLIST.by - All Competitive Programming Contests",
+                "url": "https://clist.by/",
+                "type": "contest"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
 ];
 
 // Flatten all stages for fast lookups
@@ -937,11 +1251,10 @@ export default function RoadmapView() {
                 return (
                   <div
                     key={group.id}
-                    className={`rounded-xl border transition-all duration-150 overflow-hidden ${
-                      isGroupActive
-                        ? "border-accent-primary/60 bg-surface-secondary/40"
-                        : "border-border-default/80 bg-surface-primary/40"
-                    }`}
+                    className={`rounded-xl border transition-all duration-150 overflow-hidden ${isGroupActive
+                      ? "border-accent-primary/60 bg-surface-secondary/40"
+                      : "border-border-default/80 bg-surface-primary/40"
+                      }`}
                   >
                     {/* Category Header with Toggle */}
                     <button
@@ -951,9 +1264,8 @@ export default function RoadmapView() {
                     >
                       <span className="flex items-center gap-2">
                         <span
-                          className={`w-2.5 h-2.5 rounded-full transition-colors ${
-                            isGroupActive ? "bg-accent-primary" : "bg-text-tertiary/60"
-                          }`}
+                          className={`w-2.5 h-2.5 rounded-full transition-colors ${isGroupActive ? "bg-accent-primary" : "bg-text-tertiary/60"
+                            }`}
                         />
                         <span>{group.title}</span>
                       </span>
@@ -1001,11 +1313,10 @@ export default function RoadmapView() {
 
                                   {/* Node Dot */}
                                   <div
-                                    className={`relative z-10 rounded-full transition-all ${
-                                      isSelected
-                                        ? "w-2.5 h-2.5 border-2 border-surface-elevated shadow-xs scale-110"
-                                        : "w-1.5 h-1.5 border border-border-default group-hover/item:border-accent-primary group-hover/item:scale-125"
-                                    }`}
+                                    className={`relative z-10 rounded-full transition-all ${isSelected
+                                      ? "w-2.5 h-2.5 border-2 border-surface-elevated shadow-xs scale-110"
+                                      : "w-1.5 h-1.5 border border-border-default group-hover/item:border-accent-primary group-hover/item:scale-125"
+                                      }`}
                                     style={{
                                       backgroundColor: isSelected
                                         ? "var(--accent-primary)"
@@ -1019,19 +1330,17 @@ export default function RoadmapView() {
                                 <button
                                   type="button"
                                   onClick={() => handleSelectStage(stage.slug)}
-                                  className={`flex-1 min-w-0 flex items-center justify-between gap-2 py-2 px-2.5 rounded-lg text-xs transition-all cursor-pointer ${
-                                    isSelected
-                                      ? "bg-accent-primary text-accent-primary-text font-bold shadow-[2px_2px_0px_var(--border-brutalist)] border border-text-primary dark:border-border-default"
-                                      : "text-text-secondary hover:text-text-primary hover:bg-surface-secondary font-medium"
-                                  }`}
+                                  className={`flex-1 min-w-0 flex items-center justify-between gap-2 py-2 px-2.5 rounded-lg text-xs transition-all cursor-pointer ${isSelected
+                                    ? "bg-accent-primary text-accent-primary-text font-bold shadow-[2px_2px_0px_var(--border-brutalist)] border border-text-primary dark:border-border-default"
+                                    : "text-text-secondary hover:text-text-primary hover:bg-surface-secondary font-medium"
+                                    }`}
                                 >
                                   <div className="flex items-center gap-2 min-w-0">
                                     <span
-                                      className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded transition-colors ${
-                                        isSelected
-                                          ? "bg-accent-primary-text/15 text-accent-primary-text"
-                                          : "bg-surface-primary border border-border-default/60 text-text-tertiary group-hover/item:text-text-primary"
-                                      }`}
+                                      className={`font-mono text-[10px] font-bold px-1.5 py-0.5 rounded transition-colors ${isSelected
+                                        ? "bg-accent-primary-text/15 text-accent-primary-text"
+                                        : "bg-surface-primary border border-border-default/60 text-text-tertiary group-hover/item:text-text-primary"
+                                        }`}
                                     >
                                       {stage.number}
                                     </span>
@@ -1039,11 +1348,10 @@ export default function RoadmapView() {
                                   </div>
 
                                   <span
-                                    className={`font-mono text-[10px] uppercase px-1.5 py-0.5 rounded shrink-0 ${
-                                      isSelected
-                                        ? "bg-accent-primary-text/20 text-accent-primary-text font-bold"
-                                        : "text-text-tertiary"
-                                    }`}
+                                    className={`font-mono text-[10px] uppercase px-1.5 py-0.5 rounded shrink-0 ${isSelected
+                                      ? "bg-accent-primary-text/20 text-accent-primary-text font-bold"
+                                      : "text-text-tertiary"
+                                      }`}
                                   >
                                     {stage.topics.length} topics
                                   </span>
@@ -1177,10 +1485,10 @@ export default function RoadmapView() {
                             resource.type === "problemset"
                               ? "Problemset"
                               : resource.type === "documentation"
-                              ? "Docs"
-                              : resource.type === "contest"
-                              ? "Contest"
-                              : "Guide";
+                                ? "Docs"
+                                : resource.type === "contest"
+                                  ? "Contest"
+                                  : "Guide";
 
                           return (
                             <a
