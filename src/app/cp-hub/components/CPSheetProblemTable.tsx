@@ -19,7 +19,7 @@ interface CPSheetProblemTableProps {
   onToggleSolve: (problemId: string) => void;
   onOpenHint: (problem: CPProblem) => void;
   onOpenCode: (problem: CPProblem) => void;
-  onOpenVideo: (problem: CPProblem) => void;
+  onOpenVideo?: (problem: CPProblem) => void;
   selectedRating: number;
   showAllTags?: boolean;
 }
@@ -69,7 +69,7 @@ export default function CPSheetProblemTable({
               <th className="py-3.5 px-3 sm:px-4 w-32 text-center">Status</th>
               <th className="py-3.5 px-4 min-w-[240px]">Problem</th>
               <th className="py-3.5 px-4 hidden lg:table-cell">Topics</th>
-              <th className="py-3.5 px-4 text-right w-52">Editorial &amp; Solutions</th>
+              <th className="py-3.5 px-4 text-right w-36">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border-default">
@@ -208,38 +208,54 @@ export default function CPSheetProblemTable({
                     )}
                   </td>
 
-                  {/* Action Buttons (Hint, Code, Video) */}
+                  {/* Action Buttons (Logo Only: Hint, Code, Video with Tooltips) */}
                   <td className="py-3.5 px-4 text-right">
-                    <div className="inline-flex items-center gap-1.5 sm:gap-2">
+                    <div className="inline-flex items-center justify-end gap-2">
                       {/* Hint Button */}
-                      <button
-                        onClick={() => onOpenHint(problem)}
-                        title="View Algorithmic Hint"
-                        className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-400 font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-2xs"
-                      >
-                        <Lightbulb size={15} className="text-amber-400" />
-                        <span className="hidden sm:inline">Hint</span>
-                      </button>
+                      <div className="relative group/hint inline-flex">
+                        <button
+                          type="button"
+                          onClick={() => onOpenHint(problem)}
+                          aria-label="View Hint"
+                          className="p-2 sm:p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-500 dark:text-amber-400 transition-all cursor-pointer shadow-2xs hover:scale-105 active:scale-95"
+                        >
+                          <Lightbulb size={16} />
+                        </button>
+                        <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 z-30 px-2 py-0.5 rounded-md bg-zinc-900 text-zinc-100 text-[11px] font-mono font-bold shadow-lg whitespace-nowrap opacity-0 group-hover/hint:opacity-100 transition-opacity duration-150 border border-zinc-700">
+                          View Hint
+                        </span>
+                      </div>
 
                       {/* Code Solution Button */}
-                      <button
-                        onClick={() => onOpenCode(problem)}
-                        title="View Solution Code (C++)"
-                        className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 text-cyan-400 font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-2xs"
-                      >
-                        <Code2 size={15} className="text-cyan-400" />
-                        <span className="hidden sm:inline">Code</span>
-                      </button>
+                      <div className="relative group/code inline-flex">
+                        <button
+                          type="button"
+                          onClick={() => onOpenCode(problem)}
+                          aria-label="View Solution Code (C++)"
+                          className="p-2 sm:p-2.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 text-cyan-500 dark:text-cyan-400 transition-all cursor-pointer shadow-2xs hover:scale-105 active:scale-95"
+                        >
+                          <Code2 size={16} />
+                        </button>
+                        <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 z-30 px-2 py-0.5 rounded-md bg-zinc-900 text-zinc-100 text-[11px] font-mono font-bold shadow-lg whitespace-nowrap opacity-0 group-hover/code:opacity-100 transition-opacity duration-150 border border-zinc-700">
+                          View Solution (C++)
+                        </span>
+                      </div>
 
-                      {/* Video Editorial Button */}
-                      <button
-                        onClick={() => onOpenVideo(problem)}
-                        title="Watch Video Editorial"
-                        className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-rose-500/10 border border-rose-500/30 hover:bg-rose-500/20 text-rose-400 font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-2xs"
-                      >
-                        <Video size={15} className="text-rose-400" />
-                        <span className="hidden sm:inline">Video</span>
-                      </button>
+                      {/* Video Editorial Button - Directly Redirects to YouTube */}
+                      <div className="relative group/video inline-flex">
+                        <a
+                          href={problem.videoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label="Watch Video Editorial on YouTube"
+                          className="p-2 sm:p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 hover:bg-rose-500/20 text-rose-500 dark:text-rose-400 transition-all cursor-pointer shadow-2xs hover:scale-105 active:scale-95 inline-flex items-center justify-center"
+                        >
+                          <Video size={16} />
+                        </a>
+                        <span className="pointer-events-none absolute -top-8 right-0 sm:left-1/2 sm:-translate-x-1/2 z-30 px-2 py-0.5 rounded-md bg-zinc-900 text-zinc-100 text-[11px] font-mono font-bold shadow-lg whitespace-nowrap opacity-0 group-hover/video:opacity-100 transition-opacity duration-150 border border-zinc-700">
+                          Watch on YouTube
+                        </span>
+                      </div>
                     </div>
                   </td>
                 </tr>

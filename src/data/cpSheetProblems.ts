@@ -255,20 +255,20 @@ export const CP_SHEET_PROBLEMS: CPProblem[] = [
     "order": 13
   },
   {
-    "id": "268B",
-    "contestId": 268,
-    "index": "B",
+    "id": "1858A",
+    "contestId": 1858,
+    "index": "A",
     "title": "Buttons",
     "rating": 800,
-    "url": "https://codeforces.com/problemset/problem/268/B",
+    "url": "https://codeforces.com/problemset/problem/1858/A",
     "tags": [
       "implementation",
       "math"
     ],
-    "hint": "Analyze the arithmetic structure: inspect modular remainders, prime factorizations, GCD properties, or parity. Avoid brute-force simulation where formulas or divisibility suffice.",
-    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+268B+Buttons+editorial",
+    "hint": "Compare the counts: Anna can press (a + c) buttons and Katie can press (b + c) buttons. If c is odd, Anna gets one extra turn with c; if c is even, both get equal turns from c.",
+    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1858A+Buttons+editorial",
     "solutionCode": {
-      "cpp": "#include<bits/stdc++.h>\nusing namespace std;\n\n\nint main()\n{\n    ios_base::sync_with_stdio(0);\n    cin.tie(0);\n    cout.tie(0);\n    int tt;\n    cin >> tt;\n    while(tt--)\n    {\n        long long a,b,c;\n        cin>>a>>b>>c;\n        if(c % 2==1){\n            if(b>a){\n                cout<<\"Second\"<<\"\\n\";\n            }\n            else{\n                cout<<\"First\"<<\"\\n\";\n            }\n        }\n        else{\n            if(a>b){\n                cout<<\"First\"<<\"\\n\";\n            }\n            else{\n                cout<<\"Second\"<<\"\\n\";\n            }\n        }\n    }\n    return 0;\n}"
+      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\nvoid solve() {\n    long long a, b, c;\n    if (!(cin >> a >> b >> c)) return;\n    if (a + (c + 1) / 2 > b + c / 2) {\n        cout << \"First\\n\";\n    } else {\n        cout << \"Second\\n\";\n    }\n}\n\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n    int tt;\n    if (cin >> tt) {\n        while (tt--) solve();\n    }\n    return 0;\n}"
     },
     "order": 14
   },
@@ -400,19 +400,19 @@ export const CP_SHEET_PROBLEMS: CPProblem[] = [
     "order": 21
   },
   {
-    "id": "47B",
-    "contestId": 47,
-    "index": "B",
+    "id": "1814A",
+    "contestId": 1814,
+    "index": "A",
     "title": "Coins",
     "rating": 800,
-    "url": "https://codeforces.com/problemset/problem/47/B",
+    "url": "https://codeforces.com/problemset/problem/1814/A",
     "tags": [
       "implementation"
     ],
-    "hint": "Test small examples by hand, identify invariants preserved under the problem operations, and consider extreme corner cases (e.g. n=1, all equal elements).",
-    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+47B+Coins+editorial",
+    "hint": "We want to pay n using coins of 2 and k: 2*x + k*y = n. If n is even, we can pay with only 2s. If n is odd and k is odd, we can use one coin of k and the remainder (n - k) is even.",
+    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1814A+Coins+editorial",
     "solutionCode": {
-      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main()\n{\n\n  ios_base::sync_with_stdio(0);\n    cin.tie(0);\n    cout.tie(0);\n    long long tt;\n    cin >> tt;\n    while (tt--){\n        long long n,k;\n        cin>>n>>k;\n        if(n%2 ==0 || (n-k) % 2 == 0){\n            cout<<\"YES\"<<\"\\n\";\n        }\n        else{\n            cout<<\"NO\"<<\"\\n\";\n        }\n    }\n    return 0;\n\n}"
+      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\nvoid solve() {\n    long long n, k;\n    if (!(cin >> n >> k)) return;\n    if (n % 2 == 0) {\n        cout << \"YES\\n\";\n    } else if (k % 2 != 0 && n >= k) {\n        cout << \"YES\\n\";\n    } else {\n        cout << \"NO\\n\";\n    }\n}\n\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n    int tt;\n    if (cin >> tt) {\n        while (tt--) solve();\n    }\n    return 0;\n}"
     },
     "order": 22
   },
@@ -565,21 +565,21 @@ export const CP_SHEET_PROBLEMS: CPProblem[] = [
     "order": 30
   },
   {
-    "id": "213E",
-    "contestId": 213,
-    "index": "E",
+    "id": "1761A",
+    "contestId": 1761,
+    "index": "A",
     "title": "Two Permutations",
     "rating": 800,
-    "url": "https://codeforces.com/problemset/problem/213/E",
+    "url": "https://codeforces.com/problemset/problem/1761/A",
     "tags": [
       "data structures",
       "hashing",
       "strings"
     ],
-    "hint": "Speed up operations from O(N) to O(log N) using appropriate containers like std::set, std::map, or a Fenwick/Segment Tree for dynamic range queries and updates.",
-    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+213E+Two%20Permutations+editorial",
+    "hint": "If a == n and b == n, both permutations are identical and prefix/suffix equal n. Otherwise, the longest common prefix of length a and suffix of length b can only coexist if a + b + 2 <= n.",
+    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1761A+Two%20Permutations+editorial",
     "solutionCode": {
-      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main()\n{\n    int tt;\n    cin >> tt; \n    while (tt--)\n    {\n        long long n, a, b;\n        cin >> n >> a >> b; \n        if (a + b + 2 <= n || (a == b && a == n)) \n            cout << \"Yes\" << \"\\n\"; \n        else\n            cout << \"No\" << \"\\n\"; \n    }\n    return 0;\n}"
+      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\nvoid solve() {\n    long long n, a, b;\n    if (!(cin >> n >> a >> b)) return;\n    if (a == n && b == n) {\n        cout << \"Yes\\n\";\n    } else if (a + b + 2 <= n) {\n        cout << \"Yes\\n\";\n    } else {\n        cout << \"No\\n\";\n    }\n}\n\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n    int tt;\n    if (cin >> tt) {\n        while (tt--) solve();\n    }\n    return 0;\n}"
     },
     "order": 31
   },
@@ -1417,22 +1417,22 @@ export const CP_SHEET_PROBLEMS: CPProblem[] = [
     "order": 27
   },
   {
-    "id": "85D",
-    "contestId": 85,
-    "index": "D",
+    "id": "1440B",
+    "contestId": 1440,
+    "index": "B",
     "title": "Sum of Medians",
     "rating": 900,
-    "url": "https://codeforces.com/problemset/problem/85/D",
+    "url": "https://codeforces.com/problemset/problem/1440/B",
     "tags": [
       "binary search",
       "brute force",
       "data structures",
       "implementation"
     ],
-    "hint": "Observe the monotonic predicate: if a target x is achievable, any value >= x (or <= x) is also achievable. Use binary search on the answer range and write a greedy check() function.",
-    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+85D+Sum%20of%20Medians+editorial",
+    "hint": "Sort the array. To maximize the sum of medians across k arrays of size n, greedily assign the smallest elements to the lower halves and pick elements from the right step-by-step.",
+    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1440B+Sum%20of%20Medians+editorial",
     "solutionCode": {
-      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main()\n{\n    int tt\n    cin >> tt;\n    while (tt--)\n    {\n        long long n, k;\n        cin >> n >> k;\n        vector<long long> v(n * k);\n        for (int i = 0; i < n * k; i++) \n            cin >> v[i];\n\n        long long pointer = n * k;\n\n        long long sum = 0;\n        while (k--) // k\n        {\n            pointer -= (n / 2 + 1);\n            sum += v[pointer];\n        }\n        cout << sum << \"\\n\";\n    }\n    return 0;\n}"
+      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\nvoid solve() {\n    int n, k;\n    if (!(cin >> n >> k)) return;\n    int total = n * k;\n    vector<long long> a(total);\n    for (int i = 0; i < total; i++) cin >> a[i];\n    long long sum = 0;\n    int step = n / 2 + 1;\n    int idx = total - step;\n    for (int count = 0; count < k; count++) {\n        sum += a[idx];\n        idx -= step;\n    }\n    cout << sum << \"\\n\";\n}\n\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n    int tt;\n    if (cin >> tt) {\n        while (tt--) solve();\n    }\n    return 0;\n}"
     },
     "order": 28
   },
@@ -1455,21 +1455,21 @@ export const CP_SHEET_PROBLEMS: CPProblem[] = [
     "order": 29
   },
   {
-    "id": "49D",
-    "contestId": 49,
-    "index": "D",
+    "id": "1649A",
+    "contestId": 1649,
+    "index": "A",
     "title": "Game",
     "rating": 900,
-    "url": "https://codeforces.com/problemset/problem/49/D",
+    "url": "https://codeforces.com/problemset/problem/1649/A",
     "tags": [
       "brute force",
       "dp",
       "implementation"
     ],
-    "hint": "Formulate the dynamic programming state dp[i] representing the optimal answer for prefix i. Identify which previous states are reachable and initialize your base cases carefully.",
-    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+49D+Game+editorial",
+    "hint": "Find the first zero from the left and the last zero from the right. The player can walk on continuous land (1s) for free, but must jump over the segment containing the zeros.",
+    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1649A+Game+editorial",
     "solutionCode": {
-      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main()\n{\n    int tt;\n    cin >> tt;\n    while (tt--)\n    {\n        string s;\n        cin >> s;\n\n        int count_of_one = 0;\n        int count_of_zero = 0;\n        for (int i = 0; i < s.length(); i++)\n        {\n            if (s[i] == '0')\n                count_of_zero++;\n            else\n                count_of_one++;\n        }\n\n        int operations = min(count_of_zero, count_of_one);\n        if (operations % 2 != 0)\n            cout << \"DA\" << endl;\n        else\n            cout << \"NET\" << endl;\n    }\n    return 0;\n}"
+      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\nvoid solve() {\n    int n;\n    if (!(cin >> n)) return;\n    vector<int> a(n);\n    for (int i = 0; i < n; i++) cin >> a[i];\n    int firstZero = -1, lastZero = -1;\n    for (int i = 0; i < n; i++) {\n        if (a[i] == 0) {\n            if (firstZero == -1) firstZero = i;\n            lastZero = i;\n        }\n    }\n    if (firstZero == -1) {\n        cout << 0 << \"\\n\";\n    } else {\n        cout << (lastZero + 1) - (firstZero - 1) << \"\\n\";\n    }\n}\n\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n    int tt;\n    if (cin >> tt) {\n        while (tt--) solve();\n    }\n    return 0;\n}"
     },
     "order": 30
   },
@@ -5736,20 +5736,20 @@ export const CP_SHEET_PROBLEMS: CPProblem[] = [
     "order": 5
   },
   {
-    "id": "59B",
-    "contestId": 59,
+    "id": "1634B",
+    "contestId": 1634,
     "index": "B",
     "title": "Fortune Telling",
     "rating": 1400,
-    "url": "https://codeforces.com/problemset/problem/59/B",
+    "url": "https://codeforces.com/problemset/problem/1634/B",
     "tags": [
       "implementation",
       "number theory"
     ],
-    "hint": "Analyze the arithmetic structure: inspect modular remainders, prime factorizations, GCD properties, or parity. Avoid brute-force simulation where formulas or divisibility suffice.",
-    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+59B+Fortune%20Telling+editorial",
+    "hint": "Notice that both (x + a) and (x ^ a) have the exact same parity: (x + a) % 2 == (x ^ a) % 2. Thus, the final parity after all n operations depends solely on the initial parity and the sum of array elements.",
+    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1634B+Fortune%20Telling+editorial",
     "solutionCode": {
-      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\nvoid solve() {\n\t\tlong long n, x, y;\n\t\tcin >> n >> x >> y;\n\t\tlong long a[n];\n\t\tfor (int i = 0; i < n; i++) {\n\t\t\t\tcin >> a[i];\n\t\t}\n\n\t\tint numOdds = 0;\n\t\tfor (int i = 0; i < n; i++) {\n\t\t\t\tif (a[i] % 2 == 1) numOdds++;\n\t\t}\n\n\t\tint aliceStart = x % 2;\n\t\tint bobStart = 1 - aliceStart;\n\n\t\tint aliceEnd, bobEnd;\n\t\tif (numOdds % 2 == 0) {\n\t\t\t\taliceEnd = aliceStart;\n\t\t\t\tbobEnd = bobStart;\n\t\t} else {\n\t\t\t\taliceEnd = 1 - aliceStart;\n\t\t\t\tbobEnd = 1 - bobStart;\n\t\t}\n\n\t\tif (y % 2 == aliceEnd) {\n\t\t\t\tcout << \"Alice\\n\";\n\t\t} else {\n\t\t\t\tcout << \"Bob\\n\";\n\t\t}\n}\n\nint main() {\n\t\tios::sync_with_stdio(false);\n\t\tcin.tie(nullptr);\n\n\t\tint tt;\n\t\tcin >> tt;\n\t\twhile (tt--) {\n\t\t\t\tsolve();\n\t\t}\n}"
+      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\nvoid solve() {\n    int n;\n    long long x, y;\n    if (!(cin >> n >> x >> y)) return;\n    long long sum = 0;\n    for (int i = 0; i < n; i++) {\n        long long a;\n        cin >> a;\n        sum += a;\n    }\n    if ((x + sum) % 2 == y % 2) {\n        cout << \"Alice\\n\";\n    } else {\n        cout << \"Bob\\n\";\n    }\n}\n\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n    int tt;\n    if (cin >> tt) {\n        while (tt--) solve();\n    }\n    return 0;\n}"
     },
     "order": 6
   },
@@ -7632,19 +7632,19 @@ export const CP_SHEET_PROBLEMS: CPProblem[] = [
     "order": 3
   },
   {
-    "id": "40D",
-    "contestId": 40,
-    "index": "D",
+    "id": "1775C",
+    "contestId": 1775,
+    "index": "C",
     "title": "Interesting Sequence",
     "rating": 1600,
-    "url": "https://codeforces.com/problemset/problem/40/D",
+    "url": "https://codeforces.com/problemset/problem/1775/C",
     "tags": [
       "math"
     ],
-    "hint": "Analyze the arithmetic structure: inspect modular remainders, prime factorizations, GCD properties, or parity. Avoid brute-force simulation where formulas or divisibility suffice.",
-    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+40D+Interesting%20Sequence+editorial",
+    "hint": "The range bitwise AND product n & (n+1) & ... & m preserves prefix bits and turns differing suffixes into zeros. Check if m can be formed by rounding up to clear the necessary low-order bits.",
+    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1775C+Interesting%20Sequence+editorial",
     "solutionCode": {
-      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\nusing ll = long long;\n\nint main()\n{\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n\n    int tc;\n    cin >> tc;\n    while (tc--)\n    {\n        ll n, x;\n        cin >> n >> x;\n\n        if (n == x)\n        {\n\n            cout << n << '\\n';\n            continue;\n        }\n\n        ll ans = -1;\n        for (int i = 0; i <= 61; i++)\n        {\n            if (((n >> i) << i) == x)\n            {\n\n                ll m = x | (1LL << i);\n                ans = (m >= n) ? m : -1;\n                break;\n            }\n        }\n\n        cout << ans << '\\n';\n    }\n\n    return 0;\n}"
+      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\nvoid solve() {\n    unsigned long long n, x;\n    if (!(cin >> n >> x)) return;\n    if ((n & x) != x) {\n        cout << -1 << \"\\n\";\n        return;\n    }\n    if (n == x) {\n        cout << n << \"\\n\";\n        return;\n    }\n    unsigned long long low = n, high = 5e18, ans = -1;\n    while (low <= high) {\n        unsigned long long mid = low + (high - low) / 2;\n        unsigned long long andVal = 0;\n        for (int b = 62; b >= 0; b--) {\n            unsigned long long bitN = (n >> b) & 1ULL;\n            unsigned long long bitM = (mid >> b) & 1ULL;\n            if (bitN != bitM) break;\n            if (bitN) andVal |= (1ULL << b);\n        }\n        if (andVal == x) {\n            ans = mid;\n            high = mid - 1;\n        } else if (andVal > x) {\n            low = mid + 1;\n        } else {\n            high = mid - 1;\n        }\n    }\n    cout << (long long)ans << \"\\n\";\n}\n\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n    int tt;\n    if (cin >> tt) {\n        while (tt--) solve();\n    }\n    return 0;\n}"
     },
     "order": 4
   },
@@ -9562,21 +9562,21 @@ export const CP_SHEET_PROBLEMS: CPProblem[] = [
     "order": 1
   },
   {
-    "id": "121C",
-    "contestId": 121,
-    "index": "C",
+    "id": "1768D",
+    "contestId": 1768,
+    "index": "D",
     "title": "Lucky Permutation",
     "rating": 1800,
-    "url": "https://codeforces.com/problemset/problem/121/C",
+    "url": "https://codeforces.com/problemset/problem/1768/D",
     "tags": [
       "brute force",
       "combinatorics",
       "number theory"
     ],
-    "hint": "Analyze the arithmetic structure: inspect modular remainders, prime factorizations, GCD properties, or parity. Avoid brute-force simulation where formulas or divisibility suffice.",
-    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+121C+Lucky%20Permutation+editorial",
+    "hint": "Decompose the permutation into disjoint cycles. Sorting takes (n - cycles) swaps. If two adjacent values i and i+1 belong to the same cycle, swapping them splits the cycle, achieving exactly 1 inversion with (n - cycles - 1) swaps.",
+    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1768D+Lucky%20Permutation+editorial",
     "solutionCode": {
-      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\n\nusing namespace std;\n\nvoid solve() {\n\tint arraySize;\n\tcin >> arraySize;\n\tvector<int> permutation(arraySize);\n\tfor (int i = 0; i < arraySize; i++) {\n\t\tcin >> permutation[i];\n\t\tpermutation[i]--;\n\t}\n\n\tint componentIndex = 1, totalCycles = 0;\n\tvector<int> component(arraySize, 0);\n\n\tfor (int i = 0; i < arraySize; i++) {\n\t\tif (component[i]) continue;\n\n\t\tint current = i;\n\t\twhile (component[current] == 0) {\n\t\t\tcomponent[current] = componentIndex;\n\t\t\tcurrent = permutation[current];\n\t\t\ttotalCycles++;\n\t\t}\n\t\tcomponentIndex++;\n\t\ttotalCycles--;\n\t}\n\n\tfor (int i = 0; i < arraySize - 1; i++) {\n\t\tif (component[i] == component[i + 1]) {\n\t\t\tcout << totalCycles - 1 << '\\n';\n\t\t\treturn;\n\t\t}\n\t}\n\tcout << totalCycles + 1 << '\\n';\n}\n\nint main() {\n\tios::sync_with_stdio(false);\n\tcin.tie(nullptr);\n\t\n\tint testCases;\n\tcin >> testCases;\n\twhile (testCases--) solve();\n\n\treturn 0;\n}"
+      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\nvoid solve() {\n    int n;\n    if (!(cin >> n)) return;\n    vector<int> p(n + 1);\n    for (int i = 1; i <= n; i++) cin >> p[i];\n    vector<int> cycle(n + 1, 0);\n    int numCycles = 0;\n    for (int i = 1; i <= n; i++) {\n        if (!cycle[i]) {\n            numCycles++;\n            int curr = i;\n            while (!cycle[curr]) {\n                cycle[curr] = numCycles;\n                curr = p[curr];\n            }\n        }\n    }\n    bool adjacentSame = false;\n    for (int i = 1; i < n; i++) {\n        if (cycle[i] == cycle[i + 1]) {\n            adjacentSame = true;\n            break;\n        }\n    }\n    int ans = (n - numCycles) + (adjacentSame ? -1 : 1);\n    cout << ans << \"\\n\";\n}\n\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n    int tt;\n    if (cin >> tt) {\n        while (tt--) solve();\n    }\n    return 0;\n}"
     },
     "order": 2
   },
@@ -10844,10 +10844,10 @@ export const CP_SHEET_PROBLEMS: CPProblem[] = [
       "dfs and similar",
       "graphs"
     ],
-    "hint": "Represent the input as an adjacency list. Use BFS/DFS traversal to discover reachable components, compute shortest hops in unweighted graphs, or detect bipartite coloring.",
+    "hint": "A fish graph requires a cycle containing a vertex u with degree >= 4, where u has at least 2 edges outside the cycle. Find such a vertex u and find a simple cycle through two of its neighbors using BFS.",
     "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1817B+Fish%20Graph+editorial",
     "solutionCode": {
-      "cpp": "git"
+      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\nvoid solve() {\n    int n, m;\n    if (!(cin >> n >> m)) return;\n    vector<vector<int>> adj(n + 1);\n    for (int i = 0; i < m; i++) {\n        int u, v;\n        cin >> u >> v;\n        adj[u].push_back(v);\n        adj[v].push_back(u);\n    }\n    for (int u = 1; u <= n; u++) {\n        if (adj[u].size() >= 4) {\n            for (int v : adj[u]) {\n                vector<int> parent(n + 1, -1);\n                queue<int> q;\n                parent[v] = u;\n                q.push(v);\n                bool found = false;\n                int endNode = -1;\n                while (!q.empty()) {\n                    int curr = q.front();\n                    q.pop();\n                    for (int nxt : adj[curr]) {\n                        if (nxt == u) continue;\n                        if (parent[nxt] == -1) {\n                            parent[nxt] = curr;\n                            q.push(nxt);\n                        }\n                    }\n                }\n                for (int w : adj[u]) {\n                    if (w != v && parent[w] != -1) {\n                        endNode = w;\n                        found = true;\n                        break;\n                    }\n                }\n                if (found) {\n                    vector<pair<int, int>> cycleEdges;\n                    cycleEdges.push_back({u, v});\n                    int curr = endNode;\n                    unordered_set<int> inCycle = {u, v};\n                    while (curr != v) {\n                        cycleEdges.push_back({curr, parent[curr]});\n                        inCycle.insert(curr);\n                        curr = parent[curr];\n                    }\n                    cycleEdges.push_back({u, endNode});\n                    vector<pair<int, int>> finEdges = cycleEdges;\n                    int added = 0;\n                    for (int nei : adj[u]) {\n                        if (nei != v && nei != endNode && inCycle.find(nei) == inCycle.end()) {\n                            finEdges.push_back({u, nei});\n                            added++;\n                            if (added == 2) break;\n                        }\n                    }\n                    if (added == 2) {\n                        cout << \"YES\\n\" << finEdges.size() << \"\\n\";\n                        for (auto& e : finEdges) cout << e.first << \" \" << e.second << \"\\n\";\n                        return;\n                    }\n                }\n            }\n        }\n    }\n    cout << \"NO\\n\";\n}\n\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n    int tt;\n    if (cin >> tt) {\n        while (tt--) solve();\n    }\n    return 0;\n}"
     },
     "order": 15
   },

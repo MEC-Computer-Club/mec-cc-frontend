@@ -14,7 +14,7 @@ import {
 import CPSheetSidebar from "./CPSheetSidebar";
 import CPSheetTopBar from "./CPSheetTopBar";
 import CPSheetProblemTable from "./CPSheetProblemTable";
-import { HintModal, CodeModal, VideoModal } from "./CPSheetModals";
+import { HintModal, CodeModal } from "./CPSheetModals";
 import ConfirmationModal from "@/components/ui/shared/ConfirmModal";
 
 const STORAGE_KEY_SOLVED = "mec_cp_sheet_solved_v1";
@@ -43,7 +43,6 @@ export default function CPSheetView() {
   // Modal active states
   const [hintProblem, setHintProblem] = useState<CPProblem | null>(null);
   const [codeProblem, setCodeProblem] = useState<CPProblem | null>(null);
-  const [videoProblem, setVideoProblem] = useState<CPProblem | null>(null);
 
   // Reset confirmation modal state
   const [isResetModalOpen, setIsResetModalOpen] = useState<boolean>(false);
@@ -229,7 +228,6 @@ export default function CPSheetView() {
             onToggleSolve={handleToggleSolve}
             onOpenHint={(p) => setHintProblem(p)}
             onOpenCode={(p) => setCodeProblem(p)}
-            onOpenVideo={(p) => setVideoProblem(p)}
             selectedRating={selectedRating}
             showAllTags={showAllTags}
           />
@@ -246,12 +244,6 @@ export default function CPSheetView() {
       <CodeModal
         problem={codeProblem}
         onClose={() => setCodeProblem(null)}
-      />
-
-      {/* Video Editorial Modal */}
-      <VideoModal
-        problem={videoProblem}
-        onClose={() => setVideoProblem(null)}
       />
 
       {/* Reset Confirmation Modal */}
