@@ -75,7 +75,7 @@ export function HintModal({ problem, onClose }: HintModalProps) {
         <div className="flex items-center justify-end p-4 border-t border-border-default bg-surface">
           <button
             onClick={onClose}
-            className="px-6 py-2 text-xs sm:text-sm font-bold rounded-lg bg-accent-primary text-text-primary hover:opacity-90 transition-opacity cursor-pointer shadow-xs"
+            className="px-6 py-2 text-xs sm:text-sm font-bold rounded-lg bg-accent-primary !text-accent-primary-text hover:bg-accent-primary-hover transition-colors cursor-pointer shadow-xs"
           >
             Got it
           </button>
@@ -91,6 +91,14 @@ interface CodeModalProps {
 }
 
 export function CodeModal({ problem, onClose }: CodeModalProps) {
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   if (!problem) return null;
   const ratingStyle = getRatingColor(problem.rating);
   const code =
@@ -102,11 +110,14 @@ export function CodeModal({ problem, onClose }: CodeModalProps) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="code-modal-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in"
     >
-      <div className="relative w-full max-w-4xl bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-2xl shadow-[6px_6px_0px_var(--accent-primary)] overflow-hidden flex flex-col max-h-[90vh]">
+      <div className="relative w-full max-w-4xl h-[85vh] max-h-[90vh] bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-2xl shadow-[6px_6px_0px_var(--accent-primary)] overflow-hidden flex flex-col min-h-0">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 md:p-5 border-b border-border-default bg-surface">
+        <div className="flex items-center justify-between p-4 md:p-5 border-b border-border-default bg-surface shrink-0">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-xl bg-cyan-500/15 text-cyan-500 dark:text-cyan-400 border border-cyan-500/30">
               <Code2 size={22} />
@@ -137,7 +148,7 @@ export function CodeModal({ problem, onClose }: CodeModalProps) {
         </div>
 
         {/* Monokai Theme Syntax Highlighted Editor */}
-        <div className="flex-1 overflow-hidden p-3 sm:p-4 bg-[#1e1f1c]">
+        <div className="flex-1 min-h-0 overflow-hidden p-3 sm:p-4 bg-[#1e1f1c] flex flex-col">
           <MonokaiCodeViewer
             code={code}
             problemId={problem.id}

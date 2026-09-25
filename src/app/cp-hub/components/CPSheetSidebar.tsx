@@ -40,9 +40,9 @@ export default function CPSheetSidebar({
 
   return (
     <>
-      {/* Mobile Horizontal Rating Tabs (Sticky on small screens) */}
-      <div className="md:hidden w-full overflow-x-auto pb-2 scrollbar-none">
-        <div className="flex items-center gap-2 min-w-max">
+      {/* Mobile & Tablet Horizontal Rating Tabs */}
+      <div className="lg:hidden w-full overflow-x-auto pb-2 scrollbar-none">
+        <div className="flex items-center gap-2 min-w-max px-0.5">
           {statsByRating.map((stat) => {
             const isSelected = selectedRating === stat.rating;
             const isAllSolved = stat.total > 0 && stat.solved === stat.total;
@@ -51,16 +51,18 @@ export default function CPSheetSidebar({
               <button
                 key={stat.rating}
                 onClick={() => onSelectRating(stat.rating)}
-                className={`flex items-center gap-2 px-3.5 py-2.5 rounded-xl font-mono text-xs sm:text-sm font-bold transition-all border cursor-pointer ${
+                className={`flex items-center gap-2 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl font-mono text-xs sm:text-sm font-bold transition-all border cursor-pointer ${
                   isSelected
-                    ? "bg-surface-elevated border-accent-primary text-text-primary shadow-[2px_2px_0px_var(--accent-primary)] -translate-y-0.5"
+                    ? "bg-accent-primary !text-accent-primary-text border-2 border-text-primary dark:border-border-default shadow-[2px_2px_0px_var(--border-brutalist)] -translate-y-0.5"
                     : "bg-surface border-border-default text-text-secondary hover:text-text-primary"
                 }`}
               >
-                <span className={stat.colorStyle.text}>{stat.rating}</span>
+                <span className={isSelected ? "!text-accent-primary-text" : stat.colorStyle.text}>{stat.rating}</span>
                 <span
                   className={`text-xs px-2 py-0.5 rounded-full font-bold ${
-                    isAllSolved
+                    isSelected
+                      ? "bg-accent-primary-text/20 !text-accent-primary-text"
+                      : isAllSolved
                       ? "bg-emerald-500/20 text-emerald-400"
                       : "bg-surface-elevated text-text-tertiary"
                   }`}
@@ -74,7 +76,7 @@ export default function CPSheetSidebar({
       </div>
 
       {/* Desktop Vertical Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 shrink-0 space-y-3">
+      <aside className="hidden lg:flex flex-col w-64 shrink-0 space-y-3">
         <div className="p-4 bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-2xl shadow-[4px_4px_0px_var(--accent-primary)]">
           <div className="flex items-center gap-2 mb-1.5">
             <Flame size={20} className="text-accent-primary" />
@@ -98,32 +100,36 @@ export default function CPSheetSidebar({
                 onClick={() => onSelectRating(stat.rating)}
                 className={`w-full group flex flex-col p-3.5 rounded-xl border-2 text-left transition-all cursor-pointer ${
                   isSelected
-                    ? "bg-surface-elevated border-accent-primary shadow-[4px_4px_0px_var(--accent-primary)] -translate-x-0.5 -translate-y-0.5"
+                    ? "bg-accent-primary !text-accent-primary-text border-2 border-text-primary dark:border-border-default shadow-[4px_4px_0px_0px_var(--text-primary)] dark:shadow-[4px_4px_0px_0px_var(--accent-primary)] -translate-x-0.5 -translate-y-0.5"
                     : "bg-surface border-border-default hover:bg-surface-elevated hover:border-border-brutalist/50 text-text-secondary"
                 }`}
               >
                 <div className="flex items-center justify-between w-full mb-2">
                   <div className="flex items-center gap-2">
                     <span
-                      className={`font-mono text-base font-black ${stat.colorStyle.text}`}
+                      className={`font-mono text-base font-black ${
+                        isSelected ? "!text-accent-primary-text" : stat.colorStyle.text
+                      }`}
                     >
                       ★ {stat.rating}
                     </span>
-                    <span className="text-xs uppercase font-bold text-text-tertiary">
+                    <span className={`text-xs uppercase font-bold ${
+                      isSelected ? "!text-accent-primary-text opacity-90" : "text-text-tertiary"
+                    }`}>
                       {stat.colorStyle.label}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-1.5">
                     {isAllSolved && (
-                      <CheckCircle2 size={16} className="text-emerald-400" />
+                      <CheckCircle2 size={16} className={isSelected ? "!text-accent-primary-text" : "text-emerald-400"} />
                     )}
                     <span
                       className={`font-mono text-xs sm:text-sm font-bold px-2 py-0.5 rounded ${
-                        isAllSolved
+                        isSelected
+                          ? "bg-accent-primary-text/20 !text-accent-primary-text"
+                          : isAllSolved
                           ? "bg-emerald-500/20 text-emerald-400"
-                          : isSelected
-                          ? "bg-accent-primary/10 text-accent-primary"
                           : "bg-surface text-text-tertiary"
                       }`}
                     >
@@ -133,13 +139,15 @@ export default function CPSheetSidebar({
                 </div>
 
                 {/* Progress Bar */}
-                <div className="w-full h-2 bg-surface rounded-full overflow-hidden border border-border-default/60">
+                <div className={`w-full h-2 rounded-full overflow-hidden border ${
+                  isSelected ? "bg-accent-primary-text/20 border-accent-primary-text/30" : "bg-surface border-border-default/60"
+                }`}>
                   <div
                     className={`h-full transition-all duration-300 ${
-                      isAllSolved
+                      isSelected
+                        ? "bg-accent-primary-text"
+                        : isAllSolved
                         ? "bg-emerald-500"
-                        : isSelected
-                        ? "bg-accent-primary"
                         : "bg-text-tertiary/40"
                     }`}
                     style={{ width: `${stat.percent}%` }}

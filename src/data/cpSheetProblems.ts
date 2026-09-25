@@ -867,23 +867,22 @@ export const CP_SHEET_PROBLEMS: CPProblem[] = [
     "order": 47
   },
   {
-    "id": "1858A",
-    "contestId": 1858,
+    "id": "1030A",
+    "contestId": 1030,
     "index": "A",
-    "title": "Buttons",
+    "title": "In Search of an Easy Problem",
     "rating": 800,
-    "url": "https://codeforces.com/problemset/problem/1858/A",
+    "order": 48,
+    "url": "https://codeforces.com/problemset/problem/1030/A",
     "tags": [
-      "games",
-      "greedy",
-      "math"
+      "implementation"
     ],
-    "hint": "Examine the local optimal decision. Usually sorting by end time, cost, or ratio guarantees that making the locally best choice never prevents a globally optimal solution.",
-    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1858A+Buttons+editorial",
+    "hint": "If at least one person answered 1 (hard), output HARD. Otherwise, output EASY.",
+    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1030A+In+Search+of+an+Easy+Problem+editorial",
     "solutionCode": {
-      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\nvoid solve() {\n    int n;\n    if (!(cin >> n)) return;\n    vector<long long> a(n);\n    for (int i = 0; i < n; i++) cin >> a[i];\n\n    sort(a.begin(), a.end());\n    long long ans = 0;\n    for (int i = 0; i < n; i++) ans += a[i];\n    cout << ans << \"\\n\";\n}\n\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n    int tt = 1;\n    if (cin >> tt) {\n        while (tt--) solve();\n    }\n    return 0;\n}"
-    },
-    "order": 48
+      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int n; cin >> n;\n    bool hard = false;\n    for (int i = 0; i < n; i++) {\n        int x; cin >> x;\n        if (x == 1) hard = true;\n    }\n    cout << (hard ? \"HARD\" : \"EASY\") << \"\\n\";\n    return 0;\n}",
+      "python": "n = int(input())\na = list(map(int, input().split()))\nprint('HARD' if 1 in a else 'EASY')"
+    }
   },
   {
     "id": "1829A",
@@ -1176,25 +1175,24 @@ export const CP_SHEET_PROBLEMS: CPProblem[] = [
     "order": 14
   },
   {
-    "id": "1437E",
-    "contestId": 1437,
-    "index": "E",
-    "title": "Make It Increasing",
+    "id": "1475B",
+    "contestId": 1475,
+    "index": "B",
+    "title": "New Year's Number",
     "rating": 900,
-    "url": "https://codeforces.com/problemset/problem/1437/E",
+    "order": 15,
+    "url": "https://codeforces.com/problemset/problem/1475/B",
     "tags": [
-      "binary search",
-      "constructive algorithms",
-      "data structures",
+      "brute force",
       "dp",
-      "implementation"
+      "math"
     ],
-    "hint": "Formulate the dynamic programming state dp[i] representing the optimal answer for prefix i. Identify which previous states are reachable and initialize your base cases carefully.",
-    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1437E+Make%20It%20Increasing+editorial",
+    "hint": "n can be written as 2020 * a + 2021 * b = 2020 * (a + b) + b. Divide n by 2020: quotient is (a + b) and remainder is b. You must have remainder <= quotient.",
+    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1475B+New+Years+Number+editorial",
     "solutionCode": {
-      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main()\n{\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int tt;\n    cin >> tt;\n    while (tt--)\n    {\n        long long n;\n        cin >> n;\n        vector<long long> a(n);\n        for (int i = 0; i < n; i++) \n            cin >> a[i];\n\n        long long ans = 0;\n        for (int i = n - 2; i >= 0; i--)\n        {\n            while (a[i] >= a[i + 1]) \n            {\n                ans++;\n                a[i] /= 2;\n                if (a[i] == 0)\n                    break;\n            }\n            if (a[i] == 0 && a[i + 1] == 0)\n            {\n                ans = -1;\n                break;\n            }\n        }\n        cout << ans << \"\\n\";\n    }\n    return 0;\n}"
-    },
-    "order": 15
+      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\nvoid solve() {\n    int n; cin >> n;\n    int b = n % 2020;\n    int a = (n - b) / 2020 - b;\n    cout << (a >= 0 ? \"YES\" : \"NO\") << \"\\n\";\n}\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int t; cin >> t;\n    while (t--) solve();\n    return 0;\n}",
+      "python": "import sys\ndef solve():\n    lines = sys.stdin.read().split()\n    if not lines: return\n    t = int(lines[0])\n    for i in range(1, t + 1):\n        n = int(lines[i])\n        rem = n % 2020\n        quot = n // 2020\n        print('YES' if rem <= quot else 'NO')\nif __name__ == '__main__': solve()"
+    }
   },
   {
     "id": "1666D",
@@ -1455,23 +1453,22 @@ export const CP_SHEET_PROBLEMS: CPProblem[] = [
     "order": 29
   },
   {
-    "id": "1649A",
-    "contestId": 1649,
-    "index": "A",
-    "title": "Game",
+    "id": "1373B",
+    "contestId": 1373,
+    "index": "B",
+    "title": "01 Game",
     "rating": 900,
-    "url": "https://codeforces.com/problemset/problem/1649/A",
+    "order": 30,
+    "url": "https://codeforces.com/problemset/problem/1373/B",
     "tags": [
-      "brute force",
-      "dp",
-      "implementation"
+      "games"
     ],
-    "hint": "Find the first zero from the left and the last zero from the right. The player can walk on continuous land (1s) for free, but must jump over the segment containing the zeros.",
-    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1649A+Game+editorial",
+    "hint": "Each move removes one '0' and one '1'. Total moves that can be made is min(count('0'), count('1')). If this number is odd, Alice wins; otherwise Bob wins.",
+    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1373B+01+Game+editorial",
     "solutionCode": {
-      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\nvoid solve() {\n    int n;\n    if (!(cin >> n)) return;\n    vector<int> a(n);\n    for (int i = 0; i < n; i++) cin >> a[i];\n    int firstZero = -1, lastZero = -1;\n    for (int i = 0; i < n; i++) {\n        if (a[i] == 0) {\n            if (firstZero == -1) firstZero = i;\n            lastZero = i;\n        }\n    }\n    if (firstZero == -1) {\n        cout << 0 << \"\\n\";\n    } else {\n        cout << (lastZero + 1) - (firstZero - 1) << \"\\n\";\n    }\n}\n\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n    int tt;\n    if (cin >> tt) {\n        while (tt--) solve();\n    }\n    return 0;\n}"
-    },
-    "order": 30
+      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\nvoid solve() {\n    string s; cin >> s;\n    int c0 = count(s.begin(), s.end(), '0');\n    int c1 = count(s.begin(), s.end(), '1');\n    int moves = min(c0, c1);\n    cout << (moves % 2 == 1 ? \"DA\" : \"NET\") << \"\\n\";\n}\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int t; cin >> t;\n    while (t--) solve();\n    return 0;\n}",
+      "python": "import sys\ndef solve():\n    lines = sys.stdin.read().split()\n    if not lines: return\n    t = int(lines[0])\n    for i in range(1, t + 1):\n        s = lines[i]\n        m = min(s.count('0'), s.count('1'))\n        print('DA' if m % 2 == 1 else 'NET')\nif __name__ == '__main__': solve()"
+    }
   },
   {
     "id": "1374B",
@@ -1911,26 +1908,23 @@ export const CP_SHEET_PROBLEMS: CPProblem[] = [
     "order": 4
   },
   {
-    "id": "1810E",
-    "contestId": 1810,
-    "index": "E",
-    "title": "Monsters",
+    "id": "1342A",
+    "contestId": 1342,
+    "index": "A",
+    "title": "Road To Zero",
     "rating": 1000,
-    "url": "https://codeforces.com/problemset/problem/1810/E",
+    "order": 5,
+    "url": "https://codeforces.com/problemset/problem/1342/A",
     "tags": [
-      "brute force",
-      "data structures",
-      "dfs and similar",
-      "dsu",
-      "graphs",
-      "greedy"
+      "greedy",
+      "math"
     ],
-    "hint": "Examine the local optimal decision. Usually sorting by end time, cost, or ratio guarantees that making the locally best choice never prevents a globally optimal solution.",
-    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1810E+Monsters+editorial",
+    "hint": "You can either change both by min(x, y) using cost b (if b < 2*a), or change each individually using cost a.",
+    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1342A+Road+To+Zero+editorial",
     "solutionCode": {
-      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main()\n{\n    int tt;\n    cin >> tt;\n    while (tt--)\n    {\n        long long n, k;\n        cin >> n >> k;\n        vector<pair<long long, long long> > health_points(n);\n        for (long long i = 0; i < n; i++) \n        {\n            long long x;\n            cin >> x;\n            health_points[i] = { x, i + 1 };\n        }\n\n        for (long long i = 0; i < n; i++) \n        {\n            health_points[i].first = health_points[i].first % k;\n            if (health_points[i].first == 0)\n                health_points[i].first = k;\n        }\n\n        sort(health_points.begin(), health_points.end(), [&](pair<long long, long long> a, pair<long long, long long> b) {\n            if (a.first != b.first)\n                return a.first > b.first;\n            return a.second < b.second;\n        }); \n\n        for (auto it : health_points) \n            cout << it.second << \" \";\n        cout << \"\\n\";\n    }\n    return 0;\n}"
-    },
-    "order": 5
+      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\nvoid solve() {\n    long long x, y, a, b;\n    cin >> x >> y >> a >> b;\n    if (x > y) swap(x, y);\n    long long ans1 = (x + y) * a;\n    long long ans2 = x * b + (y - x) * a;\n    cout << min(ans1, ans2) << \"\\n\";\n}\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int t; cin >> t;\n    while (t--) solve();\n    return 0;\n}",
+      "python": "import sys\ndef solve():\n    lines = sys.stdin.read().split()\n    if not lines: return\n    t = int(lines[0])\n    idx = 1\n    for _ in range(t):\n        x, y, a, b = map(int, lines[idx:idx+4])\n        idx += 4\n        if x > y: x, y = y, x\n        ans1 = (x + y) * a\n        ans2 = x * b + (y - x) * a\n        print(min(ans1, ans2))\nif __name__ == '__main__': solve()"
+    }
   },
   {
     "id": "1840C",
@@ -2045,25 +2039,25 @@ export const CP_SHEET_PROBLEMS: CPProblem[] = [
     "order": 11
   },
   {
-    "id": "1155D",
-    "contestId": 1155,
-    "index": "D",
-    "title": "Beautiful Array",
+    "id": "1476A",
+    "contestId": 1476,
+    "index": "A",
+    "title": "K-divisible Sum",
     "rating": 1000,
-    "url": "https://codeforces.com/problemset/problem/1155/D",
+    "order": 12,
+    "url": "https://codeforces.com/problemset/problem/1476/A",
     "tags": [
-      "brute force",
-      "data structures",
-      "divide and conquer",
-      "dp",
-      "greedy"
+      "binary search",
+      "constructive algorithms",
+      "greedy",
+      "math"
     ],
-    "hint": "Formulate the dynamic programming state dp[i] representing the optimal answer for prefix i. Identify which previous states are reachable and initialize your base cases carefully.",
-    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1155D+Beautiful%20Array+editorial",
+    "hint": "We want the sum S to be a multiple of k and S >= n. Let S = ceil(n / k) * k. Then maximum element is ceil(S / n).",
+    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1476A+K-divisible+Sum+editorial",
     "solutionCode": {
-      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main()\n{\n    int tt;\n    cin >> tt;\n    while (tt--)\n    {\n        long long n, k, b, s;\n        cin >> n >> k >> b >> s;\n        long long minimum_s = (k * b);\n        long long maximum_s = (k * b) + (k - 1) * n;\n        if(s < minimum_s || s > maximum_s)\n            cout << \"-1\" << endl;\n        else\n        {\n            vector<long long> ans(n, 0);\n            ans[0] = minimum_s;\n            s -= minimum_s;\n            for (int i = 0; i < n; i++) \n            {\n                long long add = min(k - 1, s);\n                ans[i] += add;\n                s -= add;\n            }\n            for (long long i = 0; i < n; i++) \n                cout << ans[i] << \" \";\n            cout << \"\\n\";\n        }\n    }\n}"
-    },
-    "order": 12
+      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\nvoid solve() {\n    long long n, k;\n    cin >> n >> k;\n    long long cf = (n + k - 1) / k;\n    k *= cf;\n    cout << (k + n - 1) / n << \"\\n\";\n}\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int t; cin >> t;\n    while (t--) solve();\n    return 0;\n}",
+      "python": "import sys\ndef solve():\n    lines = sys.stdin.read().split()\n    if not lines: return\n    t = int(lines[0])\n    for i in range(t):\n        n, k = int(lines[1 + 2*i]), int(lines[2 + 2*i])\n        cf = (n + k - 1) // k\n        k *= cf\n        print((k + n - 1) // n)\nif __name__ == '__main__': solve()"
+    }
   },
   {
     "id": "1704B",
@@ -2798,23 +2792,22 @@ export const CP_SHEET_PROBLEMS: CPProblem[] = [
     "order": 1
   },
   {
-    "id": "1760F",
-    "contestId": 1760,
-    "index": "F",
-    "title": "Quests",
+    "id": "1327A",
+    "contestId": 1327,
+    "index": "A",
+    "title": "Sum of Odd Integers",
     "rating": 1100,
-    "url": "https://codeforces.com/problemset/problem/1760/F",
+    "order": 2,
+    "url": "https://codeforces.com/problemset/problem/1327/A",
     "tags": [
-      "binary search",
-      "greedy",
-      "sortings"
+      "math"
     ],
-    "hint": "Observe the monotonic predicate: if a target x is achievable, any value >= x (or <= x) is also achievable. Use binary search on the answer range and write a greedy check() function.",
-    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1760F+Quests+editorial",
+    "hint": "The sum of the first k odd integers is k^2. So we must have n >= k^2 and n % 2 == k % 2.",
+    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1327A+Sum+of+Odd+Integers+editorial",
     "solutionCode": {
-      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\ntypedef long long ll;\nint main(){\n    int tt=1;\n    cin>>tt;\n    while(tt--){\n        int n,k;\n        cin>>n>>k;\n        vector<int>a(n),b(n);\n        for(int i=0;i<n;i++){\n            cin>>a[i];\n        }\n        for(int i=0;i<n;i++){\n            cin>>b[i];\n        }\n        int maxi=0;\n        int sum=0;\n        int ans=0;\n        for(int i=0;i<min(n,k);i++){\n            sum+=a[i];\n            maxi=max(maxi,b[i]);\n            ans=max(ans,sum+(k-(i+1))*maxi);\n        }\n        cout<<ans<<\"\\n\";\n    }\n    \n}"
-    },
-    "order": 2
+      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\nvoid solve() {\n    long long n, k;\n    cin >> n >> k;\n    if (n >= k * k && (n % 2 == k % 2)) cout << \"YES\\n\";\n    else cout << \"NO\\n\";\n}\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int t; cin >> t;\n    while (t--) solve();\n    return 0;\n}",
+      "python": "import sys\ndef solve():\n    lines = sys.stdin.read().split()\n    if not lines: return\n    t = int(lines[0])\n    for i in range(t):\n        n, k = int(lines[1 + 2*i]), int(lines[2 + 2*i])\n        print('YES' if n >= k * k and n % 2 == k % 2 else 'NO')\nif __name__ == '__main__': solve()"
+    }
   },
   {
     "id": "1904B",
@@ -2876,23 +2869,25 @@ export const CP_SHEET_PROBLEMS: CPProblem[] = [
     "order": 5
   },
   {
-    "id": "331E1",
-    "contestId": 331,
-    "index": "E1",
-    "title": "Deja Vu",
+    "id": "1335C",
+    "contestId": 1335,
+    "index": "C",
+    "title": "Two Teams Composing",
     "rating": 1100,
-    "url": "https://codeforces.com/problemset/problem/331/E1",
+    "order": 6,
+    "url": "https://codeforces.com/problemset/problem/1335/C",
     "tags": [
-      "constructive algorithms",
-      "graphs",
-      "implementation"
+      "binary search",
+      "greedy",
+      "implementation",
+      "sortings"
     ],
-    "hint": "Represent the input as an adjacency list. Use BFS/DFS traversal to discover reachable components, compute shortest hops in unweighted graphs, or detect bipartite coloring.",
-    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+331E1+Deja%20Vu+editorial",
+    "hint": "Let max_freq be the highest frequency of any skill, and unique_cnt be the number of distinct skills. Try max team size as min(unique_cnt, max_freq - 1) or min(unique_cnt - 1, max_freq).",
+    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1335C+Two+Teams+Composing+editorial",
     "solutionCode": {
-      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n#define ll long long \nint main(){\n    int tt;\n    cin>>tt;\n    while(tt--){\n        ll n,q;\n        cin>>n>>q;\n        vector<ll>a(n);\n        for(int i=0;i<n;i++){\n            cin>>a[i];\n        }\n        vector<ll>x(q);\n        for(int i=0;i<q;i++){\n            cin>>x[i];\n        }\n        ll prev=31;\n        for(int i=0;i<q;i++){//q\n            if(x[i]>=prev)continue;\n            ll val=pow(2,x[i]);\n            for(int j=0;j<n;j++){\n                if(a[j]%val==0){\n                    a[j]+=(val/2);\n                }\n            }\n            prev=x[i];\n        }\n        for(int i=0;i<n;i++){\n            cout<<a[i]<<\" \";\n        }\n        cout<<\"\\n\";\n    }\n    \n}"
-    },
-    "order": 6
+      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\nvoid solve() {\n    int n; cin >> n;\n    map<int, int> mp;\n    for (int i = 0; i < n; i++) { int x; cin >> x; mp[x]++; }\n    int max_freq = 0;\n    for (auto& p : mp) max_freq = max(max_freq, p.second);\n    int distinct = mp.size();\n    int ans = max(min(distinct - 1, max_freq), min(distinct, max_freq - 1));\n    cout << ans << \"\\n\";\n}\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int t; cin >> t;\n    while (t--) solve();\n    return 0;\n}",
+      "python": "import sys\nfrom collections import Counter\ndef solve():\n    lines = sys.stdin.read().split()\n    if not lines: return\n    t = int(lines[0])\n    idx = 1\n    for _ in range(t):\n        n = int(lines[idx]); idx += 1\n        a = [int(lines[idx + i]) for i in range(n)]; idx += n\n        c = Counter(a)\n        max_freq = max(c.values())\n        dist = len(c)\n        print(max(min(dist - 1, max_freq), min(dist, max_freq - 1)))\nif __name__ == '__main__': solve()"
+    }
   },
   {
     "id": "1873E",
@@ -3295,21 +3290,24 @@ export const CP_SHEET_PROBLEMS: CPProblem[] = [
     "order": 27
   },
   {
-    "id": "2209B",
-    "contestId": 2209,
-    "index": "B",
-    "title": "Array",
+    "id": "1490C",
+    "contestId": 1490,
+    "index": "C",
+    "title": "Sum of Cubes",
     "rating": 1100,
-    "url": "https://codeforces.com/problemset/problem/2209/B",
+    "order": 28,
+    "url": "https://codeforces.com/problemset/problem/1490/C",
     "tags": [
-      "greedy"
+      "binary search",
+      "brute force",
+      "math"
     ],
-    "hint": "Examine the local optimal decision. Usually sorting by end time, cost, or ratio guarantees that making the locally best choice never prevents a globally optimal solution.",
-    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+2209B+Array+editorial",
+    "hint": "Precompute all cubes up to 10^12 (up to 10000^3). For each x, check if x - a^3 is in the set of cubes.",
+    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1490C+Sum+of+Cubes+editorial",
     "solutionCode": {
-      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\nint main() {\n\tint tt;\n\tcin >> tt; \n\twhile (tt--) {\n\t\tint n;\n\t\tcin >> n;\n\t\tvector<int> v(n); \n\t\tfor (int i = 0; i < n; i++) {\n\t\t\tcin >> v[i]; \n\t\t}\n\n\t\tint ans = 0; \n\t\tint i = n - 1;\n\t\twhile (i >= 0 && v[i] == v[n - 1]) {\n\t\t\ti--;\n\t\t}\n\t\tif (i == -1) {\n\t\t\tcout << 0 << endl;\n\t\t\tcontinue;\n\t\t}\n\t\twhile (i >= 0) {\n\t\t\ti -= (n - 1 - i);\n\t\t\tans++;\n\t\t\twhile (i >= 0 && v[i] == v[n - 1]) {\n\t\t\t\ti--;\n\t\t\t}\n\t\t}\n\n\t\tcout << ans << \"\\n\";\n\t}\n}"
-    },
-    "order": 28
+      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\nunordered_set<long long> cubes;\nvoid init() {\n    for (long long i = 1; i * i * i <= 1000000000000LL; i++) cubes.insert(i * i * i);\n}\nvoid solve() {\n    long long x; cin >> x;\n    for (long long i = 1; i * i * i < x; i++) {\n        if (cubes.count(x - i * i * i)) {\n            cout << \"YES\\n\"; return;\n        }\n    }\n    cout << \"NO\\n\";\n}\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    init();\n    int t; cin >> t;\n    while (t--) solve();\n    return 0;\n}",
+      "python": "import sys\ncubes = {i**3 for i in range(1, 10001)}\ndef solve():\n    lines = sys.stdin.read().split()\n    if not lines: return\n    t = int(lines[0])\n    for i in range(1, t + 1):\n        x = int(lines[i])\n        found = False\n        for a in range(1, 10001):\n            if a**3 >= x: break\n            if (x - a**3) in cubes:\n                found = True; break\n        print('YES' if found else 'NO')\nif __name__ == '__main__': solve()"
+    }
   },
   {
     "id": "1618C",
@@ -3802,24 +3800,23 @@ export const CP_SHEET_PROBLEMS: CPProblem[] = [
     "order": 4
   },
   {
-    "id": "1423H",
-    "contestId": 1423,
-    "index": "H",
-    "title": "Virus",
+    "id": "1352C",
+    "contestId": 1352,
+    "index": "C",
+    "title": "K-th Not Divisible by n",
     "rating": 1200,
-    "url": "https://codeforces.com/problemset/problem/1423/H",
+    "order": 5,
+    "url": "https://codeforces.com/problemset/problem/1352/C",
     "tags": [
-      "data structures",
-      "divide and conquer",
-      "dsu",
-      "graphs"
+      "binary search",
+      "math"
     ],
-    "hint": "Represent the input as an adjacency list. Use BFS/DFS traversal to discover reachable components, compute shortest hops in unweighted graphs, or detect bipartite coloring.",
-    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1423H+Virus+editorial",
+    "hint": "Among each group of n numbers, there are n - 1 numbers not divisible by n. Use integer arithmetic k + (k - 1) / (n - 1).",
+    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1352C+Kth+Not+Divisible+by+n+editorial",
     "solutionCode": {
-      "cpp": "#include <bits/stdc++.h>\n\nusing namespace std;\n\nint main() {\n\tint tt;\n\tcin >> tt;\n\n\twhile (tt--) {\n\t\tint n, m;\n\t\tcin >> n >> m; \n\t\tvector<int> v(m);\n\t\tfor (int i = 0; i < m; i++)\n\t\t\tcin >> v[i];\n\n\t\tsort(v.begin(), v.end());\n\n\t\tvector<int> gaps;\n\t\tfor (int i = 0; i < m - 1; i++) {\n\t\t\tgaps.push_back(v[i + 1] - v[i] - 1); \n\t\t}\n\n\t\tgaps.push_back(v[0] + n - v[m - 1] - 1); \n\n\t\tsort(gaps.rbegin(), gaps.rend());\n\n\t\tint numSaved = 0, numDays = 0; \n\n\t\tfor (auto gap : gaps) {\n\t\t\tint currGap = gap - numDays * 2; \n\t\t\tif (currGap > 0) {\n\t\t\t\tnumSaved++;\n\n\t\t\t\tcurrGap -= 2; \n\t\t\t\tif (currGap > 0)\n\t\t\t\t\tnumSaved += currGap;\n\n\t\t\t\tnumDays += 2; \n\t\t\t}\n\t\t}\n\n\t\tcout << (n - numSaved) << \"\\n\"; \n\t}\n\n\treturn 0;\n}"
-    },
-    "order": 5
+      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\nvoid solve() {\n    long long n, k;\n    cin >> n >> k;\n    cout << k + (k - 1) / (n - 1) << \"\\n\";\n}\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int t; cin >> t;\n    while (t--) solve();\n    return 0;\n}",
+      "python": "import sys\ndef solve():\n    lines = sys.stdin.read().split()\n    if not lines: return\n    t = int(lines[0])\n    for i in range(t):\n        n, k = int(lines[1 + 2*i]), int(lines[2 + 2*i])\n        print(k + (k - 1) // (n - 1))\nif __name__ == '__main__': solve()"
+    }
   },
   {
     "id": "1703E",
@@ -6095,22 +6092,25 @@ export const CP_SHEET_PROBLEMS: CPProblem[] = [
     "order": 24
   },
   {
-    "id": "1076G",
-    "contestId": 1076,
-    "index": "G",
-    "title": "Array Game",
+    "id": "1201C",
+    "contestId": 1201,
+    "index": "C",
+    "title": "Maximum Median",
     "rating": 1400,
-    "url": "https://codeforces.com/problemset/problem/1076/G",
+    "order": 25,
+    "url": "https://codeforces.com/problemset/problem/1201/C",
     "tags": [
-      "data structures",
-      "games"
+      "binary search",
+      "greedy",
+      "math",
+      "sortings"
     ],
-    "hint": "Speed up operations from O(N) to O(log N) using appropriate containers like std::set, std::map, or a Fenwick/Segment Tree for dynamic range queries and updates.",
-    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1076G+Array%20Game+editorial",
+    "hint": "Sort the array. To make the median at least x, all elements from index n/2 to n-1 must be raised to max(a[i], x). Check if total required operations <= k using binary search on x.",
+    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1201C+Maximum+Median+editorial",
     "solutionCode": {
-      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\n#define int long long\n \nsigned main() {\n    int tt;\n    cin >> tt;\n    while (tt--) {\n        int n, k;\n        cin >> n >> k;\n        vector<int> a(n);\n        for (int i = 0; i < n; i++) cin >> a[i];\n        if (k >= 3) {\n            cout << 0 << endl;\n            continue;\n        }\n        sort(begin(a), end(a));\n        int d = a[0];\n        for (int i = 0; i < n - 1; i++) d = min(d, a[i + 1] - a[i]);\n        if (k == 1) {\n            cout << d << endl;\n            continue;\n        }\n        for (int i = 0; i < n; i++) for (int j = 0; j < i; j++) {\n            int v = a[i] - a[j];\n            int p = lower_bound(begin(a), end(a), v) - begin(a);\n            if (p < n) d = min(d, a[p] - v);\n            if (p > 0) d = min(d, v - a[p - 1]);\n        }\n        cout << d << endl;\n    }\n}"
-    },
-    "order": 25
+      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int n; long long k; cin >> n >> k;\n    vector<long long> a(n);\n    for (int i = 0; i < n; i++) cin >> a[i];\n    sort(a.begin(), a.end());\n    long long low = 1, high = 2e9, ans = 1;\n    while (low <= high) {\n        long long mid = low + (high - low) / 2;\n        long long ops = 0;\n        for (int i = n / 2; i < n; i++) {\n            if (mid > a[i]) ops += mid - a[i];\n        }\n        if (ops <= k) { ans = mid; low = mid + 1; } else { high = mid - 1; }\n    }\n    cout << ans << \"\\n\";\n    return 0;\n}",
+      "python": "import sys\ndef solve():\n    lines = sys.stdin.read().split()\n    if not lines: return\n    n, k = int(lines[0]), int(lines[1])\n    a = sorted([int(lines[2 + i]) for i in range(n)])\n    low, high, ans = 1, 2 * 10**9, 1\n    while low <= high:\n        mid = (low + high) // 2\n        ops = sum(max(0, mid - a[i]) for i in range(n // 2, n))\n        if ops <= k: ans = mid; low = mid + 1\n        else: high = mid - 1\n    print(ans)\nif __name__ == '__main__': solve()"
+    }
   },
   {
     "id": "1883G1",
@@ -6289,22 +6289,25 @@ export const CP_SHEET_PROBLEMS: CPProblem[] = [
     "order": 34
   },
   {
-    "id": "1634B",
-    "contestId": 1634,
-    "index": "B",
-    "title": "Fortune Telling",
+    "id": "1324D",
+    "contestId": 1324,
+    "index": "D",
+    "title": "Pair of Topics",
     "rating": 1400,
-    "url": "https://codeforces.com/problemset/problem/1634/B",
+    "order": 35,
+    "url": "https://codeforces.com/problemset/problem/1324/D",
     "tags": [
-      "bitmasks",
-      "math"
+      "binary search",
+      "data structures",
+      "sortings",
+      "two pointers"
     ],
-    "hint": "Analyze the arithmetic structure: inspect modular remainders, prime factorizations, GCD properties, or parity. Avoid brute-force simulation where formulas or divisibility suffice.",
-    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1634B+Fortune%20Telling+editorial",
+    "hint": "Condition a[i] + a[j] > b[i] + b[j] rearranges to (a[i] - b[i]) + (a[j] - b[j]) > 0. Let c[i] = a[i] - b[i], sort c, and use two pointers or upper_bound.",
+    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1324D+Pair+of+Topics+editorial",
     "solutionCode": {
-      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\nvoid solve() {\n    int n;\n    if (!(cin >> n)) return;\n    vector<long long> a(n);\n    for (int i = 0; i < n; i++) cin >> a[i];\n\n    sort(a.begin(), a.end());\n    long long ans = 0;\n    for (int i = 0; i < n; i++) ans += a[i];\n    cout << ans << \"\\n\";\n}\n\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n    int tt = 1;\n    if (cin >> tt) {\n        while (tt--) solve();\n    }\n    return 0;\n}"
-    },
-    "order": 35
+      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int n; cin >> n;\n    vector<long long> a(n), b(n), c(n);\n    for (int i = 0; i < n; i++) cin >> a[i];\n    for (int i = 0; i < n; i++) { cin >> b[i]; c[i] = a[i] - b[i]; }\n    sort(c.begin(), c.end());\n    long long ans = 0;\n    for (int i = 0; i < n; i++) {\n        auto it = upper_bound(c.begin() + i + 1, c.end(), -c[i]);\n        ans += (c.end() - it);\n    }\n    cout << ans << \"\\n\";\n    return 0;\n}",
+      "python": "import sys, bisect\ndef solve():\n    lines = sys.stdin.read().split()\n    if not lines: return\n    n = int(lines[0])\n    a = [int(lines[1 + i]) for i in range(n)]\n    b = [int(lines[1 + n + i]) for i in range(n)]\n    c = sorted([a[i] - b[i] for i in range(n)])\n    ans = 0\n    for i in range(n):\n        idx = bisect.bisect_right(c, -c[i], i + 1)\n        ans += n - idx\n    print(ans)\nif __name__ == '__main__': solve()"
+    }
   },
   {
     "id": "1989C",
@@ -6655,21 +6658,24 @@ export const CP_SHEET_PROBLEMS: CPProblem[] = [
     "order": 3
   },
   {
-    "id": "1604A",
-    "contestId": 1604,
-    "index": "A",
-    "title": "Era",
+    "id": "1352E",
+    "contestId": 1352,
+    "index": "E",
+    "title": "Special Elements",
     "rating": 1500,
-    "url": "https://codeforces.com/problemset/problem/1604/A",
+    "order": 4,
+    "url": "https://codeforces.com/problemset/problem/1352/E",
     "tags": [
-      "greedy"
+      "brute force",
+      "implementation",
+      "two pointers"
     ],
-    "hint": "Examine the local optimal decision. Usually sorting by end time, cost, or ratio guarantees that making the locally best choice never prevents a globally optimal solution.",
-    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1604A+Era+editorial",
+    "hint": "Check all contiguous subarray sums. If a subarray sum <= n, mark that value as special. Then count how many elements of a are marked.",
+    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1352E+Special+Elements+editorial",
     "solutionCode": {
-      "cpp": "#include <bits/stdc++.h>\n\nusing namespace std;\n\ntypedef long long int LL;\n\nconst int N = 100 * 1000 + 7;\n\nint n;\nint w[N];\nint deg[N];\n\nvoid solve() {\n\tscanf(\"%d\", &n);\n\tfor(int i = 1; i <= n; ++i) {\n\t\tscanf(\"%d\", &w[i]);\n\t\tdeg[i] = 0;\n\t}\n\t\n\tfor(int i = 1; i < n; ++i) {\n\t\tint u, v;\n\t\tscanf(\"%d %d\", &u, &v);\n\t\tdeg[u]++; deg[v]++;\n\t}\n\t\n\tLL ans = 0;\n\tvector <int> to_sort;\n\n\tfor(int i = 1; i <= n; ++i) {\n\t\tfor(int j = 1; j < deg[i]; ++j)\n\t\t\tto_sort.push_back(w[i]);\n\t\tans += w[i];\n\t}\n\t\n\tsort(to_sort.begin(), to_sort.end());\n\treverse(to_sort.begin(), to_sort.end());\n\t\n\tfor(auto &v: to_sort) {\n\t\tprintf(\"%lld \", ans);\n\t\tans += v;\n\t}\n\t\n\tprintf(\"%lld\\n\", ans);\n}\n\nint main() {\n\tint cases;\n\tscanf(\"%d\", &cases);\n\t\n\twhile(cases--)\n\t\tsolve();\n\treturn 0;\n}"
-    },
-    "order": 4
+      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\nvoid solve() {\n    int n; cin >> n;\n    vector<int> a(n);\n    vector<int> cnt(n + 1, 0);\n    for (int i = 0; i < n; i++) { cin >> a[i]; cnt[a[i]]++; }\n    int ans = 0;\n    for (int l = 0; l < n; l++) {\n        int sum = a[l];\n        for (int r = l + 1; r < n; r++) {\n            sum += a[r];\n            if (sum > n) break;\n            if (cnt[sum]) { ans += cnt[sum]; cnt[sum] = 0; }\n        }\n    }\n    cout << ans << \"\\n\";\n}\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int t; cin >> t;\n    while (t--) solve();\n    return 0;\n}",
+      "python": "import sys\ndef solve():\n    lines = sys.stdin.read().split()\n    if not lines: return\n    t = int(lines[0])\n    idx = 1\n    for _ in range(t):\n        n = int(lines[idx]); idx += 1\n        a = [int(lines[idx + i]) for i in range(n)]; idx += n\n        cnt = [0] * (n + 1)\n        for x in a: cnt[x] += 1\n        ans = 0\n        for l in range(n):\n            s = a[l]\n            for r in range(l + 1, n):\n                s += a[r]\n                if s > n: break\n                if cnt[s]: ans += cnt[s]; cnt[s] = 0\n        print(ans)\nif __name__ == '__main__': solve()"
+    }
   },
   {
     "id": "1418C",
@@ -6965,22 +6971,26 @@ export const CP_SHEET_PROBLEMS: CPProblem[] = [
     "order": 19
   },
   {
-    "id": "652D",
-    "contestId": 652,
+    "id": "1385D",
+    "contestId": 1385,
     "index": "D",
-    "title": "Nested Segments",
+    "title": "a-Good String",
     "rating": 1500,
-    "url": "https://codeforces.com/problemset/problem/652/D",
+    "order": 20,
+    "url": "https://codeforces.com/problemset/problem/1385/D",
     "tags": [
-      "data structures",
-      "sortings"
+      "bitmasks",
+      "brute force",
+      "divide and conquer",
+      "dp",
+      "implementation"
     ],
-    "hint": "Speed up operations from O(N) to O(log N) using appropriate containers like std::set, std::map, or a Fenwick/Segment Tree for dynamic range queries and updates.",
-    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+652D+Nested%20Segments+editorial",
+    "hint": "Use divide and conquer: to make s[l..r] a c-good string, either make the first half all 'c' and the second half (c+1)-good, or make the second half all 'c' and the first half (c+1)-good.",
+    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1385D+a-Good+String+editorial",
     "solutionCode": {
-      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\nint32_t main() {\n\t\tios::sync_with_stdio(false);\n\t\tcin.tie(NULL);\n\t\tcout.tie(NULL);\n\n\t\tint n;\n\t\tcin >> n;\n\n\t\tvector<vector<int>> a(n); \n\t\tfor (int i = 0; i < n; i++) {\n\t\t\t\tint l, r;\n\t\t\t\tcin >> l >> r;\n\t\t\t\ta[i] = {l, r, i + 1}; \n\t\t} \n\t\tsort(a.begin(), a.end(), [&](vector<int> &v1, vector<int> &v2) {\n\t\t\t\tif (v1[0] == v2[0]) return v1[1] > v2[1];\n\t\t\t\treturn v1[0] < v2[0];\n\t\t}); \n\n\t\tint mx = a[0][1], ind = a[0][2]; \n\t\tfor (int i = 1; i < n; i++) {\n\t\t\t\tif (mx >= a[i][1]) {\n\t\t\t\t\t\tcout << a[i][2] << ' ' << ind << '\\n';\n\t\t\t\t\t\treturn 0;\n\t\t\t\t}\n\t\t\t\tif (a[i][1] > mx) {\n\t\t\t\t\t\tmx = a[i][1];\n\t\t\t\t\t\tind = a[i][2];\n\t\t\t\t}\n\t\t} // n\n\n\t\tcout << \"-1 -1\\n\";\n\n\t\treturn 0;\n}"
-    },
-    "order": 20
+      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\nstring s;\nint get_cost(int l, int r, char c) {\n    if (l == r) return s[l] == c ? 0 : 1;\n    int mid = (l + r) / 2;\n    int cnt1 = 0, cnt2 = 0;\n    for (int i = l; i <= mid; i++) if (s[i] != c) cnt1++;\n    for (int i = mid + 1; i <= r; i++) if (s[i] != c) cnt2++;\n    return min(cnt1 + get_cost(mid + 1, r, c + 1), cnt2 + get_cost(l, mid, c + 1));\n}\nvoid solve() {\n    int n; cin >> n >> s;\n    cout << get_cost(0, n - 1, 'a') << \"\\n\";\n}\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int t; cin >> t;\n    while (t--) solve();\n    return 0;\n}",
+      "python": "import sys\ndef get_cost(s, l, r, c):\n    if l == r: return 0 if s[l] == chr(c) else 1\n    mid = (l + r) // 2\n    cnt1 = sum(1 for i in range(l, mid + 1) if s[i] != chr(c))\n    cnt2 = sum(1 for i in range(mid + 1, r + 1) if s[i] != chr(c))\n    return min(cnt1 + get_cost(s, mid + 1, r, c + 1), cnt2 + get_cost(s, l, mid, c + 1))\ndef solve():\n    lines = sys.stdin.read().split()\n    if not lines: return\n    t = int(lines[0])\n    for i in range(t):\n        n, s = int(lines[1 + 2*i]), lines[2 + 2*i]\n        print(get_cost(s, 0, n - 1, ord('a')))\nif __name__ == '__main__': solve()"
+    }
   },
   {
     "id": "960B",
@@ -7764,22 +7774,22 @@ export const CP_SHEET_PROBLEMS: CPProblem[] = [
     "order": 10
   },
   {
-    "id": "1168B",
-    "contestId": 1168,
-    "index": "B",
-    "title": "Good Triple",
+    "id": "1352G",
+    "contestId": 1352,
+    "index": "G",
+    "title": "Special Permutation",
     "rating": 1600,
-    "url": "https://codeforces.com/problemset/problem/1168/B",
+    "order": 11,
+    "url": "https://codeforces.com/problemset/problem/1352/G",
     "tags": [
-      "brute force",
-      "two pointers"
+      "constructive algorithms"
     ],
-    "hint": "Notice that as the right pointer expands, the left pointer only needs to move forward. Maintain frequency counts or window invariants to keep the window valid in O(N) overall.",
-    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1168B+Good%20Triple+editorial",
+    "hint": "For n < 4, it is impossible. For n >= 4, place all odd numbers in descending order (e.g., ... 5, 3, 1), transition using 4, 2, and then even numbers ascending (6, 8, ...).",
+    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1352G+Special+Permutation+editorial",
     "solutionCode": {
-      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\nusing ll = long long;\n\nint main() {\n\tios_base::sync_with_stdio(false);\n\tcin.tie(nullptr);\n\n\tvector<int> ways(10, 0);\n\tfor (int i = 0; i <= 9; i++) {\n\t\tfor (int j = 0; j <= 9; j++) {\n\t\t\tfor (int k = 0; k <= 9; k++) {\n\t\t\t\tif (i + j + k < 10) ways[i + j + k]++;\n\t\t\t}\n\t\t}\n\t}\n\n\tint t;\n\tcin >> t;\n\twhile (t--) {\n\t\tstring n;\n\t\tcin >> n; \n\n\t\tll ans = 1;\n\t\tfor (char ch : n) {\n\t\t\tans *= ways[ch - '0'];\n\t\t}\n\n\t\tcout << ans << '\\n';\n\t}\n\n\treturn 0;\n}"
-    },
-    "order": 11
+      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\nvoid solve() {\n    int n; cin >> n;\n    if (n < 4) { cout << -1 << \"\\n\"; return; }\n    for (int i = n - (n % 2 == 0 ? 1 : 0); i >= 1; i -= 2) cout << i << \" \";\n    cout << 4 << \" \" << 2 << \" \";\n    for (int i = 6; i <= n; i += 2) cout << i << \" \";\n    cout << \"\\n\";\n}\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int t; cin >> t;\n    while (t--) solve();\n    return 0;\n}",
+      "python": "import sys\ndef solve():\n    lines = sys.stdin.read().split()\n    if not lines: return\n    t = int(lines[0])\n    for i in range(1, t + 1):\n        n = int(lines[i])\n        if n < 4: print(-1); continue\n        odds = [x for x in range(n, 0, -1) if x % 2 == 1]\n        evens = [4, 2] + [x for x in range(6, n + 1, 2)]\n        print(*(odds + evens))\nif __name__ == '__main__': solve()"
+    }
   },
   {
     "id": "1555D",
@@ -8469,22 +8479,23 @@ export const CP_SHEET_PROBLEMS: CPProblem[] = [
     "order": 46
   },
   {
-    "id": "1775C",
-    "contestId": 1775,
+    "id": "1363C",
+    "contestId": 1363,
     "index": "C",
-    "title": "Interesting Sequence",
+    "title": "Game On Leaves",
     "rating": 1600,
-    "url": "https://codeforces.com/problemset/problem/1775/C",
+    "order": 47,
+    "url": "https://codeforces.com/problemset/problem/1363/C",
     "tags": [
-      "bitmasks",
-      "math"
+      "games",
+      "trees"
     ],
-    "hint": "Analyze the arithmetic structure: inspect modular remainders, prime factorizations, GCD properties, or parity. Avoid brute-force simulation where formulas or divisibility suffice.",
-    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1775C+Interesting%20Sequence+editorial",
+    "hint": "If deg(x) <= 1, Ayush wins immediately on move 1. Otherwise, whoever removes the second-to-last neighbor of x loses; thus it reduces to parity of remaining non-x nodes (n - 1) % 2.",
+    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1363C+Game+On+Leaves+editorial",
     "solutionCode": {
-      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\nvoid solve() {\n    int n;\n    if (!(cin >> n)) return;\n    vector<long long> a(n);\n    for (int i = 0; i < n; i++) cin >> a[i];\n\n    sort(a.begin(), a.end());\n    long long ans = 0;\n    for (int i = 0; i < n; i++) ans += a[i];\n    cout << ans << \"\\n\";\n}\n\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n    int tt = 1;\n    if (cin >> tt) {\n        while (tt--) solve();\n    }\n    return 0;\n}"
-    },
-    "order": 47
+      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\nvoid solve() {\n    int n, x; cin >> n >> x;\n    int deg = 0;\n    for (int i = 0; i < n - 1; i++) {\n        int u, v; cin >> u >> v;\n        if (u == x || v == x) deg++;\n    }\n    if (deg <= 1) cout << \"Ayush\\n\";\n    else cout << ((n - 1) % 2 == 1 ? \"Ayush\\n\" : \"Ashish\\n\");\n}\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int t; cin >> t;\n    while (t--) solve();\n    return 0;\n}",
+      "python": "import sys\ndef solve():\n    lines = sys.stdin.read().split()\n    if not lines: return\n    t = int(lines[0])\n    idx = 1\n    for _ in range(t):\n        n, x = int(lines[idx]), int(lines[idx+1]); idx += 2\n        deg = 0\n        for _ in range(n - 1):\n            u, v = int(lines[idx]), int(lines[idx+1]); idx += 2\n            if u == x or v == x: deg += 1\n        if deg <= 1: print('Ayush')\n        else: print('Ayush' if (n - 1) % 2 == 1 else 'Ashish')\nif __name__ == '__main__': solve()"
+    }
   },
   {
     "id": "1520F1",
@@ -10102,25 +10113,26 @@ export const CP_SHEET_PROBLEMS: CPProblem[] = [
     "order": 28
   },
   {
-    "id": "1824B2",
-    "contestId": 1824,
-    "index": "B2",
-    "title": "LuoTianyi and the Floating Islands (Hard Version)",
+    "id": "1328D",
+    "contestId": 1328,
+    "index": "D",
+    "title": "Carousel",
     "rating": 1800,
-    "url": "https://codeforces.com/problemset/problem/1824/B2",
+    "order": 29,
+    "url": "https://codeforces.com/problemset/problem/1328/D",
     "tags": [
-      "combinatorics",
-      "dfs and similar",
-      "math",
-      "probabilities",
-      "trees"
+      "constructive algorithms",
+      "dp",
+      "graphs",
+      "greedy",
+      "math"
     ],
-    "hint": "Represent the input as an adjacency list. Use BFS/DFS traversal to discover reachable components, compute shortest hops in unweighted graphs, or detect bipartite coloring.",
-    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1824B2+LuoTianyi%20and%20the%20Floating%20Islands%20(Hard%20Version)+editorial",
+    "hint": "If all figures are identical, 1 color suffices. If n is even, alternate colors 1 and 2. If n is odd, alternate 1 and 2; if adjacent equal elements exist, absorb the parity without needing a 3rd color; otherwise 3 colors are needed.",
+    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1328D+Carousel+editorial",
     "solutionCode": {
-      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\nconst int MOD = 1'000'000'007;\nconst int MAX_NODES = 200005;\n\nstd::vector<int> adjacencyList[MAX_NODES];\nint subtreeSize[MAX_NODES];\nint factorial[MAX_NODES], inverseFactorial[MAX_NODES];\n\n\nint modularExponentiation(int base, int exp) {\n\tint result = 1;\n\twhile (exp > 0) {\n\t\tif (exp % 2 == 1)\n\t\t\tresult = static_cast<int>(1LL * result * base % MOD);\n\t\tbase = static_cast<int>(1LL * base * base % MOD);\n\t\texp /= 2;\n\t}\n\treturn result;\n}\n\nint combination(int n, int k) {\n\tif (k < 0 || k > n) return 0;\n\treturn static_cast<int>(1LL * factorial[n] * inverseFactorial[k] % MOD * inverseFactorial[n - k] % MOD);\n}\n\nvoid initializeCombinations(int limit) {\n\tfactorial[0] = inverseFactorial[0] = 1;\n\tfor (int i = 1; i <= limit; ++i) {\n\t\tfactorial[i] = static_cast<int>(1LL * factorial[i - 1] * i % MOD);\n\t}\n\tinverseFactorial[limit] = modularExponentiation(factorial[limit], MOD - 2);\n\tfor (int i = limit - 1; i >= 1; --i) {\n\t\tinverseFactorial[i] = static_cast<int>(1LL * inverseFactorial[i + 1] * (i + 1) % MOD);\n\t}\n}\n\nvoid depthFirstSearch(int node, int parent) {\n\tsubtreeSize[node] = 1;\n\tfor (int neighbor : adjacencyList[node]) {\n\t\tif (neighbor != parent) {\n\t\t\tdepthFirstSearch(neighbor, node);\n\t\t\tsubtreeSize[node] += subtreeSize[neighbor];\n\t\t}\n\t}\n}\n\nint main() {\n\tstd::ios::sync_with_stdio(false);\n\tstd::cin.tie(nullptr);\n\n\tint numNodes, k;\n\tstd::cin >> numNodes >> k;\n\n\tinitializeCombinations(MAX_NODES - 1);\n\n\n\tfor (int i = 0; i < numNodes - 1; ++i) {\n\t\tint u, v;\n\t\tstd::cin >> u >> v;\n\t\tadjacencyList[u].push_back(v);\n\t\tadjacencyList[v].push_back(u);\n\t}\n\n\tdepthFirstSearch(1, 0);\n\n\tif (k % 2 == 1) {\n\t\tstd::cout << \"1\\n\";\n\t} else {\n\t\tint result = 0;\n\t\tfor (int i = 2; i <= numNodes; ++i) {\n\t\t\tint leftSubtreeNodes = subtreeSize[i];\n\t\t\tint rightSubtreeNodes = numNodes - subtreeSize[i];\n\t\t\tint numWays = static_cast<int>(1LL * combination(leftSubtreeNodes, k / 2) * combination(rightSubtreeNodes, k / 2) % MOD);\n\t\t\tresult = (result + numWays) % MOD;\n\t\t}\n\t\tresult = static_cast<int>(1LL * result * modularExponentiation(combination(numNodes, k), MOD - 2) % MOD);\n\t\tresult = (result + 1) % MOD;\n\t\tstd::cout << result << '\\n';\n\t}\n\n\treturn 0;\n}"
-    },
-    "order": 29
+      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\nvoid solve() {\n    int n; cin >> n;\n    vector<int> a(n);\n    for (int i = 0; i < n; i++) cin >> a[i];\n    if (equal(a.begin() + 1, a.end(), a.begin())) {\n        cout << 1 << \"\\n\";\n        for (int i = 0; i < n; i++) cout << 1 << \" \";\n        cout << \"\\n\"; return;\n    }\n    if (n % 2 == 0) {\n        cout << 2 << \"\\n\";\n        for (int i = 0; i < n; i++) cout << (i % 2 + 1) << \" \";\n        cout << \"\\n\"; return;\n    }\n    int same = -1;\n    for (int i = 0; i < n; i++) {\n        if (a[i] == a[(i + 1) % n]) { same = i; break; }\n    }\n    if (same != -1) {\n        cout << 2 << \"\\n\";\n        vector<int> c(n);\n        int cur = 1;\n        for (int i = 0; i < n; i++) {\n            c[(same + 1 + i) % n] = cur;\n            if (i != 0) cur = 3 - cur;\n        }\n        for (int i = 0; i < n; i++) cout << c[i] << \" \";\n        cout << \"\\n\"; return;\n    }\n    cout << 3 << \"\\n\";\n    for (int i = 0; i < n - 1; i++) cout << (i % 2 + 1) << \" \";\n    cout << 3 << \"\\n\";\n}\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    int t; cin >> t;\n    while (t--) solve();\n    return 0;\n}",
+      "python": "import sys\ndef solve():\n    lines = sys.stdin.read().split()\n    if not lines: return\n    t = int(lines[0])\n    idx = 1\n    for _ in range(t):\n        n = int(lines[idx]); idx += 1\n        a = [int(lines[idx + i]) for i in range(n)]; idx += n\n        if len(set(a)) == 1:\n            print(1); print(*( [1] * n )); continue\n        if n % 2 == 0:\n            print(2); print(*( [(i % 2 + 1) for i in range(n)] )); continue\n        same = -1\n        for i in range(n):\n            if a[i] == a[(i + 1) % n]: same = i; break\n        if same != -1:\n            print(2)\n            c = [0] * n\n            cur = 1\n            for i in range(n):\n                c[(same + 1 + i) % n] = cur\n                if i != 0: cur = 3 - cur\n            print(*c); continue\n        print(3); print(*( [(i % 2 + 1) for i in range(n - 1)] + [3] ))\nif __name__ == '__main__': solve()"
+    }
   },
   {
     "id": "1805D",
@@ -10334,24 +10346,25 @@ export const CP_SHEET_PROBLEMS: CPProblem[] = [
     "order": 39
   },
   {
-    "id": "1768D",
-    "contestId": 1768,
-    "index": "D",
-    "title": "Lucky Permutation",
+    "id": "1324F",
+    "contestId": 1324,
+    "index": "F",
+    "title": "Maximum White Subtree",
     "rating": 1800,
-    "url": "https://codeforces.com/problemset/problem/1768/D",
+    "order": 40,
+    "url": "https://codeforces.com/problemset/problem/1324/F",
     "tags": [
-      "constructive algorithms",
       "dfs and similar",
+      "dp",
       "graphs",
-      "greedy"
+      "trees"
     ],
-    "hint": "Examine the local optimal decision. Usually sorting by end time, cost, or ratio guarantees that making the locally best choice never prevents a globally optimal solution.",
-    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1768D+Lucky%20Permutation+editorial",
+    "hint": "Use rerooting tree DP. First compute dp[u] = val[u] + sum(max(0, dp[v])) for children. Then in second DFS, re-root to include contribution from parent.",
+    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1324F+Maximum+White+Subtree+editorial",
     "solutionCode": {
-      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\nvoid solve() {\n    int n;\n    if (!(cin >> n)) return;\n    vector<long long> a(n);\n    for (int i = 0; i < n; i++) cin >> a[i];\n\n    sort(a.begin(), a.end());\n    long long ans = 0;\n    for (int i = 0; i < n; i++) ans += a[i];\n    cout << ans << \"\\n\";\n}\n\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(NULL);\n    int tt = 1;\n    if (cin >> tt) {\n        while (tt--) solve();\n    }\n    return 0;\n}"
-    },
-    "order": 40
+      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\nint n;\nvector<int> a, dp, ans;\nvector<vector<int>> adj;\nvoid dfs1(int u, int p) {\n    dp[u] = a[u];\n    for (int v : adj[u]) if (v != p) {\n        dfs1(v, u);\n        dp[u] += max(0, dp[v]);\n    }\n}\nvoid dfs2(int u, int p) {\n    ans[u] = dp[u];\n    for (int v : adj[u]) if (v != p) {\n        dp[u] -= max(0, dp[v]);\n        dp[v] += max(0, dp[u]);\n        dfs2(v, u);\n        dp[v] -= max(0, dp[u]);\n        dp[u] += max(0, dp[v]);\n    }\n}\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    if (!(cin >> n)) return 0;\n    a.resize(n + 1); dp.resize(n + 1); ans.resize(n + 1); adj.resize(n + 1);\n    for (int i = 1; i <= n; i++) { int x; cin >> x; a[i] = (x == 1 ? 1 : -1); }\n    for (int i = 0; i < n - 1; i++) {\n        int u, v; cin >> u >> v;\n        adj[u].push_back(v); adj[v].push_back(u);\n    }\n    dfs1(1, 0);\n    dfs2(1, 0);\n    for (int i = 1; i <= n; i++) cout << ans[i] << \" \";\n    cout << \"\\n\";\n    return 0;\n}",
+      "python": "import sys\nsys.setrecursionlimit(300000)\ndef solve():\n    lines = sys.stdin.read().split()\n    if not lines: return\n    n = int(lines[0])\n    a = [0] + [1 if int(lines[i]) == 1 else -1 for i in range(1, n + 1)]\n    adj = [[] for _ in range(n + 1)]\n    idx = n + 1\n    for _ in range(n - 1):\n        u, v = int(lines[idx]), int(lines[idx+1]); idx += 2\n        adj[u].append(v); adj[v].append(u)\n    dp = [0] * (n + 1)\n    ans = [0] * (n + 1)\n    def dfs1(u, p):\n        dp[u] = a[u]\n        for v in adj[u]:\n            if v != p:\n                dfs1(v, u)\n                dp[u] += max(0, dp[v])\n    def dfs2(u, p):\n        ans[u] = dp[u]\n        for v in adj[u]:\n            if v != p:\n                dp[u] -= max(0, dp[v])\n                dp[v] += max(0, dp[u])\n                dfs2(v, u)\n                dp[v] -= max(0, dp[u])\n                dp[u] += max(0, dp[v])\n    dfs1(1, 0); dfs2(1, 0)\n    print(*(ans[1:]))\nif __name__ == '__main__': solve()"
+    }
   },
   {
     "id": "1852A",
@@ -10773,23 +10786,23 @@ export const CP_SHEET_PROBLEMS: CPProblem[] = [
     "order": 11
   },
   {
-    "id": "1310A",
-    "contestId": 1310,
-    "index": "A",
-    "title": "Recommendations",
+    "id": "1036C",
+    "contestId": 1036,
+    "index": "C",
+    "title": "Classy Numbers",
     "rating": 1900,
-    "url": "https://codeforces.com/problemset/problem/1310/A",
+    "order": 12,
+    "url": "https://codeforces.com/problemset/problem/1036/C",
     "tags": [
-      "data structures",
-      "greedy",
-      "sortings"
+      "combinatorics",
+      "dp"
     ],
-    "hint": "Examine the local optimal decision. Usually sorting by end time, cost, or ratio guarantees that making the locally best choice never prevents a globally optimal solution.",
-    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1310A+Recommendations+editorial",
+    "hint": "Precompute all numbers up to 10^18 that have at most 3 non-zero digits (there are fewer than 10^5 such numbers). For each query [L, R], count with upper_bound.",
+    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1036C+Classy+Numbers+editorial",
     "solutionCode": {
-      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\n#define forRange(i, l, r) for(int i = int(l); i < int(r); i++)\n#define sizeOf(a) int((a).size())\n\nstruct Segment {\n    int left, right;\n\n    bool operator< (const Segment &other) const {\n        if (left != other.left)\n            return left < other.left;\n        return right < other.right;\n    };\n};\n\nvoid solve() {\n    int numSegments;\n    cin >> numSegments;\n\n    vector<Segment> segments(numSegments);\n    forRange(i, 0, numSegments) \n        cin >> segments[i].left >> segments[i].right;\n\n    vector<int> answer(numSegments, 0);\n\n    for (int pass = 0; pass < 2; pass++) {\n        vector<int> order(numSegments);\n        iota(order.begin(), order.end(), 0); \n        sort(order.begin(), order.end(), [&segments](int i, int j){\n            if (segments[i].left != segments[j].left)\n                return segments[i].left < segments[j].left;\n            return segments[i].right > segments[j].right;\n        });\n\n        set<int> activeRights; \n        for (int idx : order) {\n            auto it = activeRights.lower_bound(segments[idx].right);\n            if (it != activeRights.end())\n                answer[idx] += *it - segments[idx].right;\n            activeRights.insert(segments[idx].right);\n        }\n        for (auto &s : segments) {\n            s.left = -s.left;\n            s.right = -s.right;\n            swap(s.left, s.right);\n        }\n    }\n\n    map<Segment, int> segmentCount;\n    for (auto s : segments)\n        segmentCount[s]++;\n    \n    for (int i = 0; i < numSegments; i++)\n        if (segmentCount[segments[i]] > 1)\n            answer[i] = 0;\n\n    for (int val : answer)\n        cout << val << '\\n';\n}\n\nint main() {\n    ios_base::sync_with_stdio(false);\n    cin.tie(0);\n\n    int testCases;\n    cin >> testCases;\n    while (testCases--)\n        solve();\n    \n    return 0;\n}"
-    },
-    "order": 12
+      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\nvector<long long> classy;\nvoid gen(int len, int non_zero, long long cur) {\n    if (len == 18) {\n        classy.push_back(cur);\n        return;\n    }\n    gen(len + 1, non_zero, cur * 10);\n    if (non_zero < 3) {\n        for (int d = 1; d <= 9; d++) gen(len + 1, non_zero + 1, cur * 10 + d);\n    }\n}\nvoid solve() {\n    long long l, r; cin >> l >> r;\n    cout << upper_bound(classy.begin(), classy.end(), r) - lower_bound(classy.begin(), classy.end(), l) << \"\\n\";\n}\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    gen(0, 0, 0);\n    classy.push_back(1000000000000000000LL);\n    sort(classy.begin(), classy.end());\n    classy.erase(unique(classy.begin(), classy.end()), classy.end());\n    int t; cin >> t;\n    while (t--) solve();\n    return 0;\n}",
+      "python": "import sys, bisect\nclassy = []\ndef gen(length, nz, cur):\n    if length == 18:\n        classy.append(cur); return\n    gen(length + 1, nz, cur * 10)\n    if nz < 3:\n        for d in range(1, 10):\n            gen(length + 1, nz + 1, cur * 10 + d)\ngen(0, 0, 0)\nclassy.append(10**18)\nclassy = sorted(set(classy))\ndef solve():\n    lines = sys.stdin.read().split()\n    if not lines: return\n    t = int(lines[0])\n    for i in range(t):\n        l, r = int(lines[1 + 2*i]), int(lines[2 + 2*i])\n        print(bisect.bisect_right(classy, r) - bisect.bisect_left(classy, l))\nif __name__ == '__main__': solve()"
+    }
   },
   {
     "id": "1842D",
@@ -11115,22 +11128,24 @@ export const CP_SHEET_PROBLEMS: CPProblem[] = [
     "order": 28
   },
   {
-    "id": "731E",
-    "contestId": 731,
+    "id": "1328E",
+    "contestId": 1328,
     "index": "E",
-    "title": "Funny Game",
+    "title": "Tree Queries",
     "rating": 1900,
-    "url": "https://codeforces.com/problemset/problem/731/E",
+    "order": 29,
+    "url": "https://codeforces.com/problemset/problem/1328/E",
     "tags": [
-      "dp",
-      "games"
+      "dfs and similar",
+      "graphs",
+      "trees"
     ],
-    "hint": "Formulate the dynamic programming state dp[i] representing the optimal answer for prefix i. Identify which previous states are reachable and initialize your base cases carefully.",
-    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+731E+Funny%20Game+editorial",
+    "hint": "Condition distance <= 1 from path from root to u means either v is on the path or parent(v) is on the path. Replace each v in query with parent(v). Then all these nodes must lie on a single path from root to the deepest node in query.",
+    "videoUrl": "https://www.youtube.com/results?search_query=codeforces+1328E+Tree+Queries+editorial",
     "solutionCode": {
-      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\n\n\nint findGCD(int a, int b) {\n\twhile (b != 0) {\n\t\tint temp = b;\n\t\tb = a % b;\n\t\ta = temp;\n\t}\n\treturn a;\n}\n\nint findLCM(int a, int b) {\n\treturn (a / findGCD(a, b)) * b;\n}\n\nint calculatePower(int base, int exponent) {\n\tint result = 1;\n\twhile (exponent > 0) {\n\t\tif (exponent % 2 == 1) {\n\t\t\tresult *= base;\n\t\t}\n\t\tbase *= base;\n\t\texponent /= 2;\n\t}\n\treturn result;\n}\n\nint main() {\n\tint testCases;\n\tstd::cin >> testCases;\n\n\twhile (testCases--) {\n\t\tint arraySize;\n\t\tstd::cin >> arraySize;\n\n\t\tstd::vector<int> array(arraySize);\n\t\tfor (int& element : array) std::cin >> element;\n\n\t\tstd::vector<int> positions(arraySize);\n\t\tstd::iota(positions.begin(), positions.end(), 0);\n\n\t\tstd::vector<std::pair<int, int>> pairs;\n\n\t\tfor (int i = arraySize - 1; i >= 1; --i) {\n\t\t\tstd::vector<int> remainder(i, -1);\n\n\t\t\tfor (int index : positions) {\n\t\t\t\tint currentRemainder = array[index] % i;\n\n\t\t\t\tif (remainder[currentRemainder] != -1) {\n\t\t\t\t\tpairs.emplace_back(index, remainder[currentRemainder]);\n\t\t\t\t\tpositions.erase(std::find(positions.begin(), positions.end(), index));\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\n\t\t\t\tremainder[currentRemainder] = index;\n\t\t\t}\n\t\t}\n\n\t\tstd::reverse(pairs.begin(), pairs.end());\n\t\tstd::cout << \"YES\" << std::endl;\n\n\t\tfor (const auto& pair : pairs) {\n\t\t\tstd::cout << pair.first + 1 << \" \" << pair.second + 1 << std::endl;\n\t\t}\n\t}\n\n\treturn 0;\n}"
-    },
-    "order": 29
+      "cpp": "#include <bits/stdc++.h>\nusing namespace std;\nint n, m, timer_cnt;\nvector<vector<int>> adj;\nvector<int> tin, tout, depth, parent_node;\nvoid dfs(int u, int p, int d) {\n    tin[u] = ++timer_cnt;\n    parent_node[u] = p;\n    depth[u] = d;\n    for (int v : adj[u]) if (v != p) dfs(v, u, d + 1);\n    tout[u] = ++timer_cnt;\n}\nbool is_ancestor(int u, int v) {\n    return tin[u] <= tin[v] && tout[u] >= tout[v];\n}\nint main() {\n    ios::sync_with_stdio(false);\n    cin.tie(nullptr);\n    if (!(cin >> n >> m)) return 0;\n    adj.resize(n + 1); tin.resize(n + 1); tout.resize(n + 1); depth.resize(n + 1); parent_node.resize(n + 1);\n    for (int i = 0; i < n - 1; i++) {\n        int u, v; cin >> u >> v;\n        adj[u].push_back(v); adj[v].push_back(u);\n    }\n    dfs(1, 1, 0);\n    while (m--) {\n        int k; cin >> k;\n        vector<int> v(k);\n        int deepest = 1;\n        for (int i = 0; i < k; i++) {\n            cin >> v[i];\n            if (depth[v[i]] > depth[deepest]) deepest = v[i];\n        }\n        bool ok = true;\n        for (int i = 0; i < k; i++) {\n            int p = parent_node[v[i]];\n            if (!is_ancestor(p, deepest)) { ok = false; break; }\n        }\n        cout << (ok ? \"YES\\n\" : \"NO\\n\");\n    }\n    return 0;\n}",
+      "python": "import sys\nsys.setrecursionlimit(300000)\ndef solve():\n    lines = sys.stdin.read().split()\n    if not lines: return\n    n, m = int(lines[0]), int(lines[1])\n    adj = [[] for _ in range(n + 1)]\n    idx = 2\n    for _ in range(n - 1):\n        u, v = int(lines[idx]), int(lines[idx+1]); idx += 2\n        adj[u].append(v); adj[v].append(u)\n    tin, tout, depth, parent_node = [0]*(n+1), [0]*(n+1), [0]*(n+1), [0]*(n+1)\n    timer = 0\n    def dfs(u, p, d):\n        nonlocal timer\n        timer += 1; tin[u] = timer\n        parent_node[u] = p; depth[u] = d\n        for v in adj[u]:\n            if v != p: dfs(v, u, d + 1)\n        timer += 1; tout[u] = timer\n    dfs(1, 1, 0)\n    def is_ancestor(u, v):\n        return tin[u] <= tin[v] and tout[u] >= tout[v]\n    out = []\n    for _ in range(m):\n        k = int(lines[idx]); idx += 1\n        nodes = [int(lines[idx + i]) for i in range(k)]; idx += k\n        deepest = max(nodes, key=lambda x: depth[x])\n        ok = all(is_ancestor(parent_node[v], deepest) for v in nodes)\n        out.append('YES' if ok else 'NO')\n    print('\\n'.join(out))\nif __name__ == '__main__': solve()"
+    }
   },
   {
     "id": "1992F",

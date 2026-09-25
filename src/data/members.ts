@@ -20,51 +20,7 @@ export interface Member {
 }
 
 export const activeMembers: Member[] = [
-  {
-    id: "mem-1",
-    name: "Sakib Al Hasan",
-    role: "Senior Developer",
-    session: "CSE (21-22)",
-    batch: "CSE, 5th",
-    image: "",
-    socials: {
-      github: "#",
-    },
-  },
-  {
-    id: "mem-2",
-    name: "Nushrat Jahan",
-    role: "UI/UX Designer",
-    session: "CSE (21-22)",
-    batch: "CSE, 5th",
-    image: "",
-    socials: {
-      linkedin: "#",
-    },
-  },
-  {
-    id: "mem-3",
-    name: "Fahim Faysal",
-    role: "Cybersecurity Analyst",
-    session: "CSE (21-22)",
-    batch: "CSE, 5th",
-    image: "",
-    socials: {
-      github: "#",
-      linkedin: "#",
-    },
-  },
-  {
-    id: "mem-4",
-    name: "Tasnia Rahman",
-    role: "Competitive Programmer",
-    session: "CSE (21-22)",
-    batch: "CSE, 5th",
-    image: "",
-    socials: {
-      github: "#",
-    },
-  },
+
 ];
 
 import { API_BASE_URL } from "@/lib/api";

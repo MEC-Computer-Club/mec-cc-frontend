@@ -289,28 +289,28 @@ export default function MonokaiCodeViewer({
 
   return (
     <div
-      className="flex flex-col h-full rounded-xl overflow-hidden border border-[#3e3d32] shadow-2xl"
+      className="flex flex-col h-full min-h-0 rounded-xl overflow-hidden border border-[#3e3d32] shadow-2xl"
       style={{ backgroundColor: "#272822" }}
     >
       {/* Editor Header Bar */}
       <div
-        className="flex items-center justify-between px-4 py-3 border-b border-[#3e3d32]"
+        className="flex items-center justify-between px-4 py-3 border-b border-[#3e3d32] shrink-0"
         style={{ backgroundColor: "#1e1f1c" }}
       >
         {/* Left: Window Dots & Title */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <div className="hidden sm:flex items-center gap-1.5 shrink-0">
             <span className="w-3 h-3 rounded-full bg-[#ff5f56] inline-block opacity-90" />
             <span className="w-3 h-3 rounded-full bg-[#ffbd2e] inline-block opacity-90" />
             <span className="w-3 h-3 rounded-full bg-[#27c93f] inline-block opacity-90" />
           </div>
 
-          <div className="flex items-center gap-2 pl-2 border-l border-[#3e3d32]">
-            <Terminal size={14} className="text-[#a6e22e]" />
-            <span className="font-mono text-xs font-bold text-[#f8f8f2]">
+          <div className="flex items-center gap-2 sm:pl-2 border-l-0 sm:border-l sm:border-[#3e3d32] min-w-0">
+            <Terminal size={14} className="text-[#a6e22e] shrink-0" />
+            <span className="font-mono text-xs font-bold text-[#f8f8f2] truncate max-w-[140px] sm:max-w-none">
               {problemId ? `solution_${problemId}.cpp` : "solution.cpp"}
             </span>
-            <span className="font-mono text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-[#3e3d32] text-[#66d9ef] font-bold">
+            <span className="hidden md:inline-block font-mono text-[10px] uppercase tracking-wider px-2 py-0.5 rounded bg-[#3e3d32] text-[#66d9ef] font-bold shrink-0">
               {language}
             </span>
           </div>
@@ -334,7 +334,7 @@ export default function MonokaiCodeViewer({
 
       {/* Editor Body with Line Numbers & Monokai Syntax */}
       <div
-        className="flex-1 overflow-auto p-4 font-mono text-xs sm:text-sm leading-6 selection:bg-[#49483e] selection:text-[#f8f8f2]"
+        className="flex-1 min-h-0 overflow-y-auto overflow-x-auto p-4 font-mono text-xs sm:text-sm leading-6 selection:bg-[#49483e] selection:text-[#f8f8f2]"
         style={{ backgroundColor: "#272822" }}
       >
         <div className="min-w-max flex">

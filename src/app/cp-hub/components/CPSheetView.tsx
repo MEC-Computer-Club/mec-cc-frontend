@@ -10,6 +10,8 @@ import {
 import {
   fetchCodeforcesSolved,
   cleanCfHandle,
+  normalizeProblemTitle,
+  CFUserInfo,
 } from "../services/cfSyncService";
 import CPSheetSidebar from "./CPSheetSidebar";
 import CPSheetTopBar from "./CPSheetTopBar";
@@ -20,6 +22,8 @@ import ConfirmationModal from "@/components/ui/shared/ConfirmModal";
 const STORAGE_KEY_SOLVED = "mec_cp_sheet_solved_v1";
 const STORAGE_KEY_HANDLE = "mec_cp_sheet_cf_handle";
 const STORAGE_KEY_SYNC_TIME = "mec_cp_sheet_last_sync";
+const STORAGE_KEY_TOTAL_CF = "mec_cp_sheet_total_cf_solved";
+const STORAGE_KEY_USER_INFO = "mec_cp_sheet_cf_user_info";
 
 export default function CPSheetView() {
   const { user } = useAuth();
@@ -30,8 +34,10 @@ export default function CPSheetView() {
   // Solved state map: { [problemId]: boolean }
   const [solvedMap, setSolvedMap] = useState<Record<string, boolean>>({});
 
-  // Codeforces handle & sync
+  // Codeforces handle & profile metrics
   const [cfHandle, setCfHandle] = useState<string>("");
+  const [totalCfSolved, setTotalCfSolved] = useState<number>(0);
+  const [cfUserInfo, setCfUserInfo] = useState<CFUserInfo | null>(null);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
 
@@ -47,22 +53,40 @@ export default function CPSheetView() {
   // Reset confirmation modal state
   const [isResetModalOpen, setIsResetModalOpen] = useState<boolean>(false);
 
-  // Initialize from localStorage and user profile
+  // Initialize from user profile, localStorage, and immediately live-fetch fresh Codeforces stats
   useEffect(() => {
     try {
       const storedSolved = localStorage.getItem(STORAGE_KEY_SOLVED);
       if (storedSolved) {
-        setSolvedMap(JSON.parse(storedSolved));
+        const parsed = JSON.parse(storedSolved);
+        if (parsed && typeof parsed === "object") {
+          setSolvedMap(parsed);
+        }
       }
 
-      const storedHandle = localStorage.getItem(STORAGE_KEY_HANDLE);
-      if (storedHandle) {
-        setCfHandle(storedHandle);
-      } else if (user?.socialLinks?.codeforces) {
-        const extracted = cleanCfHandle(user.socialLinks.codeforces);
-        if (extracted) {
-          setCfHandle(extracted);
-        }
+      const storedTotalCf = localStorage.getItem(STORAGE_KEY_TOTAL_CF);
+      if (storedTotalCf) {
+        setTotalCfSolved(Number(storedTotalCf));
+      }
+
+      const storedUserInfo = localStorage.getItem(STORAGE_KEY_USER_INFO);
+      if (storedUserInfo) {
+        try {
+          setCfUserInfo(JSON.parse(storedUserInfo));
+        } catch {}
+      }
+
+      // The authenticated user's profile Codeforces handle is authoritative
+      const profileHandle = cleanCfHandle(user?.socialLinks?.codeforces || "");
+      const storedHandle = cleanCfHandle(localStorage.getItem(STORAGE_KEY_HANDLE) || "");
+      const activeHandle = profileHandle || storedHandle;
+
+      if (activeHandle) {
+        setCfHandle(activeHandle);
+        localStorage.setItem(STORAGE_KEY_HANDLE, activeHandle);
+
+        // Always run dedicated live fetch on mount in the background to ensure 100% fresh data
+        handleSyncCodeforces(activeHandle, true);
       }
 
       const storedTime = localStorage.getItem(STORAGE_KEY_SYNC_TIME);
@@ -79,6 +103,9 @@ export default function CPSheetView() {
     setSolvedMap(newMap);
     try {
       localStorage.setItem(STORAGE_KEY_SOLVED, JSON.stringify(newMap));
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("mec_cp_sheet_updated"));
+      }
     } catch (e) {
       console.error("Failed to save solved map to localStorage", e);
     }
@@ -98,45 +125,76 @@ export default function CPSheetView() {
     }
   };
 
-  // Codeforces Auto-Sync
-  const handleSyncCodeforces = async () => {
-    const cleaned = cleanCfHandle(cfHandle);
+  // Codeforces Auto-Sync using user's CF handle
+  const handleSyncCodeforces = async (targetHandle?: string, isSilent: boolean = false) => {
+    const handleToFetch = targetHandle || cfHandle || cleanCfHandle(user?.socialLinks?.codeforces || "");
+    const cleaned = cleanCfHandle(handleToFetch);
     if (!cleaned) {
-      toast.error("Please enter a valid Codeforces handle.");
+      if (!isSilent) toast.error("Please link your Codeforces handle in your profile to auto-sync.");
       return;
     }
 
     setIsSyncing(true);
-    const toastId = toast.loading(`Fetching Codeforces submissions for ${cleaned}...`);
+    const toastId = !isSilent ? toast.loading(`Fetching Codeforces submissions for @${cleaned}...`) : undefined;
 
     try {
-      // Save entered handle
       localStorage.setItem(STORAGE_KEY_HANDLE, cleaned);
+      setCfHandle(cleaned);
 
       const result = await fetchCodeforcesSolved(cleaned);
 
       if (!result.success) {
-        toast.error(result.error || "Sync failed", { id: toastId });
+        if (!isSilent && toastId) toast.error(result.error || "Sync failed", { id: toastId });
         setIsSyncing(false);
         return;
       }
 
-      // Match solved problems with problems in our sheet
-      const cfSolvedSet = new Set(result.solvedProblemIds);
-      const sheetIds = new Set(CP_SHEET_PROBLEMS.map((p) => p.id));
+      if (result.totalPlatformSolved) {
+        setTotalCfSolved(result.totalPlatformSolved);
+        try {
+          localStorage.setItem(STORAGE_KEY_TOTAL_CF, String(result.totalPlatformSolved));
+        } catch {}
+      }
 
-      let newlySolvedCount = 0;
-      const updated = { ...solvedMap };
+      if (result.userInfo) {
+        setCfUserInfo(result.userInfo);
+        try {
+          localStorage.setItem(STORAGE_KEY_USER_INFO, JSON.stringify(result.userInfo));
+        } catch {}
+      }
 
-      cfSolvedSet.forEach((id) => {
-        if (sheetIds.has(id)) {
-          if (!updated[id]) {
-            newlySolvedCount++;
-          }
-          updated[id] = true;
+      // Match solved problems with problems in our sheet for his handle
+      // 1. Exact ID matching
+      const cfSolvedIds = new Set(result.solvedProblemIds);
+      const updated: Record<string, boolean> = {};
+
+      for (const p of CP_SHEET_PROBLEMS) {
+        if (cfSolvedIds.has(p.id)) {
+          updated[p.id] = true;
         }
-      });
+      }
 
+      // 2. Twin round matching (Div 1 / Div 2 twin rounds or Gym mirrors)
+      if (result.solvedSubmissions) {
+        for (const sub of result.solvedSubmissions) {
+          if (!sub.name || !sub.rating) continue;
+          const normSubName = normalizeProblemTitle(sub.name);
+
+          for (const p of CP_SHEET_PROBLEMS) {
+            if (!updated[p.id] && p.rating === sub.rating) {
+              const normPTitle = normalizeProblemTitle(p.title);
+              if (normPTitle === normSubName) {
+                const diff = Math.abs(sub.contestId - p.contestId);
+                if (diff <= 10 || sub.contestId >= 100000) {
+                  updated[p.id] = true;
+                }
+              }
+            }
+          }
+        }
+      }
+
+      const totalSolvedCount = Object.keys(updated).length;
       saveSolvedMap(updated);
 
       const now = new Date().toLocaleTimeString([], {
@@ -146,12 +204,16 @@ export default function CPSheetView() {
       setLastSyncedAt(now);
       localStorage.setItem(STORAGE_KEY_SYNC_TIME, now);
 
-      toast.success(
-        `Synced with Codeforces! ${newlySolvedCount} new problems marked solved.`,
-        { id: toastId, duration: 4000 }
-      );
+      if (!isSilent && toastId) {
+        toast.success(
+          `Synced with Codeforces! ${totalSolvedCount} of ${CP_SHEET_PROBLEMS.length} sheet problems solved for @${cleaned}.`,
+          { id: toastId, duration: 4000 }
+        );
+      }
     } catch (err: any) {
-      toast.error("An error occurred during sync.", { id: toastId });
+      if (!isSilent && toastId) {
+        toast.error("An error occurred during sync.", { id: toastId });
+      }
     } finally {
       setIsSyncing(false);
     }
@@ -196,8 +258,9 @@ export default function CPSheetView() {
         problems={CP_SHEET_PROBLEMS}
         solvedMap={solvedMap}
         cfHandle={cfHandle}
-        setCfHandle={setCfHandle}
-        onSync={handleSyncCodeforces}
+        totalCfSolved={totalCfSolved}
+        cfUserInfo={cfUserInfo}
+        onSync={() => handleSyncCodeforces(cfHandle, false)}
         isSyncing={isSyncing}
         lastSyncedAt={lastSyncedAt}
         searchQuery={searchQuery}
@@ -211,7 +274,7 @@ export default function CPSheetView() {
       />
 
       {/* Main Content: Sidebar + Problem Table */}
-      <div className="flex flex-col md:flex-row items-start gap-6">
+      <div className="flex flex-col lg:flex-row items-start gap-6">
         {/* Rating Sidebar (Left) */}
         <CPSheetSidebar
           selectedRating={selectedRating}
@@ -223,6 +286,7 @@ export default function CPSheetView() {
         {/* Problem List (Right) */}
         <div className="flex-1 w-full min-w-0">
           <CPSheetProblemTable
+            key={selectedRating}
             problems={displayedProblems}
             solvedMap={solvedMap}
             onToggleSolve={handleToggleSolve}

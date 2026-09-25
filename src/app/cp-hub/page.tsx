@@ -29,30 +29,6 @@ export const metadata: Metadata = {
   },
 };
 
-const defaultAchievements = [
-  {
-    id: "ach-1",
-    title: "ICPC Asia Dhaka Regional Contest",
-    highlight: "Top 25 Finish",
-    desc: "MEC Computer Club represented the institution with distinction among national universities.",
-    year: "2025",
-  },
-  {
-    id: "ach-2",
-    title: "Intra-MEC Programming Contest",
-    highlight: "100+ Participants",
-    desc: "Annual algorithmic contest hosted on campus with dedicated lab setups and real-time scoreboards.",
-    year: "2025",
-  },
-  {
-    id: "ach-3",
-    title: "National Collegiate Girls' Contest",
-    highlight: "Regional Qualification",
-    desc: "Female members of MEC Computer Club qualified for national finals with flying colors.",
-    year: "2025",
-  },
-];
-
 export default async function CPHubPage() {
   const [leaderboardData, cpContent] = await Promise.all([
     getClubLeaderboard(),
@@ -66,14 +42,10 @@ export default async function CPHubPage() {
     "Leaderboard, curated roadmaps, problem sets, and resources — everything the CP team needs in one place.";
 
   const achievements =
-    Array.isArray(cpContent?.achievements) && cpContent.achievements.length > 0
-      ? cpContent.achievements
-      : defaultAchievements;
+    Array.isArray(cpContent?.achievements) ? cpContent.achievements : [];
 
   const clubDocs =
-    Array.isArray(cpContent?.clubDocs) && cpContent.clubDocs.length > 0
-      ? cpContent.clubDocs
-      : cpResources;
+    Array.isArray(cpContent?.clubDocs) ? cpContent.clubDocs : [];
 
   return (
     <CPHubView
