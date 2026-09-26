@@ -137,14 +137,14 @@ export function HomeSponsors({ sponsors }: HomeSponsorsProps) {
       {/* Mobile Dual Opposing Sliders (Different content across both rows, opposite directions) */}
       <div className="block md:hidden space-y-3 py-1 select-none marquee-mask">
         {/* Row 1: Right to Left */}
-        <div className="relative w-full overflow-hidden">
+        <div className="relative w-full overflow-hidden py-1.5">
           <div className="animate-marquee flex items-center gap-3">
             {mobileRow1Items.map((sponsor, idx) => renderCard(sponsor, `m1-${idx}`, true))}
           </div>
         </div>
 
         {/* Row 2: Left to Right (Reverse direction with different content) */}
-        <div className="relative w-full overflow-hidden">
+        <div className="relative w-full overflow-hidden py-1.5">
           <div className="animate-marquee-reverse flex items-center gap-3">
             {mobileRow2Items.map((sponsor, idx) => renderCard(sponsor, `m2-${idx}`, true))}
           </div>

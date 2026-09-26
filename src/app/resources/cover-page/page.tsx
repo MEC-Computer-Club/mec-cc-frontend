@@ -1,5 +1,13 @@
 import type { Metadata } from "next";
+import { Quicksand } from "next/font/google";
 import { CoverPageGeneratorClient } from "./CoverPageGeneratorClient";
+
+const quicksand = Quicksand({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-quicksand",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Cover Page — MEC CC",
@@ -21,5 +29,9 @@ export const metadata: Metadata = {
 };
 
 export default function CoverPage() {
-  return <CoverPageGeneratorClient />;
+  return (
+    <div className={quicksand.variable}>
+      <CoverPageGeneratorClient />
+    </div>
+  );
 }

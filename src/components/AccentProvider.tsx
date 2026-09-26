@@ -76,6 +76,8 @@ export function AccentProvider({
 
   useEffect(() => {
     setMounted(true);
+    const randomIndex = Math.floor(Math.random() * VIBE_ORDER.length);
+    setVibeIndex(randomIndex);
   }, []);
 
   // Apply accent tokens whenever vibe or mode changes

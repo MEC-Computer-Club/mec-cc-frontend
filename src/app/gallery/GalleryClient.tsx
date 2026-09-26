@@ -34,7 +34,7 @@ const BATCH_INCREMENT = 8;
 /* ── Neo-Brutalist Skeleton Card ── */
 function GallerySkeletonCard() {
   return (
-    <div className="relative aspect-[4/3] bg-surface-secondary rounded-2xl border-2 border-border-default overflow-hidden animate-pulse shadow-[3px_3px_0px_var(--border-default)]">
+    <div className="relative aspect-[4/3] bg-surface-secondary rounded-2xl border border-black dark:border-border-default overflow-hidden animate-pulse">
       <div className="w-full h-full bg-gradient-to-br from-surface-secondary via-surface-elevated to-surface-secondary" />
       <div className="absolute top-3 right-3 w-8 h-8 rounded-lg bg-surface-tertiary/70 border border-border-default" />
       <div className="absolute bottom-3 left-3 right-3 space-y-2">
@@ -61,7 +61,7 @@ function GalleryCardItem({
   return (
     <div
       onClick={onClick}
-      className="group relative aspect-[4/3] bg-surface-secondary rounded-2xl border-2 border-border-brutalist overflow-hidden transition-all duration-200 hover:shadow-[6px_6px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5 cursor-pointer z-0 hover:z-10"
+      className="group relative aspect-[4/3] bg-surface-secondary rounded-2xl border border-black dark:border-border-default overflow-hidden transition-all duration-200 hover:shadow-[6px_6px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5 cursor-pointer z-0 hover:z-10"
       id={`gallery-item-${item.id}`}
     >
       {/* Background Skeleton Shimmer while Image is Loading */}

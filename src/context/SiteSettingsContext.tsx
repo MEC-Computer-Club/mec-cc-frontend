@@ -62,10 +62,18 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
       if (!res.ok) throw new Error("Failed to fetch public settings");
       const data = await res.json();
       if (data && data.settings) {
-        setSettings((prev) => ({
-          ...prev,
-          ...data.settings,
-        }));
+        setSettings((prev) => {
+          const next = {
+            ...prev,
+            ...data.settings,
+          };
+          if (typeof window !== "undefined") {
+            try {
+              localStorage.setItem("mec_site_settings", JSON.stringify(next));
+            } catch {}
+          }
+          return next;
+        });
       }
     } catch {
       // Retain defaults gracefully
@@ -75,6 +83,15 @@ export function SiteSettingsProvider({ children }: { children: React.ReactNode }
   }, []);
 
   useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem("mec_site_settings");
+        if (cached) {
+          setSettings(JSON.parse(cached));
+          setLoading(false);
+        }
+      } catch {}
+    }
     fetchSettings();
 
     const handleUpdate = () => {

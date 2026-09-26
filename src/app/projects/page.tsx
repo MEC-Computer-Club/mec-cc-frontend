@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 import type { Metadata } from "next";
 import { getProjects } from "@/data/projects";
 import { ProjectsClient } from "./components/ProjectsClient";

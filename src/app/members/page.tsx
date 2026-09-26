@@ -3,8 +3,7 @@ import { ProfileCard, ProfileGrid } from "@/components/ui/ProfileCard";
 import { getActiveMembers } from "@/data/members";
 import { groupPeopleByBatch } from "@/lib/batchUtils";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 120;
 
 export const metadata: Metadata = {
   title: "Club Members & Student Developers | MEC Computer Club",

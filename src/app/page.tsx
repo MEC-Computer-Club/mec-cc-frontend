@@ -1,6 +1,7 @@
 export const revalidate = 60;
 import type { Metadata } from "next";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/Button";
 import { EventCard, ProjectCard } from "@/components/ui/Card";
 import { departments } from "@/data/departments";
@@ -8,14 +9,26 @@ import { getHomeEvents } from "@/data/events";
 import { getFeaturedProjects } from "@/data/projects";
 import { getFeaturedBlogs } from "@/data/blog";
 import { getClubLeaderboard } from "@/data/cp";
-import { getHomeGalleryItems } from "@/data/gallery";
+import { getHomeGalleryItems, getOptimizedImageUrl } from "@/data/gallery";
 import { getPartners } from "@/data/partners";
 import { getPageContent } from "@/lib/pageContent";
-import { AlgorithmVisualizer } from "@/components/ui/AlgorithmVisualizer";
 import { HomeGallery } from "@/components/home/HomeGallery";
 import { HomeSponsors } from "@/components/home/HomeSponsors";
 import { HomeBlogs } from "@/components/home/HomeBlogs";
-import { AboutContactGlimpse } from "@/components/home/AboutContactGlimpse";
+
+const AlgorithmVisualizer = dynamic(
+  () => import("@/components/ui/AlgorithmVisualizer").then((m) => m.AlgorithmVisualizer),
+  {
+    loading: () => <div className="w-full max-w-[500px] h-[380px] bg-surface-secondary rounded-xl animate-pulse" />,
+  }
+);
+
+const AboutContactGlimpse = dynamic(
+  () => import("@/components/home/AboutContactGlimpse").then((m) => m.AboutContactGlimpse),
+  {
+    loading: () => <div className="w-full h-96 bg-surface-secondary/50 rounded-xl animate-pulse" />,
+  }
+);
 
 export const metadata: Metadata = {
   title: "MEC Computer Club — Weekly CP Practice, Real Projects, One Club",
@@ -246,10 +259,11 @@ export default async function HomePage() {
                   <span className="text-right">Solved</span>
                 </div>
                 {topCP.map((entry) => {
-                  const avatarSrc =
+                  const rawAvatarSrc =
                     entry.imageUrl ||
                     entry.avatar ||
                     `https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(entry.name)}&backgroundColor=transparent`;
+                  const avatarSrc = getOptimizedImageUrl(rawAvatarSrc, 64);
                   const isTop1 = entry.rank === 1;
                   const isTop2 = entry.rank === 2;
                   const isTop3 = entry.rank === 3;
@@ -290,6 +304,10 @@ export default async function HomePage() {
                           <img
                             src={avatarSrc}
                             alt={entry.name}
+                            width={32}
+                            height={32}
+                            loading="lazy"
+                            decoding="async"
                             className="w-full h-full object-cover"
                           />
                         </div>
