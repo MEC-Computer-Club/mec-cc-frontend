@@ -19,7 +19,7 @@ interface CPSheetProblemTableProps {
   onToggleSolve: (problemId: string) => void;
   onOpenHint: (problem: CPProblem) => void;
   onOpenCode: (problem: CPProblem) => void;
-  onOpenVideo: (problem: CPProblem) => void;
+  onOpenVideo?: (problem: CPProblem) => void;
   selectedRating: number;
   showAllTags?: boolean;
 }
@@ -59,17 +59,17 @@ export default function CPSheetProblemTable({
   }
 
   return (
-    <div className="border-2 border-border-brutalist dark:border-border-default rounded-2xl bg-surface-elevated overflow-hidden shadow-[5px_5px_0px_var(--accent-primary)]">
+    <div className="border-2 border-border-brutalist dark:border-border-default rounded-xl sm:rounded-2xl bg-surface-elevated overflow-hidden shadow-[3px_3px_0px_var(--accent-primary)] sm:shadow-[5px_5px_0px_var(--accent-primary)]">
       {/* Table Header */}
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b-2 border-border-default bg-surface/90 text-text-secondary font-mono uppercase tracking-wider text-xs sm:text-sm font-bold">
-              <th className="py-3.5 px-3 sm:px-4 w-14 text-center">#</th>
-              <th className="py-3.5 px-3 sm:px-4 w-32 text-center">Status</th>
-              <th className="py-3.5 px-4 min-w-[240px]">Problem</th>
-              <th className="py-3.5 px-4 hidden lg:table-cell">Topics</th>
-              <th className="py-3.5 px-4 text-right w-52">Editorial &amp; Solutions</th>
+              <th className="py-3 px-1.5 sm:px-3 w-8 sm:w-12 text-center">#</th>
+              <th className="py-3 px-1.5 sm:px-3 w-20 sm:w-28 text-center">Status</th>
+              <th className="py-3 px-2 sm:px-4 min-w-[160px] sm:min-w-[240px]">Problem</th>
+              <th className="py-3 px-4 hidden lg:table-cell">Topics</th>
+              <th className="py-3 px-2 sm:px-5 text-right w-28 sm:w-44">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-border-default">
@@ -80,36 +80,34 @@ export default function CPSheetProblemTable({
 
               return (
                 <tr
-                  key={problem.id}
-                  className={`group transition-colors ${
-                    isSolved
+                  key={`${selectedRating}-${problem.id}-${problem.order}`}
+                  className={`group transition-colors ${isSolved
                       ? "bg-emerald-500/10 hover:bg-emerald-500/15"
                       : "hover:bg-surface/80"
-                  }`}
+                    }`}
                 >
                   {/* Index */}
-                  <td className="py-3.5 px-3 sm:px-4 text-center font-mono font-extrabold text-xs sm:text-sm text-text-secondary">
+                  <td className="py-3 px-1.5 sm:px-3 text-center font-mono font-extrabold text-xs sm:text-sm text-text-secondary">
                     {problem.order}
                   </td>
 
                   {/* Solved Status Toggle */}
-                  <td className="py-3.5 px-3 sm:px-4 text-center">
+                  <td className="py-3 px-1.5 sm:px-3 text-center">
                     <button
                       onClick={() => onToggleSolve(problem.id)}
-                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-mono text-xs sm:text-sm font-bold transition-all border cursor-pointer ${
-                        isSolved
+                      className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full font-mono text-[11px] sm:text-xs font-bold transition-all border cursor-pointer ${isSolved
                           ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/50 hover:bg-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.25)]"
                           : "bg-surface text-text-secondary border-border-default hover:border-accent-primary hover:text-text-primary"
-                      }`}
+                        }`}
                     >
                       {isSolved ? (
                         <>
-                          <CheckCircle2 size={15} className="text-emerald-400" />
+                          <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
                           <span>Solved</span>
                         </>
                       ) : (
                         <>
-                          <Circle size={15} className="opacity-50" />
+                          <Circle size={14} className="opacity-50 shrink-0" />
                           <span>Todo</span>
                         </>
                       )}
@@ -117,10 +115,10 @@ export default function CPSheetProblemTable({
                   </td>
 
                   {/* Problem Name & Codeforces Link */}
-                  <td className="py-3.5 px-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <td className="py-3 px-2 sm:px-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2">
                       <span
-                        className={`font-mono text-xs sm:text-sm font-black px-2.5 py-1 rounded-md border shrink-0 w-fit shadow-xs ${problemRatingStyle.badge}`}
+                        className={`font-mono text-[11px] sm:text-xs font-black px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md border shrink-0 w-fit shadow-xs ${problemRatingStyle.badge}`}
                       >
                         {problem.id}
                       </span>
@@ -128,13 +126,12 @@ export default function CPSheetProblemTable({
                         href={problem.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className={`font-bold text-sm sm:text-base text-text-primary hover:text-accent-primary transition-colors flex items-center gap-1.5 ${
-                          isSolved ? "line-through opacity-75" : ""
-                        }`}
+                        className={`font-bold text-xs sm:text-sm md:text-base text-text-primary hover:text-accent-primary transition-colors flex items-center gap-1.5 break-words ${isSolved ? "line-through opacity-75" : ""
+                          }`}
                       >
                         <span>{problem.title}</span>
                         <ExternalLink
-                          size={14}
+                          size={13}
                           className="opacity-50 group-hover:opacity-100 transition-opacity shrink-0"
                         />
                       </a>
@@ -175,7 +172,7 @@ export default function CPSheetProblemTable({
                   </td>
 
                   {/* Topics (Desktop) */}
-                  <td className="py-3.5 px-4 hidden lg:table-cell">
+                  <td className="py-3 px-4 hidden lg:table-cell">
                     {areTagsVisible ? (
                       <div className="flex flex-wrap items-center gap-1.5 max-w-sm animate-fade-in">
                         {problem.tags.map((tag) => (
@@ -208,38 +205,63 @@ export default function CPSheetProblemTable({
                     )}
                   </td>
 
-                  {/* Action Buttons (Hint, Code, Video) */}
-                  <td className="py-3.5 px-4 text-right">
-                    <div className="inline-flex items-center gap-1.5 sm:gap-2">
+                  {/* Action Buttons (Logo Only: Hint, Code, Video with Tooltips) */}
+                  <td className="py-3 px-2 sm:px-5 text-right">
+                    <div className="inline-flex items-center justify-end gap-1.5 sm:gap-2">
                       {/* Hint Button */}
-                      <button
-                        onClick={() => onOpenHint(problem)}
-                        title="View Algorithmic Hint"
-                        className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-400 font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-2xs"
-                      >
-                        <Lightbulb size={15} className="text-amber-400" />
-                        <span className="hidden sm:inline">Hint</span>
-                      </button>
+                      <div className="relative group/hint inline-flex justify-center">
+                        <button
+                          type="button"
+                          onClick={() => onOpenHint(problem)}
+                          aria-label="View Hint"
+                          className="p-1.5 sm:p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500/20 text-amber-500 dark:text-amber-400 transition-all cursor-pointer shadow-2xs hover:scale-105 active:scale-95 inline-flex items-center justify-center"
+                        >
+                          <Lightbulb size={16} />
+                        </button>
+                        <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 hidden sm:flex opacity-0 group-hover/hint:opacity-100 transition-opacity duration-150 flex-col items-center">
+                          <span className="px-2.5 py-1 rounded-md bg-zinc-900 dark:bg-zinc-800 text-zinc-100 text-[11px] font-mono font-bold shadow-xl whitespace-nowrap border border-zinc-700">
+                            View Hint
+                          </span>
+                          <span className="w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-zinc-900 dark:border-t-zinc-800" />
+                        </div>
+                      </div>
 
                       {/* Code Solution Button */}
-                      <button
-                        onClick={() => onOpenCode(problem)}
-                        title="View Solution Code (C++)"
-                        className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 text-cyan-400 font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-2xs"
-                      >
-                        <Code2 size={15} className="text-cyan-400" />
-                        <span className="hidden sm:inline">Code</span>
-                      </button>
+                      <div className="relative group/code inline-flex justify-center">
+                        <button
+                          type="button"
+                          onClick={() => onOpenCode(problem)}
+                          aria-label="View Solution Code (C++)"
+                          className="p-1.5 sm:p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-cyan-500/10 border border-cyan-500/30 hover:bg-cyan-500/20 text-cyan-500 dark:text-cyan-400 transition-all cursor-pointer shadow-2xs hover:scale-105 active:scale-95 inline-flex items-center justify-center"
+                        >
+                          <Code2 size={16} />
+                        </button>
+                        <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 hidden sm:flex opacity-0 group-hover/code:opacity-100 transition-opacity duration-150 flex-col items-center">
+                          <span className="px-2.5 py-1 rounded-md bg-zinc-900 dark:bg-zinc-800 text-zinc-100 text-[11px] font-mono font-bold shadow-xl whitespace-nowrap border border-zinc-700">
+                            View Solution (C++)
+                          </span>
+                          <span className="w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-zinc-900 dark:border-t-zinc-800" />
+                        </div>
+                      </div>
 
-                      {/* Video Editorial Button */}
-                      <button
-                        onClick={() => onOpenVideo(problem)}
-                        title="Watch Video Editorial"
-                        className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-rose-500/10 border border-rose-500/30 hover:bg-rose-500/20 text-rose-400 font-bold text-xs sm:text-sm transition-all cursor-pointer shadow-2xs"
-                      >
-                        <Video size={15} className="text-rose-400" />
-                        <span className="hidden sm:inline">Video</span>
-                      </button>
+                      {/* Video Editorial Button - Directly Redirects to YouTube */}
+                      <div className="relative group/video inline-flex justify-center">
+                        <a
+                          href={problem.videoUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label="Video Editorial (YouTube)"
+                          className="p-1.5 sm:p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-rose-500/10 border border-rose-500/30 hover:bg-rose-500/20 text-rose-500 dark:text-rose-400 transition-all cursor-pointer shadow-2xs hover:scale-105 active:scale-95 inline-flex items-center justify-center"
+                        >
+                          <Video size={16} />
+                        </a>
+                        <div className="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-50 hidden sm:flex opacity-0 group-hover/video:opacity-100 transition-opacity duration-150 flex-col items-center">
+                          <span className="px-2.5 py-1 rounded-md bg-zinc-900 dark:bg-zinc-800 text-zinc-100 text-[11px] font-mono font-bold shadow-xl whitespace-nowrap border border-zinc-700">
+                            Video
+                          </span>
+                          <span className="w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-zinc-900 dark:border-t-zinc-800" />
+                        </div>
+                      </div>
                     </div>
                   </td>
                 </tr>

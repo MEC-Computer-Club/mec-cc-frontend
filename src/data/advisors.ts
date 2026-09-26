@@ -16,43 +16,6 @@ export interface Advisor {
 }
 
 export const staticAdvisors: Advisor[] = [
-  {
-    id: "adv-1",
-    name: "Dr. Abu Sayed",
-    role: "Chief Advisor",
-    academicPost: "Head of CSE Department",
-    department: "CSE",
-    image: "",
-    bio: "Head of CSE Department. Passionate about algorithms and data structures.",
-    socials: {
-      linkedin: "#",
-    },
-  },
-  {
-    id: "adv-2",
-    name: "Prof. Farhana Haque",
-    role: "Technical Advisor",
-    academicPost: "Professor, Dept. of CSE",
-    department: "CSE",
-    image: "",
-    bio: "Specializes in Artificial Intelligence and Machine Learning research.",
-    socials: {
-      linkedin: "#",
-      github: "#",
-    },
-  },
-  {
-    id: "adv-3",
-    name: "Dr. Rakib Hasan",
-    role: "Faculty Advisor",
-    academicPost: "Associate Professor, Dept. of CSE",
-    department: "CSE",
-    image: "",
-    bio: "Expert in Cyber Security and Software Engineering principles.",
-    socials: {
-      linkedin: "#",
-    },
-  },
 ];
 
 export const advisors = staticAdvisors;

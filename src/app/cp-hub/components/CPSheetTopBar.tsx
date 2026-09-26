@@ -14,12 +14,15 @@ import {
   EyeOff,
 } from "lucide-react";
 import { CPProblem } from "@/data/cpSheetProblems";
+import { CFUserInfo } from "../services/cfSyncService";
 
 interface CPSheetTopBarProps {
   problems: CPProblem[];
   solvedMap: Record<string, boolean>;
   cfHandle: string;
-  setCfHandle: (val: string) => void;
+  totalCfSolved?: number;
+  cfUserInfo?: CFUserInfo | null;
+  setCfHandle?: (val: string) => void;
   onSync: () => void;
   isSyncing: boolean;
   lastSyncedAt: string | null;
@@ -37,7 +40,8 @@ export default function CPSheetTopBar({
   problems,
   solvedMap,
   cfHandle,
-  setCfHandle,
+  totalCfSolved,
+  cfUserInfo,
   onSync,
   isSyncing,
   lastSyncedAt,
@@ -55,19 +59,12 @@ export default function CPSheetTopBar({
   const overallPercent =
     totalCount > 0 ? Math.round((totalSolved / totalCount) * 100) : 0;
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!isSyncing) {
-      onSync();
-    }
-  };
-
   return (
     <div className="space-y-5">
-      {/* Top Banner: Global Stats & Codeforces Auto-Sync */}
+      {/* Top Banner: Global Stats & Codeforces Profile Sync */}
       <div className="p-6 md:p-7 bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-2xl shadow-[5px_5px_0px_var(--accent-primary)] space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          {/* Left: Overall Solved Counter */}
+          {/* Left: Overall Solved Counter (Self Solve Count) */}
           <div className="space-y-2.5">
             <div className="flex items-center gap-2.5 flex-wrap">
               <span className="p-2 rounded-xl bg-accent-primary/15 text-accent-primary border border-accent-primary/30 shadow-xs">
@@ -81,52 +78,83 @@ export default function CPSheetTopBar({
               </span>
             </div>
 
-            <div className="flex flex-wrap items-baseline gap-3.5">
+            <div className="flex flex-wrap items-center gap-3.5 sm:gap-4">
               <div className="text-3xl sm:text-4xl font-black font-mono text-text-primary tracking-tight">
                 {totalSolved}{" "}
                 <span className="text-base sm:text-lg font-medium text-text-tertiary">
-                  / {totalCount} Solved
+                  / {totalCount} Sheet Solved
                 </span>
               </div>
+
+              {totalCfSolved && totalCfSolved > 0 ? (
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface border border-border-default shadow-xs">
+                  <span className="text-xs font-mono text-text-tertiary">All-Time CF:</span>
+                  <span className="font-mono text-sm sm:text-base font-black text-accent-primary">
+                    {totalCfSolved.toLocaleString()} solved
+                  </span>
+                </div>
+              ) : null}
+
               <span className="font-mono text-xs sm:text-sm font-black px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40 shadow-xs">
                 {overallPercent}% Completed
               </span>
             </div>
 
             <p className="text-sm text-text-secondary leading-relaxed max-w-2xl">
-              Curated Codeforces problems modeled after competitive programming ladders. Track progress, review hints &amp; solutions, or auto-sync your accepted solves.
+              Curated Codeforces problems modeled after competitive programming ladders. Your accepted submissions are automatically tracked and marked.
             </p>
           </div>
 
-          {/* Right: Codeforces Sync Form */}
-          <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-stretch sm:items-center gap-3 bg-surface p-3.5 rounded-xl border border-border-default shadow-xs">
-            <form onSubmit={handleSubmit} className="flex items-center gap-2 flex-1">
-              <div className="relative flex-1 min-w-[200px]">
-                <input
-                  type="text"
-                  value={cfHandle}
-                  onChange={(e) => setCfHandle(e.target.value)}
-                  placeholder="Codeforces handle..."
-                  className="w-full px-3.5 py-2.5 text-sm font-mono rounded-lg bg-surface-elevated border border-border-default focus:border-accent-primary focus:outline-none text-text-primary placeholder:text-text-tertiary font-medium"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={isSyncing || !cfHandle.trim()}
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-black bg-accent-primary text-text-primary hover:opacity-95 disabled:opacity-50 transition-all shrink-0 shadow-xs cursor-pointer"
-              >
-                <RefreshCw
-                  size={16}
-                  className={isSyncing ? "animate-spin" : ""}
-                />
-                <span>{isSyncing ? "Syncing..." : "Auto Fetch"}</span>
-              </button>
-            </form>
+          {/* Right: Codeforces Profile & Quick Sync Badge (No manual input) */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 bg-surface p-3.5 sm:px-4 sm:py-3 rounded-xl border border-border-default shadow-xs self-start lg:self-center">
+            {cfHandle ? (
+              <>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-mono text-text-tertiary">CF:</span>
+                    <a
+                      href={`https://codeforces.com/profile/${cfHandle}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-mono text-xs sm:text-sm font-bold text-accent-primary hover:underline inline-flex items-center gap-1"
+                      title="View Codeforces profile"
+                    >
+                      @{cfHandle}
+                      <ExternalLink size={12} className="opacity-70 shrink-0" />
+                    </a>
+                  </div>
+                  {cfUserInfo?.rating ? (
+                    <span className="font-mono text-[11px] sm:text-xs font-bold px-2 py-0.5 rounded-md bg-accent-primary/10 text-accent-primary border border-accent-primary/20">
+                      {cfUserInfo.rating} {cfUserInfo.rank ? `(${cfUserInfo.rank})` : ""}
+                    </span>
+                  ) : null}
+                </div>
 
-            {lastSyncedAt && (
-              <span className="text-xs font-mono text-text-tertiary shrink-0 sm:pl-1">
-                Last synced: {lastSyncedAt}
-              </span>
+                <div className="flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={onSync}
+                    disabled={isSyncing}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-accent-primary !text-accent-primary-text hover:bg-accent-primary-hover disabled:opacity-50 transition-all shrink-0 cursor-pointer shadow-xs"
+                  >
+                    <RefreshCw
+                      size={13}
+                      className={isSyncing ? "animate-spin shrink-0" : "shrink-0"}
+                    />
+                    <span>{isSyncing ? "Syncing..." : "Sync CF"}</span>
+                  </button>
+
+                  {lastSyncedAt && (
+                    <span className="text-[11px] font-mono text-text-tertiary shrink-0">
+                      Synced: {lastSyncedAt}
+                    </span>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center gap-2 text-xs font-mono text-text-secondary">
+                <span>Link Codeforces handle in your profile to auto-sync</span>
+              </div>
             )}
           </div>
         </div>
@@ -141,7 +169,7 @@ export default function CPSheetTopBar({
           </div>
           <div className="w-full h-3 bg-surface-secondary rounded-full overflow-hidden border border-border-default shadow-inner">
             <div
-              className="h-full bg-gradient-to-r from-accent-primary via-emerald-400 to-emerald-500 transition-all duration-500 rounded-full"
+              className="h-full bg-accent-primary transition-all duration-500 rounded-full"
               style={{ width: `${overallPercent}%` }}
             />
           </div>
@@ -172,7 +200,7 @@ export default function CPSheetTopBar({
               onClick={() => setStatusFilter("all")}
               className={`px-3.5 py-1.5 rounded-md text-xs sm:text-sm font-black transition-colors cursor-pointer ${
                 statusFilter === "all"
-                  ? "bg-accent-primary text-text-primary shadow-xs"
+                  ? "bg-accent-primary !text-accent-primary-text shadow-xs"
                   : "text-text-secondary hover:text-text-primary"
               }`}
             >
@@ -182,7 +210,7 @@ export default function CPSheetTopBar({
               onClick={() => setStatusFilter("unsolved")}
               className={`px-3.5 py-1.5 rounded-md text-xs sm:text-sm font-black transition-colors cursor-pointer ${
                 statusFilter === "unsolved"
-                  ? "bg-accent-primary text-text-primary shadow-xs"
+                  ? "bg-accent-primary !text-accent-primary-text shadow-xs"
                   : "text-text-secondary hover:text-text-primary"
               }`}
             >
@@ -192,7 +220,7 @@ export default function CPSheetTopBar({
               onClick={() => setStatusFilter("solved")}
               className={`px-3.5 py-1.5 rounded-md text-xs sm:text-sm font-black transition-colors cursor-pointer ${
                 statusFilter === "solved"
-                  ? "bg-emerald-600 text-white shadow-xs"
+                  ? "bg-accent-primary !text-accent-primary-text shadow-xs"
                   : "text-text-secondary hover:text-text-primary"
               }`}
             >

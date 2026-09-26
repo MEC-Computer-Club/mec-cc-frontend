@@ -51,12 +51,10 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
           setUserSheetSolved(0);
         }
 
-        const storedHandle = localStorage.getItem("mec_cp_sheet_cf_handle");
-        if (storedHandle) {
-          setUserHandle(cleanCfHandle(storedHandle));
-        } else if (user?.socialLinks?.codeforces) {
-          setUserHandle(cleanCfHandle(user.socialLinks.codeforces));
-        }
+        const authCf = cleanCfHandle(user?.socialLinks?.codeforces || "");
+        const storedHandle = cleanCfHandle(localStorage.getItem("mec_cp_sheet_cf_handle") || "");
+        // If user is authenticated, their profile CF handle takes precedence; otherwise use stored practice handle
+        setUserHandle(authCf || storedHandle);
       } catch (e) {
         console.warn("Could not read local solved progress", e);
       }
@@ -64,37 +62,54 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
 
     syncLocalProgress();
     window.addEventListener("storage", syncLocalProgress);
-    return () => window.removeEventListener("storage", syncLocalProgress);
+    window.addEventListener("mec_cp_sheet_updated", syncLocalProgress);
+    return () => {
+      window.removeEventListener("storage", syncLocalProgress);
+      window.removeEventListener("mec_cp_sheet_updated", syncLocalProgress);
+    };
   }, [user]);
 
   // Combine and enrich entries:
-  // 1. Compute valid sheetSolved for each member (capped at 293)
+  // 1. Authenticate and uniquely match at most ONE active user
   // 2. Identify and update active user's entry with their exact local sheet solves
   // 3. If user is active/logged-in/has handle and not in initialEntries, inject their row
   const entriesWithSheet = useMemo(() => {
-    const normalizedUserHandle = cleanCfHandle(userHandle).toLowerCase();
-    const normalizedUserName = (user?.fullName || (user as any)?.name || "").trim().toLowerCase();
     const userId = user?._id || user?.id;
+    const authCf = cleanCfHandle(user?.socialLinks?.codeforces || "").toLowerCase();
+    const authName = (user?.fullName || (user as any)?.name || "").trim().toLowerCase();
+    const guestHandle = !user ? cleanCfHandle(userHandle).toLowerCase() : "";
 
-    let userMatched = false;
+    // Find strictly ONE matching member index for the active visitor
+    let matchedIndex = -1;
+    if (userId) {
+      matchedIndex = initialEntries.findIndex((e) => e.userId && e.userId === userId);
+    }
+    if (matchedIndex === -1 && authCf) {
+      matchedIndex = initialEntries.findIndex(
+        (e) => cleanCfHandle(e.handle).toLowerCase() === authCf
+      );
+    }
+    if (matchedIndex === -1 && authName) {
+      matchedIndex = initialEntries.findIndex(
+        (e) => (e.name || "").trim().toLowerCase() === authName
+      );
+    }
+    if (matchedIndex === -1 && guestHandle) {
+      matchedIndex = initialEntries.findIndex(
+        (e) => cleanCfHandle(e.handle).toLowerCase() === guestHandle
+      );
+    }
 
-    const enriched = initialEntries.map((e) => {
-      const entryHandle = cleanCfHandle(e.handle).toLowerCase();
-      const entryName = (e.name || "").trim().toLowerCase();
-      const isThisUser =
-        (normalizedUserHandle && entryHandle === normalizedUserHandle) ||
-        (userId && e.userId === userId) ||
-        (normalizedUserName && entryName === normalizedUserName);
-
-      let sheetSolved = e.sheetSolved ?? (e.solved > 0 ? Math.min(e.solved, Math.round(e.solved * 0.38)) : 0);
+    const enriched = initialEntries.map((e, idx) => {
+      const isThisUser = idx === matchedIndex;
+      let sheetSolved = e.sheetSolved ?? 0;
 
       // Enforce sheet cap
       sheetSolved = Math.min(sheetSolved, totalSheetProblems);
 
       // If this row belongs to the current user, synchronize with exact local sheet solved count
-      if (isThisUser) {
-        userMatched = true;
-        sheetSolved = Math.max(sheetSolved, userSheetSolved);
+      if (isThisUser && userSheetSolved > 0) {
+        sheetSolved = userSheetSolved;
       }
 
       return {
@@ -106,7 +121,7 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
     });
 
     // If current visitor has solved sheet problems or has a handle/logged-in, but isn't on leaderboard yet:
-    if (!userMatched && (userSheetSolved > 0 || normalizedUserHandle || user)) {
+    if (matchedIndex === -1 && (userSheetSolved > 0 || guestHandle || user)) {
       const activeName = user?.fullName || (user as any)?.name || userHandle || "You (Current Visitor)";
       const activeHandle = userHandle || (user?.email ? user.email.split("@")[0] : "you");
 
@@ -114,7 +129,7 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
         rank: 999,
         name: activeName,
         handle: activeHandle,
-        hasCfHandle: Boolean(userHandle),
+        hasCfHandle: Boolean(activeHandle && activeHandle !== "you"),
         platform: "Codeforces",
         rating: (user as any)?.cpStats?.cfRating || 0,
         solved: Math.max((user as any)?.cpStats?.cfSolved || 0, userSheetSolved),
@@ -257,11 +272,11 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
               setSortBy("sheetSolved");
             }}
             className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${leaderboardMode === "cpsheet"
-                ? "bg-accent-primary text-text-primary shadow-[2px_2px_0px_var(--border-brutalist)] font-black"
+                ? "bg-accent-primary !text-accent-primary-text shadow-[2px_2px_0px_var(--border-brutalist)] font-black"
                 : "text-text-secondary hover:text-text-primary font-bold"
               }`}
           >
-            <Zap size={16} className={leaderboardMode === "cpsheet" ? "text-text-primary" : "text-accent-primary"} />
+            <Zap size={16} className={leaderboardMode === "cpsheet" ? "!text-accent-primary-text" : "text-accent-primary"} />
             <span>CP Sheet Ladder</span>
           </button>
           <button
@@ -270,11 +285,11 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
               setSortBy("rating");
             }}
             className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${leaderboardMode === "cf"
-                ? "bg-accent-primary text-text-primary shadow-[2px_2px_0px_var(--border-brutalist)] font-black"
+                ? "bg-accent-primary !text-accent-primary-text shadow-[2px_2px_0px_var(--border-brutalist)] font-black"
                 : "text-text-secondary hover:text-text-primary font-bold"
               }`}
           >
-            <Trophy size={16} className={leaderboardMode === "cf" ? "text-text-primary" : "text-amber-500"} />
+            <Trophy size={16} className={leaderboardMode === "cf" ? "!text-accent-primary-text" : "text-amber-500"} />
             <span>Global Codeforces</span>
           </button>
         </div>
@@ -442,7 +457,7 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
       <div className="w-full bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-2xl overflow-hidden shadow-[5px_5px_0px_var(--border-brutalist)] dark:shadow-[5px_5px_0px_var(--border-default)] transition-all duration-200">
         {/* Table Header */}
         {leaderboardMode === "cpsheet" ? (
-          <div className="grid grid-cols-[40px_1fr_85px_65px] sm:grid-cols-[55px_1.7fr_1.1fr_120px_120px_80px_50px] p-3.5 sm:px-5 bg-surface-secondary font-mono text-xs sm:text-sm font-bold uppercase tracking-wider text-text-secondary border-b-2 border-border-default">
+          <div className="grid grid-cols-[36px_1fr_75px_58px] sm:grid-cols-[55px_1.7fr_1.1fr_120px_120px_80px_50px] p-2.5 sm:p-3.5 sm:px-5 bg-surface-secondary font-mono text-xs sm:text-sm font-bold uppercase tracking-wider text-text-secondary border-b-2 border-border-default">
             <span>#</span>
             <span>Member</span>
             <span className="hidden sm:inline">Handle</span>
@@ -452,7 +467,7 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
             <span className="hidden sm:inline text-right">Profile</span>
           </div>
         ) : (
-          <div className="grid grid-cols-[40px_1fr_75px_65px] sm:grid-cols-[55px_1.8fr_1.2fr_95px_85px_55px] p-3.5 sm:px-5 bg-surface-secondary font-mono text-xs sm:text-sm font-bold uppercase tracking-wider text-text-secondary border-b-2 border-border-default">
+          <div className="grid grid-cols-[36px_1fr_70px_58px] sm:grid-cols-[55px_1.8fr_1.2fr_95px_85px_55px] p-2.5 sm:p-3.5 sm:px-5 bg-surface-secondary font-mono text-xs sm:text-sm font-bold uppercase tracking-wider text-text-secondary border-b-2 border-border-default">
             <span>#</span>
             <span>Member</span>
             <span className="hidden sm:inline">Handle</span>
@@ -489,7 +504,7 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
               return (
                 <div
                   key={entry.userId || entry.handle || actualRank}
-                  className={`grid grid-cols-[40px_1fr_85px_65px] sm:grid-cols-[55px_1.7fr_1.1fr_120px_120px_80px_50px] p-3 sm:p-3.5 sm:px-5 border-t border-border-default items-center transition-colors hover:bg-surface-secondary/70 ${isCurrentUser
+                  className={`grid grid-cols-[36px_1fr_75px_58px] sm:grid-cols-[55px_1.7fr_1.1fr_120px_120px_80px_50px] p-2.5 sm:p-3.5 sm:px-5 border-t border-border-default items-center transition-colors hover:bg-surface-secondary/70 ${isCurrentUser
                       ? "border-l-4 border-l-accent-primary bg-accent-primary/10 shadow-inner"
                       : isTop1
                         ? "border-l-4 border-l-amber-400 bg-amber-400/10"
@@ -547,7 +562,7 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
                           </span>
                         )}
                         {isCurrentUser && (
-                          <span className="px-1.5 py-0.5 rounded bg-accent-primary text-text-primary font-mono text-[10px] font-black uppercase tracking-wider shrink-0 shadow-2xs">
+                          <span className="px-1.5 py-0.5 rounded bg-accent-primary !text-accent-primary-text font-mono text-[10px] font-black uppercase tracking-wider shrink-0 shadow-2xs">
                             YOU
                           </span>
                         )}
@@ -601,7 +616,7 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
                   <div className="hidden sm:flex items-center justify-end gap-2 text-right">
                     <div className="w-20 h-2 sm:h-2.5 bg-surface rounded-full overflow-hidden border border-border-default/60">
                       <div
-                        className="h-full bg-emerald-500 transition-all duration-500"
+                        className="h-full bg-accent-primary transition-all duration-500"
                         style={{ width: `${sheetPct}%` }}
                       />
                     </div>
@@ -635,7 +650,7 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
             return (
               <div
                 key={entry.userId || entry.handle || actualRank}
-                className={`grid grid-cols-[40px_1fr_75px_65px] sm:grid-cols-[55px_1.8fr_1.2fr_95px_85px_55px] p-3 sm:p-3.5 sm:px-5 border-t border-border-default items-center transition-colors hover:bg-surface-secondary/70 ${isCurrentUser
+                className={`grid grid-cols-[36px_1fr_70px_58px] sm:grid-cols-[55px_1.8fr_1.2fr_95px_85px_55px] p-2.5 sm:p-3.5 sm:px-5 border-t border-border-default items-center transition-colors hover:bg-surface-secondary/70 ${isCurrentUser
                     ? "border-l-4 border-l-accent-primary bg-accent-primary/10 shadow-inner"
                     : isTop1
                       ? "border-l-4 border-l-amber-400 bg-amber-400/10"
@@ -693,7 +708,7 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
                         </span>
                       )}
                       {isCurrentUser && (
-                        <span className="px-1.5 py-0.5 rounded bg-accent-primary text-text-primary font-mono text-[10px] font-black uppercase tracking-wider shrink-0 shadow-2xs">
+                        <span className="px-1.5 py-0.5 rounded bg-accent-primary !text-accent-primary-text font-mono text-[10px] font-black uppercase tracking-wider shrink-0 shadow-2xs">
                           YOU
                         </span>
                       )}

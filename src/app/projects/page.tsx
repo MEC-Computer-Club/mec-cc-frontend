@@ -8,12 +8,6 @@ export const metadata: Metadata = {
   description:
     "Explore real-world software, open-source platforms, and tools built by MEC Computer Club members — including MEC Judge, CP Tracker, and campus software in Mymensingh.",
   keywords: [
-    "MEC Computer Club projects",
-    "MEC Judge",
-    "MEC CP Tracker",
-    "Mymensingh Engineering College software projects",
-    "student projects Mymensingh",
-    "open source MEC",
   ],
   alternates: {
     canonical: "https://meccomputerclub.org/projects",

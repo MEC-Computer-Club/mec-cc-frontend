@@ -35,7 +35,7 @@ export default async function AdvisorsPage() {
         <div className="container mx-auto px-4 md:px-8">
           <span className="kicker">Guidance &amp; Vision</span>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-text-primary mb-2">
-            sudoers (Our Honorable Advisors)
+            Our Honorable Advisors
           </h1>
           <p className="text-xl text-text-secondary max-w-[600px] mt-3">
             Meet the experienced mentors who guide our club towards excellence and innovation.
