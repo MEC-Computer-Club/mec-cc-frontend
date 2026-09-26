@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ProfileCard, ProfileGrid } from "@/components/ui/ProfileCard";
-import { getAdvisors } from "@/data/advisors";
+import { getAdvisors, getAdvisorDesignationRank } from "@/data/advisors";
 
 export const revalidate = 120;
 
@@ -29,6 +29,14 @@ export const metadata: Metadata = {
 export default async function AdvisorsPage() {
   const advisorsList = await getAdvisors();
 
+  // Sort strictly by designation hierarchy
+  const sortedAdvisors = [...advisorsList].sort((a, b) => {
+    const rankA = getAdvisorDesignationRank(a.role);
+    const rankB = getAdvisorDesignationRank(b.role);
+    if (rankA !== rankB) return rankA - rankB;
+    return a.name.localeCompare(b.name);
+  });
+
   return (
     <>
       <section className="pt-8 pb-4">
@@ -45,26 +53,33 @@ export default async function AdvisorsPage() {
 
       <section className="py-8 md:py-12 bg-surface-secondary">
         <div className="container mx-auto px-4 md:px-8">
-          <ProfileGrid className="stagger-children">
-            {advisorsList.map((advisor) => (
-              <ProfileCard
-                key={advisor.id}
-                slug={advisor.id}
-                name={advisor.name}
-                role={advisor.role}
-                department={advisor.department}
-                session={
-                  advisor.academicPost ||
-                  (advisor.department ? `Dept. of ${advisor.department}` : "Faculty")
-                }
-                image={advisor.image}
-                imagePosition={advisor.imagePosition}
-                sublabel="FACULTY"
-                category="advisor"
-                socials={advisor.socials}
-              />
-            ))}
-          </ProfileGrid>
+          {sortedAdvisors.length === 0 ? (
+            <p className="text-center text-text-secondary py-12">
+              No advisor records found yet.
+            </p>
+          ) : (
+            <ProfileGrid className="stagger-children">
+              {sortedAdvisors.map((advisor) => (
+                <ProfileCard
+                  key={advisor.id}
+                  slug={advisor.id}
+                  name={advisor.name}
+                  role={advisor.role}
+                  department={advisor.department}
+                  session={
+                    advisor.academicPost ||
+                    (advisor.department ? `Dept. of ${advisor.department}` : "Faculty")
+                  }
+                  image={advisor.image}
+                  imagePosition={advisor.imagePosition}
+                  sublabel="FACULTY"
+                  category="advisor"
+                  hideRoleBadges={true}
+                  socials={advisor.socials}
+                />
+              ))}
+            </ProfileGrid>
+          )}
         </div>
       </section>
     </>

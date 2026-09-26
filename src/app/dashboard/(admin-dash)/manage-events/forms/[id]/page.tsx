@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
+import { api } from "@/lib/api";
 import {
   ArrowLeft,
   FileSpreadsheet,
@@ -25,6 +26,9 @@ import {
   Download,
   ChevronDown,
   FileDown,
+  Pencil,
+  Trash2,
+  X,
 } from "lucide-react";
 import FilterSelect from "@/app/dashboard/components/FilterSelect";
 import toast from "react-hot-toast";
@@ -106,7 +110,93 @@ export default function FormResponsesPage() {
   const [copied, setCopied] = useState(false);
   const [exportStatus, setExportStatus] = useState<"idle" | "csv" | "excel">("idle");
   const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
-  const [stickyColumnKey, setStickyColumnKey] = useState<string>("auto");
+  const [stickyColumnKey, setStickyColumnKey] = useState<string>("#");
+  const [copiedCol, setCopiedCol] = useState<string | null>(null);
+  const [editingSub, setEditingSub] = useState<Submission | null>(null);
+  const [editResponses, setEditResponses] = useState<Record<string, any>>({});
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [deletingSub, setDeletingSub] = useState<Submission | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const copyColumnValues = (columnKey: string, columnLabel: string) => {
+    let vals: string[] = [];
+    if (columnKey === "#") {
+      vals = filtered.map((_, i) => String(i + 1));
+    } else if (columnKey === "submitted_by") {
+      vals = filtered.map((sub) => sub.userId?.fullName || "Anonymous");
+    } else if (columnKey === "submitted_at") {
+      vals = filtered.map((sub) =>
+        new Date(sub.createdAt).toLocaleDateString("en-GB", {
+          day: "2-digit",
+          month: "short",
+          year: "numeric",
+        })
+      );
+    } else {
+      vals = filtered.map((sub) => {
+        const v = sub.responses?.[columnKey];
+        if (v == null || v === "") return "";
+        if (Array.isArray(v)) return v.join("; ");
+        if (typeof v === "object") {
+          const obj = v as Record<string, unknown>;
+          return String(obj.url || JSON.stringify(v));
+        }
+        return String(v);
+      });
+    }
+
+    const textToCopy = vals.filter(Boolean).join(", ");
+    if (!textToCopy) {
+      toast.error(`No values to copy for "${columnLabel}"`);
+      return;
+    }
+
+    navigator.clipboard.writeText(textToCopy);
+    setCopiedCol(columnKey);
+    toast.success(`Copied ${vals.filter(Boolean).length} values from "${columnLabel}"`);
+    setTimeout(() => setCopiedCol(null), 2000);
+  };
+
+  const handleOpenEditModal = (sub: Submission) => {
+    setEditingSub(sub);
+    setEditResponses({ ...(sub.responses || {}) });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingSub) return;
+    setSavingEdit(true);
+    try {
+      await api.put(`/api/forms/submissions/${editingSub._id}`, { responses: editResponses });
+      setSubmissions((prev) =>
+        prev.map((s) => (s._id === editingSub._id ? { ...s, responses: editResponses } : s))
+      );
+      toast.success("Response updated successfully!");
+      setEditingSub(null);
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to update response entry.");
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleDeleteSubmission = (sub: Submission) => {
+    setDeletingSub(sub);
+  };
+
+  const confirmDeleteSubmission = async () => {
+    if (!deletingSub) return;
+    setIsDeleting(true);
+    try {
+      await api.delete(`/api/forms/submissions/${deletingSub._id}`);
+      setSubmissions((prev) => prev.filter((s) => s._id !== deletingSub._id));
+      toast.success("Response entry deleted successfully.");
+      setDeletingSub(null);
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to delete response entry.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const fetchData = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -120,18 +210,6 @@ export default function FormResponsesPage() {
       const fetchedForm = formRes.data.data;
       setForm(fetchedForm);
       setSubmissions(subRes.data.data || []);
-
-      // Auto-determine best sticky column (e.g. full_name if present)
-      if (stickyColumnKey === "auto") {
-        const nameField = fetchedForm?.fields?.find(
-          (f: FormField) => f.name === "full_name" || f.name.toLowerCase().includes("name")
-        );
-        if (nameField) {
-          setStickyColumnKey(nameField.name);
-        } else {
-          setStickyColumnKey("submitted_by");
-        }
-      }
     } catch (e: unknown) {
       const err = e as { response?: { data?: { message?: string } } };
       setError(err?.response?.data?.message || "Failed to load form data.");
@@ -145,19 +223,29 @@ export default function FormResponsesPage() {
 
   const fields = form?.fields ?? [];
 
-  // Sticky column options for FilterSelect
+  // Sticky column options for FilterSelect (no "Pin: None" option; defaults to "#")
   const stickyOptions = useMemo(() => {
-    const opts = [
+    return [
+      { value: "#", label: "Pin: # (SL No)" },
       { value: "submitted_by", label: "Pin: Submitted By (Account)" },
       ...fields.map((f) => ({ value: f.name, label: `Pin: ${f.label}` })),
-      { value: "none", label: "Pin: None (# only)" },
+      { value: "actions", label: "Pin: Actions" },
     ];
-    return opts;
   }, [fields]);
 
-  // Determine active sticky field
-  const isStickyField = stickyColumnKey !== "none" && stickyColumnKey !== "submitted_by";
+  /* ── sticky layout dimensions ── */
+  const stickyNumW = 44;
+  const stickyColW = 190;
+
+  // Determine active sticky column flags (only ONE column is pinned at any time)
+  const isStickyActions = stickyColumnKey === "actions";
+  const isStickyNumber = stickyColumnKey === "#";
+  const hasStickySecondCol =
+    stickyColumnKey !== "#" &&
+    stickyColumnKey !== "actions";
+  const isStickyField = hasStickySecondCol && stickyColumnKey !== "submitted_by";
   const stickyFieldObj = isStickyField ? fields.find((f) => f.name === stickyColumnKey) : null;
+  const stickyColLeft = 0;
 
   // Non-sticky scrollable fields (exclude the one pinned as sticky)
   const scrollableFields = useMemo(() => {
@@ -250,11 +338,6 @@ export default function FormResponsesPage() {
       </div>
     );
   }
-
-  /* ── sticky layout dimensions ── */
-  const stickyNumW = 44;
-  const stickyColW = 190;
-  const hasStickySecondCol = stickyColumnKey !== "none";
 
   return (
     <div className="space-y-8 pb-12">
@@ -449,21 +532,10 @@ export default function FormResponsesPage() {
             <table style={{ borderCollapse: "collapse", fontSize: "12px", width: "max-content", minWidth: "100%", tableLayout: "auto" }}>
               <thead>
                 <tr style={{ background: "var(--surface-secondary)", borderBottom: "2px solid var(--border-default)" }}>
-                  {/* Sticky # */}
-                  <th style={{
-                    position: "sticky", left: 0, zIndex: 10,
-                    background: "var(--surface-secondary)",
-                    padding: "12px 14px",
-                    textAlign: "left", fontSize: "10px", fontWeight: 900,
-                    color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.06em",
-                    whiteSpace: "nowrap", width: stickyNumW, minWidth: stickyNumW,
-                    borderRight: hasStickySecondCol ? "1px solid var(--border-default)" : "2px solid var(--border-default)",
-                  }}>#</th>
-
                   {/* Sticky Column (if enabled) */}
                   {hasStickySecondCol && (
                     <th style={{
-                      position: "sticky", left: stickyNumW, zIndex: 10,
+                      position: "sticky", left: 0, zIndex: 10,
                       background: "var(--surface-secondary)",
                       padding: "12px 16px",
                       textAlign: "left", fontSize: "10px", fontWeight: 900,
@@ -472,23 +544,69 @@ export default function FormResponsesPage() {
                       borderRight: "2px solid var(--border-default)",
                       boxShadow: "2px 0 4px -2px rgba(0,0,0,0.1)",
                     }}>
-                      <div className="flex items-center gap-1.5">
-                        <Pin size={11} className="text-accent-primary shrink-0" />
-                        <span className="truncate">
-                          {stickyColumnKey === "submitted_by" ? "Submitted By" : (stickyFieldObj?.label ?? stickyColumnKey)}
-                        </span>
-                        {stickyFieldObj?.required && <span style={{ color: "var(--accent-error)" }}>*</span>}
+                      <div className="flex items-center justify-between gap-1.5">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <Pin size={11} className="text-accent-primary shrink-0" />
+                          <span className="truncate">
+                            {stickyColumnKey === "submitted_by" ? "Submitted By" : (stickyFieldObj?.label ?? stickyColumnKey)}
+                          </span>
+                          {stickyFieldObj?.required && <span style={{ color: "var(--accent-error)" }}>*</span>}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => copyColumnValues(stickyColumnKey, stickyColumnKey === "submitted_by" ? "Submitted By" : (stickyFieldObj?.label ?? stickyColumnKey))}
+                          className="p-1 hover:bg-surface-elevated rounded transition text-text-secondary hover:text-accent-primary shrink-0"
+                          title="Copy all values in this column (comma-separated)"
+                        >
+                          {copiedCol === stickyColumnKey ? <Check size={11} className="text-accent-success" /> : <Copy size={11} />}
+                        </button>
                       </div>
                     </th>
                   )}
+
+                  {/* # Column Header */}
+                  <th style={{
+                    position: isStickyNumber ? "sticky" : undefined,
+                    left: isStickyNumber ? 0 : undefined,
+                    zIndex: isStickyNumber ? 10 : undefined,
+                    background: "var(--surface-secondary)",
+                    padding: "12px 14px",
+                    textAlign: "left", fontSize: "10px", fontWeight: 900,
+                    color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.06em",
+                    whiteSpace: "nowrap", width: stickyNumW, minWidth: stickyNumW,
+                    borderRight: isStickyNumber ? "2px solid var(--border-default)" : "1px solid var(--border-default)",
+                    boxShadow: isStickyNumber ? "2px 0 4px -2px rgba(0,0,0,0.1)" : undefined,
+                  }}>
+                    <div className="flex items-center justify-between gap-1.5">
+                      <span>#</span>
+                      <button
+                        type="button"
+                        onClick={() => copyColumnValues("#", "Row Numbers")}
+                        className="p-1 hover:bg-surface-elevated rounded transition text-text-secondary hover:text-accent-primary shrink-0"
+                        title="Copy all row numbers"
+                      >
+                        {copiedCol === "#" ? <Check size={11} className="text-accent-success" /> : <Copy size={11} />}
+                      </button>
+                    </div>
+                  </th>
 
                   {/* Submitted At */}
                   <th style={{
                     padding: "12px 16px", textAlign: "left", fontSize: "10px", fontWeight: 900,
                     color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.06em",
-                    whiteSpace: "nowrap", minWidth: 140,
+                    whiteSpace: "nowrap", minWidth: 150,
                   }}>
-                    Submitted At
+                    <div className="flex items-center justify-between gap-1.5">
+                      <span>Submitted At</span>
+                      <button
+                        type="button"
+                        onClick={() => copyColumnValues("submitted_at", "Submitted At")}
+                        className="p-1 hover:bg-surface-elevated rounded transition text-text-secondary hover:text-accent-primary shrink-0"
+                        title="Copy all submission dates"
+                      >
+                        {copiedCol === "submitted_at" ? <Check size={11} className="text-accent-success" /> : <Copy size={11} />}
+                      </button>
+                    </div>
                   </th>
 
                   {/* If stickyColumn is NOT "submitted_by", show Submitted By as a normal scrollable column */}
@@ -496,9 +614,19 @@ export default function FormResponsesPage() {
                     <th style={{
                       padding: "12px 16px", textAlign: "left", fontSize: "10px", fontWeight: 900,
                       color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.06em",
-                      whiteSpace: "nowrap", minWidth: 180, maxWidth: 220,
+                      whiteSpace: "nowrap", minWidth: 190, maxWidth: 230,
                     }}>
-                      Submitted By
+                      <div className="flex items-center justify-between gap-1.5">
+                        <span>Submitted By</span>
+                        <button
+                          type="button"
+                          onClick={() => copyColumnValues("submitted_by", "Submitted By")}
+                          className="p-1 hover:bg-surface-elevated rounded transition text-text-secondary hover:text-accent-primary shrink-0"
+                          title="Copy all submitter names"
+                        >
+                          {copiedCol === "submitted_by" ? <Check size={11} className="text-accent-success" /> : <Copy size={11} />}
+                        </button>
+                      </div>
                     </th>
                   )}
 
@@ -507,15 +635,41 @@ export default function FormResponsesPage() {
                     <th key={f.name} style={{
                       padding: "12px 16px", textAlign: "left", fontSize: "10px", fontWeight: 900,
                       color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.06em",
-                      minWidth: 200, maxWidth: 280, verticalAlign: "top",
+                      minWidth: 210, maxWidth: 300, verticalAlign: "top",
                       wordBreak: "break-word", lineHeight: 1.35,
                     }}>
-                      <div style={{ wordBreak: "break-word", whiteSpace: "normal" }}>
-                        {f.label}
-                        {f.required && <span style={{ color: "var(--accent-error)", marginLeft: 3 }}>*</span>}
+                      <div className="flex items-start justify-between gap-1.5">
+                        <div style={{ wordBreak: "break-word", whiteSpace: "normal" }}>
+                          {f.label}
+                          {f.required && <span style={{ color: "var(--accent-error)", marginLeft: 3 }}>*</span>}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => copyColumnValues(f.name, f.label)}
+                          className="p-1 hover:bg-surface-elevated rounded transition text-text-secondary hover:text-accent-primary shrink-0 mt-0.5"
+                          title={`Copy all values from "${f.label}" (comma-separated)`}
+                        >
+                          {copiedCol === f.name ? <Check size={11} className="text-accent-success" /> : <Copy size={11} />}
+                        </button>
                       </div>
                     </th>
                   ))}
+
+                  {/* Action Column Header */}
+                  <th style={{
+                    position: isStickyActions ? "sticky" : undefined,
+                    right: isStickyActions ? 0 : undefined,
+                    zIndex: isStickyActions ? 10 : undefined,
+                    background: "var(--surface-secondary)",
+                    padding: "12px 16px", textAlign: "center",
+                    fontSize: "10px", fontWeight: 900,
+                    color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.06em",
+                    whiteSpace: "nowrap", width: 110, minWidth: 110,
+                    borderLeft: isStickyActions ? "2px solid var(--border-default)" : "1px solid var(--border-default)",
+                    boxShadow: isStickyActions ? "-2px 0 4px -2px rgba(0,0,0,0.08)" : undefined,
+                  }}>
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -525,19 +679,10 @@ export default function FormResponsesPage() {
                   return (
                     <tr key={sub._id} style={{ borderBottom: "1px solid var(--border-default)", background: rowBg }}
                       className="hover:bg-surface-secondary transition-colors">
-                      {/* Sticky # */}
-                      <td style={{
-                        position: "sticky", left: 0, zIndex: 5, background: rowBg,
-                        padding: "12px 14px", fontSize: "11px", fontWeight: 700,
-                        color: "var(--text-secondary)", whiteSpace: "nowrap",
-                        width: stickyNumW, minWidth: stickyNumW,
-                        borderRight: hasStickySecondCol ? "1px solid var(--border-default)" : "2px solid var(--border-default)",
-                      }}>{rowNum}</td>
-
                       {/* Sticky Column Cell (if enabled) */}
                       {hasStickySecondCol && (
                         <td style={{
-                          position: "sticky", left: stickyNumW, zIndex: 5, background: rowBg,
+                          position: "sticky", left: 0, zIndex: 5, background: rowBg,
                           padding: "12px 16px",
                           width: stickyColW, minWidth: stickyColW, maxWidth: 220,
                           borderRight: "2px solid var(--border-default)",
@@ -571,8 +716,21 @@ export default function FormResponsesPage() {
                         </td>
                       )}
 
+                      {/* # Cell */}
+                      <td style={{
+                        position: isStickyNumber ? "sticky" : undefined,
+                        left: isStickyNumber ? 0 : undefined,
+                        zIndex: isStickyNumber ? 5 : undefined,
+                        background: rowBg,
+                        padding: "12px 14px", fontSize: "11px", fontWeight: 700,
+                        color: "var(--text-secondary)", whiteSpace: "nowrap",
+                        width: stickyNumW, minWidth: stickyNumW,
+                        borderRight: isStickyNumber ? "2px solid var(--border-default)" : "1px solid var(--border-default)",
+                        boxShadow: isStickyNumber ? "2px 0 4px -2px rgba(0,0,0,0.1)" : undefined,
+                      }}>{rowNum}</td>
+
                       {/* Submitted At */}
-                      <td style={{ padding: "12px 16px", fontSize: "11px", color: "var(--text-secondary)", whiteSpace: "nowrap", minWidth: 140 }}>
+                      <td style={{ padding: "12px 16px", fontSize: "11px", color: "var(--text-secondary)", whiteSpace: "nowrap", minWidth: 150 }}>
                         {new Date(sub.createdAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
                         {" "}
                         <span style={{ opacity: 0.7 }}>{new Date(sub.createdAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</span>
@@ -580,7 +738,7 @@ export default function FormResponsesPage() {
 
                       {/* If stickyColumn is NOT "submitted_by", render Submitted By as regular column */}
                       {stickyColumnKey !== "submitted_by" && (
-                        <td style={{ padding: "12px 16px", minWidth: 180, maxWidth: 220 }}>
+                        <td style={{ padding: "12px 16px", minWidth: 190, maxWidth: 230 }}>
                           {sub.userId ? (
                             <div>
                               <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-primary)" }}>{sub.userId.fullName}</p>
@@ -596,14 +754,14 @@ export default function FormResponsesPage() {
                         const display = cellValue(val);
                         const link = isLink(val);
                         return (
-                          <td key={f.name} style={{ padding: "12px 16px", fontSize: "12px", color: "var(--text-primary)", minWidth: 200, maxWidth: 280 }}>
+                          <td key={f.name} style={{ padding: "12px 16px", fontSize: "12px", color: "var(--text-primary)", minWidth: 210, maxWidth: 300 }}>
                             {link ? (
                               <a href={link} target="_blank" rel="noopener noreferrer"
                                 style={{ color: "var(--accent-primary)", fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
                                 <ExternalLink size={11} /> View
                               </a>
                             ) : (
-                              <span style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 250 }}
+                              <span style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 270 }}
                                 title={display !== "\u2014" ? display : undefined}>
                                 {display}
                               </span>
@@ -611,6 +769,37 @@ export default function FormResponsesPage() {
                           </td>
                         );
                       })}
+
+                      {/* Actions Cell */}
+                      <td style={{
+                        position: isStickyActions ? "sticky" : undefined,
+                        right: isStickyActions ? 0 : undefined,
+                        zIndex: isStickyActions ? 5 : undefined,
+                        background: rowBg,
+                        padding: "8px 12px", textAlign: "center",
+                        borderLeft: isStickyActions ? "2px solid var(--border-default)" : "1px solid var(--border-default)",
+                        boxShadow: isStickyActions ? "-2px 0 4px -2px rgba(0,0,0,0.08)" : undefined,
+                        whiteSpace: "nowrap", width: 110, minWidth: 110,
+                      }}>
+                        <div className="flex items-center justify-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEditModal(sub)}
+                            className="p-1.5 rounded-lg border border-border-default bg-surface-elevated text-text-secondary hover:text-accent-primary hover:border-accent-primary transition shadow-[1px_1px_0px_0px_var(--border-default)]"
+                            title="Modify response"
+                          >
+                            <Pencil size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteSubmission(sub)}
+                            className="p-1.5 rounded-lg border border-border-default bg-surface-elevated text-text-secondary hover:text-accent-error hover:border-accent-error transition shadow-[1px_1px_0px_0px_var(--border-default)]"
+                            title="Delete entry"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   );
                 })}
@@ -640,6 +829,157 @@ export default function FormResponsesPage() {
           </div>
         )}
       </div>
+
+      {/* Modify Response Modal */}
+      {editingSub && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <div
+            className="bg-surface-elevated rounded-2xl border-2 border-border-default shadow-[6px_6px_0px_0px_var(--border-default)] max-w-lg w-full max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 sm:p-5 border-b border-border-default bg-surface-secondary">
+              <div>
+                <h3 className="text-base font-bold text-text-primary flex items-center gap-2">
+                  <Pencil size={16} className="text-accent-primary" /> Modify Response Entry
+                </h3>
+                <p className="text-xs text-text-secondary mt-0.5">
+                  {editingSub.userId?.fullName || "Anonymous Submission"} &bull;{" "}
+                  {new Date(editingSub.createdAt).toLocaleString("en-GB")}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingSub(null)}
+                className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-elevated transition"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Fields Body */}
+            <div className="p-4 sm:p-6 overflow-y-auto space-y-4 flex-1">
+              {fields.length === 0 ? (
+                <p className="text-xs text-text-secondary">No custom fields defined for this form.</p>
+              ) : (
+                fields.map((f) => {
+                  const currentVal = editResponses[f.name] ?? "";
+                  return (
+                    <div key={f.name} className="flex flex-col gap-1.5">
+                      <label className="text-xs font-bold text-text-primary flex items-center justify-between">
+                        <span>
+                          {f.label} {f.required && <span className="text-accent-error">*</span>}
+                        </span>
+                        <span className="text-[10px] text-text-tertiary font-mono">{f.type}</span>
+                      </label>
+                      {f.type === "textarea" ? (
+                        <textarea
+                          rows={3}
+                          value={String(currentVal)}
+                          onChange={(e) =>
+                            setEditResponses((prev) => ({ ...prev, [f.name]: e.target.value }))
+                          }
+                          className="w-full px-3 py-2 text-xs rounded-xl border border-border-default bg-surface-primary text-text-primary focus:outline-none focus:border-accent-primary transition"
+                        />
+                      ) : f.type === "select" || f.type === "radio" ? (
+                        <select
+                          value={String(currentVal)}
+                          onChange={(e) =>
+                            setEditResponses((prev) => ({ ...prev, [f.name]: e.target.value }))
+                          }
+                          className="w-full px-3 py-2 text-xs rounded-xl border border-border-default bg-surface-primary text-text-primary focus:outline-none focus:border-accent-primary transition"
+                        >
+                          <option value="">-- Select an option --</option>
+                          {f.options?.map((opt, oi) => (
+                            <option key={oi} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type={f.type === "number" ? "number" : f.type === "email" ? "email" : "text"}
+                          value={String(currentVal)}
+                          onChange={(e) =>
+                            setEditResponses((prev) => ({ ...prev, [f.name]: e.target.value }))
+                          }
+                          className="w-full px-3 py-2 text-xs rounded-xl border border-border-default bg-surface-primary text-text-primary focus:outline-none focus:border-accent-primary transition"
+                        />
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 border-t border-border-default bg-surface-secondary flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setEditingSub(null)}
+                className="px-4 py-2 text-xs font-bold rounded-xl border border-border-default text-text-secondary hover:text-text-primary bg-surface-elevated transition"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={savingEdit}
+                onClick={handleSaveEdit}
+                className="px-5 py-2 text-xs font-bold rounded-xl bg-accent-primary text-white hover:opacity-90 transition disabled:opacity-50 shadow-[2px_2px_0px_0px_var(--text-primary)]"
+                style={{ color: "#FFFFFF" }}
+              >
+                {savingEdit ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deletingSub && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in"
+          onClick={() => !isDeleting && setDeletingSub(null)}
+        >
+          <div
+            className="w-full max-w-md bg-surface-elevated rounded-2xl border border-border-default shadow-[6px_6px_0px_0px_var(--accent-error)] overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="p-6">
+              <div className="w-12 h-12 rounded-2xl bg-accent-error/10 border border-accent-error/20 flex items-center justify-center text-accent-error mb-4">
+                <Trash2 size={24} />
+              </div>
+              <h3 className="text-lg font-bold text-text-primary">Delete Response Entry?</h3>
+              <p className="text-xs text-text-secondary mt-1.5 leading-relaxed">
+                Are you sure you want to permanently delete this response submitted by{" "}
+                <span className="font-semibold text-text-primary">
+                  {deletingSub.userId?.fullName || "Anonymous"}
+                </span>
+                ? Any associated media files will also be permanently deleted. This action cannot be undone.
+              </p>
+            </div>
+            <div className="p-4 border-t border-border-default bg-surface-secondary flex items-center justify-end gap-2">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setDeletingSub(null)}
+                className="px-4 py-2 text-xs font-bold rounded-xl border border-border-default text-text-secondary hover:text-text-primary bg-surface-elevated transition disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={confirmDeleteSubmission}
+                className="px-5 py-2 text-xs font-bold rounded-xl bg-accent-error text-white hover:opacity-90 transition disabled:opacity-50 shadow-[2px_2px_0px_0px_var(--text-primary)]"
+                style={{ color: "#FFFFFF" }}
+              >
+                {isDeleting ? "Deleting..." : "Permanently Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

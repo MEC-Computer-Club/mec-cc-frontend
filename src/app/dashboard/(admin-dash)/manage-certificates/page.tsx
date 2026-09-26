@@ -5,6 +5,7 @@ import axios from "axios";
 import Link from "next/link";
 import Image from "next/image";
 import toast from "react-hot-toast";
+import { getOptimizedImageUrl } from "@/data/gallery";
 import {
   Award,
   Plus,
@@ -62,6 +63,7 @@ interface CertificateItem {
     batch?: string;
     session?: string;
     imageUrl?: string;
+    imagePosition?: string;
   };
   associatedEvent?: {
     _id: string;
@@ -831,7 +833,12 @@ export default function CertificatesManagementPage() {
                       <div className="flex items-center gap-2">
                         <div className="w-7 h-7 rounded-md bg-surface-secondary border border-border-default flex items-center justify-center font-bold text-xs text-text-primary flex-shrink-0 overflow-hidden relative">
                           {cert.recipient?.imageUrl ? (
-                            <Image src={cert.recipient.imageUrl} alt="" fill className="object-cover" />
+                            <img
+                              src={getOptimizedImageUrl(cert.recipient.imageUrl, 160)}
+                              alt=""
+                              className="w-full h-full object-cover block"
+                              style={{ objectPosition: cert.recipient.imagePosition || "50% 50%" }}
+                            />
                           ) : (
                             (cert.recipient?.fullName || cert.recipientName || "MB").slice(0, 2).toUpperCase()
                           )}

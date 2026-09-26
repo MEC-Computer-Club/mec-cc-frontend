@@ -20,7 +20,10 @@ import {
   Tag,
   X,
   ExternalLink,
+  Archive,
+  Users,
 } from "lucide-react";
+import toast from "react-hot-toast";
 import { useAuth } from "@/context/AuthContext";
 import FilterSelect, { FilterOption } from "@/app/dashboard/components/FilterSelect";
 import { Select, SelectOption } from "@/components/ui/Select";
@@ -120,10 +123,14 @@ export default function AssetsPage() {
   const [editingClub, setEditingClub] = useState<ClubAsset | null>(null);
   const [returningItem, setReturningItem] = useState<BorrowedEquipment | null>(null);
   const [returnNotes, setReturnNotes] = useState("");
+  const [itemToDelete, setItemToDelete] = useState<{
+    type: "borrowed" | "club";
+    item: BorrowedEquipment | ClubAsset;
+  } | null>(null);
 
   // Lock body scroll whenever ANY modal is active
   const isAnyModalOpen = Boolean(
-    isAddBorrowedOpen || editingBorrowed || isAddClubOpen || editingClub || returningItem
+    isAddBorrowedOpen || editingBorrowed || isAddClubOpen || editingClub || returningItem || itemToDelete
   );
 
   useEffect(() => {
@@ -172,6 +179,7 @@ export default function AssetsPage() {
     { value: "all", label: "All Statuses" },
     { value: "In Use", label: "In Use" },
     { value: "Returned", label: "Returned" },
+    { value: "Permanent", label: "Permanent Borrow" },
     { value: "Overdue", label: "Overdue" },
     { value: "Damaged", label: "Damaged" },
   ];
@@ -210,7 +218,15 @@ export default function AssetsPage() {
         item.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (item.notes && item.notes.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      const matchesStatus = statusFilter === "all" || item.status === statusFilter;
+      let matchesStatus = true;
+      if (statusFilter === "all") {
+        matchesStatus = true;
+      } else if (statusFilter === "Permanent") {
+        matchesStatus = (item.dueDate || "").toLowerCase().includes("permanent");
+      } else {
+        matchesStatus = item.status === statusFilter;
+      }
+
       const matchesCategory = categoryFilter === "all" || item.category === categoryFilter;
 
       return matchesSearch && matchesStatus && matchesCategory;
@@ -234,20 +250,64 @@ export default function AssetsPage() {
 
   // Metrics summary
   const metrics = useMemo(() => {
-    const borrowedInUse = borrowedItems.filter((i) => i.status === "In Use").length;
+    const totalBorrowedRecords = borrowedItems.length;
     const borrowedReturned = borrowedItems.filter((i) => i.status === "Returned").length;
+    const borrowedInUse = borrowedItems.filter((i) => i.status === "In Use").length;
+    const borrowedPermanent = borrowedItems.filter((i) =>
+      (i.dueDate || "").toLowerCase().includes("permanent")
+    ).length;
+    const activeBorrowedRecords = totalBorrowedRecords - borrowedReturned;
+
     const totalBorrowedUnits = borrowedItems.reduce((acc, curr) => acc + (Number(curr.quantity) || 0), 0);
+    const returnedBorrowedUnits = borrowedItems
+      .filter((i) => i.status === "Returned")
+      .reduce((acc, curr) => acc + (Number(curr.quantity) || 0), 0);
+    const inUseBorrowedUnits = borrowedItems
+      .filter((i) => i.status === "In Use")
+      .reduce((acc, curr) => acc + (Number(curr.quantity) || 0), 0);
+    const permanentBorrowedUnits = borrowedItems
+      .filter((i) => (i.dueDate || "").toLowerCase().includes("permanent"))
+      .reduce((acc, curr) => acc + (Number(curr.quantity) || 0), 0);
+    const activeBorrowedUnits = totalBorrowedUnits - returnedBorrowedUnits;
+
+    const totalClubRecords = clubAssets.length;
     const clubAvailable = clubAssets.filter((i) => i.status === "Available").length;
     const clubInUse = clubAssets.filter((i) => i.status === "In Use").length;
+    const clubRetired = clubAssets.filter((i) => i.status === "Retired").length;
+    const clubMaintenance = clubAssets.filter((i) => i.status === "Maintenance").length;
+
     const totalClubUnits = clubAssets.reduce((acc, curr) => acc + (Number(curr.quantity) || 0), 0);
+    const availableClubUnits = clubAssets
+      .filter((i) => i.status === "Available")
+      .reduce((acc, curr) => acc + (Number(curr.quantity) || 0), 0);
+    const inUseClubUnits = clubAssets
+      .filter((i) => i.status === "In Use")
+      .reduce((acc, curr) => acc + (Number(curr.quantity) || 0), 0);
+    const retiredClubUnits = clubAssets
+      .filter((i) => i.status === "Retired")
+      .reduce((acc, curr) => acc + (Number(curr.quantity) || 0), 0);
 
     return {
-      borrowedInUse,
+      totalBorrowedRecords,
       borrowedReturned,
+      borrowedInUse,
+      borrowedPermanent,
+      activeBorrowedRecords,
       totalBorrowedUnits,
+      returnedBorrowedUnits,
+      inUseBorrowedUnits,
+      permanentBorrowedUnits,
+      activeBorrowedUnits,
+
+      totalClubRecords,
       clubAvailable,
       clubInUse,
+      clubRetired,
+      clubMaintenance,
       totalClubUnits,
+      availableClubUnits,
+      inUseClubUnits,
+      retiredClubUnits,
     };
   }, [borrowedItems, clubAssets]);
 
@@ -301,45 +361,59 @@ export default function AssetsPage() {
     setReturnNotes("");
   };
 
-  // Delete Borrowed Item
+  // Delete Borrowed Item trigger
   const handleDeleteBorrowed = (item: BorrowedEquipment) => {
-    if (!confirm(`Are you sure you want to delete '${item.name}' from the borrowed inventory?`)) return;
-    const updated = borrowedItems.filter((i) => i.id !== item.id);
-    saveBorrowed(updated);
-
-    logAdminActivity({
-      actorName: currentActorName,
-      actorRole: currentActorRole,
-      actorEmail: currentActorEmail,
-      action: "DELETE",
-      targetType: "ASSET",
-      targetTitle: item.name,
-      description: `${currentActorName} deleted borrowed asset record '${item.name}' (Qty: ${item.quantity}, From: ${item.borrowedFrom}).`,
-      diff: [
-        { field: "Record Status", previousValue: "Active Record", newValue: "Deleted" },
-        { field: "Previous State", previousValue: item.status, newValue: "N/A" },
-      ],
-    });
+    setItemToDelete({ type: "borrowed", item });
   };
 
-  // Delete Club Asset
+  // Delete Club Asset trigger
   const handleDeleteClub = (item: ClubAsset) => {
-    if (!confirm(`Are you sure you want to delete '${item.name}' from club owned assets?`)) return;
-    const updated = clubAssets.filter((i) => i.id !== item.id);
-    saveClub(updated);
+    setItemToDelete({ type: "club", item });
+  };
 
-    logAdminActivity({
-      actorName: currentActorName,
-      actorRole: currentActorRole,
-      actorEmail: currentActorEmail,
-      action: "DELETE",
-      targetType: "ASSET",
-      targetTitle: item.name,
-      description: `${currentActorName} deleted club asset '${item.name}' (Qty: ${item.quantity}).`,
-      diff: [
-        { field: "Record Status", previousValue: "Active Record", newValue: "Deleted" },
-      ],
-    });
+  // Confirm and Execute Deletion
+  const handleConfirmDelete = () => {
+    if (!itemToDelete) return;
+    const { type, item } = itemToDelete;
+
+    if (type === "borrowed") {
+      const updated = borrowedItems.filter((i) => i.id !== item.id);
+      saveBorrowed(updated);
+
+      logAdminActivity({
+        actorName: currentActorName,
+        actorRole: currentActorRole,
+        actorEmail: currentActorEmail,
+        action: "DELETE",
+        targetType: "ASSET",
+        targetTitle: item.name,
+        description: `${currentActorName} deleted borrowed asset record '${item.name}' (Qty: ${item.quantity}, From: ${(item as BorrowedEquipment).borrowedFrom}).`,
+        diff: [
+          { field: "Record Status", previousValue: "Active Record", newValue: "Deleted" },
+          { field: "Previous State", previousValue: (item as BorrowedEquipment).status, newValue: "N/A" },
+        ],
+      });
+      toast.success(`'${item.name}' deleted from borrowed inventory.`);
+    } else {
+      const updated = clubAssets.filter((i) => i.id !== item.id);
+      saveClub(updated);
+
+      logAdminActivity({
+        actorName: currentActorName,
+        actorRole: currentActorRole,
+        actorEmail: currentActorEmail,
+        action: "DELETE",
+        targetType: "ASSET",
+        targetTitle: item.name,
+        description: `${currentActorName} deleted club asset '${item.name}' (Qty: ${item.quantity}).`,
+        diff: [
+          { field: "Record Status", previousValue: "Active Record", newValue: "Deleted" },
+        ],
+      });
+      toast.success(`'${item.name}' deleted from club assets.`);
+    }
+
+    setItemToDelete(null);
   };
 
   return (
@@ -384,58 +458,7 @@ export default function AssetsPage() {
         </div>
       </div>
 
-      {/* ── Summary Stats Grid ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="bg-surface-elevated border border-border-default rounded-xl p-3.5 sm:p-4 shadow-[3px_3px_0px_var(--border-default)]">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono font-bold text-text-secondary uppercase">Borrowed In Use</span>
-            <span className="w-2.5 h-2.5 rounded-full bg-accent-warning animate-pulse" />
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-black text-text-primary">{metrics.borrowedInUse}</span>
-            <span className="text-xs text-text-tertiary font-mono">items</span>
-          </div>
-          <p className="text-[11px] text-text-tertiary mt-1">Total {metrics.totalBorrowedUnits} physical units</p>
-        </div>
-
-        <div className="bg-surface-elevated border border-border-default rounded-xl p-3.5 sm:p-4 shadow-[3px_3px_0px_var(--border-default)]">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono font-bold text-text-secondary uppercase">Dept Returned</span>
-            <CheckCircle2 size={15} className="text-accent-success" />
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-black text-text-primary">{metrics.borrowedReturned}</span>
-            <span className="text-xs text-text-tertiary font-mono">returned</span>
-          </div>
-          <p className="text-[11px] text-text-tertiary mt-1">Returned to department storage</p>
-        </div>
-
-        <div className="bg-surface-elevated border border-border-default rounded-xl p-3.5 sm:p-4 shadow-[3px_3px_0px_var(--border-default)]">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono font-bold text-text-secondary uppercase">Club Owned</span>
-            <Layers size={15} className="text-accent-primary" />
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-black text-text-primary">{clubAssets.length}</span>
-            <span className="text-xs text-text-tertiary font-mono">categories</span>
-          </div>
-          <p className="text-[11px] text-text-tertiary mt-1">{metrics.totalClubUnits} club asset units</p>
-        </div>
-
-        <div className="bg-surface-elevated border border-border-default rounded-xl p-3.5 sm:p-4 shadow-[3px_3px_0px_var(--border-default)]">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono font-bold text-text-secondary uppercase">Club In-Use</span>
-            <span className="w-2.5 h-2.5 rounded-full bg-accent-primary" />
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl sm:text-3xl font-black text-text-primary">{metrics.clubInUse}</span>
-            <span className="text-xs text-text-tertiary font-mono">assigned</span>
-          </div>
-          <p className="text-[11px] text-text-tertiary mt-1">{metrics.clubAvailable} available in storage</p>
-        </div>
-      </div>
-
-      {/* ── Dual Tab Switcher ── */}
+      {/* ── Dual Tab Switcher (ON TOP OF CARDS) ── */}
       <div className="flex items-center gap-2 border-b border-border-default pb-2">
         <button
           onClick={() => {
@@ -450,12 +473,12 @@ export default function AssetsPage() {
           }`}
         >
           <Building2 size={16} />
-          <span>Department Borrowed Equipment</span>
+          <span>Department Borrowed Logs</span>
           <span
-            className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+            className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded-full transition-colors ${
               activeTab === "borrowed"
-                ? "bg-accent-primary text-black font-extrabold"
-                : "bg-surface-secondary text-text-tertiary"
+                ? "bg-accent-primary text-accent-primary-text shadow-xs"
+                : "bg-surface-secondary text-text-secondary border border-border-default/60"
             }`}
           >
             {borrowedItems.length}
@@ -477,16 +500,327 @@ export default function AssetsPage() {
           <Package size={16} />
           <span>Club Owned Assets</span>
           <span
-            className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+            className={`text-[11px] font-mono font-bold px-2 py-0.5 rounded-full transition-colors ${
               activeTab === "club"
-                ? "bg-accent-primary text-black font-extrabold"
-                : "bg-surface-secondary text-text-tertiary"
+                ? "bg-accent-primary text-accent-primary-text shadow-xs"
+                : "bg-surface-secondary text-text-secondary border border-border-default/60"
             }`}
           >
             {clubAssets.length}
           </span>
         </button>
       </div>
+
+      {/* ── Summary Stats Grid (UNDER TABS, Clickable Quick Filters) ── */}
+      {activeTab === "borrowed" ? (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {/* Card 1: Dept Borrowed Logs (Total - Returned) */}
+          <button
+            type="button"
+            onClick={() => setStatusFilter("all")}
+            className={`text-left p-3.5 sm:p-4 rounded-xl transition-all cursor-pointer select-none ${
+              statusFilter === "all"
+                ? "bg-surface-elevated border-2 border-text-primary dark:border-border-default shadow-[4px_4px_0px_var(--accent-primary)] ring-2 ring-accent-primary/25 -translate-y-0.5"
+                : "bg-surface-elevated border border-border-default shadow-[3px_3px_0px_var(--border-default)] hover:shadow-[4px_4px_0px_var(--accent-primary)] hover:border-text-primary/40 hover:-translate-y-0.5"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span
+                className={`text-xs font-mono font-bold uppercase transition-colors ${
+                  statusFilter === "all" ? "text-text-primary" : "text-text-secondary"
+                }`}
+              >
+                Dept Borrowed Logs
+              </span>
+              <div className="flex items-center gap-1.5">
+                {statusFilter === "all" && (
+                  <span className="text-[9px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-accent-primary text-accent-primary-text">
+                    All
+                  </span>
+                )}
+                <Building2 size={15} className="text-accent-primary" />
+              </div>
+            </div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-2xl sm:text-3xl font-black text-text-primary">
+                {metrics.activeBorrowedRecords}
+              </span>
+              <span className="text-xs text-text-tertiary font-mono">items</span>
+            </div>
+            <p className="text-[11px] text-text-tertiary mt-1 truncate">
+              Total {metrics.activeBorrowedUnits} units ({metrics.totalBorrowedUnits} total - {metrics.returnedBorrowedUnits} returned)
+            </p>
+          </button>
+
+          {/* Card 2: Borrowed In Use */}
+          <button
+            type="button"
+            onClick={() => setStatusFilter((prev) => (prev === "In Use" ? "all" : "In Use"))}
+            className={`text-left p-3.5 sm:p-4 rounded-xl transition-all cursor-pointer select-none ${
+              statusFilter === "In Use"
+                ? "bg-surface-elevated border-2 border-text-primary dark:border-border-default shadow-[4px_4px_0px_var(--accent-primary)] ring-2 ring-accent-primary/25 -translate-y-0.5"
+                : "bg-surface-elevated border border-border-default shadow-[3px_3px_0px_var(--border-default)] hover:shadow-[4px_4px_0px_var(--accent-primary)] hover:border-text-primary/40 hover:-translate-y-0.5"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span
+                className={`text-xs font-mono font-bold uppercase transition-colors ${
+                  statusFilter === "In Use" ? "text-text-primary" : "text-text-secondary"
+                }`}
+              >
+                Borrowed In Use
+              </span>
+              <div className="flex items-center gap-1.5">
+                {statusFilter === "In Use" && (
+                  <span className="text-[9px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-accent-primary text-accent-primary-text">
+                    Filtered
+                  </span>
+                )}
+                <span className="w-2.5 h-2.5 rounded-full bg-accent-warning animate-pulse" />
+              </div>
+            </div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-2xl sm:text-3xl font-black text-text-primary">
+                {metrics.borrowedInUse}
+              </span>
+              <span className="text-xs text-text-tertiary font-mono">items</span>
+            </div>
+            <p className="text-[11px] text-text-tertiary mt-1 truncate">
+              Active in club room ({metrics.inUseBorrowedUnits} units)
+            </p>
+          </button>
+
+          {/* Card 3: Dept Returned */}
+          <button
+            type="button"
+            onClick={() => setStatusFilter((prev) => (prev === "Returned" ? "all" : "Returned"))}
+            className={`text-left p-3.5 sm:p-4 rounded-xl transition-all cursor-pointer select-none ${
+              statusFilter === "Returned"
+                ? "bg-surface-elevated border-2 border-text-primary dark:border-border-default shadow-[4px_4px_0px_var(--accent-primary)] ring-2 ring-accent-primary/25 -translate-y-0.5"
+                : "bg-surface-elevated border border-border-default shadow-[3px_3px_0px_var(--border-default)] hover:shadow-[4px_4px_0px_var(--accent-primary)] hover:border-text-primary/40 hover:-translate-y-0.5"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span
+                className={`text-xs font-mono font-bold uppercase transition-colors ${
+                  statusFilter === "Returned" ? "text-text-primary" : "text-text-secondary"
+                }`}
+              >
+                Dept Returned
+              </span>
+              <div className="flex items-center gap-1.5">
+                {statusFilter === "Returned" && (
+                  <span className="text-[9px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-accent-primary text-accent-primary-text">
+                    Filtered
+                  </span>
+                )}
+                <CheckCircle2 size={15} className="text-accent-success" />
+              </div>
+            </div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-2xl sm:text-3xl font-black text-text-primary">
+                {metrics.borrowedReturned}
+              </span>
+              <span className="text-xs text-text-tertiary font-mono">returned</span>
+            </div>
+            <p className="text-[11px] text-text-tertiary mt-1 truncate">
+              Returned to storage ({metrics.returnedBorrowedUnits} units)
+            </p>
+          </button>
+
+          {/* Card 4: Permanent Borrowed */}
+          <button
+            type="button"
+            onClick={() => setStatusFilter((prev) => (prev === "Permanent" ? "all" : "Permanent"))}
+            className={`text-left p-3.5 sm:p-4 rounded-xl transition-all cursor-pointer select-none ${
+              statusFilter === "Permanent"
+                ? "bg-surface-elevated border-2 border-text-primary dark:border-border-default shadow-[4px_4px_0px_var(--accent-primary)] ring-2 ring-accent-primary/25 -translate-y-0.5"
+                : "bg-surface-elevated border border-border-default shadow-[3px_3px_0px_var(--border-default)] hover:shadow-[4px_4px_0px_var(--accent-primary)] hover:border-text-primary/40 hover:-translate-y-0.5"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span
+                className={`text-xs font-mono font-bold uppercase transition-colors ${
+                  statusFilter === "Permanent" ? "text-text-primary" : "text-text-secondary"
+                }`}
+              >
+                Permanent Borrow
+              </span>
+              <div className="flex items-center gap-1.5">
+                {statusFilter === "Permanent" && (
+                  <span className="text-[9px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-accent-primary text-accent-primary-text">
+                    Filtered
+                  </span>
+                )}
+                <Clock size={15} className="text-accent-primary" />
+              </div>
+            </div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-2xl sm:text-3xl font-black text-text-primary">
+                {metrics.borrowedPermanent}
+              </span>
+              <span className="text-xs text-text-tertiary font-mono">items</span>
+            </div>
+            <p className="text-[11px] text-text-tertiary mt-1 truncate">
+              Permanent allocation ({metrics.permanentBorrowedUnits} units)
+            </p>
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          {/* Club Card 1: Total Assets */}
+          <button
+            type="button"
+            onClick={() => setStatusFilter("all")}
+            className={`text-left p-3.5 sm:p-4 rounded-xl transition-all cursor-pointer select-none ${
+              statusFilter === "all"
+                ? "bg-surface-elevated border-2 border-text-primary dark:border-border-default shadow-[4px_4px_0px_var(--accent-primary)] ring-2 ring-accent-primary/25 -translate-y-0.5"
+                : "bg-surface-elevated border border-border-default shadow-[3px_3px_0px_var(--border-default)] hover:shadow-[4px_4px_0px_var(--accent-primary)] hover:border-text-primary/40 hover:-translate-y-0.5"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span
+                className={`text-xs font-mono font-bold uppercase transition-colors ${
+                  statusFilter === "all" ? "text-text-primary" : "text-text-secondary"
+                }`}
+              >
+                Total Assets
+              </span>
+              <div className="flex items-center gap-1.5">
+                {statusFilter === "all" && (
+                  <span className="text-[9px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-accent-primary text-accent-primary-text">
+                    All
+                  </span>
+                )}
+                <Layers size={15} className="text-accent-primary" />
+              </div>
+            </div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-2xl sm:text-3xl font-black text-text-primary">
+                {metrics.totalClubRecords}
+              </span>
+              <span className="text-xs text-text-tertiary font-mono">categories</span>
+            </div>
+            <p className="text-[11px] text-text-tertiary mt-1 truncate">
+              {metrics.totalClubUnits} total club asset units
+            </p>
+          </button>
+
+          {/* Club Card 2: Available */}
+          <button
+            type="button"
+            onClick={() => setStatusFilter((prev) => (prev === "Available" ? "all" : "Available"))}
+            className={`text-left p-3.5 sm:p-4 rounded-xl transition-all cursor-pointer select-none ${
+              statusFilter === "Available"
+                ? "bg-surface-elevated border-2 border-text-primary dark:border-border-default shadow-[4px_4px_0px_var(--accent-primary)] ring-2 ring-accent-primary/25 -translate-y-0.5"
+                : "bg-surface-elevated border border-border-default shadow-[3px_3px_0px_var(--border-default)] hover:shadow-[4px_4px_0px_var(--accent-primary)] hover:border-text-primary/40 hover:-translate-y-0.5"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span
+                className={`text-xs font-mono font-bold uppercase transition-colors ${
+                  statusFilter === "Available" ? "text-text-primary" : "text-text-secondary"
+                }`}
+              >
+                Available
+              </span>
+              <div className="flex items-center gap-1.5">
+                {statusFilter === "Available" && (
+                  <span className="text-[9px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-accent-primary text-accent-primary-text">
+                    Filtered
+                  </span>
+                )}
+                <CheckCircle2 size={15} className="text-accent-success" />
+              </div>
+            </div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-2xl sm:text-3xl font-black text-text-primary">
+                {metrics.clubAvailable}
+              </span>
+              <span className="text-xs text-text-tertiary font-mono">available</span>
+            </div>
+            <p className="text-[11px] text-text-tertiary mt-1 truncate">
+              {metrics.availableClubUnits} available in storage
+            </p>
+          </button>
+
+          {/* Club Card 3: In Use */}
+          <button
+            type="button"
+            onClick={() => setStatusFilter((prev) => (prev === "In Use" ? "all" : "In Use"))}
+            className={`text-left p-3.5 sm:p-4 rounded-xl transition-all cursor-pointer select-none ${
+              statusFilter === "In Use"
+                ? "bg-surface-elevated border-2 border-text-primary dark:border-border-default shadow-[4px_4px_0px_var(--accent-primary)] ring-2 ring-accent-primary/25 -translate-y-0.5"
+                : "bg-surface-elevated border border-border-default shadow-[3px_3px_0px_var(--border-default)] hover:shadow-[4px_4px_0px_var(--accent-primary)] hover:border-text-primary/40 hover:-translate-y-0.5"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span
+                className={`text-xs font-mono font-bold uppercase transition-colors ${
+                  statusFilter === "In Use" ? "text-text-primary" : "text-text-secondary"
+                }`}
+              >
+                In Use
+              </span>
+              <div className="flex items-center gap-1.5">
+                {statusFilter === "In Use" && (
+                  <span className="text-[9px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-accent-primary text-accent-primary-text">
+                    Filtered
+                  </span>
+                )}
+                <span className="w-2.5 h-2.5 rounded-full bg-accent-warning animate-pulse" />
+              </div>
+            </div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-2xl sm:text-3xl font-black text-text-primary">
+                {metrics.clubInUse}
+              </span>
+              <span className="text-xs text-text-tertiary font-mono">assigned</span>
+            </div>
+            <p className="text-[11px] text-text-tertiary mt-1 truncate">
+              {metrics.inUseClubUnits} deployed or in active use
+            </p>
+          </button>
+
+          {/* Club Card 4: Retired */}
+          <button
+            type="button"
+            onClick={() => setStatusFilter((prev) => (prev === "Retired" ? "all" : "Retired"))}
+            className={`text-left p-3.5 sm:p-4 rounded-xl transition-all cursor-pointer select-none ${
+              statusFilter === "Retired"
+                ? "bg-surface-elevated border-2 border-text-primary dark:border-border-default shadow-[4px_4px_0px_var(--accent-primary)] ring-2 ring-accent-primary/25 -translate-y-0.5"
+                : "bg-surface-elevated border border-border-default shadow-[3px_3px_0px_var(--border-default)] hover:shadow-[4px_4px_0px_var(--accent-primary)] hover:border-text-primary/40 hover:-translate-y-0.5"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span
+                className={`text-xs font-mono font-bold uppercase transition-colors ${
+                  statusFilter === "Retired" ? "text-text-primary" : "text-text-secondary"
+                }`}
+              >
+                Retired
+              </span>
+              <div className="flex items-center gap-1.5">
+                {statusFilter === "Retired" && (
+                  <span className="text-[9px] font-mono font-black uppercase px-1.5 py-0.5 rounded bg-accent-primary text-accent-primary-text">
+                    Filtered
+                  </span>
+                )}
+                <Archive size={15} className="text-text-tertiary" />
+              </div>
+            </div>
+            <div className="mt-2 flex items-baseline gap-2">
+              <span className="text-2xl sm:text-3xl font-black text-text-primary">
+                {metrics.clubRetired}
+              </span>
+              <span className="text-xs text-text-tertiary font-mono">retired</span>
+            </div>
+            <p className="text-[11px] text-text-tertiary mt-1 truncate">
+              {metrics.retiredClubUnits} decommissioned or archived
+            </p>
+          </button>
+        </div>
+      )}
 
       {/* ── Search & Filters Bar (Using Neo-Brutalist FilterSelect) ── */}
       <div className="bg-surface-elevated border border-border-default rounded-xl p-4 shadow-[4px_4px_0px_var(--border-default)] flex flex-col md:flex-row gap-3 md:items-center justify-between">
@@ -623,18 +957,23 @@ export default function AssetsPage() {
                         })()}
                       </td>
 
-                      {/* Borrowed By (Executive Member Account) */}
+                      {/* Borrowed By (Executive Member Account / Club Executives) */}
                       <td className="py-3.5 px-4 font-medium text-text-secondary whitespace-nowrap min-w-[210px]">
                         {(() => {
                           const match = item.borrowedBy.match(/^([^(]+)(?:\((.*)\))?$/);
                           const bName = match ? match[1].trim() : item.borrowedBy;
-                          const bRole = match && match[2] ? match[2].trim() : null;
+                          const isCollective = bName.toLowerCase().includes("club executive");
+                          const bRole = isCollective ? "Joint" : (match && match[2] ? match[2].trim() : null);
                           const initial = bName ? bName.charAt(0).toUpperCase() : "E";
 
                           return (
                             <div className="flex items-center gap-2.5">
                               <div className="w-7 h-7 rounded-lg bg-accent-primary/20 border border-accent-primary/40 flex items-center justify-center font-mono font-black text-xs text-text-primary dark:text-white shadow-[1px_1px_0px_var(--border-default)] shrink-0">
-                                {initial}
+                                {isCollective ? (
+                                  <Users size={14} className="text-accent-primary" />
+                                ) : (
+                                  initial
+                                )}
                               </div>
                               <div className="min-w-0">
                                 <div className="font-bold text-text-primary text-xs sm:text-sm whitespace-nowrap">
@@ -932,6 +1271,74 @@ export default function AssetsPage() {
         </div>
       )}
 
+      {/* ================= MODAL: DELETE CONFIRMATION ================= */}
+      {itemToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150 overflow-hidden">
+          <div
+            className="w-full max-w-md bg-surface-elevated border-2 border-text-primary dark:border-border-default rounded-xl shadow-[4px_4px_0px_var(--accent-error)] overflow-hidden flex flex-col my-auto"
+            style={{ maxHeight: "calc(100dvh - 3rem)" }}
+          >
+            <div className="p-4 border-b border-border-default flex items-center justify-between bg-surface-secondary shrink-0">
+              <div className="flex items-center gap-2 text-accent-error">
+                <AlertTriangle size={18} />
+                <h3 className="font-black text-text-primary text-base">
+                  {itemToDelete.type === "borrowed" ? "Delete Borrowed Item" : "Delete Club Asset"}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setItemToDelete(null)}
+                className="p-1 rounded-md text-text-tertiary hover:text-text-primary cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="p-4 sm:p-5 space-y-3">
+              <p className="text-sm text-text-secondary leading-relaxed">
+                Are you sure you want to permanently delete{" "}
+                <span className="font-bold text-text-primary">
+                  &ldquo;{itemToDelete.item.name}&rdquo;
+                </span>{" "}
+                from {itemToDelete.type === "borrowed" ? "borrowed inventory" : "club assets"}?
+              </p>
+
+              <div className="bg-surface-primary p-3 rounded-lg border border-border-default text-xs space-y-1 font-mono text-text-secondary">
+                <div>Quantity: {itemToDelete.item.quantity} units</div>
+                <div>Category: {itemToDelete.item.category}</div>
+                <div>Location: {itemToDelete.item.location}</div>
+                {itemToDelete.type === "borrowed" && (
+                  <div>Borrowed From: {(itemToDelete.item as BorrowedEquipment).borrowedFrom}</div>
+                )}
+              </div>
+
+              <div className="p-2.5 rounded-lg bg-accent-error/10 border border-accent-error/20 text-xs text-accent-error font-medium flex items-center gap-2">
+                <AlertTriangle size={14} className="shrink-0" />
+                This action cannot be undone and will be logged in the audit log.
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 p-3 sm:p-4 border-t border-border-default bg-surface-secondary/40 shrink-0">
+              <button
+                type="button"
+                onClick={() => setItemToDelete(null)}
+                className="px-4 py-2 rounded-lg bg-surface-secondary text-text-secondary font-bold text-xs hover:bg-surface-elevated transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-accent-error text-white font-bold text-xs hover:opacity-90 shadow-[2px_2px_0px_var(--border-default)] transition cursor-pointer"
+              >
+                <Trash2 size={13} />
+                Delete Record
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ================= MODAL: ADD / EDIT BORROWED ITEM ================= */}
       {(isAddBorrowedOpen || editingBorrowed) && (
         <BorrowedEquipmentModal
@@ -1077,10 +1484,16 @@ function BorrowedEquipmentModal({
   const availableExecutives = liveExecutives && liveExecutives.length > 0 ? liveExecutives : executives;
 
   const executiveOptions: SelectOption[] = useMemo(() => {
-    const list: SelectOption[] = availableExecutives.map((exec) => ({
-      value: `${exec.name} (${exec.role})`,
-      label: `${exec.name} — ${exec.role}`,
-    }));
+    const list: SelectOption[] = [
+      {
+        value: "Club Executives (Joint)",
+        label: "👥 Club Executives (Joint)",
+      },
+      ...availableExecutives.map((exec) => ({
+        value: `${exec.name} (${exec.role})`,
+        label: `${exec.name} — ${exec.role}`,
+      })),
+    ];
     if (initialData?.borrowedBy && !list.some((o) => o.value === initialData.borrowedBy)) {
       list.unshift({ value: initialData.borrowedBy, label: initialData.borrowedBy });
     }
@@ -1100,7 +1513,7 @@ function BorrowedEquipmentModal({
 
   const [name, setName] = useState(initialData?.name || "");
   const [category, setCategory] = useState(initialData?.category || "Networking");
-  const [quantity, setQuantity] = useState(initialData?.quantity || 1);
+  const [quantity, setQuantity] = useState<number | string>(initialData?.quantity ?? 1);
   const [borrowedFrom, setBorrowedFrom] = useState(initialData?.borrowedFrom || "Monir Vai (Lab Attendant)");
   const [borrowedBy, setBorrowedBy] = useState(defaultBorrower);
 
@@ -1151,7 +1564,7 @@ function BorrowedEquipmentModal({
       id: initialData?.id || `dept-eq-${Date.now()}`,
       name: name.trim(),
       category,
-      quantity: Number(quantity) || 1,
+      quantity: Math.max(1, Number(quantity) || 1),
       borrowedFrom: borrowedFrom.trim(),
       borrowedBy: borrowedBy.trim(),
       borrowDate,
@@ -1219,7 +1632,15 @@ function BorrowedEquipmentModal({
                 type="number"
                 min={1}
                 value={quantity}
-                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setQuantity(val === "" ? "" : Number(val));
+                }}
+                onBlur={() => {
+                  if (quantity === "" || Number(quantity) < 1) {
+                    setQuantity(1);
+                  }
+                }}
                 className="w-full p-2.5 rounded-lg bg-surface-primary border border-border-default text-xs sm:text-sm text-text-primary focus:outline-none focus:border-accent-primary"
               />
             </div>
@@ -1340,7 +1761,7 @@ function ClubAssetModal({
 }) {
   const [name, setName] = useState(initialData?.name || "");
   const [category, setCategory] = useState(initialData?.category || "Electronics");
-  const [quantity, setQuantity] = useState(initialData?.quantity || 1);
+  const [quantity, setQuantity] = useState<number | string>(initialData?.quantity ?? 1);
   const [acquisitionDate, setAcquisitionDate] = useState(
     initialData?.acquisitionDate || new Date().toISOString().split("T")[0]
   );
@@ -1386,7 +1807,7 @@ function ClubAssetModal({
       id: initialData?.id || `club-asset-${Date.now()}`,
       name: name.trim(),
       category,
-      quantity: Number(quantity) || 1,
+      quantity: Math.max(1, Number(quantity) || 1),
       acquisitionDate,
       custodian: custodian.trim(),
       location: location.trim(),
@@ -1454,7 +1875,15 @@ function ClubAssetModal({
                 type="number"
                 min={1}
                 value={quantity}
-                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setQuantity(val === "" ? "" : Number(val));
+                }}
+                onBlur={() => {
+                  if (quantity === "" || Number(quantity) < 1) {
+                    setQuantity(1);
+                  }
+                }}
                 className="w-full p-2.5 rounded-lg bg-surface-primary border border-border-default text-xs sm:text-sm text-text-primary focus:outline-none focus:border-accent-primary"
               />
             </div>

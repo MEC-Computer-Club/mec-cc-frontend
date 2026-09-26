@@ -29,6 +29,7 @@ interface StaffUser {
   role: string;
   clubRole?: string;
   imageUrl?: string;
+  imagePosition?: string;
   designation?: string;
 }
 
@@ -280,6 +281,7 @@ function ChannelSection({
                         <UserAvatarWithFallback
                           initialImageUrl={staff.imageUrl}
                           fullName={staff.fullName}
+                          imagePosition={staff.imagePosition}
                           w={28}
                           h={28}
                         />
@@ -341,6 +343,7 @@ function ChannelSection({
                           <UserAvatarWithFallback
                             initialImageUrl={staff.imageUrl}
                             fullName={staff.fullName}
+                            imagePosition={staff.imagePosition}
                             w={32}
                             h={32}
                           />

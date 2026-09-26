@@ -67,13 +67,13 @@ export default function AdminOverview() {
 
   const quickActions = [
     { href: "/dashboard/manage-events/create-event", icon: Calendar, label: "Create Event" },
-    { href: "/dashboard/members", icon: Users, label: "Approve Members" },
+    { href: "/dashboard/members?tab=pending", icon: Users, label: "Approve Members" },
     { href: "/dashboard/utilities", icon: Wrench, label: "Utilities" },
     { href: "/dashboard/assets", icon: HardHat, label: "Manage Assets" },
     { href: "/dashboard/overview/home-page-edit", icon: LayoutDashboard, label: "Home Page Editor" },
     { href: "/dashboard/messages", icon: MessageSquare, label: "View Messages" },
     { href: "/dashboard/blogs", icon: PenLine, label: "Write Blog" },
-    { href: "/dashboard/projects", icon: FolderOpen, label: "Add Project" },
+    { href: "/dashboard/manage-projects", icon: FolderOpen, label: "Add Project" },
     { href: "/dashboard/sponsors/create", icon: DollarSign, label: "Add Sponsor" },
   ];
 
@@ -103,11 +103,11 @@ export default function AdminOverview() {
       value: stats?.membership.pendingApplications ?? "—",
       icon: ClipboardCheck,
       color: "text-accent-error",
-      link: "/dashboard/members",
+      link: "/dashboard/members?tab=pending",
     },
     {
-      title: "Upcoming Events",
-      value: stats?.activities.upcomingEvents ?? "—",
+      title: "Total Events",
+      value: stats?.activities.totalEvents ?? "—",
       icon: Calendar,
       color: "text-accent-success",
       link: "/dashboard/manage-events",
@@ -126,7 +126,7 @@ export default function AdminOverview() {
       {/* Page Title */}
       <div className="border-b border-border-default pb-4">
         <h2 className="text-2xl sm:text-3xl font-semibold text-text-primary">
-          Platform Health Overview
+          Platform Overview
         </h2>
         <p className="text-sm text-text-secondary mt-1">
           Welcome back, <strong className="text-text-primary">{user?.fullName || user?.email}</strong>

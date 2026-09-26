@@ -215,16 +215,32 @@ function populateIsolatedIframe(
     if (src.style.paddingTop) dst.style.paddingTop = src.style.paddingTop;
     if (src.style.paddingBottom) dst.style.paddingBottom = src.style.paddingBottom;
 
-    // Preserve auto margins and full widths so flex layouts and mid-balancing don't collapse
-    if (src.classList.contains("mx-auto") || src.classList.contains("w-fit")) {
+    // Preserve margins and spacing so elements (like logos, headers, and text) maintain exact vertical gaps in print
+    dst.style.marginTop = comp.marginTop;
+    dst.style.marginBottom = comp.marginBottom;
+
+    if (src.classList.contains("mx-auto")) {
       dst.style.marginLeft = "auto";
       dst.style.marginRight = "auto";
-      dst.style.width = "fit-content";
+    } else {
+      dst.style.marginLeft = comp.marginLeft;
+      dst.style.marginRight = comp.marginRight;
+    }
+
+    if (src.style.marginTop) dst.style.marginTop = src.style.marginTop;
+    if (src.style.marginBottom) dst.style.marginBottom = src.style.marginBottom;
+    if (src.style.marginLeft) dst.style.marginLeft = src.style.marginLeft;
+    if (src.style.marginRight) dst.style.marginRight = src.style.marginRight;
+
+    // Dimensions
+    if (src.tagName === "IMG") {
+      dst.style.width = src.style.width || comp.width;
+      dst.style.height = src.style.height || comp.height;
     } else if (src.classList.contains("w-full") || src.style.width === "100%") {
       dst.style.width = "100%";
-      dst.style.margin = comp.margin;
+    } else if (src.classList.contains("w-fit")) {
+      dst.style.width = "fit-content";
     } else {
-      dst.style.margin = comp.margin;
       dst.style.width = comp.width;
     }
     dst.style.height = comp.height;

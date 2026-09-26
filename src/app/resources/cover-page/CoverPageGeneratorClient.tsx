@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Space_Mono, EB_Garamond } from "next/font/google";
@@ -36,6 +36,8 @@ import {
   Users,
   User,
   Download,
+  Upload,
+  Building,
 } from "lucide-react";
 import { MecHeaderVector } from "./MecHeaderVector";
 
@@ -187,6 +189,12 @@ export interface GroupMember {
   reg: string;
 }
 
+export const isMecInstitute = (name?: string): boolean => {
+  if (!name) return true;
+  const lower = name.toLowerCase().trim();
+  return lower.includes("mymensingh") || lower.includes("mec");
+};
+
 interface FormData {
   template: CoverTemplate;
   docType: DocType;
@@ -194,6 +202,7 @@ interface FormData {
   studentDepartment: string;
   institution: string;
   university: string;
+  customLogo?: string | null;
   courseName: string;
   courseCode: string;
   courseCredit: string;
@@ -228,6 +237,7 @@ const DEFAULT_DATA: FormData = {
   studentDepartment: "CSE",
   institution: "Mymensingh Engineering College",
   university: "University of Dhaka",
+  customLogo: null,
   courseName: "Database Management Systems - I Lab",
   courseCode: "CSE-2211",
   courseCredit: "1.5",
@@ -282,6 +292,7 @@ const DEPARTMENT_OPTIONS = [
   { value: "Department of Computer Science and Engineering", label: "Computer Science & Engineering (CSE)" },
   { value: "Department of Electrical & Electronic Engineering", label: "Electrical & Electronic Engineering (EEE)" },
   { value: "Department of Civil Engineering", label: "Civil Engineering (CE)" },
+  { value: "custom", label: "✏️ Other / Custom Department..." },
 ];
 
 const QUICK_COURSES = [
@@ -337,15 +348,20 @@ function generateLatexCode(data: FormData): string {
     \\centering
     
     % College Logo
-    \\IfFileExists{mec-logo.png}{
-        \\includegraphics[width=0.20\\textwidth]{mec-logo.png}
+    \\IfFileExists{institute-logo.png}{
+        \\includegraphics[width=0.20\\textwidth]{institute-logo.png}
         \\vspace{.5cm}
     }{
-        \\IfFileExists{logomec.jpg}{
-            \\includegraphics[width=0.19\\textwidth]{logomec.jpg}
+        \\IfFileExists{mec-logo.png}{
+            \\includegraphics[width=0.20\\textwidth]{mec-logo.png}
             \\vspace{.5cm}
         }{
-            \\vspace*{2cm}
+            \\IfFileExists{logomec.jpg}{
+                \\includegraphics[width=0.19\\textwidth]{logomec.jpg}
+                \\vspace{.5cm}
+            }{
+                \\vspace*{2cm}
+            }
         }
     }
     
@@ -449,7 +465,29 @@ export function CoverPageGeneratorClient() {
 
   const mobileScale = Math.min(1.0, Math.max(0.35, containerWidth / 794));
 
-  // Load saved student data on mount & auto-fill from user profile
+  // Determine if the current institute is MEC (Classic Space Mono is exclusive to MEC)
+  const isMec = isMecInstitute(formData.institution);
+  const effectiveTemplate = !isMec && formData.template === "classic-mono" ? "modern-clean" : formData.template;
+
+  // Filter templates: Classic Space Mono is hidden for non-MEC institutes
+  const availableTemplateOptions = useMemo(() => {
+    if (isMec) {
+      return TEMPLATE_SELECT_OPTIONS;
+    }
+    return TEMPLATE_SELECT_OPTIONS.filter((opt) => opt.value !== "classic-mono");
+  }, [isMec]);
+
+  // Auto-switch away from classic-mono if a non-MEC institute is entered
+  useEffect(() => {
+    if (!isMec && formData.template === "classic-mono") {
+      setFormData((prev) => ({ ...prev, template: "modern-clean" }));
+      toast("Switched to Modern Centered template (Classic Space Mono is exclusive to MEC).", {
+        icon: "ℹ️",
+      });
+    }
+  }, [isMec, formData.template]);
+
+  // Load saved student data & custom logo on mount
   useEffect(() => {
     let savedProfile: any = null;
     try {
@@ -458,6 +496,13 @@ export function CoverPageGeneratorClient() {
         savedProfile = JSON.parse(saved);
         setIsSavedLocally(true);
       }
+    } catch {
+      // ignore
+    }
+
+    let savedLogo: string | null = null;
+    try {
+      savedLogo = localStorage.getItem("cover_page_custom_logo");
     } catch {
       // ignore
     }
@@ -494,6 +539,7 @@ export function CoverPageGeneratorClient() {
 
       return {
         ...prev,
+        customLogo: savedLogo || prev.customLogo,
         department,
         studentName,
         roll,
@@ -506,6 +552,65 @@ export function CoverPageGeneratorClient() {
       };
     });
   }, [user]);
+
+  // Synchronize institution with teacherInstitution when appropriate
+  const handleInstitutionChange = (val: string) => {
+    setFormData((prev) => {
+      const shouldSyncTeacher =
+        !prev.teacherInstitution ||
+        prev.teacherInstitution === "Mymensingh Engineering College" ||
+        prev.teacherInstitution === prev.institution;
+      return {
+        ...prev,
+        institution: val,
+        teacherInstitution: shouldSyncTeacher ? val : prev.teacherInstitution,
+      };
+    });
+  };
+
+  // Purely client-side logo upload: reads image into base64 Data URL, never uploads to cloud/server
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please upload a valid image file (PNG, JPG, SVG, WebP)");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image file is too large. Please select an image under 5MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      if (result) {
+        handleChange("customLogo", result);
+        try {
+          localStorage.setItem("cover_page_custom_logo", result);
+        } catch {
+          // Ignore quota error in local storage
+        }
+        toast.success("Institute logo updated locally in your browser!");
+      }
+    };
+    reader.onerror = () => {
+      toast.error("Failed to read image file.");
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleResetLogo = () => {
+    handleChange("customLogo", null);
+    try {
+      localStorage.removeItem("cover_page_custom_logo");
+    } catch {
+      // ignore
+    }
+    toast.success("Reset to default MEC crest");
+  };
 
   const handleSyncWithAccount = () => {
     if (!user) {
@@ -778,11 +883,42 @@ export function CoverPageGeneratorClient() {
 
   const handleReset = () => {
     setFormData(DEFAULT_DATA);
+    try {
+      localStorage.removeItem("cover_page_custom_logo");
+    } catch {
+      // ignore
+    }
     toast("Template reset to sample", { icon: "🔄" });
   };
 
   const handlePrint = async () => {
     autoSubmitEntities();
+
+    // Track print analytics asynchronously
+    try {
+      const normalizeDeptCode = (dept?: string): string => {
+        if (!dept) return "CSE";
+        const upper = dept.toUpperCase().trim();
+        if (upper.includes("COMPUTER") || upper.includes("CSE")) return "CSE";
+        if (upper.includes("ELECTRICAL") || upper.includes("EEE")) return "EEE";
+        if (upper.includes("CIVIL") || upper.includes("CE")) return "CE";
+        return dept.trim();
+      };
+
+      fetch(`${API_BASE_URL}/api/analytics/track`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tool: "cover_page",
+          action: "print",
+          instituteName: formData.institution?.trim() || "Mymensingh Engineering College",
+          department: normalizeDeptCode(formData.department),
+        }),
+      }).catch(() => {});
+    } catch {
+      // Non-blocking
+    }
+
     const printRoot = document.getElementById("print-root");
     if (!printRoot) {
       window.print();
@@ -1229,15 +1365,106 @@ export function CoverPageGeneratorClient() {
               {/* TAB 1: Document & Course Info */}
               {activeTab === "document" && (
                 <div className="space-y-4">
+                  {/* Universal Institute & Logo Support */}
+                  <div className="p-3.5 bg-surface-secondary/40 border border-border-default rounded-xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs font-mono font-bold uppercase text-text-primary flex items-center gap-1.5">
+                        <Building size={13} className="text-accent-primary" /> Institution &amp; Logo
+                      </div>
+                      <span className="text-[10px] font-mono bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20 font-bold">
+                        Client-Side Only
+                      </span>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-mono font-bold uppercase text-text-secondary mb-1">
+                        College / Institution Name
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.institution}
+                        onChange={(e) => handleInstitutionChange(e.target.value)}
+                        placeholder="e.g. Mymensingh Engineering College, BUET, DU..."
+                        className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
+                      />
+                    </div>
+
+                    {/* Logo Upload Card (100% Client-side) */}
+                    <div>
+                      <label className="block text-xs font-mono font-bold uppercase text-text-secondary mb-1.5">
+                        Institute Crest / Photo
+                      </label>
+                      <div className="flex items-center gap-3 p-2.5 bg-surface-primary border border-border-default rounded-lg">
+                        <div className="w-12 h-12 rounded border border-border-default bg-white p-1 shrink-0 flex items-center justify-center overflow-hidden">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={formData.customLogo || "/mec-logo.png"}
+                            alt="Crest Preview"
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                        <div className="flex-1 min-w-0 flex flex-wrap items-center gap-2">
+                          <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent-primary text-white text-xs font-mono font-bold rounded hover:opacity-90 transition-opacity">
+                            <Upload size={12} />
+                            <span>{formData.customLogo ? "Change Logo" : "Upload Logo"}</span>
+                            <input
+                              type="file"
+                              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                              onChange={handleLogoUpload}
+                              className="hidden"
+                            />
+                          </label>
+                          {formData.customLogo && (
+                            <button
+                              type="button"
+                              onClick={handleResetLogo}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-surface-secondary border border-border-default text-text-secondary hover:text-red-500 text-xs font-mono rounded transition-colors"
+                              title="Reset to default MEC logo"
+                            >
+                              <RotateCcw size={11} />
+                              <span>Reset MEC</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-[11px] font-mono text-text-secondary mt-1">
+                        Supports PNG, JPG, WebP, SVG. Stored in browser memory only (never uploaded to cloud/server).
+                      </p>
+                    </div>
+                  </div>
+
                   <div>
                     <label className="block text-xs font-mono font-bold uppercase text-text-secondary mb-1">
                       Department Name
                     </label>
                     <Select
-                      value={formData.department}
-                      onChange={(val) => handleChange("department", val)}
+                      value={
+                        DEPARTMENT_OPTIONS.some((opt) => opt.value === formData.department && opt.value !== "custom")
+                          ? formData.department
+                          : "custom"
+                      }
+                      onChange={(val) => {
+                        if (val === "custom") {
+                          if (DEPARTMENT_OPTIONS.some((opt) => opt.value === formData.department && opt.value !== "custom")) {
+                            handleChange("department", "");
+                          }
+                        } else {
+                          handleChange("department", val);
+                        }
+                      }}
                       options={DEPARTMENT_OPTIONS}
                     />
+                    {(!DEPARTMENT_OPTIONS.some((opt) => opt.value === formData.department && opt.value !== "custom") || formData.department === "") && (
+                      <div className="mt-2">
+                        <input
+                          type="text"
+                          value={formData.department}
+                          onChange={(e) => handleChange("department", e.target.value)}
+                          placeholder="Enter department (e.g. Department of Mechanical Engineering)"
+                          className="w-full px-3 py-2 bg-surface-primary border border-border-default rounded-md text-base sm:text-sm font-mono focus:border-accent-primary focus:outline-none"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div>
@@ -1820,9 +2047,20 @@ export function CoverPageGeneratorClient() {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-mono font-bold uppercase text-text-secondary mb-1">
-                      Institution
-                    </label>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs font-mono font-bold uppercase text-text-secondary">
+                        Institution
+                      </label>
+                      {formData.teacherInstitution !== formData.institution && (
+                        <button
+                          type="button"
+                          onClick={() => handleChange("teacherInstitution", formData.institution)}
+                          className="text-[11px] font-mono text-accent-primary hover:underline"
+                        >
+                          Sync Document Institute
+                        </button>
+                      )}
+                    </div>
                     <input
                       type="text"
                       value={formData.teacherInstitution}
@@ -1887,7 +2125,7 @@ export function CoverPageGeneratorClient() {
                   <Select
                     value={formData.template}
                     onChange={(val) => handleChange("template", val as CoverTemplate)}
-                    options={TEMPLATE_SELECT_OPTIONS}
+                    options={availableTemplateOptions}
                   />
                 </div>
               </div>
@@ -1941,7 +2179,7 @@ export function CoverPageGeneratorClient() {
                   <Select
                     value={formData.template}
                     onChange={(val) => handleChange("template", val as CoverTemplate)}
-                    options={TEMPLATE_SELECT_OPTIONS}
+                    options={availableTemplateOptions}
                   />
                 </div>
 
@@ -2018,9 +2256,9 @@ export function CoverPageGeneratorClient() {
                     border: "1px solid #000000",
                     boxSizing: "border-box",
                   }}
-                className={`${formData.template === "classic-mono"
+                className={`${effectiveTemplate === "classic-mono"
                   ? `${spaceMono.className} font-space-mono pt-[81px] pb-[80px] px-[64px] flex flex-col justify-start shrink-0`
-                  : formData.template === "latex-academic"
+                  : effectiveTemplate === "latex-academic"
                     ? `${ebGaramond.className} font-latex font-serif p-0 flex flex-col justify-between shrink-0`
                     : formData.docType === "index-table"
                       ? "font-quicksand p-[48px] sm:p-[56px] flex flex-col justify-between shrink-0"
@@ -2032,12 +2270,12 @@ export function CoverPageGeneratorClient() {
                   <div className="flex flex-col flex-1 justify-between select-text">
                     <div>
                       {/* Index Table Header */}
-                      {formData.template === "modern-clean" ? (
+                      {effectiveTemplate === "modern-clean" ? (
                         <div className="flex items-center justify-center gap-4 pb-4 border-b border-black">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
-                            src="/mec-logo.png"
-                            alt="Mymensingh Engineering College Crest"
+                            src={formData.customLogo || "/mec-logo.png"}
+                            alt={formData.institution ? `${formData.institution} Crest` : "Institute Crest"}
                             width={68}
                             height={68}
                             className="w-[68px] h-[68px] object-contain shrink-0"
@@ -2046,7 +2284,7 @@ export function CoverPageGeneratorClient() {
                             <h2
                               contentEditable
                               suppressContentEditableWarning
-                              onBlur={(e) => handleChange("institution", e.currentTarget.textContent || "")}
+                              onBlur={(e) => handleInstitutionChange(e.currentTarget.textContent || "")}
                               className="inline-editable block text-[22px] font-bold tracking-tight text-neutral-900 leading-snug"
                               style={{ display: "block" }}
                               title="Click to edit institution"
@@ -2328,7 +2566,7 @@ export function CoverPageGeneratorClient() {
                       </div>
                     </div>
                   </div>
-                ) : formData.template === "latex-academic" ? (
+                ) : effectiveTemplate === "latex-academic" ? (
                   /* ================= TEMPLATE 3: LATEX ACADEMIC (srs.tex) ================= */
                   <div className={`relative w-full h-full min-h-[1121px] overflow-hidden text-black select-text p-[64px] flex flex-col justify-between ${ebGaramond.className} font-latex font-serif`}>
                     {/* Top Content Block */}
@@ -2336,8 +2574,8 @@ export function CoverPageGeneratorClient() {
                       {/* Crest */}
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src="/mec-logo.png"
-                        alt="Mymensingh Engineering College Crest"
+                        src={formData.customLogo || "/mec-logo.png"}
+                        alt={formData.institution ? `${formData.institution} Crest` : "Institute Crest"}
                         width={96}
                         height={96}
                         className="w-[96px] h-[96px] object-contain mx-auto mb-4"
@@ -2347,7 +2585,7 @@ export function CoverPageGeneratorClient() {
                       <h1
                         contentEditable
                         suppressContentEditableWarning
-                        onBlur={(e) => handleChange("institution", e.currentTarget.textContent || "")}
+                        onBlur={(e) => handleInstitutionChange(e.currentTarget.textContent || "")}
                         className="inline-editable text-center text-[26px] font-bold tracking-tight text-neutral-900 leading-snug"
                         title="Click to edit institution"
                       >
@@ -2575,20 +2813,26 @@ export function CoverPageGeneratorClient() {
                       </div>
                     </div>
                   </div>
-                ) : formData.template === "modern-clean" ? (
+                ) : effectiveTemplate === "modern-clean" ? (
                   /* ================= TEMPLATE 2: MODERN CENTERED (hehe.pdf, Lab Report & Assignment) ================= */
                   <div className="relative w-full h-full min-h-[1121px] overflow-hidden text-black select-text font-quicksand">
                     {/* Institution name (fully centered across 816px sheet) */}
                     <div
                       className={`${formData.docType === "lab-report" || formData.docType === "assignment"
-                        ? "pt-[46px]"
-                        : "pt-[72px]"
+                        ? "pt-[46px] pb-[14px]"
+                        : "pt-[72px] pb-[18px]"
                         } text-center w-full block`}
+                      style={{
+                        paddingBottom:
+                          formData.docType === "lab-report" || formData.docType === "assignment"
+                            ? "14px"
+                            : "18px",
+                      }}
                     >
                       <h1
                         contentEditable
                         suppressContentEditableWarning
-                        onBlur={(e) => handleChange("institution", e.currentTarget.textContent || "")}
+                        onBlur={(e) => handleInstitutionChange(e.currentTarget.textContent || "")}
                         className="inline-editable inline-block text-center text-[35px] font-bold leading-[42px] tracking-tight text-neutral-900 font-quicksand"
                         title="Click to edit institution"
                       >
@@ -2599,8 +2843,8 @@ export function CoverPageGeneratorClient() {
                     {/* Crest (high-res matching reference) */}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src="/mec-logo.png"
-                      alt="Mymensingh Engineering College Crest"
+                      src={formData.customLogo || "/mec-logo.png"}
+                      alt={formData.institution ? `${formData.institution} Crest` : "Institute Crest"}
                       width={formData.docType === "lab-report" || formData.docType === "assignment" ? 208 : 232}
                       height={formData.docType === "lab-report" || formData.docType === "assignment" ? 208 : 232}
                       style={{
@@ -2612,10 +2856,18 @@ export function CoverPageGeneratorClient() {
                           formData.docType === "lab-report" || formData.docType === "assignment"
                             ? "208px"
                             : "232px",
+                        marginTop:
+                          formData.docType === "lab-report" || formData.docType === "assignment"
+                            ? "28px"
+                            : "60px",
+                        marginBottom:
+                          formData.docType === "lab-report" || formData.docType === "assignment"
+                            ? "32px"
+                            : "58px",
                       }}
                       className={`mx-auto ${formData.docType === "lab-report" || formData.docType === "assignment"
-                        ? "mt-[38px]"
-                        : "mt-[74px]"
+                        ? "mt-[28px] mb-[32px]"
+                        : "mt-[60px] mb-[58px]"
                         } block object-contain`}
                     />
 

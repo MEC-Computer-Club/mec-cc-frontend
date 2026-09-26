@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { MembersData } from "@/types";
 import axios from "axios";
 import { API_BASE_URL } from "@/lib/api";
@@ -46,7 +47,9 @@ interface CountsData {
   banned: number;
 }
 
-export default function MemberManagementPage() {
+function MemberManagementContent() {
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
   const [members, setMembers] = useState<MembersData[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState<PaginationData>({
@@ -66,7 +69,16 @@ export default function MemberManagementPage() {
     banned: 0,
   });
 
-  const [activeTab, setActiveTab] = useState<MainTab>("pending");
+  const [activeTab, setActiveTab] = useState<MainTab>(tabParam === "pending" ? "pending" : "all");
+
+  useEffect(() => {
+    const currentTabParam = searchParams.get("tab");
+    if (currentTabParam === "pending") {
+      setActiveTab("pending");
+    } else if (currentTabParam === "all") {
+      setActiveTab("all");
+    }
+  }, [searchParams]);
   const [pendingFilter, setPendingFilter] = useState("pending");
   const [allFilter, setAllFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -221,10 +233,10 @@ export default function MemberManagementPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-3 border-b border-border-default">
         <div>
           <h2 className="text-2xl sm:text-3xl font-semibold text-text-primary">
-            Member Applications &amp; Data
+            Members Management
           </h2>
           <p className="text-xs sm:text-sm text-text-secondary mt-0.5">
-            Manage student registrations, approval pipelines, and club roles.
+            Manage club members, executive roles, advisors, and student registrations.
           </p>
         </div>
         <button
@@ -244,6 +256,29 @@ export default function MemberManagementPage() {
           <div className="flex items-center gap-3 flex-wrap">
             {/* Tab Pills */}
             <div className="flex p-1 bg-surface-secondary border border-border-default rounded-xl shadow-[2px_2px_0px_0px_var(--border-default)]">
+              {/* All Tab */}
+              <button
+                type="button"
+                onClick={() => handleTabChange("all")}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${activeTab === "all"
+                    ? "bg-surface-elevated text-text-primary border border-border-default shadow-[2px_2px_0px_0px_var(--accent-primary)]"
+                    : "text-text-secondary hover:text-text-primary"
+                  }`}
+              >
+                <Users size={14} className={activeTab === "all" ? "text-accent-primary" : ""} />
+                <span>All Members</span>
+                {counts.all > 0 && (
+                  <span
+                    className={`px-1.5 py-0.2 text-[10px] font-semibold rounded-full ${activeTab === "all"
+                        ? "bg-accent-primary text-accent-primary-text"
+                        : "bg-surface-elevated text-text-secondary border border-border-default"
+                      }`}
+                  >
+                    {counts.all}
+                  </span>
+                )}
+              </button>
+
               {/* Pending Tab */}
               <button
                 type="button"
@@ -263,29 +298,6 @@ export default function MemberManagementPage() {
                       }`}
                   >
                     {counts.pending}
-                  </span>
-                )}
-              </button>
-
-              {/* All Tab */}
-              <button
-                type="button"
-                onClick={() => handleTabChange("all")}
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${activeTab === "all"
-                    ? "bg-surface-elevated text-text-primary border border-border-default shadow-[2px_2px_0px_0px_var(--accent-primary)]"
-                    : "text-text-secondary hover:text-text-primary"
-                  }`}
-              >
-                <Users size={14} className={activeTab === "all" ? "text-accent-primary" : ""} />
-                <span>All</span>
-                {counts.all > 0 && (
-                  <span
-                    className={`px-1.5 py-0.2 text-[10px] font-semibold rounded-full ${activeTab === "all"
-                        ? "bg-accent-primary text-accent-primary-text"
-                        : "bg-surface-elevated text-text-secondary border border-border-default"
-                      }`}
-                  >
-                    {counts.all}
                   </span>
                 )}
               </button>
@@ -391,7 +403,13 @@ export default function MemberManagementPage() {
                 {members.map((u) => (
                   <tr key={u._id} className="hover:bg-surface-secondary/70 transition-colors">
                     <td className="px-5 py-3.5 whitespace-nowrap">
-                      <UserAvatarWithFallback initialImageUrl={u.imageUrl} fullName={u.fullName} />
+                      <UserAvatarWithFallback
+                        initialImageUrl={u.imageUrl}
+                        fullName={u.fullName}
+                        imagePosition={(u as any).imagePosition}
+                        w={40}
+                        h={40}
+                      />
                     </td>
                     <td className="px-5 py-3.5 whitespace-nowrap">
                       <div className="flex flex-col">
@@ -439,7 +457,13 @@ export default function MemberManagementPage() {
                 className="bg-surface-elevated rounded-xl shadow-[4px_4px_0px_0px_var(--border-default)] border border-border-default p-4"
               >
                 <div className="flex items-center gap-3 mb-3">
-                  <UserAvatarWithFallback initialImageUrl={u.imageUrl} fullName={u.fullName} />
+                  <UserAvatarWithFallback
+                    initialImageUrl={u.imageUrl}
+                    fullName={u.fullName}
+                    imagePosition={(u as any).imagePosition}
+                    w={40}
+                    h={40}
+                  />
                   <div className="min-w-0">
                     <p className="font-semibold text-text-primary truncate">{u.fullName}</p>
                     <p className="text-xs text-text-secondary truncate">{u.email}</p>
@@ -737,5 +761,20 @@ function ActionCell({
         <p className="mt-1 text-xs text-accent-error font-semibold">{rowErrors[user._id]}</p>
       )}
     </div>
+  );
+}
+
+export default function MemberManagementPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="space-y-4 p-4">
+          <div className="h-10 w-64 bg-surface-secondary border border-border-default rounded-xl animate-pulse" />
+          <div className="h-64 bg-surface-secondary border border-border-default rounded-xl animate-pulse" />
+        </div>
+      }
+    >
+      <MemberManagementContent />
+    </Suspense>
   );
 }

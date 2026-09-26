@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 
 export interface SelectOption {
   value: string;
@@ -20,13 +21,69 @@ export interface SelectProps {
 
 export function Select({ id, name, value, onChange, options, placeholder = "Select...", required, disabled }: SelectProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [menuCoords, setMenuCoords] = useState<{
+    top?: number;
+    bottom?: number;
+    left: number;
+    width: number;
+  } | null>(null);
 
   const selectedOption = options.find((opt) => opt.value === value);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const updatePosition = useCallback(() => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    const showUpward = spaceBelow < 250 && spaceAbove > spaceBelow;
+
+    if (showUpward) {
+      setMenuCoords({
+        bottom: window.innerHeight - rect.top + 4,
+        left: rect.left,
+        width: rect.width,
+      });
+    } else {
+      setMenuCoords({
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width,
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    updatePosition();
+
+    const handleScrollOrResize = () => {
+      updatePosition();
+    };
+
+    window.addEventListener("scroll", handleScrollOrResize, true);
+    window.addEventListener("resize", handleScrollOrResize);
+    return () => {
+      window.removeEventListener("scroll", handleScrollOrResize, true);
+      window.removeEventListener("resize", handleScrollOrResize);
+    };
+  }, [isOpen, updatePosition]);
+
+  useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(target) &&
+        menuRef.current &&
+        !menuRef.current.contains(target)
+      ) {
         setIsOpen(false);
       }
     };
@@ -34,9 +91,28 @@ export function Select({ id, name, value, onChange, options, placeholder = "Sele
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, []);
 
+  // Close on Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen]);
+
+  const handleToggle = () => {
+    if (disabled) return;
+    if (!isOpen) {
+      updatePosition();
+    }
+    setIsOpen(!isOpen);
+  };
+
   return (
     <div
-      className={`relative w-full ${isOpen ? "z-[500]" : ""} ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
+      className={`relative w-full ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
       ref={containerRef}
       id={id}
       data-open={isOpen}
@@ -92,7 +168,7 @@ export function Select({ id, name, value, onChange, options, placeholder = "Sele
             ? "border-accent-primary shadow-[3px_3px_0px_var(--accent-primary)] font-bold text-text-primary dark:text-white"
             : "border-border-brutalist dark:border-border-default focus:border-accent-primary focus:shadow-[3px_3px_0px_var(--accent-primary)]"
         }`}
-        onClick={() => !disabled && setIsOpen(!isOpen)}
+        onClick={handleToggle}
         disabled={disabled}
       >
         <span>{selectedOption ? selectedOption.label : placeholder}</span>
@@ -108,8 +184,19 @@ export function Select({ id, name, value, onChange, options, placeholder = "Sele
         </svg>
       </button>
 
-      {isOpen && !disabled && (
-        <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-surface-primary border border-text-primary dark:border-border-default rounded-md shadow-[4px_4px_0px_0px_var(--accent-primary)] z-[500] max-h-[250px] overflow-y-auto overflow-x-hidden flex flex-col m-0 p-0 list-none animate-in fade-in slide-in-from-top-1 duration-150">
+      {isOpen && !disabled && mounted && menuCoords && createPortal(
+        <div
+          ref={menuRef}
+          style={{
+            position: "fixed",
+            top: menuCoords.top !== undefined ? `${menuCoords.top}px` : "auto",
+            bottom: menuCoords.bottom !== undefined ? `${menuCoords.bottom}px` : "auto",
+            left: `${menuCoords.left}px`,
+            width: `${menuCoords.width}px`,
+            zIndex: 99999,
+          }}
+          className="bg-surface-primary border border-text-primary dark:border-border-default rounded-md shadow-[4px_4px_0px_0px_var(--accent-primary)] max-h-[250px] overflow-y-auto overflow-x-hidden flex flex-col m-0 p-0 list-none animate-in fade-in duration-100"
+        >
           {options.map((opt) => (
             <div
               key={opt.value}
@@ -127,7 +214,8 @@ export function Select({ id, name, value, onChange, options, placeholder = "Sele
               )}
             </div>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Hidden input to support native HTML5 form validation & form name */}

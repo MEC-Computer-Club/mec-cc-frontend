@@ -15,49 +15,36 @@ export interface Advisor {
   };
 }
 
-export const staticAdvisors: Advisor[] = [
-  {
-    id: "adv-1",
-    name: "Dr. Abu Sayed",
-    role: "Chief Advisor",
-    academicPost: "Head of CSE Department",
-    department: "CSE",
-    image: "",
-    bio: "Head of CSE Department. Passionate about algorithms and data structures.",
-    socials: {
-      linkedin: "#",
-    },
-  },
-  {
-    id: "adv-2",
-    name: "Prof. Farhana Haque",
-    role: "Technical Advisor",
-    academicPost: "Professor, Dept. of CSE",
-    department: "CSE",
-    image: "",
-    bio: "Specializes in Artificial Intelligence and Machine Learning research.",
-    socials: {
-      linkedin: "#",
-      github: "#",
-    },
-  },
-  {
-    id: "adv-3",
-    name: "Dr. Rakib Hasan",
-    role: "Faculty Advisor",
-    academicPost: "Associate Professor, Dept. of CSE",
-    department: "CSE",
-    image: "",
-    bio: "Expert in Cyber Security and Software Engineering principles.",
-    socials: {
-      linkedin: "#",
-    },
-  },
-];
+export const staticAdvisors: Advisor[] = [];
 
 export const advisors = staticAdvisors;
 
 import { API_BASE_URL } from "@/lib/api";
+
+export function getAdvisorDesignationRank(role: string, orderMap?: Record<string, number>): number {
+  if (!role) return 999;
+  const clean = role.toLowerCase().trim();
+  if (orderMap && typeof orderMap[clean] === "number") {
+    return orderMap[clean];
+  }
+  // Try partial match with orderMap keys
+  if (orderMap) {
+    for (const key of Object.keys(orderMap)) {
+      if (clean.includes(key) || key.includes(clean)) {
+        return orderMap[key];
+      }
+    }
+  }
+
+  // Canonical fallback hierarchy
+  if (clean.includes("patron") || clean.includes("principal")) return 1;
+  if (clean.includes("chief advisor") || clean.includes("head of department") || clean.includes("head of dept")) return 2;
+  if (clean.includes("technical advisor")) return 3;
+  if (clean.includes("faculty advisor") || clean.includes("senior advisor")) return 4;
+  if (clean.includes("mentor") || clean.includes("honorary")) return 5;
+  if (clean.includes("advisor")) return 6;
+  return 100;
+}
 
 export async function getAdvisors(): Promise<Advisor[]> {
   const API_URL = API_BASE_URL;
@@ -112,8 +99,8 @@ export async function getAdvisors(): Promise<Advisor[]> {
 
         // Sort by precedence rank
         mapped.sort((a, b) => {
-          const rankA = orderMap[a.role.toLowerCase().trim()] ?? 999;
-          const rankB = orderMap[b.role.toLowerCase().trim()] ?? 999;
+          const rankA = getAdvisorDesignationRank(a.role, orderMap);
+          const rankB = getAdvisorDesignationRank(b.role, orderMap);
           if (rankA !== rankB) return rankA - rankB;
           return a.name.localeCompare(b.name);
         });
@@ -125,5 +112,5 @@ export async function getAdvisors(): Promise<Advisor[]> {
     console.warn("Could not fetch backend advisors, using static fallback:", err);
   }
 
-  return staticAdvisors;
+  return [];
 }

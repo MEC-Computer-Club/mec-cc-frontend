@@ -359,6 +359,7 @@ export interface MembersData {
   _id: string;
   fullName: string;
   imageUrl: string;
+  imagePosition?: string;
   email: string;
   role: string;
   applicationStatus: string;

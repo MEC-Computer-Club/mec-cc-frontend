@@ -40,7 +40,7 @@ export default async function HomePage() {
   const [homeEvents, galleryItems, sponsors, leaderboardData, homeContent, featuredProjects, featuredBlogs] = await Promise.all([
     getHomeEvents(5),
     getHomeGalleryItems(5),
-    getPartners(),
+    getPartners({ forHome: true }),
     getClubLeaderboard(),
     getPageContent("home"),
     getFeaturedProjects(),

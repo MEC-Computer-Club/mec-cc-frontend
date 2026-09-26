@@ -164,13 +164,6 @@ function CreateEventFormContent() {
     return eventDate < today;
   }, [form.date, form.status]);
 
-  // If event is no longer past, automatically reset allowParticipationClaims
-  useEffect(() => {
-    if (!isPastEvent && form.allowParticipationClaims) {
-      set("allowParticipationClaims", false);
-    }
-  }, [isPastEvent, form.allowParticipationClaims]);
-
   // Independent forms or forms currently linked to this event
   const selectableForms = useMemo(() => {
     return availableForms.filter((f) => {
@@ -295,7 +288,7 @@ function CreateEventFormContent() {
         bannerImageUrl: finalBannerUrl,
         linkedForm: form.linkedForm ? form.linkedForm : "",
         registrationLink: form.registrationLink ? form.registrationLink.trim() : "",
-        allowParticipationClaims: isPastEvent ? form.allowParticipationClaims : false,
+        allowParticipationClaims: Boolean(form.allowParticipationClaims),
         contributors: contributors.filter((c) => c.name.trim() && c.role.trim()),
         tags,
         maxParticipants: form.maxParticipants ? Number(form.maxParticipants) : undefined,
@@ -470,42 +463,7 @@ function CreateEventFormContent() {
           </Field>
         </Section>
 
-        {/* ── 4. Past Event Archiving & Participation Claims ── */}
-        <Section icon={UserCheck} title="Past Event Archiving & Participation Claims" color="text-emerald-500">
-          {isPastEvent ? (
-            <div className="p-4 rounded-xl border border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/50 dark:bg-emerald-950/20 space-y-3">
-              <div className="flex items-start justify-between gap-4">
-                <div className="space-y-1">
-                  <span className="text-sm font-semibold text-emerald-900 dark:text-emerald-200 flex items-center gap-2">
-                    <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400" />
-                    Allow Participation Claims (&quot;I Participated&quot;)
-                  </span>
-                  <p className="text-xs text-emerald-700 dark:text-emerald-400/90 leading-relaxed">
-                    This is recognized as a past event. When enabled, logged-in students who visit this event page can click &quot;I Participated&quot; to claim attendance. You can review, approve, or reject each claim in the dashboard.
-                  </p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-1">
-                  <input
-                    type="checkbox"
-                    checked={form.allowParticipationClaims}
-                    onChange={(e) => set("allowParticipationClaims", e.target.checked)}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-600"></div>
-                </label>
-              </div>
-            </div>
-          ) : (
-            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/40 flex items-start gap-3 text-xs text-slate-500 leading-relaxed">
-              <Info size={16} className="text-slate-400 shrink-0 mt-0.5" />
-              <div>
-                <strong>Upcoming Event Notice:</strong> Participation claims (&quot;I Participated&quot;) can only be enabled for events that have already occurred. Once this event concludes or status is set to &quot;Completed&quot;, you will be able to enable participation claims here.
-              </div>
-            </div>
-          )}
-        </Section>
-
-        {/* ── 5. Event Contributors & Organizing Team ── */}
+        {/* ── 4. Event Contributors & Organizing Team ── */}
         <Section icon={Users} title="Event Contributors & Organizing Team" color="text-indigo-500">
           <p className="text-xs text-slate-500 leading-relaxed">
             Acknowledge the key people who organized, mentored, spoke, or contributed to this event. These individuals will be credited on the public event page.
@@ -680,9 +638,33 @@ function CreateEventFormContent() {
               )}
             </div>
           </div>
+
+          {/* ── Participation Claims Toggle ("I Participated") ── */}
+          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30">
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-1">
+                <span className="text-sm font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                  <UserCheck size={16} className="text-emerald-500" />
+                  Allow Participation Claims (&quot;I Participated&quot;)
+                </span>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  When enabled, verified students visiting this event page can click &quot;I Participated&quot; to claim attendance or certificates. You can review, approve, or reject claims from the dashboard.
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                <input
+                  type="checkbox"
+                  checked={form.allowParticipationClaims}
+                  onChange={(e) => set("allowParticipationClaims", e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-600"></div>
+              </label>
+            </div>
+          </div>
         </Section>
 
-        {/* ── 7. Prizes & Rewards (Optional) ── */}
+        {/* ── 6. Prizes & Rewards (Optional) ── */}
         <Section icon={Trophy} title="Prize Pool & Rewards (Optional)" color="text-amber-500">
           <Field label="Total Prize Pool Title" hint="e.g. ৳15,000 BDT or Grand Trophy + Swags">
             <Input icon={Trophy} placeholder="e.g. ৳15,000 BDT" value={form.prizePool}
@@ -745,7 +727,7 @@ function CreateEventFormContent() {
           </div>
         </Section>
 
-        {/* ── 8. Schedule Timeline (Optional) ── */}
+        {/* ── 7. Schedule Timeline (Optional) ── */}
         <Section icon={Clock} title="Schedule Timeline (Optional)" color="text-teal-500">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -816,7 +798,7 @@ function CreateEventFormContent() {
           </div>
         </Section>
 
-        {/* ── 9. Rules & Guidelines (Optional) ── */}
+        {/* ── 8. Rules & Guidelines (Optional) ── */}
         <Section icon={ListChecks} title="Rules & Guidelines (Optional)" color="text-violet-500">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -866,7 +848,7 @@ function CreateEventFormContent() {
           </div>
         </Section>
 
-        {/* ── 10. Organiser & Contact ── */}
+        {/* ── 9. Organiser & Contact ── */}
         <Section icon={Info} title="Organiser & Contact" color="text-orange-500">
           <p className="text-xs text-slate-500 leading-relaxed">
             Pre-filled with MEC Computer Club global site contact information. You can modify these values if this event has a specific external partner or coordinator.
