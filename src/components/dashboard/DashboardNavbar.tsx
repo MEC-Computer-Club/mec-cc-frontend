@@ -9,6 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { NotificationCenter } from "@/components/layout/NotificationCenter";
 import { AuthUser } from "@/types";
+import { getOptimizedImageUrl } from "@/data/gallery";
 
 interface DashboardNavbarProps {
   role: AuthUser["role"];
@@ -101,14 +102,13 @@ export const DashboardNavbar: React.FC<DashboardNavbarProps> = ({
                 onClick={() => setIsMenuOpen((v) => !v)}
                 className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-surface-secondary border border-transparent hover:border-border-default transition"
               >
-                <div className="w-8 h-8 rounded-full overflow-hidden bg-accent-primary flex items-center justify-center text-accent-primary-text font-semibold text-sm flex-shrink-0 relative border border-border-default">
+                <div className="w-8 h-8 rounded-md overflow-hidden bg-surface-secondary flex items-center justify-center text-text-primary font-bold text-xs flex-shrink-0 relative border border-border-default shadow-[1.5px_1.5px_0px_var(--border-default)]">
                   {user?.imageUrl ? (
-                    <Image
-                      src={user.imageUrl}
+                    <img
+                      src={getOptimizedImageUrl(user.imageUrl, 200)}
                       alt={user.fullName || "User avatar"}
-                      width={32}
-                      height={32}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover block"
+                      style={{ objectPosition: user.imagePosition || authUser?.imagePosition || "50% 50%" }}
                     />
                   ) : (
                     user?.fullName?.charAt(0)?.toUpperCase() || <User size={16} />

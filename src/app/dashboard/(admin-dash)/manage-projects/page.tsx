@@ -14,6 +14,8 @@ import {
   MoreVertical,
   CheckCircle2,
   Clock,
+  LayoutGrid,
+  List as ListIcon,
 } from "lucide-react";
 import { FaGithub } from "react-icons/fa";
 import toast from "react-hot-toast";
@@ -30,6 +32,7 @@ export default function AdminProjectsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [deptFilter, setDeptFilter] = useState("all");
   const [featuredFilter, setFeaturedFilter] = useState("all");
+  const [viewMode, setViewMode] = useState<"card" | "list">("card");
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -56,9 +59,9 @@ export default function AdminProjectsPage() {
     fetchProjects();
   }, []);
 
-  // Filtered list
+  // Filtered and sorted list (automatically sorted: newest created first)
   const filteredProjects = useMemo(() => {
-    return projects.filter((p) => {
+    const list = projects.filter((p) => {
       const matchesSearch =
         p.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -72,12 +75,25 @@ export default function AdminProjectsPage() {
 
       return matchesSearch && matchesDept && matchesFeatured;
     });
+
+    return list.sort((a, b) => {
+      const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return tB - tA;
+    });
   }, [projects, searchQuery, deptFilter, featuredFilter]);
 
-  // Toggle Featured
+  // Toggle Featured (Max 3 on Home)
   const handleToggleFeatured = async (project: any) => {
     try {
       const newStatus = !project.featured;
+      if (newStatus) {
+        const currentlyFeatured = projects.filter((p) => p.featured).length;
+        if (currentlyFeatured >= 3) {
+          toast.error("Maximum 3 projects can be featured on the Home page. Please unfeature another project first.");
+          return;
+        }
+      }
       await api.patch(`/api/projects/${project._id || project.id}/featured`, {
         featured: newStatus,
       });
@@ -129,7 +145,7 @@ export default function AdminProjectsPage() {
             </div>
             <div>
               <h1 className="text-2xl sm:text-3xl font-black text-text-primary tracking-tight">
-                Software &amp; Projects
+                Projects Management
               </h1>
               <p className="text-sm text-text-secondary mt-0.5">
                 Manage club software, open-source repositories, showcase highlights, and contributors.
@@ -169,20 +185,52 @@ export default function AdminProjectsPage() {
         </div>
       </div>
 
-      {/* Filter & Search Bar */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-surface-elevated rounded-2xl border border-border-default shadow-[4px_4px_0px_0px_var(--border-default)]">
-        <div className="relative w-full sm:w-80">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={16} />
-          <input
-            type="text"
-            placeholder="Search by title, tech stack..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 rounded-xl border border-border-default bg-surface-primary text-text-primary text-sm focus:ring-2 focus:ring-accent-primary outline-none transition-all"
-          />
+      {/* Filter & Search Bar with View Tool */}
+      <div className="flex flex-col lg:flex-row items-center justify-between gap-4 p-4 bg-surface-elevated rounded-2xl border border-border-default shadow-[4px_4px_0px_0px_var(--border-default)]">
+        <div className="flex items-center gap-3 w-full lg:w-auto">
+          <div className="relative flex-1 sm:w-80">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={16} />
+            <input
+              type="text"
+              placeholder="Search by title, tech stack..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-4 py-2 rounded-xl border border-border-default bg-surface-primary text-text-primary text-sm focus:ring-2 focus:ring-accent-primary outline-none transition-all"
+            />
+          </div>
+
+          {/* View Tool: Cards vs List Toggle */}
+          <div className="flex items-center bg-surface-secondary p-1 rounded-xl border border-border-default shadow-[2px_2px_0px_0px_var(--border-default)] shrink-0">
+            <button
+              type="button"
+              onClick={() => setViewMode("card")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                viewMode === "card"
+                  ? "bg-surface-elevated text-accent-primary border border-border-default shadow-[2px_2px_0px_0px_var(--accent-primary)] font-bold"
+                  : "text-text-secondary hover:text-text-primary"
+              }`}
+              title="Cards view"
+            >
+              <LayoutGrid size={15} />
+              <span className="hidden sm:inline">Cards</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode("list")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                viewMode === "list"
+                  ? "bg-surface-elevated text-accent-primary border border-border-default shadow-[2px_2px_0px_0px_var(--accent-primary)] font-bold"
+                  : "text-text-secondary hover:text-text-primary"
+              }`}
+              title="List view"
+            >
+              <ListIcon size={15} />
+              <span className="hidden sm:inline">List</span>
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap sm:flex-nowrap">
+        <div className="flex items-center gap-3 w-full lg:w-auto flex-wrap sm:flex-nowrap">
           <div className="w-full sm:w-48">
             <FilterSelect
               value={deptFilter}
@@ -213,7 +261,7 @@ export default function AdminProjectsPage() {
         </div>
       </div>
 
-      {/* Projects Grid */}
+      {/* Projects Display */}
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[1, 2, 3, 4, 5, 6].map((n) => (
@@ -224,7 +272,155 @@ export default function AdminProjectsPage() {
           ))}
         </div>
       ) : filteredProjects.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        viewMode === "list" ? (
+          /* Projects List View */
+          <div className="bg-surface-elevated rounded-2xl border border-border-default overflow-x-auto shadow-[4px_4px_0px_0px_var(--border-default)]">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-surface-secondary border-b border-border-default text-[10px] font-bold uppercase tracking-wider text-text-secondary">
+                  <th className="py-3 px-4">Project</th>
+                  <th className="py-3 px-4">Department</th>
+                  <th className="py-3 px-4">Tech Stack</th>
+                  <th className="py-3 px-4">Home Showcase</th>
+                  <th className="py-3 px-4">Links</th>
+                  <th className="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredProjects.map((project) => {
+                  const id = project._id || project.id;
+                  const skills = Array.isArray(project.techStack)
+                    ? project.techStack
+                    : Array.isArray(project.requiredSkills)
+                    ? project.requiredSkills
+                    : [];
+                  const coverImg = getProjectCoverImage(project);
+                  const projectRepos = extractProjectRepositories(project);
+
+                  return (
+                    <tr
+                      key={id}
+                      className="border-b border-border-default hover:bg-surface-secondary/60 transition"
+                    >
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="relative w-12 h-10 rounded-lg overflow-hidden border border-border-default shrink-0 bg-surface-secondary">
+                            {coverImg ? (
+                              <img
+                                src={coverImg}
+                                alt={project.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-text-secondary">
+                                <FolderGit2 size={16} />
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-bold text-text-primary text-xs truncate max-w-[200px]">
+                              {project.title}
+                            </p>
+                            <p className="text-[11px] text-text-secondary line-clamp-1 max-w-[240px]">
+                              {project.description}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-surface-secondary border border-border-default text-text-secondary whitespace-nowrap">
+                          {project.department || "General"}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex flex-wrap gap-1 max-w-[220px]">
+                          {skills.slice(0, 3).map((st: string, idx: number) => (
+                            <span
+                              key={idx}
+                              className="px-1.5 py-0.5 rounded text-[10px] bg-surface-secondary text-text-secondary border border-border-default whitespace-nowrap"
+                            >
+                              {st}
+                            </span>
+                          ))}
+                          {skills.length > 3 && (
+                            <span className="text-[10px] text-text-secondary font-mono self-center">
+                              +{skills.length - 3}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <button
+                          type="button"
+                          onClick={() => handleToggleFeatured(project)}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border transition ${
+                            project.featured
+                              ? "bg-accent-primary text-white border-accent-primary shadow-[1px_1px_0px_0px_var(--border-default)]"
+                              : "bg-surface-secondary text-text-secondary border-border-default hover:border-accent-primary"
+                          }`}
+                          style={project.featured ? { color: "#FFFFFF" } : undefined}
+                          title={project.featured ? "Featured on Home (Click to remove)" : "Click to feature on Home (Max 3)"}
+                        >
+                          <Sparkles size={11} className={project.featured ? "text-white" : "text-text-secondary"} />
+                          <span>{project.featured ? "Featured (Home)" : "Standard"}</span>
+                        </button>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-1.5">
+                          {projectRepos.map((repo, idx) => (
+                            <a
+                              key={idx}
+                              href={repo.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1 rounded-lg border border-border-default bg-surface-elevated text-text-secondary hover:text-text-primary transition"
+                              title={repo.label || "GitHub"}
+                            >
+                              <FaGithub size={13} />
+                            </a>
+                          ))}
+                          {project.liveDemoLink && (
+                            <a
+                              href={project.liveDemoLink}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1 rounded-lg border border-border-default bg-surface-elevated text-text-secondary hover:text-accent-primary transition"
+                              title="Live Demo"
+                            >
+                              <Globe size={13} />
+                            </a>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEdit(project)}
+                            className="p-1.5 rounded-lg border border-border-default bg-surface-elevated text-text-secondary hover:text-accent-primary hover:border-accent-primary transition shadow-[1px_1px_0px_0px_var(--border-default)]"
+                            title="Edit Project"
+                          >
+                            <Pencil size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteProject(id, project.title)}
+                            className="p-1.5 rounded-lg border border-border-default bg-surface-elevated text-text-secondary hover:text-accent-error hover:border-accent-error transition shadow-[1px_1px_0px_0px_var(--border-default)]"
+                            title="Delete Project"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          /* Cards Grid View */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProjects.map((project) => {
             const id = project._id || project.id;
             const skills = Array.isArray(project.techStack)
@@ -372,7 +568,8 @@ export default function AdminProjectsPage() {
               </div>
             );
           })}
-        </div>
+          </div>
+        )
       ) : (
         <div className="text-center py-16 bg-surface-elevated rounded-2xl border-2 border-dashed border-border-default shadow-[4px_4px_0px_0px_var(--border-default)]">
           <FolderGit2 className="mx-auto text-text-secondary mb-3 opacity-40" size={44} />

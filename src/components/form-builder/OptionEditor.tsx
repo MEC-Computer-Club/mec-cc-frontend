@@ -11,24 +11,49 @@ interface Props {
 }
 
 export default function OptionEditor({ options, fieldType = "select", onChange }: Props) {
+  const [customizedIndices, setCustomizedIndices] = React.useState<Set<number>>(new Set());
+
   const addOption = () => {
     const nextNum = options.length + 1;
     const defaultLabel = `Option ${nextNum}`;
-    const defaultValue = `option_${nextNum}`;
-    onChange([...options, { label: defaultLabel, value: defaultValue }]);
+    onChange([...options, { label: defaultLabel, value: defaultLabel }]);
   };
 
   const update = (index: number, key: keyof FieldOption, value: string) => {
     const updated = [...options];
-    updated[index] = { ...updated[index], [key]: value };
-    // If updating label and value was auto-derived, auto-update value
-    if (key === "label" && (!updated[index].value || updated[index].value.startsWith("option_"))) {
-      updated[index].value = value.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+    const prevOption = updated[index];
+
+    if (key === "label") {
+      const isCustomized = customizedIndices.has(index);
+      const isMirrored = !prevOption.value || prevOption.value === prevOption.label;
+      updated[index] = {
+        ...prevOption,
+        label: value,
+        value: !isCustomized || isMirrored ? value : prevOption.value,
+      };
+    } else {
+      // User explicitly editing value
+      updated[index] = { ...prevOption, value };
+      setCustomizedIndices((prev) => {
+        const next = new Set(prev);
+        if (value === "" || value === prevOption.label) {
+          next.delete(index);
+        } else {
+          next.add(index);
+        }
+        return next;
+      });
     }
+
     onChange(updated);
   };
 
   const remove = (index: number) => {
+    setCustomizedIndices((prev) => {
+      const next = new Set(prev);
+      next.delete(index);
+      return next;
+    });
     onChange(options.filter((_, i) => i !== index));
   };
 
@@ -75,10 +100,10 @@ export default function OptionEditor({ options, fieldType = "select", onChange }
               )}
             </div>
 
-            {/* Option Label */}
+            {/* Option Label (Key) */}
             <input
               type="text"
-              placeholder={`Option ${i + 1} Label`}
+              placeholder={`Option ${i + 1} Label / Key`}
               value={opt.label}
               onChange={(e) => update(i, "label", e.target.value)}
               onKeyDown={(e) => {
@@ -90,14 +115,14 @@ export default function OptionEditor({ options, fieldType = "select", onChange }
               className="flex-1 px-3 py-1.5 rounded-md border border-border-default bg-surface-elevated text-text-primary text-xs font-semibold focus:outline-none focus:border-accent-primary"
             />
 
-            {/* Optional Custom Key / Value */}
+            {/* Value / Key */}
             <input
               type="text"
-              placeholder="Value / Key"
+              placeholder="Value (auto-synced)"
               value={opt.value}
               onChange={(e) => update(i, "value", e.target.value)}
-              className="w-28 px-2 py-1.5 rounded-md border border-border-default bg-surface-secondary text-text-secondary text-[11px] font-mono focus:outline-none focus:border-accent-primary"
-              title="System value sent on form submission"
+              className="w-36 px-2 py-1.5 rounded-md border border-border-default bg-surface-secondary text-text-secondary text-[11px] font-mono focus:outline-none focus:border-accent-primary"
+              title="System value sent on form submission (auto-syncs with Label unless customized)"
             />
 
             {/* Delete button */}

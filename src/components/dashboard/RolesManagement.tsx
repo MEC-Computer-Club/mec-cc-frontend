@@ -164,6 +164,7 @@ const RolesManagement = () => {
                       <UserAvatarWithFallback
                         initialImageUrl={searchedUser?.imageUrl}
                         fullName={searchedUser?.fullName || "profile image"}
+                        imagePosition={searchedUser?.imagePosition}
                         w={112}
                         h={112}
                       />

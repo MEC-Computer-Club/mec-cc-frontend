@@ -51,8 +51,8 @@ export default function FieldEditor({ field, index, onChange, onRemove }: Props)
     // Auto-populate default options when switching to a choice type if empty
     if (["select", "radio", "checkbox"].includes(updated.type) && (!updated.options || updated.options.length === 0)) {
       updated.options = [
-        { label: "Option 1", value: "option_1" },
-        { label: "Option 2", value: "option_2" },
+        { label: "Option 1", value: "Option 1" },
+        { label: "Option 2", value: "Option 2" },
       ];
     }
     onChange(updated);

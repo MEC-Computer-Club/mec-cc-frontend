@@ -309,7 +309,7 @@ export function ProfileHero({
           }`}
         >
           <span className="w-2 h-2 rounded-full bg-accent-primary inline-block shadow-[0_0_8px_var(--accent-primary)]" />
-          <span>MEC COMPUTER CLUB // SEC CSE</span>
+          <span>MEC COMPUTER CLUB</span>
         </div>
 
         {/* ── Repositioning Mode Overlays & Controls ── */}

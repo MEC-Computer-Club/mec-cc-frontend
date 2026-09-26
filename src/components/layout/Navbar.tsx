@@ -62,8 +62,9 @@ const navItems = [
     label: "Collaborate",
     href: "#",
     children: [
+      { label: "Our Sponsors", href: "/collaborate/partners" },
+      { label: "Club Partners", href: "/collaborate/club-partners" },
       { label: "Become a Sponsor", href: "/collaborate/sponsor" },
-      { label: "Our Partners", href: "/collaborate/partners" },
     ],
   },
   { label: "Gallery", href: "/gallery" },
@@ -344,6 +345,7 @@ export function Navbar() {
                       src={user.imageUrl}
                       alt={user.fullName}
                       className="navbar__user-avatar"
+                      style={{ objectPosition: user.imagePosition || "50% 50%" }}
                       onError={(e) => {
                         e.currentTarget.style.display = 'none';
                         const fallback = e.currentTarget.parentElement?.querySelector('.navbar__user-initials');

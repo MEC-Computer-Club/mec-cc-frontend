@@ -80,10 +80,18 @@ export function ContactForm() {
 
     setSending(true);
     try {
+      const subjectMap: Record<string, string> = {
+        general: "General Inquiry",
+        membership: "Membership & Invitation Key",
+        suggestion_feedback: "Suggestion/Feedback",
+        sponsorship: "Sponsorship",
+        collaboration: "Event Collaboration",
+      };
+
       const payload = {
         senderName: formData.name.trim(),
         senderEmail: formData.email.trim(),
-        subject: formData.subject || "General Inquiry",
+        subject: subjectMap[formData.subject] || formData.subject || "General Inquiry",
         body: formData.message.trim(),
         name: formData.name.trim(),
         email: formData.email.trim(),
@@ -264,8 +272,9 @@ export function ContactForm() {
                 value={formData.subject}
                 onChange={handleSelectChange}
                 options={[
-                  { value: "membership", label: "Membership & Invitation Key" },
                   { value: "general", label: "General Inquiry" },
+                  { value: "membership", label: "Membership & Invitation Key" },
+                  { value: "suggestion_feedback", label: "Suggestion/Feedback" },
                   { value: "sponsorship", label: "Sponsorship" },
                   { value: "collaboration", label: "Event Collaboration" },
                 ]}

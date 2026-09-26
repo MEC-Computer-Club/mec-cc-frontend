@@ -16,11 +16,10 @@ const footerLinks = {
     { label: "Alumni", href: "/alumni" },
     { label: "Events", href: "/events" },
     { label: "Projects", href: "/projects" },
+    { label: "Developers", href: "/developers" },
   ],
   resources: [
     { label: "CP Hub", href: "/cp-hub" },
-    { label: "Photo Sigil", href: "/resources/watermark" },
-    { label: "Cover Page", href: "/resources/cover-page" },
     { label: "Blog", href: "/blog" },
     { label: "Join Us", href: "/join" },
     { label: "Contact", href: "/contact" },
@@ -199,7 +198,14 @@ export function Footer() {
             © {new Date().getFullYear()} {clubName}. All rights reserved.
           </p>
           <p className="text-xs text-text-tertiary flex items-center justify-center gap-1">
-            Built with <Heart size={14} className="text-accent-primary-hover inline-block align-middle mx-0.5" /> by the Web Dev panel.
+            Built with <Heart size={14} className="text-accent-primary-hover inline-block align-middle mx-0.5" /> by the{" "}
+            <Link
+              href="/developers"
+              className="text-text-primary font-semibold hover:text-accent-primary-hover underline underline-offset-2 transition-colors"
+            >
+              Core Developers
+            </Link>
+            .
           </p>
         </div>
       </div>

@@ -26,9 +26,8 @@ export interface AlumniBatch {
   members: AlumniMember[];
 }
 
-// Static fallback data (shown if API is unreachable)
-export const alumniBatches: AlumniBatch[] = [
-];
+// Static fallback data
+export const alumniBatches: AlumniBatch[] = [];
 
 import { API_BASE_URL } from "@/lib/api";
 
@@ -76,14 +75,7 @@ export async function getAlumniMembers(): Promise<AlumniMember[]> {
     console.warn("Could not fetch alumni from backend, using static fallback:", err);
   }
 
-  return alumniBatches.flatMap((b) =>
-    b.members.map((m) => ({
-      ...m,
-      batch: b.batchNumber,
-      session: b.year,
-      department: "CSE",
-    }))
-  );
+  return [];
 }
 
 export async function getAlumni(): Promise<AlumniBatch[]> {
@@ -96,5 +88,5 @@ export async function getAlumni(): Promise<AlumniBatch[]> {
       members: g.members.sort((a, b) => a.name.localeCompare(b.name)),
     }));
   }
-  return alumniBatches;
+  return [];
 }

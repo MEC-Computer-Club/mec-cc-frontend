@@ -1,10 +1,9 @@
 import { Project } from "@/types";
 import { getProjectCoverImage, extractProjectRepositories } from "@/lib/projectUtils";
-
-export const projects: Project[] = [
-];
-
 import { API_BASE_URL } from "@/lib/api";
+
+export const projects: Project[] = [];
+
 const API_URL = API_BASE_URL;
 
 function mapBackendProject(p: any): Project {
@@ -61,9 +60,9 @@ export async function getProjects(): Promise<Project[]> {
       }
     }
   } catch (err) {
-    console.warn("Could not fetch backend projects, using static projects:", err);
+    console.warn("Could not fetch backend projects:", err);
   }
-  return projects;
+  return [];
 }
 
 export async function getFeaturedProjects(): Promise<Project[]> {
@@ -77,9 +76,9 @@ export async function getFeaturedProjects(): Promise<Project[]> {
       }
     }
   } catch (err) {
-    console.warn("Could not fetch backend featured projects, fallback to static:", err);
+    console.warn("Could not fetch backend featured projects:", err);
   }
-  return projects.filter((p) => p.featured);
+  return [];
 }
 
 export async function getProjectBySlug(slug: string): Promise<Project | undefined> {
@@ -90,11 +89,10 @@ export async function getProjectBySlug(slug: string): Promise<Project | undefine
   } catch (err) {
     console.warn("Error looking up project by slug:", err);
   }
-  return projects.find((p) => p.slug === slug || p.id === slug);
+  return undefined;
 }
 
 export async function getProjectsByDepartment(dept: string): Promise<Project[]> {
   const all = await getProjects();
   return all.filter((p) => p.department === dept);
 }
-

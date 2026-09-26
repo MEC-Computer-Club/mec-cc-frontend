@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   compress: true,
+  experimental: {
+    optimizePackageImports: ["lucide-react", "react-icons", "date-fns"],
+  },
   images: {
     formats: ["image/avif", "image/webp"],
     remotePatterns: [

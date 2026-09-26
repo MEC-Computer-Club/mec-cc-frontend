@@ -19,9 +19,7 @@ export interface Member {
   };
 }
 
-export const activeMembers: Member[] = [
-
-];
+export const activeMembers: Member[] = [];
 
 import { API_BASE_URL } from "@/lib/api";
 

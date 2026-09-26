@@ -1,18 +1,16 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
-  CheckCircle2, Clock, ShieldCheck, XCircle, Users,
-  Send, ExternalLink, Info, LogIn, AlertCircle, X, Sparkles
+  CheckCircle2, Clock, Send, X, Sparkles, UserCheck
 } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
-import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
 import { Event, ParticipationClaim } from "@/types";
 import toast from "react-hot-toast";
-import Link from "next/link";
 
 interface EventParticipationClaimProps {
   event: Event;
@@ -29,23 +27,16 @@ const ROLE_OPTIONS = [
 
 export function EventParticipationClaim({ event }: EventParticipationClaimProps) {
   const { user, isAuthenticated } = useAuth();
+  const [mounted, setMounted] = useState(false);
   const eventId = event.id || (event as any)._id;
-
-  // Rule 1: strictly past events only
-  const today = new Date();
-  const eventDate = event.date ? new Date(event.date) : null;
-  const isPast =
-    (eventDate && eventDate < today) ||
-    event.status === "past" ||
-    (event as any).status === "completed";
 
   const [claim, setClaim] = useState<ParticipationClaim | null>(null);
   const [isAttendee, setIsAttendee] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Form states with profile autofill benefits (Rule 2)
+  // Form states with profile autofill benefits
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [studentId, setStudentId] = useState("");
@@ -54,15 +45,57 @@ export function EventParticipationClaim({ event }: EventParticipationClaimProps)
   const [role, setRole] = useState("Participant");
   const [notes, setNotes] = useState("");
 
+  // Rule 1: past events only
+  const today = new Date();
+  const eventDate = event.date ? new Date(event.date) : null;
+  const isPast =
+    (eventDate && eventDate < today) ||
+    event.status === "past" ||
+    (event as any).status === "completed";
+
+  // Lock body scroll when modal is open (HOOK MUST BE AT TOP LEVEL)
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (modalOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [modalOpen]);
+
   const fetchMyClaim = useCallback(async () => {
-    if (!isAuthenticated || !eventId) return;
+    if (!eventId) return;
+
+    // Check localStorage for guest submission state first
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(`mec_event_claim_${eventId}`);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          setClaim((prev) => prev || (parsed as ParticipationClaim));
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    if (!isAuthenticated) return;
+
     try {
       setLoading(true);
       const res = await axios.get(`${API_BASE_URL}/api/events/${eventId}/my-claim`, {
         withCredentials: true,
       });
       if (res.data?.success) {
-        setClaim(res.data.data || null);
+        if (res.data.data) {
+          setClaim(res.data.data);
+        }
         setIsAttendee(Boolean(res.data.isAttendee));
       }
     } catch {
@@ -76,16 +109,18 @@ export function EventParticipationClaim({ event }: EventParticipationClaimProps)
     fetchMyClaim();
   }, [fetchMyClaim]);
 
-  // Autofill user profile info when opening modal (Rule 2)
+  // Autofill user profile info when opening modal
   useEffect(() => {
     if (user && modalOpen) {
-      setFullName(user.fullName || "");
-      setEmail(user.email || "");
-      setStudentId(user.studentId || "");
-      setDepartment(user.department || "");
-      setPhone((user as any).phone || (user as any).contactNumber || "");
+      setFullName((prev) => prev || user.fullName || "");
+      setEmail((prev) => prev || user.email || "");
+      setStudentId((prev) => prev || user.studentId || "");
+      setDepartment((prev) => prev || user.department || "");
+      setPhone((prev) => prev || (user as any).phone || (user as any).contactNumber || "");
     }
   }, [user, modalOpen]);
+
+  // ALL HOOKS ARE ABOVE. Early returns happen only below this line:
 
   // If not past event or claims not allowed, do not render
   if (!isPast || !event.allowParticipationClaims) {
@@ -95,7 +130,7 @@ export function EventParticipationClaim({ event }: EventParticipationClaimProps)
   const handleSubmitClaim = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName.trim() || !email.trim()) {
-      toast.error("Full Name and Email are required.");
+      toast.error("Full Name and Email Address are required.");
       return;
     }
 
@@ -118,6 +153,25 @@ export function EventParticipationClaim({ event }: EventParticipationClaimProps)
       if (res.data?.success) {
         toast.success(res.data.message || "Claim submitted successfully!");
         setModalOpen(false);
+
+        // Store claim in local state and localStorage so guest users also see pending status
+        const localClaimData: ParticipationClaim = {
+          role,
+          status: "pending",
+          claimedAt: new Date().toISOString(),
+          fullName: fullName.trim(),
+          email: email.trim(),
+        } as any;
+        setClaim(localClaimData);
+
+        if (typeof window !== "undefined") {
+          try {
+            localStorage.setItem(`mec_event_claim_${eventId}`, JSON.stringify(localClaimData));
+          } catch {
+            // ignore
+          }
+        }
+
         await fetchMyClaim();
       }
     } catch (err: any) {
@@ -143,31 +197,12 @@ export function EventParticipationClaim({ event }: EventParticipationClaimProps)
     return (
       <div className="inline-flex items-center gap-3 px-4 py-2.5 rounded-xl bg-amber-500/10 border-2 border-amber-500 text-amber-800 dark:text-amber-300 font-semibold text-xs sm:text-sm shadow-[3px_3px_0px_#F59E0B]">
         <Clock size={17} className="text-amber-600 dark:text-amber-400 shrink-0" />
-        <span>Participation Claim Under Admin Review ({claim.role})</span>
+        <span>Participation Claim Under Review ({claim.role || "Participant"})</span>
       </div>
     );
   }
 
-  // State 3: Not logged in
-  if (!isAuthenticated) {
-    return (
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 p-3.5 bg-surface-secondary border-2 border-border-brutalist rounded-xl shadow-[3px_3px_0px_var(--border-brutalist)]">
-        <div className="text-xs text-text-secondary">
-          <span className="font-bold text-text-primary block sm:inline">Did you attend this past event? </span>
-          Log in to claim your participation and get officially verified.
-        </div>
-        <Link
-          href={`/login?redirect=/events/${event.slug || eventId}`}
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-text-primary text-white text-xs font-bold hover:bg-surface-inverse transition shrink-0"
-          style={{ color: "#FFFFFF" }}
-        >
-          <LogIn size={14} /> Log In to Claim
-        </Link>
-      </div>
-    );
-  }
-
-  // State 4: Logged in and can claim (or rejected previous claim)
+  // State 3: Anyone can claim (logged in or guest / unauthenticated)
   return (
     <>
       <div className="flex flex-wrap items-center gap-3">
@@ -189,12 +224,17 @@ export function EventParticipationClaim({ event }: EventParticipationClaimProps)
       </div>
 
       {/* ── Participation Claim Modal ── */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="relative w-full max-w-lg bg-surface-elevated rounded-2xl border-2 border-border-brutalist shadow-[6px_6px_0px_0px_var(--border-brutalist)] overflow-hidden">
+      {modalOpen && mounted && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div
+            className="fixed inset-0"
+            onClick={() => setModalOpen(false)}
+            aria-hidden="true"
+          />
+          <div className="relative w-full max-w-lg bg-surface-elevated rounded-2xl border-2 border-border-brutalist shadow-[6px_6px_0px_0px_var(--border-brutalist)] overflow-hidden z-10 my-auto">
             {/* Modal Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-border-default bg-surface-secondary">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                   <CheckCircle2 size={18} />
                 </div>
@@ -202,7 +242,7 @@ export function EventParticipationClaim({ event }: EventParticipationClaimProps)
                   <h3 className="text-base font-bold text-text-primary">
                     Claim Event Participation
                   </h3>
-                  <p className="text-xs text-text-secondary">
+                  <p className="text-xs text-text-secondary truncate max-w-[280px]">
                     {event.title}
                   </p>
                 </div>
@@ -219,7 +259,21 @@ export function EventParticipationClaim({ event }: EventParticipationClaimProps)
             {/* Modal Content */}
             <form onSubmit={handleSubmitClaim} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
               <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs text-emerald-800 dark:text-emerald-300 leading-relaxed">
-                <strong>Archive Verification:</strong> Your profile details have been autofilled below. Please review them, choose your participation role, and submit your claim for club admin verification.
+                {user ? (
+                  <>
+                    <strong className="font-bold flex items-center gap-1.5 mb-0.5">
+                      <UserCheck size={14} className="text-emerald-600" /> Archive Verification:
+                    </strong>
+                    Your profile details have been autofilled below. Please review them, choose your participation role, and submit your claim for club admin verification.
+                  </>
+                ) : (
+                  <>
+                    <strong className="font-bold flex items-center gap-1.5 mb-0.5">
+                      <Sparkles size={14} className="text-emerald-600" /> Archive Verification:
+                    </strong>
+                    Enter your name and contact details below to claim your participation in this past event. Our club admins will review and verify your record.
+                  </>
+                )}
               </div>
 
               {/* Full Name */}
@@ -341,7 +395,8 @@ export function EventParticipationClaim({ event }: EventParticipationClaimProps)
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

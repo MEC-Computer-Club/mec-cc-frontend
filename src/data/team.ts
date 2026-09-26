@@ -1,7 +1,6 @@
 import { TeamMember } from "@/types";
 
-export const teamMembers: TeamMember[] = [
-];
+export const teamMembers: TeamMember[] = [];
 
 export function getExecTeam(): TeamMember[] {
   return teamMembers.filter((m) => m.isExec);

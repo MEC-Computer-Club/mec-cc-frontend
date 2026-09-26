@@ -3,8 +3,7 @@ import { API_BASE_URL } from "@/lib/api";
 
 const API_URL = API_BASE_URL;
 
-export const leaderboard: LeaderboardEntry[] = [
-];
+export const leaderboard: LeaderboardEntry[] = [];
 
 export async function getClubLeaderboard(): Promise<LeaderboardEntry[]> {
   try {
@@ -24,15 +23,12 @@ export async function getClubLeaderboard(): Promise<LeaderboardEntry[]> {
       }
     }
   } catch (err) {
-    console.warn("Could not fetch real leaderboard from backend, using fallback:", err);
+    console.warn("Could not fetch real leaderboard from backend:", err);
   }
-  return leaderboard;
+  return [];
 }
 
-
-
-export const contests: CPContest[] = [
-];
+export const contests: CPContest[] = [];
 
 export const cpResources: CPResource[] = [
 ];

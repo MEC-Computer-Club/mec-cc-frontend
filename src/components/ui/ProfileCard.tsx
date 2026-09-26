@@ -39,6 +39,7 @@ export interface ProfileCardProps {
   imagePosition?: string;
   socials?: ProfileSocials;
   systemRole?: "admin" | "moderator" | "member" | string;
+  hideRoleBadges?: boolean;
   onCardClick?: (slug: string) => void;
   actionMenu?: React.ReactNode;
   isMenuOpen?: boolean;
@@ -189,6 +190,7 @@ export function ProfileCard({
   category,
   badgeLabel,
   systemRole,
+  hideRoleBadges = false,
   image,
   imagePosition,
   socials,
@@ -254,7 +256,7 @@ export function ProfileCard({
         )}
 
         {/* Corner Bookmark Ribbon */}
-        {systemRole && systemRole !== "member" && (
+        {systemRole && systemRole !== "member" && !hideRoleBadges && (
           <div
             className={`absolute top-0 left-0 z-10 inline-flex items-center gap-1 py-1 px-2 font-sans text-[9.5px] font-extrabold tracking-wider uppercase leading-none border-b-2 border-r-2 border-black rounded-br-md shadow-[2px_2px_0px_rgba(0,0,0,0.4)] select-none ${
               systemRole === "admin"
@@ -352,7 +354,7 @@ export function ProfileCard({
       )}
 
       {/* 4. Corner badge */}
-      {!actionMenu && (
+      {!actionMenu && !hideRoleBadges && (
         <div className="absolute top-2 right-2 font-bold text-[9px] tracking-wide bg-accent-primary text-accent-primary-text py-0.5 px-1.5 rounded pointer-events-none select-none z-[5] shadow-[1px_1px_0_var(--border-brutalist)]">
           {badgeLabel || CATEGORY_LABEL[category]}
         </div>

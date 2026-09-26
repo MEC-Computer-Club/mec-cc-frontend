@@ -7,6 +7,7 @@ interface SponsorLogoProps {
   logoUrl?: string | null;
   name: string;
   size?: number; // container size in px, default 64
+  category?: "sponsor" | "club_as_partner";
 }
 
 /**
@@ -16,7 +17,12 @@ interface SponsorLogoProps {
  *   - Clean white (#FFFFFF) for colorful logos
  *   - Off-white (#F5F5F5) for dark logos
  */
-export default function SponsorLogo({ logoUrl, name, size = 64 }: SponsorLogoProps) {
+export default function SponsorLogo({
+  logoUrl,
+  name,
+  size = 64,
+  category = "sponsor",
+}: SponsorLogoProps) {
   const bgColor = useAdaptiveLogoBackground(logoUrl);
 
   return (
@@ -37,6 +43,10 @@ export default function SponsorLogo({ logoUrl, name, size = 64 }: SponsorLogoPro
           className="w-full h-full object-contain p-2"
           unoptimized
         />
+      ) : category === "club_as_partner" ? (
+        <span className="font-bold text-lg text-accent-primary">
+          {name.trim() ? name.trim().charAt(0).toUpperCase() : "P"}
+        </span>
       ) : (
         <DollarSign
           size={size * 0.375}

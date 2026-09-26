@@ -28,6 +28,8 @@ import {
   Tag,
   SlidersHorizontal,
   Star,
+  LayoutGrid,
+  List as ListIcon,
 } from "lucide-react";
 
 export interface BlogItem {
@@ -94,6 +96,7 @@ export default function BlogManagementPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [sortOption, setSortOption] = useState("newest");
+  const [viewMode, setViewMode] = useState<"card" | "list">("card");
 
   // Modals & Action states
   const [previewBlog, setPreviewBlog] = useState<BlogItem | null>(null);
@@ -374,26 +377,58 @@ export default function BlogManagementPage() {
       </div>
 
       {/* ── Filters & Search Toolbar (Using compliant FilterSelect) ── */}
-      <div className="p-4 rounded-xl bg-surface-elevated border-2 border-border-brutalist dark:border-border-default shadow-[3px_3px_0px_var(--border-brutalist)] dark:shadow-[3px_3px_0px_var(--border-default)] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3.5">
-        {/* Search Input */}
-        <div className="relative flex-1 min-w-[220px]">
-          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-tertiary" />
-          <input
-            type="text"
-            placeholder="Search by title, excerpt, author, or tags..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-8 py-2 text-xs sm:text-sm bg-surface-primary border border-border-default rounded-md text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-primary transition"
-          />
-          {searchQuery && (
+      <div className="p-4 rounded-xl bg-surface-elevated border-2 border-border-brutalist dark:border-border-default shadow-[3px_3px_0px_var(--border-brutalist)] dark:shadow-[3px_3px_0px_var(--border-default)] flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3.5">
+        <div className="flex items-center gap-3 w-full lg:w-auto">
+          {/* Search Input */}
+          <div className="relative flex-1 min-w-[220px]">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-tertiary" />
+            <input
+              type="text"
+              placeholder="Search by title, excerpt, author, or tags..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-9 pr-8 py-2 text-xs sm:text-sm bg-surface-primary border border-border-default rounded-md text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-primary transition"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary p-0.5"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          {/* View Tool: Cards vs List Toggle */}
+          <div className="flex items-center bg-surface-secondary p-1 rounded-xl border border-border-default shadow-[2px_2px_0px_0px_var(--border-default)] shrink-0">
             <button
               type="button"
-              onClick={() => setSearchQuery("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary p-0.5"
+              onClick={() => setViewMode("card")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                viewMode === "card"
+                  ? "bg-surface-elevated text-accent-primary border border-border-default shadow-[2px_2px_0px_0px_var(--accent-primary)] font-bold"
+                  : "text-text-secondary hover:text-text-primary"
+              }`}
+              title="Cards view"
             >
-              <X size={14} />
+              <LayoutGrid size={15} />
+              <span className="hidden sm:inline">Cards</span>
             </button>
-          )}
+            <button
+              type="button"
+              onClick={() => setViewMode("list")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                viewMode === "list"
+                  ? "bg-surface-elevated text-accent-primary border border-border-default shadow-[2px_2px_0px_0px_var(--accent-primary)] font-bold"
+                  : "text-text-secondary hover:text-text-primary"
+              }`}
+              title="List view"
+            >
+              <ListIcon size={15} />
+              <span className="hidden sm:inline">List</span>
+            </button>
+          </div>
         </div>
 
         {/* Custom FilterSelect Dropdowns */}
@@ -462,6 +497,143 @@ export default function BlogManagementPage() {
                 Write First Post
               </Button>
             )}
+          </div>
+        ) : viewMode === "card" ? (
+          /* Cards Grid View */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+            {filteredBlogs.map((blog) => {
+              const coverImg = blog.coverImageUrl || "/mec-club-photo.jpg";
+              const isToggling = togglingId === blog._id;
+              const isTogglingFeatured = togglingFeaturedId === blog._id;
+
+              return (
+                <div
+                  key={blog._id}
+                  className="group relative bg-surface-primary rounded-2xl border border-border-default shadow-[4px_4px_0px_0px_var(--border-default)] hover:shadow-[6px_6px_0px_0px_var(--border-default)] hover:-translate-y-0.5 transition-all flex flex-col justify-between overflow-hidden"
+                >
+                  <div>
+                    {/* Cover Image & Badges */}
+                    <div className="relative h-44 w-full bg-surface-secondary overflow-hidden border-b border-border-default">
+                      <img
+                        src={coverImg}
+                        alt={blog.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        style={{ objectPosition: blog.coverImagePosition || "50% 50%" }}
+                      />
+                      <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 flex-wrap">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase bg-surface-elevated/90 backdrop-blur-sm text-text-primary border border-border-default shadow-sm">
+                          {blog.category}
+                        </span>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase shadow-sm ${
+                            blog.isPublished
+                              ? "bg-emerald-500 text-white"
+                              : "bg-amber-500 text-white"
+                          }`}
+                          style={{ color: "#FFFFFF" }}
+                        >
+                          {blog.isPublished ? "Published" : "Draft"}
+                        </span>
+                      </div>
+
+                      {/* Featured Star Badge */}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleFeatured(blog)}
+                        disabled={isTogglingFeatured}
+                        className={`absolute top-2.5 right-2.5 p-1.5 rounded-full backdrop-blur-md border shadow-sm transition cursor-pointer ${
+                          blog.featured
+                            ? "bg-amber-500 text-white border-amber-400"
+                            : "bg-surface-elevated/90 text-text-secondary border-border-default hover:text-amber-500"
+                        }`}
+                        title={blog.featured ? "Featured on Home (Click to remove)" : "Feature on Home (Max 3)"}
+                      >
+                        <Star size={14} className={blog.featured ? "fill-white text-white" : ""} />
+                      </button>
+                    </div>
+
+                    {/* Body */}
+                    <div className="p-4">
+                      <h4 className="font-bold text-text-primary text-sm line-clamp-2 group-hover:text-accent-primary transition-colors leading-snug">
+                        {blog.title}
+                      </h4>
+                      <p className="text-xs text-text-secondary mt-1.5 line-clamp-2 leading-relaxed">
+                        {blog.excerpt || "No summary provided for this article."}
+                      </p>
+
+                      {/* Author & Date */}
+                      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border-default">
+                        <div className="w-6 h-6 rounded-full overflow-hidden border border-border-default bg-surface-secondary shrink-0">
+                          <img
+                            src={blog.author?.imageUrl || "/default-avatar.png"}
+                            alt={blog.author?.fullName || "Author"}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <span className="text-[11px] font-medium text-text-secondary truncate">
+                          {blog.author?.fullName || "Anonymous"}
+                        </span>
+                        <span className="text-[10px] text-text-tertiary ml-auto font-mono">
+                          {new Date(blog.createdAt).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card Footer: Stats & Actions */}
+                  <div className="px-4 py-3 bg-surface-secondary/50 border-t border-border-default flex items-center justify-between">
+                    <div className="flex items-center gap-2.5 text-[11px] text-text-secondary font-mono">
+                      <span className="flex items-center gap-1" title="Views">
+                        <Eye size={12} className="text-sky-500" />
+                        {blog.views || 0}
+                      </span>
+                      <span className="flex items-center gap-1" title="Likes">
+                        <Heart size={12} className="text-rose-500" />
+                        {blog.likesCount || blog.likes?.length || 0}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleTogglePublish(blog)}
+                        disabled={isToggling}
+                        className="p-1.5 rounded-lg border border-border-default bg-surface-elevated text-text-secondary hover:text-text-primary transition"
+                        title={blog.isPublished ? "Unpublish" : "Publish"}
+                      >
+                        {blog.isPublished ? <Clock size={13} className="text-amber-500" /> : <CheckCircle2 size={13} className="text-emerald-500" />}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPreviewBlog(blog)}
+                        className="p-1.5 rounded-lg border border-border-default bg-surface-elevated text-text-secondary hover:text-accent-primary transition"
+                        title="Preview"
+                      >
+                        <Eye size={13} />
+                      </button>
+                      <Link
+                        href={`/blog/write?edit=${blog._id}`}
+                        className="p-1.5 rounded-lg border border-border-default bg-surface-elevated text-text-secondary hover:text-accent-primary transition"
+                        title="Edit Article"
+                      >
+                        <Edit size={13} />
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => setBlogToDelete(blog)}
+                        className="p-1.5 rounded-lg border border-border-default bg-surface-elevated text-text-secondary hover:text-accent-error transition"
+                        title="Delete"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         ) : (
           <div className="overflow-x-auto">

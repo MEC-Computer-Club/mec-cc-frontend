@@ -94,10 +94,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     },
     {
-      url: `${BASE_URL}/collaborate`,
+      url: `${BASE_URL}/collaborate/partners`,
       lastModified: now,
       changeFrequency: "monthly",
       priority: 0.8,
+    },
+    {
+      url: `${BASE_URL}/collaborate/club-partners`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${BASE_URL}/collaborate/sponsor`,
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.85,
     },
   ];
 

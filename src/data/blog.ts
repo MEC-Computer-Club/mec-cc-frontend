@@ -1,8 +1,6 @@
 import { BlogPost } from "@/types";
 
-export const blogPosts: BlogPost[] = [
-
-];
+export const blogPosts: BlogPost[] = [];
 
 import { API_BASE_URL } from "@/lib/api";
 const API_URL = API_BASE_URL;
@@ -43,13 +41,13 @@ export async function getBlogs(): Promise<BlogPost[]> {
       const data = await res.json();
       const backendBlogs: any[] = data.data || data.blogs || [];
       if (backendBlogs && backendBlogs.length > 0) {
-        return [...backendBlogs.map(mapBackendBlog), ...blogPosts];
+        return backendBlogs.map(mapBackendBlog);
       }
     }
   } catch (err) {
-    console.warn("Could not fetch backend blogs, using static blog posts:", err);
+    console.warn("Could not fetch backend blogs:", err);
   }
-  return blogPosts;
+  return [];
 }
 
 export function getBlogBySlug(slug: string): BlogPost | undefined {
@@ -72,13 +70,9 @@ export async function getFeaturedBlogs(): Promise<BlogPost[]> {
       }
     }
   } catch (err) {
-    console.warn("Could not fetch backend featured blogs, fallback to static:", err);
+    console.warn("Could not fetch backend featured blogs:", err);
   }
-  const staticFeatured = blogPosts.filter((p) => p.featured);
-  if (staticFeatured.length > 0) {
-    return staticFeatured.slice(0, 3);
-  }
-  return blogPosts.slice(0, 3);
+  return [];
 }
 
 /** Fetch a single blog by its slug from the backend API */
