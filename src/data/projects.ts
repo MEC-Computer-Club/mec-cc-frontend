@@ -9,21 +9,21 @@ const API_URL = API_BASE_URL;
 function mapBackendProject(p: any): Project {
   const teamMembers = Array.isArray(p.teamMembers)
     ? p.teamMembers.map((m: any) =>
-        typeof m === "object" && m ? m.fullName || m.name || "Member" : "Member"
-      )
+      typeof m === "object" && m ? m.fullName || m.name || "Member" : "Member"
+    )
     : Array.isArray(p.team)
-    ? p.team
-    : p.contributors
-    ? p.contributors.map((c: any) => c.fullName || c.name || "Member")
-    : ["Club Member"];
+      ? p.team
+      : p.contributors
+        ? p.contributors.map((c: any) => c.fullName || c.name || "Member")
+        : ["Club Member"];
 
   const skills = Array.isArray(p.techStack) && p.techStack.length > 0
     ? p.techStack
     : Array.isArray(p.requiredSkills) && p.requiredSkills.length > 0
-    ? p.requiredSkills
-    : Array.isArray(p.technologies)
-    ? p.technologies
-    : ["TypeScript", "React"];
+      ? p.requiredSkills
+      : Array.isArray(p.technologies)
+        ? p.technologies
+        : ["TypeScript", "React"];
 
   const repos = extractProjectRepositories(p);
   const coverImage = getProjectCoverImage(p);

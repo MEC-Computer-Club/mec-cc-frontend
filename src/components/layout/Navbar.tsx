@@ -231,7 +231,7 @@ export function Navbar() {
           .navbar__mobile-footer { margin-top: auto; padding-top: 16px; border-top: 2px solid var(--border-default); }
           .navbar__mobile-auth-actions { display: flex; flex-direction: column; gap: 8px; }
           .navbar__mobile-btn { display: flex; align-items: center; justify-content: center; padding: 10px 16px; font-family: var(--font-body); font-size: 14px; font-weight: 700; border-radius: var(--radius-md); text-decoration: none; text-align: center; transition: all var(--transition-fast); }
-          .navbar__mobile-btn--primary { background-color: var(--accent-primary); color: #000000 !important; border: 2px solid var(--text-primary); box-shadow: 3px 3px 0px 0px var(--text-primary); }
+          .navbar__mobile-btn--primary { background-color: var(--accent-primary); color: var(--accent-primary-text) !important; border: 2px solid var(--text-primary); box-shadow: 3px 3px 0px 0px var(--text-primary); }
           .navbar__mobile-btn--secondary { background-color: var(--surface-elevated); color: var(--text-primary); border: 2px solid var(--text-primary); box-shadow: 3px 3px 0px 0px var(--border-default); }
           .navbar__mobile-user-box { background-color: var(--surface-secondary); border: 1.5px solid var(--border-default); border-radius: var(--radius-md); padding: 12px; display: flex; flex-direction: column; gap: 12px; }
           .navbar__mobile-user-info { display: flex; align-items: center; gap: 10px; }
