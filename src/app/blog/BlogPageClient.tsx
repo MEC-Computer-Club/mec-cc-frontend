@@ -98,6 +98,10 @@ export default function BlogPageClient() {
           content: b.content || "",
           author: b.author?.fullName || "Club Member",
           authorImage: b.author?.imageUrl || "",
+          authorImagePosition: b.author?.imagePosition || "50% 50%",
+          authorDepartment: b.author?.department || "",
+          authorBatch: b.author?.batch || "",
+          authorSession: b.author?.session || "",
           date: b.createdAt
             ? new Date(b.createdAt).toISOString().split("T")[0]
             : "2025-08-01",

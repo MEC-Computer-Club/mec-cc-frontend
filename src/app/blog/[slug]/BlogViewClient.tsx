@@ -172,6 +172,35 @@ export default function BlogViewClient({ post, isHtml }: BlogViewClientProps) {
 
   const authorProfileUrl = `/profile/${post.authorId || encodeURIComponent(post.author)}`;
 
+  const getAuthorSubtitle = () => {
+    let cleanDept = (post.authorDepartment || "").trim();
+    if (/\b(CSE|Computer Science)\b/i.test(cleanDept)) cleanDept = "CSE";
+    else if (/\b(EEE|Electrical)\b/i.test(cleanDept)) cleanDept = "EEE";
+    else if (/\b(CE|Civil)\b/i.test(cleanDept)) cleanDept = "CE";
+    else if (/\b(ME|Mechanical)\b/i.test(cleanDept)) cleanDept = "ME";
+
+    let cleanBatch = (post.authorBatch || "")
+      .replace(/batch/i, "")
+      .replace(new RegExp(`^${cleanDept}[-\\s_]*`, "i"), "")
+      .trim();
+
+    if (cleanBatch && /^\d+$/.test(cleanBatch)) {
+      const n = parseInt(cleanBatch, 10);
+      const s = ["th", "st", "nd", "rd"];
+      const v = n % 100;
+      cleanBatch = n + (s[(v - 20) % 10] || s[v] || s[0]);
+    }
+
+    if (cleanDept && cleanBatch) {
+      return `MEC Computer Club | ${cleanDept} - ${cleanBatch}`;
+    } else if (cleanBatch) {
+      return `MEC Computer Club | ${cleanBatch}`;
+    } else if (cleanDept) {
+      return `MEC Computer Club | ${cleanDept}`;
+    }
+    return "MEC Computer Club Member";
+  };
+
   return (
     <article className="py-8 sm:py-12 md:py-16 overflow-x-clip">
       {/* Both Header/Cover Image (red section) and Description (green section) share this exact same width */}
@@ -366,6 +395,7 @@ export default function BlogViewClient({ post, isHtml }: BlogViewClientProps) {
                     alt={post.author}
                     fill
                     className="object-cover"
+                    style={{ objectPosition: post.authorImagePosition || "50% 50%" }}
                     unoptimized
                   />
                 ) : (
@@ -376,15 +406,18 @@ export default function BlogViewClient({ post, isHtml }: BlogViewClientProps) {
                 )}
               </Link>
               <div className="min-w-0 flex-1">
-                <Link
-                  href={authorProfileUrl}
-                  className="block text-base sm:text-lg font-bold text-text-primary mb-0.5 break-words hover:text-accent-primary-hover hover:underline transition-colors cursor-pointer"
-                  title={`Visit ${post.author}'s profile`}
-                >
-                  Written by {post.author} ↗
-                </Link>
+                <div className="text-base sm:text-lg font-bold text-text-primary mb-0.5 break-words">
+                  <span className="font-normal text-text-secondary mr-1">Written by</span>{" "}
+                  <Link
+                    href={authorProfileUrl}
+                    className="inline hover:text-accent-primary-hover hover:underline transition-colors cursor-pointer"
+                    title={`Visit ${post.author}'s profile`}
+                  >
+                    {post.author} ↗
+                  </Link>
+                </div>
                 <p className="text-sm text-text-tertiary m-0">
-                  MEC Computer Club Member
+                  {getAuthorSubtitle()}
                 </p>
               </div>
             </div>

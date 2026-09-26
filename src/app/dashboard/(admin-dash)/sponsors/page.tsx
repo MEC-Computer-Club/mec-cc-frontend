@@ -62,6 +62,7 @@ function SponsorsContent() {
     tabParam === "club_as_partner" || tabParam === "partner" ? "club_as_partner" : "sponsors"
   );
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
+  const [meta, setMeta] = useState<{ total: number; page: number; limit: number; totalPages: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [filterActive, setFilterActive] = useState<"all" | "active" | "inactive">("all");
@@ -69,8 +70,11 @@ function SponsorsContent() {
   const fetchSponsors = async () => {
     setLoading(true);
     try {
-      const res = await axios.get(API, { withCredentials: true });
+      const res = await axios.get(`${API}?all=true`, { withCredentials: true });
       setSponsors(res.data.data || []);
+      if (res.data.meta) {
+        setMeta(res.data.meta);
+      }
     } catch {
       console.error("Failed to load sponsors");
     } finally {

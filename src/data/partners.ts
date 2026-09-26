@@ -30,7 +30,7 @@ const API_URL = API_BASE_URL;
 
 export async function getPartners(options?: { forHome?: boolean }): Promise<Partner[]> {
   try {
-    const res = await fetch(`${API_URL}/api/sponsors`, { next: { revalidate: 60 } });
+    const res = await fetch(`${API_URL}/api/sponsors?limit=50`, { next: { revalidate: 60 } });
     if (res.ok) {
       const data = await res.json();
       let backendSponsors: any[] = (data.data || data.sponsors || []).filter(
@@ -83,7 +83,7 @@ export async function getPartners(options?: { forHome?: boolean }): Promise<Part
 
 export async function getClubPartners(): Promise<ClubPartner[]> {
   try {
-    const res = await fetch(`${API_URL}/api/sponsors?category=club_as_partner`, {
+    const res = await fetch(`${API_URL}/api/sponsors?category=club_as_partner&limit=50`, {
       next: { revalidate: 60 },
     });
     if (res.ok) {

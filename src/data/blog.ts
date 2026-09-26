@@ -20,6 +20,12 @@ function mapBackendBlog(b: any): BlogPost {
     author: b.author?.fullName || b.authorName || "Club Member",
     authorId,
     authorImage: b.author?.imageUrl || "",
+    authorImagePosition: b.author?.imagePosition || "50% 50%",
+    authorDepartment: b.author?.department || "",
+    authorBatch: b.author?.batch || "",
+    authorSession: b.author?.session || "",
+    authorDesignation: b.author?.designation || "",
+    authorRole: b.author?.role || "",
     date: b.createdAt ? new Date(b.createdAt).toISOString().split("T")[0] : "2025-08-01",
     readTime: b.readTime || Math.max(1, Math.ceil((b.content || "").replace(/<[^>]*>/g, "").split(/\s+/).length / 200)),
     tags: b.tags || [],
@@ -78,7 +84,7 @@ export async function getFeaturedBlogs(): Promise<BlogPost[]> {
 /** Fetch a single blog by its slug from the backend API */
 export async function getBlogBySlugFromApi(slug: string): Promise<BlogPost | null> {
   try {
-    const res = await fetch(`${API_URL}/api/blogs/slug/${slug}`, { next: { revalidate: 30 } });
+    const res = await fetch(`${API_URL}/api/blogs/slug/${slug}`, { next: { revalidate: 0 } });
     if (res.ok) {
       const data = await res.json();
       if (data.success && data.data) {

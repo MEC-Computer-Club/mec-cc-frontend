@@ -150,6 +150,12 @@ export interface BlogPost {
   author: string;
   authorId?: string;
   authorImage?: string;
+  authorImagePosition?: string;
+  authorDepartment?: string;
+  authorBatch?: string;
+  authorSession?: string;
+  authorDesignation?: string;
+  authorRole?: string;
   date: string;
   readTime: number;
   tags: string[];

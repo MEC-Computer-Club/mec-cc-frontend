@@ -285,6 +285,7 @@ interface BlogCardProps {
   excerpt: string;
   author: string;
   authorImage?: string;
+  authorImagePosition?: string;
   date: string;
   readTime: number;
   tags: string[];
@@ -300,6 +301,7 @@ export function BlogCard({
   excerpt,
   author,
   authorImage,
+  authorImagePosition,
   date,
   readTime,
   tags,
@@ -375,7 +377,13 @@ export function BlogCard({
           <div className="flex items-center" title={`Written by ${author}`}>
             <div className="w-8 h-8 rounded-md bg-surface-secondary border border-border-default flex items-center justify-center font-mono font-bold text-xs text-text-primary overflow-hidden relative shadow-sm">
               {authorImage ? (
-                <Image src={authorImage} alt={author} fill className="object-cover rounded-md" />
+                <Image
+                  src={authorImage}
+                  alt={author}
+                  fill
+                  className="object-cover rounded-md"
+                  style={{ objectPosition: authorImagePosition || "50% 50%" }}
+                />
               ) : (
                 author.split(" ").map(n => n[0]).join("").slice(0, 2)
               )}

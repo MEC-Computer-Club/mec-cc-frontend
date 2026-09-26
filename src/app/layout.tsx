@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { JetBrains_Mono } from "next/font/google";
+import { JetBrains_Mono, Hind_Siliguri } from "next/font/google";
 import localFont from "next/font/local";
 import { GeistSans } from "geist/font/sans";
 import dynamic from "next/dynamic";
@@ -22,6 +22,13 @@ import "./globals.css";
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains-mono",
+  display: "swap",
+});
+
+const hindSiliguri = Hind_Siliguri({
+  subsets: ["bengali", "latin"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-hind-siliguri",
   display: "swap",
 });
 
@@ -207,7 +214,7 @@ export default function RootLayout({
   const initialThemeCss = getInitialThemeCss(initialVibe);
 
   return (
-    <html lang="en" className={`${GeistSans.variable} ${jetbrainsMono.variable} ${generalSans.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${GeistSans.variable} ${jetbrainsMono.variable} ${generalSans.variable} ${hindSiliguri.variable}`} suppressHydrationWarning>
       <head>
         <style
           id="initial-accent-theme"
