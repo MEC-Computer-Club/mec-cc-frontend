@@ -32,7 +32,14 @@
   --color-border-hover: var(--border-hover);
   --color-border-focus: var(--border-focus);
   --color-border-brutalist: var(--border-brutalist);
+  --color-border: var(--border-default);
   --color-grid-lines: var(--grid-lines);
+
+  --color-canvas-base: var(--surface-elevated);
+  --color-canvas-subtle: var(--surface-secondary);
+  --color-foreground: var(--text-primary);
+  --color-foreground-secondary: var(--text-secondary);
+  --color-foreground-muted: var(--text-tertiary);
 }
 
 .font-space-mono {

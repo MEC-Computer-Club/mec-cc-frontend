@@ -56,6 +56,7 @@ const navItems = [
       { label: "Photo Sigil", href: "/resources/watermark" },
       { label: "Cover Page", href: "/resources/cover-page" },
       { label: "CGPA Calculator", href: "/utilities/cgpa" },
+      { label: "Questions Archive", href: "/utilities/questions-archive" },
     ],
   },
   {
