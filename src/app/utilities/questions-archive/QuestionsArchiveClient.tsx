@@ -1,0 +1,1853 @@
+"use client";
+
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import Link from "next/link";
+import {
+  FileText,
+  Search,
+  Download,
+  Eye,
+  Filter,
+  Calendar,
+  GraduationCap,
+  Layers,
+  Plus,
+  Trash2,
+  Edit3,
+  X,
+  ExternalLink,
+  ChevronDown,
+  BookOpen,
+  Sparkles,
+  LayoutGrid,
+  List,
+  RotateCcw,
+  CheckCircle2,
+  AlertCircle,
+  FilePlus,
+  Maximize2,
+  Minimize2,
+  UploadCloud,
+  Loader2,
+  Image as ImageIcon,
+  ZoomIn,
+  ZoomOut,
+  RefreshCw,
+  FileCheck,
+} from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { api } from "@/lib/api";
+import {
+  QuestionArchiveItem,
+  QuestionFiltersData,
+  QuestionArchiveResponse,
+} from "@/types/questionArchive";
+import toast from "react-hot-toast";
+
+const API_BASE_URL = (
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
+).replace(/\/+$/, "");
+
+export function QuestionsArchiveClient() {
+  const { user, isAdmin } = useAuth();
+
+  // Filters State
+  const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
+  const [selectedYear, setSelectedYear] = useState<string>("all");
+  const [selectedSemester, setSelectedSemester] = useState<string>("all");
+  const [selectedExamType, setSelectedExamType] = useState<string>("all");
+  const [selectedFileType, setSelectedFileType] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [debouncedSearch, setDebouncedSearch] = useState<string>("");
+  const [sortBy, setSortBy] = useState<string>("year");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [page, setPage] = useState<number>(1);
+  const [limit] = useState<number>(12);
+  const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
+
+  // Data State
+  const [questions, setQuestions] = useState<QuestionArchiveItem[]>([]);
+  const [filterMeta, setFilterMeta] = useState<QuestionFiltersData>({
+    departments: ["CSE", "EEE", "CE"],
+    years: [2024, 2023, 2022, 2021],
+    semesters: [1, 2, 3, 4, 5, 6, 7, 8],
+    examTypes: ["Semester Final", "CT1", "CT2", "CT3", "Midterm", "Lab Final"],
+    fileTypes: ["all", "pdf", "image"],
+    courses: [],
+    stats: { totalQuestions: 0, totalPdfs: 0, totalImages: 0 },
+  });
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 12,
+    pages: 1,
+  });
+  const [loading, setLoading] = useState<boolean>(true);
+  const [filtersLoading, setFiltersLoading] = useState<boolean>(true);
+
+  // Preview Modal
+  const [previewQuestion, setPreviewQuestion] = useState<QuestionArchiveItem | null>(null);
+  const [isFullscreenPreview, setIsFullscreenPreview] = useState<boolean>(false);
+  const [imageZoom, setImageZoom] = useState<number>(1);
+
+  // Admin Upload / Edit Modal
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [editingQuestion, setEditingQuestion] = useState<QuestionArchiveItem | null>(null);
+
+  // Form inputs with dynamic overrides
+  const [uploadFormData, setUploadFormData] = useState({
+    title: "",
+    department: "CSE",
+    customDepartment: "",
+    isCustomDept: false,
+    semester: 1,
+    customSemester: "",
+    isCustomSemester: false,
+    year: new Date().getFullYear(),
+    customYear: "",
+    isCustomYear: false,
+    session: "",
+    examType: "Semester Final",
+    customExamType: "",
+    isCustomExamType: false,
+    courseCode: "",
+    courseName: "",
+    description: "",
+    tags: "",
+    status: "published" as "published" | "draft" | "archived",
+  });
+
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [filePreviewUrl, setFilePreviewUrl] = useState<string | null>(null);
+  const [isReplacingFile, setIsReplacingFile] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Load dynamic filter metadata
+  const fetchFilterMeta = useCallback(async () => {
+    try {
+      setFiltersLoading(true);
+      const res = await api.get<{ success: boolean; data: QuestionFiltersData }>(
+        "/api/questions/filters"
+      );
+      if (res && res.data) {
+        setFilterMeta(res.data);
+      }
+    } catch (err) {
+      console.warn("Could not fetch filter options:", err);
+    } finally {
+      setFiltersLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchFilterMeta();
+  }, [fetchFilterMeta]);
+
+  // Available Years List (deduplicated, sorted descending)
+  const availableYears = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const defaultYears = [
+      currentYear + 1,
+      currentYear,
+      currentYear - 1,
+      currentYear - 2,
+      currentYear - 3,
+      currentYear - 4,
+      currentYear - 5,
+      currentYear - 6,
+    ];
+    const combined = Array.from(new Set([...(filterMeta.years || []), ...defaultYears]));
+    return combined.filter((y) => typeof y === "number" && !isNaN(y)).sort((a, b) => b - a);
+  }, [filterMeta.years]);
+
+  // Dynamic Course Filtering for current Department & Semester in the modal
+  const availableCoursesForSemester = useMemo(() => {
+    const dept = uploadFormData.isCustomDept
+      ? uploadFormData.customDepartment.trim().toUpperCase()
+      : uploadFormData.department?.trim().toUpperCase();
+    const sem = uploadFormData.isCustomSemester
+      ? parseInt(uploadFormData.customSemester, 10)
+      : uploadFormData.semester;
+
+    if (!dept || isNaN(sem)) return [];
+
+    return (filterMeta.courses || []).filter(
+      (c) =>
+        c.department?.trim().toUpperCase() === dept &&
+        Number(c.semester) === Number(sem)
+    );
+  }, [
+    filterMeta.courses,
+    uploadFormData.department,
+    uploadFormData.customDepartment,
+    uploadFormData.isCustomDept,
+    uploadFormData.semester,
+    uploadFormData.customSemester,
+    uploadFormData.isCustomSemester,
+  ]);
+
+  // Fetch Questions
+  const fetchQuestions = useCallback(async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      if (selectedDepartment !== "all") params.append("department", selectedDepartment);
+      if (selectedYear !== "all") params.append("year", selectedYear);
+      if (selectedSemester !== "all") params.append("semester", selectedSemester);
+      if (selectedExamType !== "all") params.append("examType", selectedExamType);
+      if (selectedFileType !== "all") params.append("fileType", selectedFileType);
+      if (debouncedSearch.trim()) params.append("search", debouncedSearch.trim());
+      params.append("page", page.toString());
+      params.append("limit", limit.toString());
+      params.append("sortBy", sortBy);
+      params.append("sortOrder", sortOrder);
+
+      const res = await api.get<QuestionArchiveResponse>(
+        `/api/questions?${params.toString()}`
+      );
+      if (res && res.data) {
+        setQuestions(res.data);
+        if (res.pagination) {
+          setPagination(res.pagination);
+        }
+      }
+    } catch (err: any) {
+      console.error("Error fetching questions:", err);
+      toast.error(err.message || "Failed to load question archive");
+    } finally {
+      setLoading(false);
+    }
+  }, [
+    selectedDepartment,
+    selectedYear,
+    selectedSemester,
+    selectedExamType,
+    selectedFileType,
+    debouncedSearch,
+    page,
+    limit,
+    sortBy,
+    sortOrder,
+  ]);
+
+  useEffect(() => {
+    fetchQuestions();
+  }, [fetchQuestions]);
+
+  // Helper to resolve absolute URL for files
+  const resolveFileUrl = useCallback((url: string) => {
+    if (!url) return "";
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return url;
+    }
+    return `${API_BASE_URL}${url.startsWith("/") ? url : `/${url}`}`;
+  }, []);
+
+  // Check if item is an image
+  const isImageFile = useCallback(
+    (item: QuestionArchiveItem | { fileType?: string; mimeType?: string; fileUrl?: string; fileName?: string }) => {
+      if (item.fileType === "image") return true;
+      if (item.mimeType && item.mimeType.startsWith("image/")) return true;
+      const name = item.fileName || item.fileUrl || "";
+      return /\.(jpe?g|png|webp|gif|avif|bmp)$/i.test(name);
+    },
+    []
+  );
+
+  // Handle Download
+  const handleDownload = async (item: QuestionArchiveItem, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    try {
+      const res = await api.post<{
+        success: boolean;
+        data: { fileUrl: string; fileName: string };
+      }>(`/api/questions/${item._id}/download`, {});
+
+      const targetUrl = resolveFileUrl(res?.data?.fileUrl || item.fileUrl);
+      const link = document.createElement("a");
+      link.href = targetUrl;
+      const ext = isImageFile(item) ? "png" : "pdf";
+      link.download = item.fileName || `${item.courseCode}_${item.year}_${item.examType}.${ext}`;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success("Download started");
+      setQuestions((prev) =>
+        prev.map((q) =>
+          q._id === item._id ? { ...q, downloadCount: q.downloadCount + 1 } : q
+        )
+      );
+    } catch (err: any) {
+      toast.error(err.message || "Failed to download question paper");
+    }
+  };
+
+  // Handle Open Preview Modal
+  const handleOpenPreview = (item: QuestionArchiveItem) => {
+    setPreviewQuestion(item);
+    setImageZoom(1);
+    setQuestions((prev) =>
+      prev.map((q) => (q._id === item._id ? { ...q, viewCount: q.viewCount + 1 } : q))
+    );
+  };
+
+  // Open Modal for Upload or Edit
+  const handleOpenUploadModal = (itemToEdit?: QuestionArchiveItem) => {
+    if (itemToEdit) {
+      setEditingQuestion(itemToEdit);
+      const isCustomD = !filterMeta.departments?.includes(itemToEdit.department);
+      const isCustomS = itemToEdit.semester > 8;
+      const isCustomE = !filterMeta.examTypes?.includes(itemToEdit.examType);
+      const isCustomY = !filterMeta.years?.includes(itemToEdit.year);
+
+      setUploadFormData({
+        title: itemToEdit.title,
+        department: isCustomD ? "CUSTOM" : itemToEdit.department,
+        customDepartment: isCustomD ? itemToEdit.department : "",
+        isCustomDept: isCustomD,
+        semester: itemToEdit.semester,
+        customSemester: isCustomS ? itemToEdit.semester.toString() : "",
+        isCustomSemester: isCustomS,
+        year: itemToEdit.year,
+        customYear: isCustomY ? itemToEdit.year.toString() : "",
+        isCustomYear: isCustomY,
+        session: itemToEdit.session || "",
+        examType: isCustomE ? "CUSTOM" : itemToEdit.examType,
+        customExamType: isCustomE ? itemToEdit.examType : "",
+        isCustomExamType: isCustomE,
+        courseCode: itemToEdit.courseCode,
+        courseName: itemToEdit.courseName,
+        description: itemToEdit.description || "",
+        tags: itemToEdit.tags?.join(", ") || "",
+        status: itemToEdit.status,
+      });
+      setSelectedFile(null);
+      setFilePreviewUrl(null);
+      setIsReplacingFile(false);
+    } else {
+      setEditingQuestion(null);
+      setUploadFormData({
+        title: "",
+        department: selectedDepartment !== "all" ? selectedDepartment : "CSE",
+        customDepartment: "",
+        isCustomDept: false,
+        semester: selectedSemester !== "all" ? parseInt(selectedSemester, 10) : 1,
+        customSemester: "",
+        isCustomSemester: false,
+        year: selectedYear !== "all" ? parseInt(selectedYear, 10) : new Date().getFullYear(),
+        customYear: "",
+        isCustomYear: false,
+        session: "",
+        examType: selectedExamType !== "all" ? selectedExamType : "Semester Final",
+        customExamType: "",
+        isCustomExamType: false,
+        courseCode: "",
+        courseName: "",
+        description: "",
+        tags: "",
+        status: "published",
+      });
+      setSelectedFile(null);
+      setFilePreviewUrl(null);
+      setIsReplacingFile(true); // new entry must upload a file
+    }
+    setIsModalOpen(true);
+  };
+
+  // Handle local file selection and thumbnail generation
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setSelectedFile(file);
+      if (file.type.startsWith("image/")) {
+        setFilePreviewUrl(URL.createObjectURL(file));
+      } else {
+        setFilePreviewUrl(null);
+      }
+    }
+  };
+
+  // Select a course from the filtered semester course list
+  const handleApplyCourse = (course: { courseCode: string; courseName: string }) => {
+    setUploadFormData((prev) => {
+      const currentYear = prev.isCustomYear ? prev.customYear || prev.year : prev.year;
+      return {
+        ...prev,
+        courseCode: course.courseCode,
+        courseName: course.courseName,
+        title: prev.title.trim()
+          ? prev.title
+          : `${course.courseCode} ${prev.examType} Exam Question ${currentYear}`,
+      };
+    });
+  };
+
+  // Handle Form Submit
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const resolvedDept = uploadFormData.isCustomDept
+      ? uploadFormData.customDepartment.trim().toUpperCase()
+      : uploadFormData.department;
+
+    const resolvedExamType = uploadFormData.isCustomExamType
+      ? uploadFormData.customExamType.trim()
+      : uploadFormData.examType;
+
+    const resolvedSemester = uploadFormData.isCustomSemester
+      ? parseInt(uploadFormData.customSemester, 10) || uploadFormData.semester
+      : uploadFormData.semester;
+
+    const resolvedYear = uploadFormData.isCustomYear
+      ? parseInt(uploadFormData.customYear, 10)
+      : uploadFormData.year;
+
+    if (!resolvedDept) {
+      toast.error("Please provide a department");
+      return;
+    }
+    if (!resolvedExamType) {
+      toast.error("Please provide an exam type");
+      return;
+    }
+    if (!resolvedYear || isNaN(resolvedYear)) {
+      toast.error("Please provide a valid exam year");
+      return;
+    }
+    if (!uploadFormData.courseCode.trim()) {
+      toast.error("Please enter a course code");
+      return;
+    }
+    if (!uploadFormData.courseName.trim()) {
+      toast.error("Please enter a course name");
+      return;
+    }
+    if (!editingQuestion && !selectedFile) {
+      toast.error("Please select a question PDF or Image file");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const formData = new FormData();
+      formData.append("title", uploadFormData.title.trim());
+      formData.append("department", resolvedDept);
+      formData.append("semester", resolvedSemester.toString());
+      formData.append("year", resolvedYear.toString());
+      formData.append("session", uploadFormData.session.trim());
+      formData.append("examType", resolvedExamType);
+      formData.append("courseCode", uploadFormData.courseCode.trim().toUpperCase());
+      formData.append("courseName", uploadFormData.courseName.trim());
+      formData.append("description", uploadFormData.description.trim());
+      formData.append("tags", uploadFormData.tags.trim());
+      formData.append("status", uploadFormData.status);
+
+      if (selectedFile) {
+        formData.append("file", selectedFile);
+      }
+
+      if (editingQuestion) {
+        await api.patch(`/api/questions/${editingQuestion._id}`, formData);
+        toast.success("Question paper updated successfully!");
+      } else {
+        await api.post("/api/questions", formData);
+        toast.success("Question paper archived successfully!");
+      }
+
+      setIsModalOpen(false);
+      fetchQuestions();
+      fetchFilterMeta();
+    } catch (err: any) {
+      console.error("Save error:", err);
+      toast.error(err.message || "Failed to save question paper");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle Delete Question
+  const handleDeleteQuestion = async (id: string) => {
+    try {
+      await api.delete(`/api/questions/${id}`);
+      toast.success("Question paper deleted");
+      setQuestions((prev) => prev.filter((q) => q._id !== id));
+      fetchFilterMeta();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete question");
+    }
+  };
+
+  // Reset Filters
+  const handleResetFilters = () => {
+    setSelectedDepartment("all");
+    setSelectedYear("all");
+    setSelectedSemester("all");
+    setSelectedExamType("all");
+    setSelectedFileType("all");
+    setSearchQuery("");
+    setDebouncedSearch("");
+    setSortBy("year");
+    setSortOrder("desc");
+    setPage(1);
+  };
+
+  // Count active filters
+  const activeFiltersCount = useMemo(() => {
+    let count = 0;
+    if (selectedDepartment !== "all") count++;
+    if (selectedYear !== "all") count++;
+    if (selectedSemester !== "all") count++;
+    if (selectedExamType !== "all") count++;
+    if (selectedFileType !== "all") count++;
+    if (debouncedSearch.trim()) count++;
+    return count;
+  }, [
+    selectedDepartment,
+    selectedYear,
+    selectedSemester,
+    selectedExamType,
+    selectedFileType,
+    debouncedSearch,
+  ]);
+
+  // Color mapper for exam types
+  const getExamTypeBadge = (type: string) => {
+    const t = type.toLowerCase();
+    if (t.includes("final")) {
+      return "bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border-cyan-500/30";
+    }
+    if (t.includes("ct1") || t === "ct 1") {
+      return "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30";
+    }
+    if (t.includes("ct2") || t === "ct 2") {
+      return "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30";
+    }
+    if (t.includes("ct3") || t === "ct 3") {
+      return "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30";
+    }
+    if (t.includes("quiz")) {
+      return "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30";
+    }
+    return "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30";
+  };
+
+  return (
+    <div className="min-h-screen bg-surface-primary text-text-primary pb-20">
+      {/* Hero Header */}
+      <section className="relative overflow-hidden pt-28 pb-12 border-b border-border-default bg-gradient-to-b from-surface-secondary/80 via-surface-primary to-surface-primary">
+        <div className="absolute inset-0 -z-10 pointer-events-none opacity-20">
+          <div className="absolute -top-32 left-1/4 w-96 h-96 rounded-full bg-accent-primary/20 blur-3xl" />
+          <div className="absolute -top-20 right-1/4 w-80 h-80 rounded-full bg-cyan-500/15 blur-3xl" />
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="max-w-3xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-accent-primary/10 text-accent-primary border border-accent-primary/25 mb-4">
+                <BookOpen size={14} />
+                <span>Academic Utility</span>
+              </div>
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-text-primary font-display">
+                Questions{" "}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-primary to-emerald-500">
+                  Archive
+                </span>
+              </h1>
+              <p className="mt-3 text-base sm:text-lg text-text-secondary leading-relaxed">
+                Comprehensive question bank for all academic years and engineering departments.
+                Filter, view, and download semester final and class test (CT1, CT2, CT3, Quiz)
+                questions in PDF or Image formats.
+              </p>
+            </div>
+
+            {/* Quick Actions & Dynamic Stats */}
+            <div className="flex flex-wrap items-center gap-3">
+              {isAdmin && (
+                <button
+                  onClick={() => handleOpenUploadModal()}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-accent-primary text-black hover:bg-accent-primary/90 transition-all shadow-md hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <Plus size={18} />
+                  <span>Upload Question Paper</span>
+                </button>
+              )}
+
+              <div className="inline-flex items-center gap-3 px-4 py-2 rounded-xl bg-surface-elevated border border-border-default text-xs shadow-sm">
+                <div>
+                  <span className="text-text-secondary block">Total Papers</span>
+                  <span className="text-base font-bold text-text-primary">
+                    {pagination.total || filterMeta.stats?.totalQuestions || 0}
+                  </span>
+                </div>
+                <div className="h-6 w-px bg-border-default" />
+                <div>
+                  <span className="text-text-secondary block">Departments</span>
+                  <span className="text-base font-bold text-text-primary">
+                    {filterMeta.departments?.length || 3}
+                  </span>
+                </div>
+                <div className="h-6 w-px bg-border-default" />
+                <div>
+                  <span className="text-text-secondary block">PDFs / Images</span>
+                  <span className="text-base font-bold text-text-primary">
+                    {filterMeta.stats?.totalPdfs ?? 0} / {filterMeta.stats?.totalImages ?? 0}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Main Filter & Content Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+        {/* Dynamic Filters Bar */}
+        <div className="bg-surface-elevated rounded-2xl border border-border-default p-5 shadow-sm mb-8 space-y-4">
+          {/* Top row: Search, Format & Sort */}
+          <div className="flex flex-col sm:flex-row items-center gap-3">
+            {/* Search Input */}
+            <div className="relative flex-1 w-full">
+              <Search
+                size={18}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-tertiary"
+              />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by course code (e.g. CSE-1101), title, subject, topic..."
+                className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-surface-secondary border border-border-default text-text-primary placeholder:text-text-tertiary text-sm focus:outline-none focus:border-accent-primary focus:bg-surface-elevated transition-colors"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary p-1"
+                >
+                  <X size={15} />
+                </button>
+              )}
+            </div>
+
+            {/* File Format Filter */}
+            <div className="flex items-center gap-1 bg-surface-secondary p-1 rounded-xl border border-border-default text-xs">
+              <button
+                onClick={() => {
+                  setSelectedFileType("all");
+                  setPage(1);
+                }}
+                className={`px-3 py-1.5 rounded-lg transition-colors font-medium ${
+                  selectedFileType === "all"
+                    ? "bg-accent-primary text-black font-bold shadow-xs"
+                    : "text-text-secondary hover:text-text-primary"
+                }`}
+              >
+                All Formats
+              </button>
+              <button
+                onClick={() => {
+                  setSelectedFileType("pdf");
+                  setPage(1);
+                }}
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-colors font-medium ${
+                  selectedFileType === "pdf"
+                    ? "bg-accent-primary text-black font-bold shadow-xs"
+                    : "text-text-secondary hover:text-text-primary"
+                }`}
+              >
+                <FileText size={13} />
+                PDF
+              </button>
+              <button
+                onClick={() => {
+                  setSelectedFileType("image");
+                  setPage(1);
+                }}
+                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-colors font-medium ${
+                  selectedFileType === "image"
+                    ? "bg-accent-primary text-black font-bold shadow-xs"
+                    : "text-text-secondary hover:text-text-primary"
+                }`}
+              >
+                <ImageIcon size={13} />
+                Images
+              </button>
+            </div>
+
+            {/* Sorting Select */}
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <select
+                value={`${sortBy}-${sortOrder}`}
+                onChange={(e) => {
+                  const [field, order] = e.target.value.split("-");
+                  setSortBy(field);
+                  setSortOrder(order as "asc" | "desc");
+                }}
+                className="w-full sm:w-44 px-3 py-2.5 rounded-xl bg-surface-secondary border border-border-default text-xs font-medium text-text-primary focus:outline-none focus:border-accent-primary focus:bg-surface-elevated cursor-pointer"
+              >
+                <option value="year-desc">Year: Newest First</option>
+                <option value="year-asc">Year: Oldest First</option>
+                <option value="semester-asc">Semester: Ascending</option>
+                <option value="semester-desc">Semester: Descending</option>
+                <option value="downloads-desc">Most Downloaded</option>
+                <option value="views-desc">Most Viewed</option>
+              </select>
+
+              {/* View Mode Toggle */}
+              <div className="inline-flex rounded-xl bg-surface-secondary p-1 border border-border-default">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`p-1.5 rounded-lg transition-colors ${
+                    viewMode === "grid"
+                      ? "bg-accent-primary text-black shadow-xs"
+                      : "text-text-secondary hover:text-text-primary"
+                  }`}
+                  title="Grid View"
+                >
+                  <LayoutGrid size={18} />
+                </button>
+                <button
+                  onClick={() => setViewMode("table")}
+                  className={`p-1.5 rounded-lg transition-colors ${
+                    viewMode === "table"
+                      ? "bg-accent-primary text-black shadow-xs"
+                      : "text-text-secondary hover:text-text-primary"
+                  }`}
+                  title="List / Table View"
+                >
+                  <List size={18} />
+                </button>
+              </div>
+
+              {/* Reset Filters Button */}
+              {activeFiltersCount > 0 && (
+                <button
+                  onClick={handleResetFilters}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-rose-500 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 transition-colors"
+                >
+                  <RotateCcw size={13} />
+                  <span>Reset</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Department Filter Pills (Completely dynamic) */}
+          <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-border-default">
+            <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider mr-1">
+              Department:
+            </span>
+            <button
+              onClick={() => {
+                setSelectedDepartment("all");
+                setPage(1);
+              }}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                selectedDepartment === "all"
+                  ? "bg-accent-primary text-black font-bold shadow-xs"
+                  : "bg-surface-secondary hover:bg-surface-elevated text-text-secondary hover:text-text-primary border border-border-default"
+              }`}
+            >
+              All Departments
+            </button>
+            {filterMeta.departments?.map((dept) => (
+              <button
+                key={dept}
+                onClick={() => {
+                  setSelectedDepartment(dept);
+                  setPage(1);
+                }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                  selectedDepartment === dept
+                    ? "bg-accent-primary text-black font-bold shadow-xs"
+                    : "bg-surface-secondary hover:bg-surface-elevated text-text-secondary hover:text-text-primary border border-border-default"
+                }`}
+              >
+                {dept}
+              </button>
+            ))}
+          </div>
+
+          {/* Exam Type & Year & Semester filter rows */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3 border-t border-border-default">
+            {/* Exam Type */}
+            <div>
+              <label className="block text-xs font-medium text-text-secondary mb-1.5">
+                Exam Type
+              </label>
+              <select
+                value={selectedExamType}
+                onChange={(e) => {
+                  setSelectedExamType(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-border-default text-xs text-text-primary focus:outline-none focus:border-accent-primary focus:bg-surface-elevated cursor-pointer"
+              >
+                <option value="all">All Exam Types (Final, CTs, etc.)</option>
+                {filterMeta.examTypes?.map((type) => (
+                  <option key={type} value={type}>
+                    {type}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Year */}
+            <div>
+              <label className="block text-xs font-medium text-text-secondary mb-1.5">
+                Academic Year
+              </label>
+              <select
+                value={selectedYear}
+                onChange={(e) => {
+                  setSelectedYear(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-border-default text-xs text-text-primary focus:outline-none focus:border-accent-primary focus:bg-surface-elevated cursor-pointer"
+              >
+                <option value="all">All Available Years</option>
+                {availableYears.map((yr) => (
+                  <option key={yr} value={yr}>
+                    Year {yr}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Semester */}
+            <div>
+              <label className="block text-xs font-medium text-text-secondary mb-1.5">
+                Semester
+              </label>
+              <select
+                value={selectedSemester}
+                onChange={(e) => {
+                  setSelectedSemester(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-border-default text-xs text-text-primary focus:outline-none focus:border-accent-primary focus:bg-surface-elevated cursor-pointer"
+              >
+                <option value="all">All Semesters</option>
+                {filterMeta.semesters?.map((sem) => (
+                  <option key={sem} value={sem}>
+                    Semester {sem}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Content Area */}
+        {loading ? (
+          <div className="py-24 text-center">
+            <Loader2 className="animate-spin text-accent-primary mx-auto mb-4" size={36} />
+            <p className="text-text-secondary text-sm">Loading question archive...</p>
+          </div>
+        ) : questions.length === 0 ? (
+          <div className="py-20 text-center rounded-2xl bg-surface-elevated border border-border-default p-8 shadow-sm">
+            <FileText size={48} className="mx-auto text-text-tertiary mb-4 opacity-50" />
+            <h3 className="text-lg font-semibold text-text-primary">No Question Papers Found</h3>
+            <p className="text-text-secondary text-sm max-w-md mx-auto mt-1 mb-6">
+              {activeFiltersCount > 0
+                ? "Try clearing some filters or searching with different keywords."
+                : "No question papers have been archived yet for this category."}
+            </p>
+            {activeFiltersCount > 0 ? (
+              <button
+                onClick={handleResetFilters}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-accent-primary text-black font-semibold text-xs shadow-md"
+              >
+                <RotateCcw size={14} />
+                <span>Reset All Filters</span>
+              </button>
+            ) : isAdmin ? (
+              <button
+                onClick={() => handleOpenUploadModal()}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-accent-primary text-black font-semibold text-xs shadow-md"
+              >
+                <Plus size={14} />
+                <span>Upload First Question Paper</span>
+              </button>
+            ) : null}
+          </div>
+        ) : viewMode === "grid" ? (
+          /* Grid View */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {questions.map((item) => {
+              const isImg = isImageFile(item);
+              return (
+                <div
+                  key={item._id}
+                  onClick={() => handleOpenPreview(item)}
+                  className="group relative flex flex-col justify-between rounded-2xl bg-surface-elevated hover:bg-surface-secondary/40 border border-border-default hover:border-accent-primary/50 transition-all duration-200 p-5 shadow-sm hover:shadow-md cursor-pointer"
+                >
+                  <div>
+                    {/* Top badges: Course Code, File Format & Exam Type */}
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-lg bg-surface-secondary border border-border-default text-text-primary group-hover:border-accent-primary/40 transition-colors">
+                          {item.courseCode}
+                        </span>
+                        <span
+                          className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                            isImg
+                              ? "bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30"
+                              : "bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30"
+                          }`}
+                        >
+                          {isImg ? <ImageIcon size={11} /> : <FileText size={11} />}
+                          {isImg ? "IMAGE" : "PDF"}
+                        </span>
+                      </div>
+
+                      <span
+                        className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${getExamTypeBadge(
+                          item.examType
+                        )}`}
+                      >
+                        {item.examType}
+                      </span>
+                    </div>
+
+                    {/* Title & Course Name */}
+                    <h3 className="font-semibold text-base text-text-primary group-hover:text-accent-primary transition-colors line-clamp-1 mb-1">
+                      {item.courseName}
+                    </h3>
+                    <p className="text-xs text-text-secondary line-clamp-2 mb-4">
+                      {item.description || item.title}
+                    </p>
+
+                    {/* Meta Chips */}
+                    <div className="flex flex-wrap items-center gap-2 text-[11px] text-text-secondary mb-4">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-secondary border border-border-default">
+                        <GraduationCap size={12} className="text-accent-primary" />
+                        {item.department}
+                      </span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-secondary border border-border-default">
+                        <Layers size={12} className="text-cyan-500" />
+                        Sem {item.semester}
+                      </span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-secondary border border-border-default">
+                        <Calendar size={12} className="text-amber-500" />
+                        {item.year}
+                      </span>
+                      {item.fileSize ? (
+                        <span className="px-2 py-0.5 rounded-md bg-surface-secondary border border-border-default">
+                          {(item.fileSize / 1024).toFixed(0)} KB
+                        </span>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  {/* Footer stats & actions */}
+                  <div className="pt-3 border-t border-border-default flex items-center justify-between">
+                    <div className="flex items-center gap-3 text-xs text-text-secondary">
+                      <span className="inline-flex items-center gap-1" title="Views">
+                        <Eye size={13} /> {item.viewCount}
+                      </span>
+                      <span className="inline-flex items-center gap-1" title="Downloads">
+                        <Download size={13} /> {item.downloadCount}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={(e) => handleDownload(item, e)}
+                        className="p-2 rounded-lg bg-surface-secondary hover:bg-accent-primary/20 hover:text-accent-primary text-text-secondary border border-border-default transition-colors"
+                        title="Download Document"
+                      >
+                        <Download size={15} />
+                      </button>
+
+                      {isAdmin && (
+                        <>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenUploadModal(item);
+                            }}
+                            className="p-2 rounded-lg bg-surface-secondary hover:bg-amber-500/20 hover:text-amber-500 text-text-secondary border border-border-default transition-colors"
+                            title="Edit Question"
+                          >
+                            <Edit3 size={15} />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm("Are you sure you want to delete this question paper?")) {
+                                handleDeleteQuestion(item._id);
+                              }
+                            }}
+                            className="p-2 rounded-lg bg-surface-secondary hover:bg-rose-500/20 hover:text-rose-500 text-text-secondary border border-border-default transition-colors"
+                            title="Delete Question"
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          /* Table View */
+          <div className="overflow-x-auto rounded-2xl border border-border-default bg-surface-elevated shadow-sm">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-surface-secondary text-text-secondary uppercase tracking-wider text-[11px] border-b border-border-default">
+                <tr>
+                  <th className="px-4 py-3 font-semibold">Format</th>
+                  <th className="px-4 py-3 font-semibold">Course</th>
+                  <th className="px-4 py-3 font-semibold">Title / Subject</th>
+                  <th className="px-4 py-3 font-semibold">Dept</th>
+                  <th className="px-4 py-3 font-semibold">Sem</th>
+                  <th className="px-4 py-3 font-semibold">Year</th>
+                  <th className="px-4 py-3 font-semibold">Exam Type</th>
+                  <th className="px-4 py-3 font-semibold text-center">Stats</th>
+                  <th className="px-4 py-3 font-semibold text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border-default">
+                {questions.map((item) => {
+                  const isImg = isImageFile(item);
+                  return (
+                    <tr
+                      key={item._id}
+                      onClick={() => handleOpenPreview(item)}
+                      className="hover:bg-surface-secondary/50 transition-colors cursor-pointer"
+                    >
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                            isImg
+                              ? "bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30"
+                              : "bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30"
+                          }`}
+                        >
+                          {isImg ? <ImageIcon size={11} /> : <FileText size={11} />}
+                          {isImg ? "IMG" : "PDF"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 font-mono font-bold text-text-primary">
+                        {item.courseCode}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="font-semibold text-text-primary">{item.courseName}</div>
+                        <div className="text-text-secondary text-[11px] line-clamp-1">
+                          {item.title}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-text-secondary font-medium">
+                        {item.department}
+                      </td>
+                      <td className="px-4 py-3 text-text-secondary">Sem {item.semester}</td>
+                      <td className="px-4 py-3 text-text-secondary">{item.year}</td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${getExamTypeBadge(
+                            item.examType
+                          )}`}
+                        >
+                          {item.examType}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-center text-text-secondary">
+                        <span className="inline-flex items-center gap-2">
+                          <span title="Views">👁 {item.viewCount}</span>
+                          <span title="Downloads">📥 {item.downloadCount}</span>
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={(e) => handleDownload(item, e)}
+                            className="p-1.5 rounded-lg bg-surface-secondary hover:bg-accent-primary/20 hover:text-accent-primary text-text-secondary border border-border-default transition-colors"
+                            title="Download"
+                          >
+                            <Download size={14} />
+                          </button>
+                          {isAdmin && (
+                            <>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenUploadModal(item);
+                                }}
+                                className="p-1.5 rounded-lg bg-surface-secondary hover:bg-amber-500/20 hover:text-amber-500 text-text-secondary border border-border-default transition-colors"
+                                title="Edit"
+                              >
+                                <Edit3 size={14} />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (
+                                    confirm(
+                                      "Are you sure you want to delete this question paper?"
+                                    )
+                                  ) {
+                                    handleDeleteQuestion(item._id);
+                                  }
+                                }}
+                                className="p-1.5 rounded-lg bg-surface-secondary hover:bg-rose-500/20 hover:text-rose-500 text-text-secondary border border-border-default transition-colors"
+                                title="Delete"
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Pagination Controls */}
+        {pagination.pages > 1 && (
+          <div className="mt-8 flex items-center justify-between border-t border-border-default pt-4">
+            <span className="text-xs text-text-secondary">
+              Showing page {pagination.page} of {pagination.pages} ({pagination.total} items)
+            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-surface-secondary hover:bg-surface-elevated border border-border-default text-text-primary disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+              {Array.from({ length: pagination.pages }, (_, i) => i + 1).map((pNum) => (
+                <button
+                  key={pNum}
+                  onClick={() => setPage(pNum)}
+                  className={`w-8 h-8 rounded-lg text-xs font-semibold transition-colors ${
+                    pNum === page
+                      ? "bg-accent-primary text-black"
+                      : "bg-surface-secondary hover:bg-surface-elevated text-text-secondary border border-border-default"
+                  }`}
+                >
+                  {pNum}
+                </button>
+              ))}
+              <button
+                disabled={page >= pagination.pages}
+                onClick={() => setPage((p) => Math.min(pagination.pages, p + 1))}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-surface-secondary hover:bg-surface-elevated border border-border-default text-text-primary disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* PDF / Image Preview Modal */}
+      {previewQuestion && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/70 backdrop-blur-sm animate-fadeIn">
+          <div
+            className={`relative flex flex-col bg-surface-elevated text-text-primary border border-border-default rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 ${
+              isFullscreenPreview
+                ? "w-full h-full rounded-none"
+                : "w-full max-w-5xl h-[85vh]"
+            }`}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-border-default bg-surface-secondary">
+              <div className="flex items-center gap-3">
+                <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-surface-elevated border border-border-default text-accent-primary">
+                  {previewQuestion.courseCode}
+                </span>
+                <div>
+                  <h3 className="font-semibold text-sm sm:text-base text-text-primary line-clamp-1">
+                    {previewQuestion.courseName}
+                  </h3>
+                  <div className="flex items-center gap-2 text-xs text-text-secondary">
+                    <span>{previewQuestion.department}</span>
+                    <span>•</span>
+                    <span>Semester {previewQuestion.semester}</span>
+                    <span>•</span>
+                    <span>{previewQuestion.examType}</span>
+                    <span>•</span>
+                    <span>{previewQuestion.year}</span>
+                    <span>•</span>
+                    <span className="uppercase font-bold text-[10px]">
+                      {isImageFile(previewQuestion) ? "Image Format" : "PDF Document"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {isImageFile(previewQuestion) && (
+                  <div className="flex items-center gap-1 bg-surface-elevated px-2 py-1 rounded-lg border border-border-default text-xs">
+                    <button
+                      onClick={() => setImageZoom((z) => Math.max(0.5, z - 0.25))}
+                      className="p-1 hover:text-accent-primary text-text-secondary"
+                      title="Zoom Out"
+                    >
+                      <ZoomOut size={14} />
+                    </button>
+                    <span className="w-10 text-center font-mono text-[11px] text-text-primary">
+                      {Math.round(imageZoom * 100)}%
+                    </span>
+                    <button
+                      onClick={() => setImageZoom((z) => Math.min(3, z + 0.25))}
+                      className="p-1 hover:text-accent-primary text-text-secondary"
+                      title="Zoom In"
+                    >
+                      <ZoomIn size={14} />
+                    </button>
+                  </div>
+                )}
+
+                <button
+                  onClick={() => handleDownload(previewQuestion)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-accent-primary text-black hover:bg-accent-primary/90 transition-colors"
+                >
+                  <Download size={14} />
+                  <span>Download</span>
+                </button>
+                <button
+                  onClick={() => window.open(resolveFileUrl(previewQuestion.fileUrl), "_blank")}
+                  className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary bg-surface-elevated border border-border-default transition-colors"
+                  title="Open Raw File"
+                >
+                  <ExternalLink size={16} />
+                </button>
+                <button
+                  onClick={() => setIsFullscreenPreview(!isFullscreenPreview)}
+                  className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary bg-surface-elevated border border-border-default transition-colors"
+                  title={isFullscreenPreview ? "Exit Fullscreen" : "Fullscreen"}
+                >
+                  {isFullscreenPreview ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+                </button>
+                <button
+                  onClick={() => setPreviewQuestion(null)}
+                  className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary bg-surface-elevated border border-border-default transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body: PDF iframe or Zoomable Image Viewer */}
+            <div className="flex-1 w-full bg-surface-secondary/70 overflow-auto relative flex items-center justify-center p-4">
+              {isImageFile(previewQuestion) ? (
+                <div className="max-w-full max-h-full flex items-center justify-center transition-transform duration-150">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={resolveFileUrl(previewQuestion.fileUrl)}
+                    alt={previewQuestion.title}
+                    style={{ transform: `scale(${imageZoom})`, transformOrigin: "center center" }}
+                    className="max-w-full max-h-[75vh] object-contain rounded-lg shadow-xl transition-transform duration-150"
+                  />
+                </div>
+              ) : (
+                <iframe
+                  src={`${resolveFileUrl(previewQuestion.fileUrl)}#toolbar=1&navpanes=0`}
+                  className="w-full h-full border-0 bg-white rounded-lg shadow-sm"
+                  title={previewQuestion.title}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Admin Upload / Edit Question Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn overflow-y-auto">
+          <div className="relative w-full max-w-2xl bg-surface-elevated text-text-primary border border-border-default rounded-2xl shadow-2xl p-6 my-8 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-4 border-b border-border-default mb-5">
+              <div className="flex items-center gap-2">
+                <FilePlus className="text-accent-primary" size={22} />
+                <h3 className="text-lg font-bold text-text-primary">
+                  {editingQuestion ? "Edit Question Paper" : "Upload Exam Question Paper"}
+                </h3>
+              </div>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-text-secondary hover:text-text-primary p-1"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleFormSubmit} className="space-y-4">
+              {/* CURRENT FILE PREVIEW (Crucial when editing!) */}
+              {editingQuestion && (
+                <div className="rounded-xl border border-border-default bg-surface-secondary p-3.5 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold uppercase tracking-wider text-accent-primary flex items-center gap-1.5">
+                      <FileCheck size={14} /> Current Uploaded File
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setIsReplacingFile(!isReplacingFile)}
+                      className={`text-xs font-semibold px-2.5 py-1 rounded-lg border transition-colors ${
+                        isReplacingFile
+                          ? "bg-rose-500/15 text-rose-500 border-rose-500/30 hover:bg-rose-500/25"
+                          : "bg-accent-primary/15 text-accent-primary border-accent-primary/30 hover:bg-accent-primary/25"
+                      }`}
+                    >
+                      {isReplacingFile ? "Keep Current File" : "Replace With New File"}
+                    </button>
+                  </div>
+
+                  <div className="flex items-center gap-3 bg-surface-elevated p-2.5 rounded-lg border border-border-default">
+                    {isImageFile(editingQuestion) ? (
+                      <div className="w-14 h-14 rounded overflow-hidden bg-surface-secondary border border-border-default shrink-0 flex items-center justify-center">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={resolveFileUrl(editingQuestion.fileUrl)}
+                          alt="Current"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-14 h-14 rounded bg-red-500/10 border border-red-500/20 text-red-500 shrink-0 flex items-center justify-center">
+                        <FileText size={24} />
+                      </div>
+                    )}
+
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-bold text-text-primary truncate">
+                        {editingQuestion.fileName || "exam-question-document"}
+                      </p>
+                      <div className="flex items-center gap-2 text-[11px] text-text-secondary mt-0.5">
+                        <span className="uppercase font-semibold">
+                          {isImageFile(editingQuestion) ? "Image" : "PDF"}
+                        </span>
+                        {editingQuestion.fileSize ? (
+                          <>
+                            <span>•</span>
+                            <span>{(editingQuestion.fileSize / 1024).toFixed(0)} KB</span>
+                          </>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => window.open(resolveFileUrl(editingQuestion.fileUrl), "_blank")}
+                        className="px-2.5 py-1 text-xs rounded bg-surface-secondary hover:bg-surface-elevated border border-border-default text-text-secondary hover:text-text-primary"
+                      >
+                        View File
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDownload(editingQuestion)}
+                        className="p-1 rounded bg-surface-secondary hover:bg-surface-elevated border border-border-default text-text-secondary hover:text-accent-primary"
+                        title="Download"
+                      >
+                        <Download size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Department & Semester (With Custom Inputs!) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Department */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-semibold text-text-primary">
+                      Department *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setUploadFormData((prev) => ({
+                          ...prev,
+                          isCustomDept: !prev.isCustomDept,
+                        }))
+                      }
+                      className="text-[11px] text-accent-primary hover:underline font-medium"
+                    >
+                      {uploadFormData.isCustomDept ? "Choose from list" : "+ Create new department"}
+                    </button>
+                  </div>
+
+                  {uploadFormData.isCustomDept ? (
+                    <input
+                      type="text"
+                      value={uploadFormData.customDepartment}
+                      onChange={(e) =>
+                        setUploadFormData({
+                          ...uploadFormData,
+                          customDepartment: e.target.value.toUpperCase(),
+                        })
+                      }
+                      placeholder="e.g. ME, BME, ARCH..."
+                      className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-accent-primary text-xs uppercase text-text-primary focus:outline-none focus:bg-surface-elevated"
+                      required
+                    />
+                  ) : (
+                    <select
+                      value={uploadFormData.department}
+                      onChange={(e) => {
+                        if (e.target.value === "CUSTOM") {
+                          setUploadFormData({ ...uploadFormData, isCustomDept: true });
+                        } else {
+                          setUploadFormData({
+                            ...uploadFormData,
+                            department: e.target.value,
+                            isCustomDept: false,
+                          });
+                        }
+                      }}
+                      className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-border-default text-xs text-text-primary focus:outline-none focus:border-accent-primary focus:bg-surface-elevated cursor-pointer"
+                      required
+                    >
+                      {filterMeta.departments?.map((dept) => (
+                        <option key={dept} value={dept}>
+                          {dept}
+                        </option>
+                      ))}
+                      <option value="CUSTOM">+ Add New Custom Department...</option>
+                    </select>
+                  )}
+                </div>
+
+                {/* Semester */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-semibold text-text-primary">
+                      Semester *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setUploadFormData((prev) => ({
+                          ...prev,
+                          isCustomSemester: !prev.isCustomSemester,
+                        }))
+                      }
+                      className="text-[11px] text-accent-primary hover:underline font-medium"
+                    >
+                      {uploadFormData.isCustomSemester ? "Standard (1-8)" : "+ Custom semester"}
+                    </button>
+                  </div>
+
+                  {uploadFormData.isCustomSemester ? (
+                    <input
+                      type="number"
+                      value={uploadFormData.customSemester}
+                      onChange={(e) =>
+                        setUploadFormData({
+                          ...uploadFormData,
+                          customSemester: e.target.value,
+                        })
+                      }
+                      min={1}
+                      max={20}
+                      placeholder="e.g. 9, 10..."
+                      className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-accent-primary text-xs text-text-primary focus:outline-none focus:bg-surface-elevated"
+                      required
+                    />
+                  ) : (
+                    <select
+                      value={uploadFormData.semester}
+                      onChange={(e) =>
+                        setUploadFormData({
+                          ...uploadFormData,
+                          semester: parseInt(e.target.value, 10),
+                        })
+                      }
+                      className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-border-default text-xs text-text-primary focus:outline-none focus:border-accent-primary focus:bg-surface-elevated cursor-pointer"
+                      required
+                    >
+                      {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
+                        <option key={s} value={s}>
+                          Semester {s}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              </div>
+
+              {/* AUTOMATIC COURSE FILTERING FOR THIS DEPARTMENT & SEMESTER */}
+              <div className="p-3 rounded-xl bg-surface-secondary border border-border-default space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-text-primary flex items-center gap-1.5">
+                    <BookOpen size={14} className="text-accent-primary" />
+                    <span>
+                      {uploadFormData.isCustomDept
+                        ? uploadFormData.customDepartment || "Custom Dept"
+                        : uploadFormData.department}{" "}
+                      Semester {uploadFormData.semester} Courses
+                      {availableCoursesForSemester.length > 0
+                        ? ` (${availableCoursesForSemester.length} available)`
+                        : ""}
+                    </span>
+                  </label>
+                  {availableCoursesForSemester.length > 0 && (
+                    <span className="text-[11px] text-text-secondary">
+                      Select below to auto-fill
+                    </span>
+                  )}
+                </div>
+
+                {availableCoursesForSemester.length > 0 ? (
+                  <>
+                    <select
+                      value=""
+                      onChange={(e) => {
+                        const code = e.target.value;
+                        if (!code) return;
+                        const c = availableCoursesForSemester.find(
+                          (item) => item.courseCode === code
+                        );
+                        if (c) {
+                          handleApplyCourse(c);
+                        }
+                      }}
+                      className="w-full px-3 py-2 rounded-lg bg-surface-elevated text-text-primary border border-border-default focus:border-accent-primary text-xs font-medium cursor-pointer"
+                    >
+                      <option value="">
+                        -- Choose an official semester course to auto-fill --
+                      </option>
+                      {availableCoursesForSemester.map((c) => (
+                        <option key={c.courseCode} value={c.courseCode}>
+                          {c.courseCode} — {c.courseName}{" "}
+                          {c.courseCredit ? `(${c.courseCredit} Cr)` : ""}
+                        </option>
+                      ))}
+                    </select>
+
+                    {/* Quick clickable chips */}
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {availableCoursesForSemester.map((c) => {
+                        const isSelected = uploadFormData.courseCode === c.courseCode;
+                        return (
+                          <button
+                            type="button"
+                            key={c.courseCode}
+                            onClick={() => handleApplyCourse(c)}
+                            className={`text-[11px] px-2.5 py-1 rounded-md border transition-all text-left flex items-center gap-1 ${
+                              isSelected
+                                ? "bg-accent-primary text-black border-accent-primary font-bold shadow-xs"
+                                : "bg-surface-elevated text-text-secondary border-border-default hover:border-accent-primary hover:text-text-primary"
+                            }`}
+                          >
+                            <span className="font-mono font-bold">{c.courseCode}</span>
+                            <span className="truncate max-w-[130px]">({c.courseName})</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-[11px] text-text-secondary italic">
+                    No predefined courses recorded for this department & semester yet. You can manually enter the course code and title below.
+                  </p>
+                )}
+              </div>
+
+              {/* Course Code & Name Inputs */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-text-primary mb-1.5">
+                    Course Code (e.g. CSE-1101) *
+                  </label>
+                  <input
+                    type="text"
+                    value={uploadFormData.courseCode}
+                    onChange={(e) =>
+                      setUploadFormData({ ...uploadFormData, courseCode: e.target.value })
+                    }
+                    placeholder="CSE-1101"
+                    className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-border-default text-xs uppercase text-text-primary focus:outline-none focus:border-accent-primary focus:bg-surface-elevated"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-text-primary mb-1.5">
+                    Course Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={uploadFormData.courseName}
+                    onChange={(e) =>
+                      setUploadFormData({ ...uploadFormData, courseName: e.target.value })
+                    }
+                    placeholder="e.g. Fundamentals of Programming"
+                    className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-border-default text-xs text-text-primary focus:outline-none focus:border-accent-primary focus:bg-surface-elevated"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Year & Exam Type (With Selectable & Custom Inputs!) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Exam Year */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-semibold text-text-primary">
+                      Exam Year *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setUploadFormData((prev) => ({
+                          ...prev,
+                          isCustomYear: !prev.isCustomYear,
+                        }))
+                      }
+                      className="text-[11px] text-accent-primary hover:underline font-medium"
+                    >
+                      {uploadFormData.isCustomYear ? "Choose from list" : "+ Custom year"}
+                    </button>
+                  </div>
+
+                  {uploadFormData.isCustomYear ? (
+                    <input
+                      type="number"
+                      value={uploadFormData.customYear}
+                      onChange={(e) =>
+                        setUploadFormData({
+                          ...uploadFormData,
+                          customYear: e.target.value,
+                        })
+                      }
+                      min={2000}
+                      max={2050}
+                      placeholder="e.g. 2028, 2029..."
+                      className="w-full px-3 py-2 rounded-xl bg-surface-secondary text-text-primary border border-accent-primary focus:outline-none focus:bg-surface-elevated text-xs"
+                      required
+                    />
+                  ) : (
+                    <select
+                      value={uploadFormData.year}
+                      onChange={(e) => {
+                        if (e.target.value === "CUSTOM") {
+                          setUploadFormData({ ...uploadFormData, isCustomYear: true });
+                        } else {
+                          setUploadFormData({
+                            ...uploadFormData,
+                            year: parseInt(e.target.value, 10),
+                            isCustomYear: false,
+                          });
+                        }
+                      }}
+                      className="w-full px-3 py-2 rounded-xl bg-surface-secondary text-text-primary border border-border-default focus:outline-none focus:border-accent-primary text-xs cursor-pointer focus:bg-surface-elevated"
+                      required
+                    >
+                      {availableYears.map((yr) => (
+                        <option key={yr} value={yr}>
+                          {yr}
+                        </option>
+                      ))}
+                      <option value="CUSTOM">+ Add Custom Year...</option>
+                    </select>
+                  )}
+                </div>
+
+                {/* Exam Type */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-semibold text-text-primary">
+                      Exam Type *
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setUploadFormData((prev) => ({
+                          ...prev,
+                          isCustomExamType: !prev.isCustomExamType,
+                        }))
+                      }
+                      className="text-[11px] text-accent-primary hover:underline font-medium"
+                    >
+                      {uploadFormData.isCustomExamType ? "Standard types" : "+ Custom exam type"}
+                    </button>
+                  </div>
+
+                  {uploadFormData.isCustomExamType ? (
+                    <input
+                      type="text"
+                      value={uploadFormData.customExamType}
+                      onChange={(e) =>
+                        setUploadFormData({
+                          ...uploadFormData,
+                          customExamType: e.target.value,
+                        })
+                      }
+                      placeholder="e.g. CT4, Retake, Quiz, Model Test..."
+                      className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-accent-primary text-xs text-text-primary focus:outline-none focus:bg-surface-elevated"
+                      required
+                    />
+                  ) : (
+                    <select
+                      value={uploadFormData.examType}
+                      onChange={(e) => {
+                        if (e.target.value === "CUSTOM") {
+                          setUploadFormData({ ...uploadFormData, isCustomExamType: true });
+                        } else {
+                          setUploadFormData({
+                            ...uploadFormData,
+                            examType: e.target.value,
+                            isCustomExamType: false,
+                          });
+                        }
+                      }}
+                      className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-border-default text-xs text-text-primary focus:outline-none focus:border-accent-primary focus:bg-surface-elevated cursor-pointer"
+                      required
+                    >
+                      <option value="Semester Final">Semester Final</option>
+                      <option value="CT1">CT1</option>
+                      <option value="CT2">CT2</option>
+                      <option value="CT3">CT3</option>
+                      <option value="Midterm">Midterm</option>
+                      <option value="Lab Final">Lab Final</option>
+                      <option value="Quiz">Quiz</option>
+                      <option value="Make-up">Make-up Exam</option>
+                      <option value="CUSTOM">+ Add Custom Exam Type...</option>
+                    </select>
+                  )}
+                </div>
+              </div>
+
+              {/* PDF or Image Document Upload Area */}
+              {(!editingQuestion || isReplacingFile) && (
+                <div>
+                  <label className="block text-xs font-semibold text-text-primary mb-1.5">
+                    {editingQuestion
+                      ? "Upload Replacement Document or Image"
+                      : "Question Document or Image *"}
+                  </label>
+                  <div className="relative border-2 border-dashed border-border-default hover:border-accent-primary/60 rounded-2xl p-5 text-center bg-surface-secondary/50 transition-colors">
+                    <input
+                      type="file"
+                      accept=".pdf,image/*,.jpg,.jpeg,.png,.webp,.gif,.avif"
+                      onChange={handleFileChange}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                    <UploadCloud size={30} className="mx-auto text-accent-primary mb-2" />
+                    {selectedFile ? (
+                      <div className="space-y-1">
+                        {filePreviewUrl ? (
+                          <div className="w-16 h-16 mx-auto rounded overflow-hidden mb-2 border border-border-default">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={filePreviewUrl}
+                              alt="Preview"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <FileText size={24} className="mx-auto text-red-500 mb-1" />
+                        )}
+                        <p className="text-xs font-semibold text-text-primary">{selectedFile.name}</p>
+                        <p className="text-[11px] text-text-secondary">
+                          {(selectedFile.size / 1024).toFixed(1)} KB • {selectedFile.type || "Document"}
+                        </p>
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-xs font-semibold text-text-primary">
+                          Drop question paper PDF or Images here, or click to browse
+                        </p>
+                        <p className="text-[11px] text-text-secondary mt-0.5">
+                          PDF, JPG, PNG, WEBP, GIF up to 25MB supported
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Title & Session */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-text-primary mb-1.5">
+                    Session (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={uploadFormData.session}
+                    onChange={(e) =>
+                      setUploadFormData({ ...uploadFormData, session: e.target.value })
+                    }
+                    placeholder="e.g. 2023-24"
+                    className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-border-default text-xs text-text-primary focus:outline-none focus:border-accent-primary focus:bg-surface-elevated"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-text-primary mb-1.5">
+                    Tags (comma-separated)
+                  </label>
+                  <input
+                    type="text"
+                    value={uploadFormData.tags}
+                    onChange={(e) =>
+                      setUploadFormData({ ...uploadFormData, tags: e.target.value })
+                    }
+                    placeholder="Algorithms, Graphs, Final, 2024"
+                    className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-border-default text-xs text-text-primary focus:outline-none focus:border-accent-primary focus:bg-surface-elevated"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-text-primary mb-1.5">
+                  Remarks / Description (Optional)
+                </label>
+                <textarea
+                  rows={2}
+                  value={uploadFormData.description}
+                  onChange={(e) =>
+                    setUploadFormData({ ...uploadFormData, description: e.target.value })
+                  }
+                  placeholder="Additional context, hints, handwritten note or syllabus changes..."
+                  className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-border-default text-xs text-text-primary focus:outline-none focus:border-accent-primary focus:bg-surface-elevated"
+                />
+              </div>
+
+              {/* Submit Buttons */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-border-default">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 rounded-xl text-xs font-medium text-text-secondary hover:text-text-primary bg-surface-secondary border border-border-default"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold bg-accent-primary text-black hover:bg-accent-primary/90 transition-all disabled:opacity-50"
+                >
+                  {isSubmitting && <Loader2 size={14} className="animate-spin" />}
+                  <span>{editingQuestion ? "Save Changes" : "Archive Question"}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -19,6 +19,7 @@ const footerLinks = {
     { label: "Developers", href: "/developers" },
   ],
   resources: [
+    { label: "Questions Archive", href: "/utilities/questions-archive" },
     { label: "CP Hub", href: "/cp-hub" },
     { label: "Blog", href: "/blog" },
     { label: "Join Us", href: "/join" },

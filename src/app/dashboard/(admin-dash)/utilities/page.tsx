@@ -23,10 +23,12 @@ import {
   ArrowLeftRight,
   RotateCcw,
   Sparkles,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Select, SelectOption } from "@/components/ui/Select";
 import FilterSelect, { FilterOption } from "@/app/dashboard/components/FilterSelect";
+import { QuestionArchiveTab } from "./QuestionArchiveTab";
 import { api } from "@/lib/api";
 import toast from "react-hot-toast";
 
@@ -125,7 +127,7 @@ const SEMESTER_FORM_OPTIONS: SelectOption[] = [
 ];
 
 export default function UtilitiesAdminPage() {
-  const [activeTab, setActiveTab] = useState<"courses" | "instructors" | "analytics">("courses");
+  const [activeTab, setActiveTab] = useState<"courses" | "instructors" | "analytics" | "questions">("courses");
 
   // Courses state - only holds one department at a time, CSE by default
   const [courses, setCourses] = useState<CourseItem[]>([]);
@@ -340,7 +342,7 @@ export default function UtilitiesAdminPage() {
   useEffect(() => {
     if (activeTab === "courses") {
       fetchCourses();
-    } else {
+    } else if (activeTab === "instructors") {
       fetchInstructors();
     }
   }, [activeTab, fetchCourses, fetchInstructors]);
@@ -735,6 +737,17 @@ export default function UtilitiesAdminPage() {
         >
           <BarChart3 size={16} />
           Institute Analytics
+        </button>
+        <button
+          onClick={() => setActiveTab("questions")}
+          className={`flex items-center gap-2 px-5 py-2.5 font-mono text-sm font-bold border-b-4 transition-all duration-150 whitespace-nowrap ${
+            activeTab === "questions"
+              ? "border-accent-primary text-text-primary bg-surface-secondary/40 rounded-t-md"
+              : "border-transparent text-text-secondary hover:text-text-primary"
+          }`}
+        >
+          <FileText size={16} />
+          Questions Archive
         </button>
       </div>
 
@@ -1885,6 +1898,9 @@ export default function UtilitiesAdminPage() {
           </div>
         </div>
       )}
+
+      {/* TAB 4: QUESTIONS ARCHIVE */}
+      {activeTab === "questions" && <QuestionArchiveTab />}
 
       {/* COURSE CREATE/EDIT MODAL */}
       {courseModalOpen && (
