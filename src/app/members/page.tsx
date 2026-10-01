@@ -35,13 +35,13 @@ export default async function MembersPage() {
 
   return (
     <>
-      <section className="pt-8 pb-4">
+      <section className="pt-10 md:pt-14 pb-8 md:pb-10 text-center">
         <div className="container mx-auto px-4 md:px-8">
           <span className="kicker">Our Core</span>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-text-primary mb-2">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-text-primary my-3">
             Active Nodes (Members)
           </h1>
-          <p className="text-xl text-text-secondary max-w-[600px] mt-3">
+          <p className="text-base sm:text-lg text-text-secondary max-w-[600px] mx-auto">
             Meet the talented developers, designers, and problem solvers who make up the heart of our community.
           </p>
         </div>

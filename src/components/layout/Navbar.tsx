@@ -190,13 +190,19 @@ export function Navbar() {
           .navbar__login:hover { color: #000000 !important; font-weight: 700 !important; }
           .dark .navbar__login:hover { color: #FFFFFF !important; font-weight: 700 !important; }
           .navbar__user-menu-wrap { position: relative; }
-          .navbar__user-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); height: 36px; padding: 0 var(--space-3); background-color: var(--surface-elevated); color: var(--text-primary); border: 2px solid var(--text-primary); border-radius: var(--radius-md); font-family: var(--font-body); font-size: var(--text-sm); font-weight: var(--weight-semibold); cursor: pointer; transition: all var(--transition-fast); white-space: nowrap; line-height: 1; }
-          .dark .navbar__user-btn { border-color: var(--border-default); }
-          .navbar__user-btn:hover { background-color: var(--surface-secondary); color: var(--text-primary); box-shadow: 4px 4px 0px var(--text-primary); transform: translate(-2px, -2px); }
-          .dark .navbar__user-btn:hover { border-color: var(--accent-primary); box-shadow: 3px 3px 0 var(--accent-primary); color: #FFFFFF; }
+          .navbar__user-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); height: 36px; padding: 0 var(--space-3); background-color: transparent; color: var(--text-primary); border: 1.5px solid var(--text-primary); border-radius: var(--radius-md); font-family: var(--font-body); font-size: var(--text-sm); font-weight: var(--weight-semibold); cursor: pointer; box-shadow: none; transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast); white-space: nowrap; line-height: 1; outline: none; }
+          .dark .navbar__user-btn { border-color: var(--border-default); background-color: transparent; box-shadow: none; color: var(--text-primary); }
+          .navbar__user-btn:hover { background-color: var(--surface-secondary); color: var(--text-primary); border-color: var(--text-primary); box-shadow: 3px 3px 0px 0px var(--text-primary); transform: translate(-1.5px, -1.5px); }
+          .dark .navbar__user-btn:hover { border-color: var(--accent-primary); box-shadow: 3px 3px 0px 0px var(--accent-primary); color: #FFFFFF; }
+          .navbar__user-btn--open { border-color: var(--accent-primary) !important; box-shadow: 3px 3px 0px 0px var(--accent-primary) !important; background-color: var(--surface-secondary); color: var(--text-primary) !important; transform: none; }
+          .dark .navbar__user-btn--open { color: #FFFFFF !important; }
           .navbar__user-btn:active { transform: translateY(0); box-shadow: none; }
+          .navbar__chevron { transition: transform var(--transition-fast); flex-shrink: 0; }
+          .navbar__user-btn--open .navbar__chevron { transform: rotate(180deg); }
           .navbar__user-avatar { width: 22px; height: 22px; border-radius: var(--radius-sm); border: 1.5px solid var(--text-primary); object-fit: cover; flex-shrink: 0; }
+          .dark .navbar__user-avatar { border-color: var(--border-default); }
           .navbar__user-initials { width: 22px; height: 22px; border-radius: var(--radius-sm); border: 1.5px solid var(--text-primary); background: var(--accent-primary); color: var(--accent-primary-text, #000); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 11px; font-weight: 800; flex-shrink: 0; }
+          .dark .navbar__user-initials { border-color: var(--border-default); }
           .navbar__user-name { max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-body); font-size: var(--text-sm); font-weight: var(--weight-semibold); }
           .navbar__user-dropdown-wrapper { right: 0; left: auto; }
           .navbar__user-dropdown { min-width: 210px; border: 1.5px solid var(--text-primary); border-radius: var(--radius-md); box-shadow: 4px 4px 0px 0px var(--accent-primary); background: var(--surface-elevated); overflow: hidden; padding: 0; margin: 0; list-style: none; }
@@ -333,7 +339,7 @@ export function Navbar() {
               <div className="navbar__user-menu-wrap" onMouseLeave={() => setUserDropdownOpen(false)}>
                 <button
                   type="button"
-                  className="navbar__user-btn"
+                  className={`navbar__user-btn ${userDropdownOpen ? "navbar__user-btn--open" : ""}`}
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                   onMouseEnter={() => setUserDropdownOpen(true)}
                   aria-label="User menu"

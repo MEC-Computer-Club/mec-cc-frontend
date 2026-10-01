@@ -33,14 +33,19 @@ interface PeopleDirectoryProps<T extends DirectoryPerson> {
   emptySubtitle?: string;
 }
 
-type DepartmentKey = "CSE" | "EEE" | "CE";
-const DEPARTMENTS: DepartmentKey[] = ["CSE", "EEE", "CE"];
+type DepartmentKey = "all" | "CSE" | "EEE" | "CE";
+const DEPARTMENTS: { key: DepartmentKey; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "CSE", label: "CSE" },
+  { key: "EEE", label: "EEE" },
+  { key: "CE", label: "CE" },
+];
 
 export function getPersonDepartment(person: {
   department?: string;
   session?: string;
   batch?: string;
-}): DepartmentKey {
+}): "CSE" | "EEE" | "CE" {
   const d = (person.department || "").trim().toUpperCase();
   if (d === "CSE" || d.includes("COMPUTER")) return "CSE";
   if (d === "EEE" || d.includes("ELECTR")) return "EEE";
@@ -61,7 +66,7 @@ export default function PeopleDirectory<T extends DirectoryPerson>({
   emptySubtitle = "Try adjusting your department, batch, or search query.",
 }: PeopleDirectoryProps<T>) {
   // ── States ─────────────────────────────────────────────────────────────────
-  const [selectedDept, setSelectedDept] = useState<DepartmentKey>("CSE");
+  const [selectedDept, setSelectedDept] = useState<DepartmentKey>("all");
   const [selectedBatch, setSelectedBatch] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [debouncedQuery, setDebouncedQuery] = useState<string>("");
@@ -92,7 +97,12 @@ export default function PeopleDirectory<T extends DirectoryPerson>({
 
   // ── Total Department Counts ────────────────────────────────────────────────
   const deptCounts = useMemo(() => {
-    const counts: Record<DepartmentKey, number> = { CSE: 0, EEE: 0, CE: 0 };
+    const counts: Record<DepartmentKey, number> = {
+      all: initialPeople.length,
+      CSE: 0,
+      EEE: 0,
+      CE: 0,
+    };
     for (const person of initialPeople) {
       const dept = getPersonDepartment(person);
       counts[dept] = (counts[dept] || 0) + 1;
@@ -102,6 +112,7 @@ export default function PeopleDirectory<T extends DirectoryPerson>({
 
   // ── Filter by Selected Department ──────────────────────────────────────────
   const deptPeople = useMemo(() => {
+    if (selectedDept === "all") return initialPeople;
     return initialPeople.filter((p) => getPersonDepartment(p) === selectedDept);
   }, [initialPeople, selectedDept]);
 
@@ -194,7 +205,8 @@ export default function PeopleDirectory<T extends DirectoryPerson>({
               display: inline-flex;
               align-items: center;
               gap: 8px;
-              padding: 7px 14px;
+              height: 38px;
+              padding: 0 14px;
               font-family: var(--font-heading);
               font-size: 13px;
               font-weight: 800;
@@ -204,19 +216,20 @@ export default function PeopleDirectory<T extends DirectoryPerson>({
               color: var(--text-secondary);
               cursor: pointer;
               transition: all var(--transition-fast);
-              box-shadow: 2px 2px 0 var(--border-brutalist);
+              box-shadow: none;
+              box-sizing: border-box;
             }
             .dept-btn:hover {
               background: var(--surface-secondary);
               color: var(--text-primary);
-              transform: translate(-1px, -1px);
-              box-shadow: 3px 3px 0 var(--border-brutalist);
+              border-color: var(--border-strong, var(--border-default));
+              box-shadow: none;
             }
             .dept-btn.is-active {
               background: var(--accent-primary);
               color: #FFFFFF !important;
-              border-color: var(--text-primary);
-              box-shadow: 3px 3px 0 var(--border-brutalist);
+              border-color: var(--accent-primary);
+              box-shadow: none;
             }
             .dept-btn-count {
               display: inline-flex;
@@ -246,6 +259,7 @@ export default function PeopleDirectory<T extends DirectoryPerson>({
               display: flex;
               align-items: center;
               min-width: 200px;
+              height: 38px;
               flex: 1;
             }
             @media (min-width: 640px) {
@@ -256,7 +270,8 @@ export default function PeopleDirectory<T extends DirectoryPerson>({
             }
             .directory-search-input {
               width: 100%;
-              padding: 7px 32px 7px 34px;
+              height: 38px;
+              padding: 0 32px 0 34px;
               font-family: var(--font-body);
               font-size: 13px;
               background: var(--surface-primary);
@@ -264,12 +279,13 @@ export default function PeopleDirectory<T extends DirectoryPerson>({
               border: 1px solid var(--border-default);
               border-radius: var(--radius-sm);
               outline: none;
-              box-shadow: 2px 2px 0 var(--border-brutalist);
-              transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+              box-shadow: none;
+              box-sizing: border-box;
+              transition: border-color var(--transition-fast);
             }
             .directory-search-input:focus {
               border-color: var(--accent-primary);
-              box-shadow: 3px 3px 0 var(--accent-primary);
+              box-shadow: none;
             }
           `,
         }}
@@ -277,21 +293,21 @@ export default function PeopleDirectory<T extends DirectoryPerson>({
 
       {/* ── Top Controls Bar ── */}
       <div className="dept-filter-bar">
-        {/* Left: Department Buttons (CSE, EEE, CE with counts) */}
+        {/* Left: Department Buttons (All, CSE, EEE, CE with counts) */}
         <div className="dept-btn-group" role="tablist" aria-label="Department filter">
-          {DEPARTMENTS.map((dept) => {
-            const isActive = selectedDept === dept;
-            const count = deptCounts[dept];
+          {DEPARTMENTS.map(({ key, label }) => {
+            const isActive = selectedDept === key;
+            const count = deptCounts[key] || 0;
             return (
               <button
-                key={dept}
+                key={key}
                 type="button"
                 role="tab"
                 aria-selected={isActive}
-                onClick={() => setSelectedDept(dept)}
+                onClick={() => setSelectedDept(key)}
                 className={`dept-btn ${isActive ? "is-active" : ""}`}
               >
-                <span>{dept}</span>
+                <span>{label}</span>
                 <span className="dept-btn-count">{count}</span>
               </button>
             );
@@ -307,6 +323,8 @@ export default function PeopleDirectory<T extends DirectoryPerson>({
               style={{
                 position: "absolute",
                 left: "11px",
+                top: "50%",
+                transform: "translateY(-50%)",
                 color: "var(--text-secondary)",
                 pointerEvents: "none",
               }}
@@ -325,6 +343,8 @@ export default function PeopleDirectory<T extends DirectoryPerson>({
                 style={{
                   position: "absolute",
                   right: "10px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
                   color: "var(--accent-primary)",
                   pointerEvents: "none",
                 }}
@@ -336,6 +356,8 @@ export default function PeopleDirectory<T extends DirectoryPerson>({
                 style={{
                   position: "absolute",
                   right: "8px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
                   border: "none",
                   background: "transparent",
                   color: "var(--text-secondary)",
@@ -359,6 +381,8 @@ export default function PeopleDirectory<T extends DirectoryPerson>({
             options={batchOptions}
             placeholder="Select Batch"
             className="min-w-[170px]"
+            buttonClassName="w-full h-[38px]"
+            noShadow
           />
         </div>
       </div>
@@ -368,7 +392,9 @@ export default function PeopleDirectory<T extends DirectoryPerson>({
         <div className="flex items-center gap-2">
           <span>
             Showing <strong className="text-text-primary">{filteredPeople.length}</strong> {category === "alumni" ? "alumni" : "members"} in{" "}
-            <span className="text-accent-primary font-bold">{selectedDept}</span>
+            <span className="text-accent-primary font-bold">
+              {selectedDept === "all" ? "All Departments" : selectedDept}
+            </span>
             {selectedBatch !== "all" && (
               <>
                 {" "}· <span className="font-bold text-text-primary">{selectedBatch}</span>
@@ -403,9 +429,13 @@ export default function PeopleDirectory<T extends DirectoryPerson>({
           <h3 className="text-base sm:text-lg font-bold text-text-primary mb-1">{emptyTitle}</h3>
           <p className="text-xs sm:text-sm text-text-secondary max-w-[460px] mx-auto mb-4">
             {debouncedQuery
-              ? `No ${category === "alumni" ? "alumni" : "members"} found in ${selectedDept} matching "${debouncedQuery}".`
+              ? `No ${category === "alumni" ? "alumni" : "members"} found ${
+                  selectedDept === "all" ? "" : `in ${selectedDept} `
+                }matching "${debouncedQuery}".`
               : selectedBatch !== "all"
-              ? `No members found in ${selectedDept} for ${selectedBatch}.`
+              ? `No ${category === "alumni" ? "alumni" : "members"} found ${
+                  selectedDept === "all" ? "" : `in ${selectedDept} `
+                }for ${selectedBatch}.`
               : emptySubtitle}
           </p>
           {(selectedBatch !== "all" || debouncedQuery) && (
