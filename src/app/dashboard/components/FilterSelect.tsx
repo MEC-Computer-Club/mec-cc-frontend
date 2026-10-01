@@ -16,6 +16,8 @@ export interface FilterSelectProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  buttonClassName?: string;
+  noShadow?: boolean;
 }
 
 export default function FilterSelect({
@@ -25,6 +27,8 @@ export default function FilterSelect({
   placeholder = "Filter by...",
   disabled = false,
   className = "",
+  buttonClassName = "",
+  noShadow = false,
 }: FilterSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -103,8 +107,17 @@ export default function FilterSelect({
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setIsOpen((prev) => !prev)}
-        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border-default bg-surface-elevated text-xs font-semibold transition shadow-[2px_2px_0px_0px_var(--border-default)] hover:shadow-[3px_3px_0px_0px_var(--accent-primary)] hover:border-accent-primary focus:outline-none ${isOpen ? "border-accent-primary shadow-[3px_3px_0px_0px_var(--accent-primary)] text-text-primary" : "text-text-secondary hover:text-text-primary"
-          } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+        className={`flex items-center gap-2 px-3 h-[38px] rounded-md border border-border-default bg-surface-elevated text-xs font-semibold transition focus:outline-none ${
+          noShadow
+            ? "shadow-none"
+            : `shadow-[2px_2px_0px_0px_var(--border-default)] hover:shadow-[3px_3px_0px_0px_var(--accent-primary)] ${
+                isOpen ? "shadow-[3px_3px_0px_0px_var(--accent-primary)]" : ""
+              }`
+        } ${
+          isOpen
+            ? "border-accent-primary text-text-primary"
+            : "text-text-secondary hover:text-text-primary hover:border-accent-primary"
+        } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} ${buttonClassName}`}
       >
         <Filter size={13} className={isOpen || (value && value !== "all") ? "text-accent-primary" : "text-text-secondary"} />
         <span>{selectedOption ? selectedOption.label : placeholder}</span>
@@ -121,7 +134,9 @@ export default function FilterSelect({
 
       {isOpen && !disabled && (
         <div
-          className="absolute top-[calc(100%+4px)] left-0 min-w-[170px] bg-surface-primary border border-text-primary dark:border-border-default rounded-md shadow-[4px_4px_0px_0px_var(--accent-primary)] z-[500] max-h-[250px] overflow-y-auto overflow-x-hidden flex flex-col m-0 p-0 list-none animate-in fade-in slide-in-from-top-1 duration-150"
+          className={`absolute top-[calc(100%+4px)] left-0 min-w-[170px] bg-surface-primary border border-border-default rounded-md ${
+            noShadow ? "shadow-none" : "shadow-[4px_4px_0px_0px_var(--accent-primary)]"
+          } z-[500] max-h-[250px] overflow-y-auto overflow-x-hidden flex flex-col m-0 p-0 list-none animate-in fade-in slide-in-from-top-1 duration-150`}
         >
           {options.map((opt) => {
             const isSelected = value === opt.value;
