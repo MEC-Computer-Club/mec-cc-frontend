@@ -28,10 +28,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { formatDeptSession } from "@/lib/formatters";
-import { staticExecutives } from "@/data/executives";
-import { staticAdvisors } from "@/data/advisors";
-import { activeMembers } from "@/data/members";
-import { alumniBatches } from "@/data/alumni";
+import { Member } from "@/lib/api/members";
 
 /* ── Social SVGs ── */
 const IconGH = () => (
@@ -100,97 +97,8 @@ export default function MemberProfilePage() {
             return;
           }
         }
-      } catch {
-        // Backend not reachable or error, fallback to static records
-      }
-
-      // 2. Check static collections
-      const cleanId = id.toLowerCase().trim();
-
-      // Check executives
-      const foundExec = staticExecutives.find(
-        (e: any) => e.id?.toLowerCase() === cleanId || e.name?.toLowerCase() === cleanId
-      );
-      if (foundExec && isMounted) {
-        setMember({
-          fullName: foundExec.name,
-          designation: foundExec.role,
-          role: "executive",
-          clubRole: "executive",
-          imageUrl: foundExec.image,
-          department: "CSE",
-          session: "2021-22",
-          batch: "5th",
-          bio: foundExec.bio || "Active Executive Panel Member of MEC Computer Club.",
-          socialLinks: foundExec.socials,
-        });
-        setLoading(false);
-        return;
-      }
-
-      // Check advisors
-      const foundAdv = staticAdvisors.find(
-        (a: any) => a.id?.toLowerCase() === cleanId || a.name?.toLowerCase() === cleanId
-      );
-      if (foundAdv && isMounted) {
-        setMember({
-          fullName: foundAdv.name,
-          designation: foundAdv.role,
-          role: "member",
-          clubRole: "advisor",
-          imageUrl: foundAdv.image,
-          department: "Faculty",
-          session: "Advisor",
-          batch: "Faculty",
-          bio: foundAdv.bio || "Distinguished Advisor for MEC Computer Club.",
-          socialLinks: foundAdv.socials,
-        });
-        setLoading(false);
-        return;
-      }
-
-      // Check active members
-      const foundMember = activeMembers.find(
-        (m: any) => m.id?.toLowerCase() === cleanId || m.name?.toLowerCase() === cleanId
-      );
-      if (foundMember && isMounted) {
-        setMember({
-          fullName: foundMember.name,
-          designation: foundMember.role,
-          role: (foundMember as any).systemRole || "member",
-          clubRole: "member",
-          imageUrl: foundMember.image,
-          department: foundMember.department || "CSE",
-          session: foundMember.session || "2021-22",
-          batch: foundMember.batch || "5th",
-          socialLinks: foundMember.socials,
-        });
-        setLoading(false);
-        return;
-      }
-
-      // Check alumni batches
-      for (const b of alumniBatches) {
-        const foundAlumnus = b.members.find(
-          (m: any) => m.id?.toLowerCase() === cleanId || m.name?.toLowerCase() === cleanId
-        );
-        if (foundAlumnus && isMounted) {
-          setMember({
-            fullName: foundAlumnus.name,
-            designation: foundAlumnus.role,
-            role: "alumni",
-            clubRole: "alumni",
-            imageUrl: foundAlumnus.image,
-            department: "CSE",
-            session: b.year,
-            batch: b.batchNumber,
-            isGraduated: true,
-            bio: foundAlumnus.bio,
-            socialLinks: foundAlumnus.socials,
-          });
-          setLoading(false);
-          return;
-        }
+      } catch (err) {
+        console.warn("Could not fetch user profile:", err);
       }
 
       if (isMounted) {
@@ -276,8 +184,6 @@ export default function MemberProfilePage() {
   const isAdv = member.clubRole === "advisor" || designation.toLowerCase().includes("advisor");
   const isExec = member.clubRole === "executive";
   const isAlumni = member.clubRole === "alumni" || member.isGraduated || member.role === "alumni";
-  const isAdmin = member.role === "admin";
-  const isMod = member.role === "moderator";
 
   const socials = member.socialLinks || {};
 
@@ -358,16 +264,6 @@ export default function MemberProfilePage() {
             <div className="flex-1">
               {/* Role Badges */}
               <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-2">
-                {isAdmin && (
-                  <span className="inline-flex items-center gap-1 py-0.5 px-2.5 rounded-sm font-bold text-[11px] uppercase tracking-wider bg-gradient-to-br from-yellow-300 to-amber-500 text-black border border-black shadow-[1.5px_1.5px_0px_#000]" title="Platform Administrator">
-                    <Crown size={12} /> ADMIN
-                  </span>
-                )}
-                {isMod && !isAdmin && (
-                  <span className="inline-flex items-center gap-1 py-0.5 px-2.5 rounded-sm font-bold text-[11px] uppercase tracking-wider bg-gradient-to-br from-orange-200 to-orange-600 text-black border border-black shadow-[1.5px_1.5px_0px_#000]" title="Platform Moderator">
-                    <ShieldCheck size={12} /> MOD
-                  </span>
-                )}
                 {isExec && (
                   <span className="inline-flex items-center gap-1 py-0.5 px-2.5 rounded-sm font-bold text-[11px] uppercase tracking-wider bg-accent-primary/15 text-accent-primary-hover border border-accent-primary">
                     <Sparkles size={12} /> ROOT USER / EXECUTIVE
@@ -519,7 +415,7 @@ export default function MemberProfilePage() {
                 <span className="text-text-primary font-bold text-right">
                   {member.isGraduated
                     ? member.passingYear
-                      ? `Graduated (Class of ${member.passingYear})`
+                      ? `Graduated (${member.passingYear})`
                       : "Graduated Alumni"
                     : "Undergraduate Student"}
                 </span>

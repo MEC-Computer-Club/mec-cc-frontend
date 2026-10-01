@@ -12,7 +12,7 @@ import {
   Image as ImageIcon, Award, Search, X, Plus, Trash2, Check,
   AlertCircle, Clock, Mail, User, Loader2,
   ExternalLink, Edit, Star, Printer, Eye, Copy, Share2, Sparkles, CheckCircle2,
-  FileCheck, ShieldAlert, UserCheck, Play, Video, Maximize2, ClipboardPaste, Film,
+  FileCheck, ShieldAlert, UserCheck, Play, Video, Maximize2, ClipboardPaste, Film, ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
@@ -20,14 +20,27 @@ import FilterSelect from "@/app/dashboard/components/FilterSelect";
 import { CertificateTemplatePreviewModal } from "@/components/certificates/CertificateTemplatePreviewModal";
 import { TemplateItem } from "@/components/certificates/CertificateTemplateCard";
 import { interpolateCertificateHtml } from "@/lib/utils/templateInterpolation";
-import { getOptimizedImageUrl, getYoutubeEmbedUrl, getYoutubeThumbnail } from "@/data/gallery";
+import { getOptimizedImageUrl, getYoutubeEmbedUrl, getYoutubeThumbnail } from "@/lib/api/gallery";
 import { API_BASE_URL } from "@/lib/api";
+import EventFormSubmissionsSection from "../../components/EventFormSubmissionsSection";
+import EventMailingTab from "../../components/EventMailingTab";
 
 const API = `${API_BASE_URL}/api`;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────────────────────────
+export interface ContributorItem {
+  _id?: string;
+  name: string;
+  role: string;
+  department?: string;
+  studentId?: string;
+  email?: string;
+  userId?: any;
+  avatarUrl?: string;
+}
+
 interface UserRef {
   _id: string;
   fullName: string;
@@ -151,12 +164,7 @@ interface EventData {
     claimedAt: string;
     reviewedAt?: string;
   }>;
-  contributors?: Array<{
-    _id?: string;
-    name: string;
-    role: string;
-    department?: string;
-  }>;
+  contributors?: ContributorItem[];
   winners: Winner[];
   eventSponsors: EventSponsor[];
   media: MediaItem[];
@@ -228,23 +236,31 @@ function Toast({ msg, type }: { msg: string; type: "success" | "error" }) {
   );
 }
 
-function Avatar({ user, size = 36 }: { user: UserRef; size?: number }) {
-  if (user.imageUrl) {
+function Avatar({ user, size = 36, fallbackName }: { user?: UserRef | any; size?: number; fallbackName?: string }) {
+  const imageUrl = typeof user === "object" && user !== null ? user.imageUrl || user.avatarUrl : undefined;
+  const name =
+    (typeof user === "object" && user !== null ? user.fullName || user.name : "") ||
+    fallbackName ||
+    (typeof user === "string" ? user : "") ||
+    "User";
+  const initial = (name.trim().charAt(0) || "U").toUpperCase();
+
+  if (imageUrl) {
     return (
       <div
         className="relative flex-shrink-0 rounded-full overflow-hidden border border-slate-200 dark:border-slate-700"
         style={{ width: size, height: size }}
       >
-        <Image src={user.imageUrl} alt={user.fullName} fill style={{ objectFit: "cover" }} unoptimized />
+        <Image src={imageUrl} alt={name} fill style={{ objectFit: "cover" }} unoptimized />
       </div>
     );
   }
   return (
     <div
-      className="flex-shrink-0 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-semibold"
-      style={{ width: size, height: size, fontSize: size * 0.38 }}
+      className="flex-shrink-0 rounded-full bg-indigo-100 dark:bg-indigo-900/40 flex items-center justify-center text-indigo-700 dark:text-indigo-300 font-semibold select-none"
+      style={{ width: size, height: size, fontSize: Math.max(10, size * 0.38) }}
     >
-      {user.fullName.charAt(0).toUpperCase()}
+      {initial}
     </div>
   );
 }
@@ -487,6 +503,8 @@ function ParticipantsTab({
   onAdd,
   onAddNonMember,
   inFlight,
+  onRefresh,
+  showToast,
 }: {
   event: EventData;
   onApprove: (targetId: string) => Promise<void>;
@@ -497,6 +515,8 @@ function ParticipantsTab({
   onAdd: (user: UserRef) => Promise<void>;
   onAddNonMember: (guest: { fullName: string; email: string; studentId?: string; department?: string }) => Promise<void>;
   inFlight: Set<string>;
+  onRefresh: () => void;
+  showToast: (msg: string, type?: "success" | "error") => void;
 }) {
   const [search, setSearch] = useState("");
   const [addMode, setAddMode] = useState<"member" | "guest">("member");
@@ -508,37 +528,43 @@ function ParticipantsTab({
 
   const participantsList = useMemo(() => {
     if (event.approvedParticipants && event.approvedParticipants.length > 0) {
-      return event.approvedParticipants.map((p) => ({
-        id: p.userId?._id || p._id || p.email,
-        userId: p.userId,
-        fullName: p.fullName,
-        email: p.email,
-        studentId: p.studentId,
-        department: p.department,
-        teamName: p.teamName,
-        isCaptain: p.isCaptain,
-        isGuest: !p.userId,
-      }));
+      return event.approvedParticipants.map((p) => {
+        const userObj = p.userId && typeof p.userId === "object" ? p.userId : undefined;
+        return {
+          id: userObj?._id || (typeof p.userId === "string" ? p.userId : "") || p._id || p.email || Math.random().toString(),
+          userId: userObj,
+          fullName: p.fullName || userObj?.fullName || p.email || "Participant",
+          email: p.email || userObj?.email || "",
+          studentId: p.studentId || userObj?.studentId,
+          department: p.department || userObj?.department,
+          teamName: p.teamName,
+          isCaptain: p.isCaptain,
+          isGuest: !userObj,
+        };
+      });
     }
-    return event.attendees.map((a) => ({
-      id: a._id,
-      userId: a,
-      fullName: a.fullName,
-      email: a.email,
-      studentId: a.studentId,
-      department: a.department,
-      teamName: undefined,
-      isCaptain: false,
-      isGuest: false,
-    }));
+    return (event.attendees || []).map((a) => {
+      const userObj = a && typeof a === "object" ? a : undefined;
+      return {
+        id: userObj?._id || (typeof a === "string" ? a : "") || Math.random().toString(),
+        userId: userObj,
+        fullName: userObj?.fullName || userObj?.email || "Participant",
+        email: userObj?.email || "",
+        studentId: userObj?.studentId,
+        department: userObj?.department,
+        teamName: undefined,
+        isCaptain: false,
+        isGuest: false,
+      };
+    });
   }, [event.approvedParticipants, event.attendees]);
 
   const filtered = useMemo(() => {
     return participantsList.filter((a) =>
-      a.fullName.toLowerCase().includes(search.toLowerCase()) ||
+      (a.fullName || "").toLowerCase().includes(search.toLowerCase()) ||
       (a.studentId || "").toLowerCase().includes(search.toLowerCase()) ||
       (a.teamName || "").toLowerCase().includes(search.toLowerCase()) ||
-      a.email.toLowerCase().includes(search.toLowerCase())
+      (a.email || "").toLowerCase().includes(search.toLowerCase())
     );
   }, [participantsList, search]);
 
@@ -564,6 +590,13 @@ function ParticipantsTab({
 
   return (
     <div className="space-y-6">
+      {/* ── Registration Form Responses & Bulk Approval ── */}
+      <EventFormSubmissionsSection
+        eventId={event._id}
+        onSubmissionsUpdated={onRefresh}
+        showToast={showToast}
+      />
+
       {/* ── Participation Claims Section (Archived / Past Event Claims) ── */}
       {event.participationClaims && event.participationClaims.length > 0 && (
         <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-5 space-y-4">
@@ -595,7 +628,7 @@ function ParticipantsTab({
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
                     <div className="flex items-center gap-3">
-                      {claim.userId && <Avatar user={claim.userId} size={40} />}
+                      {claim.userId && <Avatar user={claim.userId} fallbackName={claim.fullName} size={40} />}
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
                           <h4 className="text-sm font-bold text-slate-900 dark:text-white">
@@ -698,7 +731,7 @@ function ParticipantsTab({
                           🏆
                         </div>
                       ) : (
-                        p.userId && <Avatar user={p.userId} size={40} />
+                        p.userId && <Avatar user={p.userId} fallbackName={p.leaderName || p.teamName} size={40} />
                       )}
                       <div>
                         <div className="flex items-center gap-2">
@@ -824,10 +857,10 @@ function ParticipantsTab({
             {filtered.map((a) => (
               <div key={a.id} className="flex items-center gap-3 p-3 rounded-xl bg-slate-50/50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60 hover:bg-slate-100/60 dark:hover:bg-slate-800 transition">
                 {a.userId ? (
-                  <Avatar user={a.userId} size={36} />
+                  <Avatar user={a.userId} fallbackName={a.fullName} size={36} />
                 ) : (
-                  <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-bold text-xs text-slate-600 dark:text-slate-300">
-                    {a.fullName.charAt(0).toUpperCase()}
+                  <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center font-bold text-xs text-slate-600 dark:text-slate-300 select-none">
+                    {(a.fullName || "U").trim().charAt(0).toUpperCase()}
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
@@ -942,6 +975,1052 @@ function ParticipantsTab({
           </form>
         )}
       </SectionCard>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tab: Organizers & Volunteers
+// ─────────────────────────────────────────────────────────────────────────────
+
+const VOLUNTEER_ROLES = [
+  "Lead Organizer",
+  "Co-Organizer",
+  "Event Volunteer",
+  "Technical Coordinator",
+  "Logistics & Venue",
+  "Stage & Anchoring",
+  "Media & Photography",
+  "Judge / Evaluator",
+  "Mentor / Speaker",
+  "Registration & Helpdesk",
+  "Other",
+];
+
+const ROLE_OPTIONS = VOLUNTEER_ROLES.map((r) => ({ value: r, label: r }));
+
+const ROLE_FILTER_OPTIONS = [
+  { value: "all", label: "All Roles" },
+  ...VOLUNTEER_ROLES.map((r) => ({ value: r, label: r })),
+];
+
+const CERT_FILTER_OPTIONS = [
+  { value: "all", label: "All Status" },
+  { value: "certified", label: "Certified ✓" },
+  { value: "uncertified", label: "Not Certified" },
+];
+
+const ROLE_BADGE_COLORS: Record<string, string> = {
+  "Lead Organizer": "bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-900/40 dark:text-purple-300 dark:border-purple-700",
+  "Co-Organizer": "bg-indigo-100 text-indigo-800 border-indigo-300 dark:bg-indigo-900/40 dark:text-indigo-300 dark:border-indigo-700",
+  "Event Volunteer": "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700",
+  "Technical Coordinator": "bg-emerald-100 text-emerald-800 border-emerald-300 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-700",
+  "Logistics & Venue": "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-700",
+  "Stage & Anchoring": "bg-pink-100 text-pink-800 border-pink-300 dark:bg-pink-900/40 dark:text-pink-300 dark:border-pink-700",
+  "Media & Photography": "bg-cyan-100 text-cyan-800 border-cyan-300 dark:bg-cyan-900/40 dark:text-cyan-300 dark:border-cyan-700",
+  "Judge / Evaluator": "bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-700",
+  "Mentor / Speaker": "bg-teal-100 text-teal-800 border-teal-300 dark:bg-teal-900/40 dark:text-teal-300 dark:border-teal-700",
+  "Registration & Helpdesk": "bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900/40 dark:text-orange-300 dark:border-orange-700",
+};
+
+const CERT_TYPE_OPTIONS = [
+  { value: "appreciation", label: "Certificate of Appreciation" },
+  { value: "volunteer", label: "Volunteer Certificate" },
+  { value: "organizer", label: "Organizer Certificate" },
+];
+
+function findContributorCertificate(c: ContributorItem, certificates: Certificate[]) {
+  if (!certificates || certificates.length === 0) return null;
+  const cUserId = c.userId ? (typeof c.userId === "string" ? c.userId : c.userId._id) : null;
+  const cEmail = (c.email || (typeof c.userId === "object" ? c.userId?.email : "") || "").trim().toLowerCase();
+  const cStudentId = (c.studentId || (typeof c.userId === "object" ? c.userId?.studentId : "") || "").trim().toLowerCase();
+  const cName = (c.name || "").trim().toLowerCase();
+
+  return certificates.find((cert) => {
+    // 1. Match by user ID
+    const rUserId = cert.recipient?._id || (typeof cert.recipient === "string" ? cert.recipient : null);
+    if (cUserId && rUserId && String(cUserId) === String(rUserId)) return true;
+
+    // 2. Match by student ID
+    const rStudentId = (cert.recipientStudentId || cert.recipient?.studentId || "").trim().toLowerCase();
+    if (cStudentId && rStudentId && cStudentId === rStudentId) return true;
+
+    // 3. Match by email
+    const rEmail = (cert.recipientEmail || cert.recipient?.email || "").trim().toLowerCase();
+    if (cEmail && rEmail && cEmail === rEmail) return true;
+
+    // 4. Match by name if volunteer/organizer/appreciation
+    const rName = (cert.recipientName || cert.recipient?.fullName || "").trim().toLowerCase();
+    if (cName && rName && cName === rName && ["volunteer", "organizer", "appreciation"].includes(cert.type)) {
+      return true;
+    }
+
+    return false;
+  });
+}
+
+function VolunteersTab({
+  event,
+  onRefresh,
+  showToast,
+}: {
+  event: EventData;
+  onRefresh: () => Promise<void>;
+  showToast: (msg: string, type?: "success" | "error") => void;
+}) {
+  const contributors = useMemo(() => event.contributors || [], [event.contributors]);
+  const [saving, setSaving] = useState(false);
+
+  // Filters
+  const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
+  const [certFilter, setCertFilter] = useState("all");
+
+  // Add Mode State
+  const [addMode, setAddMode] = useState<"member" | "guest">("member");
+  const [selectedMember, setSelectedMember] = useState<UserRef | null>(null);
+  const [memberRole, setMemberRole] = useState("Event Volunteer");
+  const [customMemberRole, setCustomMemberRole] = useState("");
+
+  const [guestName, setGuestName] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestStudentId, setGuestStudentId] = useState("");
+  const [guestDept, setGuestDept] = useState("");
+  const [guestRole, setGuestRole] = useState("Event Volunteer");
+  const [guestCustomRole, setGuestCustomRole] = useState("");
+  const [addingGuest, setAddingGuest] = useState(false);
+
+  // Edit Inline Role
+  const [editingIdx, setEditingIdx] = useState<number | null>(null);
+  const [editRole, setEditRole] = useState("Event Volunteer");
+  const [editCustomRole, setEditCustomRole] = useState("");
+
+  // Certification Modal State
+  const [showCertModal, setShowCertModal] = useState(false);
+  const [templates, setTemplates] = useState<TemplateItem[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [certTemplateId, setCertTemplateId] = useState("");
+  const [certTitle, setCertTitle] = useState(`${event.title} - Certificate of Appreciation`);
+  const [certType, setCertType] = useState("appreciation");
+  const [certIssueDate, setCertIssueDate] = useState(new Date().toISOString().split("T")[0]);
+  const [certDesc, setCertDesc] = useState(
+    `In sincere recognition and appreciation of invaluable service, dedication, and leadership contributing to the resounding success of ${event.title}.`
+  );
+  const [selectedContributorKeys, setSelectedContributorKeys] = useState<Set<number>>(new Set());
+  const [issuing, setIssuing] = useState(false);
+  const [previewTemplate, setPreviewTemplate] = useState<TemplateItem | null>(null);
+
+  // Fetch certificate templates
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      setLoadingTemplates(true);
+      try {
+        const res = await axios.get(`${API}/certificate-templates`, { withCredentials: true });
+        const list: TemplateItem[] = res.data.data || [];
+        setTemplates(list);
+        const def = list.find((t) => t.isDefault) || list[0];
+        if (def) setCertTemplateId((p) => p || def._id);
+      } catch (err) {
+        console.warn("Failed to fetch certificate templates:", err);
+      } finally {
+        setLoadingTemplates(false);
+      }
+    };
+    fetchTemplates();
+  }, []);
+
+  // Stats
+  const certifiedCount = useMemo(() => {
+    return contributors.filter((c) => !!findContributorCertificate(c, event.certificates || [])).length;
+  }, [contributors, event.certificates]);
+  const uncertifiedCount = contributors.length - certifiedCount;
+
+  // Filtered contributors
+  const filteredContributors = useMemo(() => {
+    return contributors
+      .map((c, idx) => ({ ...c, originalIndex: idx }))
+      .filter((c) => {
+        const q = search.toLowerCase();
+        const matchesSearch =
+          !q ||
+          c.name.toLowerCase().includes(q) ||
+          (c.role || "").toLowerCase().includes(q) ||
+          (c.email || "").toLowerCase().includes(q) ||
+          (c.studentId || "").toLowerCase().includes(q) ||
+          (c.department || "").toLowerCase().includes(q);
+
+        const matchesRole = roleFilter === "all" || c.role === roleFilter;
+
+        const cert = findContributorCertificate(c, event.certificates || []);
+        const matchesCert =
+          certFilter === "all" ||
+          (certFilter === "certified" && !!cert) ||
+          (certFilter === "uncertified" && !cert);
+
+        return matchesSearch && matchesRole && matchesCert;
+      });
+  }, [contributors, search, roleFilter, certFilter, event.certificates]);
+
+  // Save to backend
+  const handleSaveContributors = async (newList: ContributorItem[]) => {
+    setSaving(true);
+    try {
+      const payload = newList.map((c) => ({
+        userId: c.userId ? (typeof c.userId === "string" ? c.userId : c.userId._id) : undefined,
+        name: c.name.trim(),
+        role: c.role.trim() || "Event Volunteer",
+        department: c.department?.trim() || undefined,
+        studentId: c.studentId?.trim() || undefined,
+        email: c.email?.trim() || undefined,
+        avatarUrl: c.avatarUrl || (typeof c.userId === "object" ? c.userId?.imageUrl : undefined),
+      }));
+
+      await axios.put(`${API}/events/${event._id}/contributors`, { contributors: payload }, { withCredentials: true });
+      await onRefresh();
+      showToast("Organizers & volunteers updated.");
+    } catch (err: any) {
+      showToast(err.response?.data?.message || "Failed to update contributors.", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Add Member
+  const handleAddMember = async () => {
+    if (!selectedMember) return;
+    const finalRole = memberRole === "Other" ? customMemberRole.trim() || "Event Volunteer" : memberRole;
+
+    const alreadyExists = contributors.some(
+      (c) =>
+        (c.userId && (c.userId._id === selectedMember._id || c.userId === selectedMember._id)) ||
+        (c.studentId && selectedMember.studentId && c.studentId.toLowerCase() === selectedMember.studentId.toLowerCase()) ||
+        (c.email && selectedMember.email && c.email.toLowerCase() === selectedMember.email.toLowerCase())
+    );
+
+    if (alreadyExists) {
+      showToast(`${selectedMember.fullName} is already enlisted.`, "error");
+      return;
+    }
+
+    const newContributor: ContributorItem = {
+      name: selectedMember.fullName,
+      userId: selectedMember,
+      email: selectedMember.email,
+      studentId: selectedMember.studentId,
+      department: selectedMember.department,
+      avatarUrl: selectedMember.imageUrl,
+      role: finalRole,
+    };
+
+    await handleSaveContributors([...contributors, newContributor]);
+    setSelectedMember(null);
+    setCustomMemberRole("");
+  };
+
+  // Add Guest
+  const handleAddGuest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!guestName.trim() || !guestEmail.trim()) return;
+    const finalRole = guestRole === "Other" ? guestCustomRole.trim() || "Event Volunteer" : guestRole;
+
+    setAddingGuest(true);
+    try {
+      const newContributor: ContributorItem = {
+        name: guestName.trim(),
+        email: guestEmail.trim(),
+        studentId: guestStudentId.trim() || undefined,
+        department: guestDept.trim() || undefined,
+        role: finalRole,
+      };
+
+      await handleSaveContributors([...contributors, newContributor]);
+      setGuestName("");
+      setGuestEmail("");
+      setGuestStudentId("");
+      setGuestDept("");
+      setGuestCustomRole("");
+    } finally {
+      setAddingGuest(false);
+    }
+  };
+
+  // Remove Contributor
+  const handleRemoveContributor = async (indexToRemove: number) => {
+    if (!confirm("Are you sure you want to remove this person from the event organizers/volunteers?")) return;
+    const updated = contributors.filter((_, idx) => idx !== indexToRemove);
+    await handleSaveContributors(updated);
+  };
+
+  // Save Inline Edited Role
+  const handleSaveEditRole = async (index: number) => {
+    const finalRole = editRole === "Other" ? editCustomRole.trim() || "Event Volunteer" : editRole;
+    const updated = contributors.map((c, idx) => (idx === index ? { ...c, role: finalRole } : c));
+    await handleSaveContributors(updated);
+    setEditingIdx(null);
+  };
+
+  // Open Certify Modal
+  const openCertifyModal = (selectedIndices?: number[]) => {
+    if (selectedIndices && selectedIndices.length > 0) {
+      setSelectedContributorKeys(new Set(selectedIndices));
+    } else {
+      // Default: select uncertified only or all
+      const uncertified = contributors
+        .map((c, idx) => ({ c, idx }))
+        .filter(({ c }) => !findContributorCertificate(c, event.certificates || []))
+        .map(({ idx }) => idx);
+
+      if (uncertified.length > 0) {
+        setSelectedContributorKeys(new Set(uncertified));
+      } else {
+        setSelectedContributorKeys(new Set(contributors.map((_, idx) => idx)));
+      }
+    }
+    setCertTitle(`${event.title} - Certificate of Appreciation`);
+    setShowCertModal(true);
+  };
+
+  // Submit Issue Certificates
+  const handleIssueCertificates = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (selectedContributorKeys.size === 0) {
+      showToast("Please select at least one recipient.", "error");
+      return;
+    }
+    if (!certTemplateId) {
+      showToast("Please select a certificate template.", "error");
+      return;
+    }
+
+    setIssuing(true);
+    try {
+      const selectedContributors = contributors.filter((_, idx) => selectedContributorKeys.has(idx));
+
+      const recipients = selectedContributors.map((c) => ({
+        userId: c.userId ? (typeof c.userId === "string" ? c.userId : c.userId._id) : undefined,
+        name: c.name,
+        fullName: c.name,
+        email: c.email || (typeof c.userId === "object" ? c.userId?.email : undefined),
+        studentId: c.studentId || (typeof c.userId === "object" ? c.userId?.studentId : undefined),
+        department: c.department || (typeof c.userId === "object" ? c.userId?.department : undefined),
+        type: certType,
+        position: c.role,
+      }));
+
+      await axios.post(
+        `${API}/events/${event._id}/certificates`,
+        {
+          templateId: certTemplateId,
+          name: certTitle.trim(),
+          description: certDesc.trim(),
+          issueDate: certIssueDate,
+          recipients,
+        },
+        { withCredentials: true }
+      );
+
+      await onRefresh();
+      showToast(`Successfully issued ${recipients.length} certificates!`);
+      setShowCertModal(false);
+    } catch (err: any) {
+      showToast(err.response?.data?.message || "Failed to issue certificates.", "error");
+    } finally {
+      setIssuing(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* ── Top Summary & Action Bar ── */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatCard
+          icon={Users}
+          label="Total Enlisted Team"
+          value={contributors.length}
+          color="bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400"
+        />
+        <StatCard
+          icon={CheckCircle2}
+          label="Certified Organizers / Volunteers"
+          value={certifiedCount}
+          color="bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+        />
+        <StatCard
+          icon={AlertCircle}
+          label="Awaiting Certification"
+          value={uncertifiedCount}
+          color="bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
+        />
+      </div>
+
+      {/* ── Action Strip ── */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+        <div>
+          <h3 className="font-bold text-slate-900 dark:text-white text-base flex items-center gap-2">
+            <UserCheck size={18} className="text-accent-primary" />
+            Organizers &amp; Volunteers Roster
+          </h3>
+          <p className="text-xs text-slate-500">
+            Enlist members &amp; external volunteers who contributed to organizing, managing, or judging this event, and grant official certificates.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            size="sm"
+            variant="primary"
+            onClick={() => openCertifyModal()}
+            disabled={contributors.length === 0}
+            className="flex items-center gap-1.5 shadow-[2px_2px_0px_var(--border-brutalist)]"
+          >
+            <Award size={14} />
+            <span>Issue Certificates</span>
+          </Button>
+        </div>
+      </div>
+
+      {/* ── Search & Filter Controls ── */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-surface-secondary/50 p-3 rounded-2xl border border-border-default">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by name, student ID, department, or role…"
+            className="w-full pl-9 pr-8 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-xs focus:ring-2 focus:ring-accent-primary outline-none"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* Custom Neo-Brutalist FilterSelect for Role */}
+          <FilterSelect
+            value={roleFilter}
+            onChange={setRoleFilter}
+            options={ROLE_FILTER_OPTIONS}
+            placeholder="Filter Role"
+          />
+
+          {/* Custom Neo-Brutalist FilterSelect for Certification Status */}
+          <FilterSelect
+            value={certFilter}
+            onChange={setCertFilter}
+            options={CERT_FILTER_OPTIONS}
+            placeholder="Filter Certification"
+          />
+        </div>
+      </div>
+
+      {/* ── Contributor Cards List ── */}
+      <SectionCard
+        title={`Enlisted Organizers & Volunteers (${filteredContributors.length} of ${contributors.length})`}
+        action={
+          saving && (
+            <div className="flex items-center gap-1.5 text-xs text-accent-primary font-mono font-bold">
+              <Loader2 size={13} className="animate-spin" /> Saving changes…
+            </div>
+          )
+        }
+      >
+        {filteredContributors.length === 0 ? (
+          <div className="text-center py-12 px-4 space-y-2">
+            <Users size={36} className="mx-auto text-slate-400 opacity-60" />
+            <p className="text-sm font-semibold text-slate-700 dark:text-slate-200">
+              {contributors.length === 0 ? "No organizers or volunteers enlisted yet." : "No matching team members found."}
+            </p>
+            <p className="text-xs text-slate-500 max-w-md mx-auto">
+              Use the form below to search and add club members or add guest volunteers for this event.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            {filteredContributors.map((c) => {
+              const origIdx = c.originalIndex;
+              const cert = findContributorCertificate(c, event.certificates || []);
+              const isCertified = !!cert;
+              const isEditing = editingIdx === origIdx;
+
+              const roleBadgeClass =
+                ROLE_BADGE_COLORS[c.role] ||
+                "bg-slate-100 text-slate-800 border-slate-300 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700";
+
+              return (
+                <div
+                  key={`${c.name}-${origIdx}`}
+                  className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm flex flex-col justify-between gap-3 hover:border-slate-300 dark:hover:border-slate-700 transition"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3 min-w-0">
+                      {c.userId ? (
+                        <Avatar user={c.userId} fallbackName={c.name} size={42} />
+                      ) : (
+                        <div className="w-[42px] h-[42px] rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 font-bold flex items-center justify-center text-sm flex-shrink-0 select-none">
+                          {(c.name || "C").trim().charAt(0).toUpperCase()}
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h4 className="font-bold text-sm text-slate-900 dark:text-white truncate">
+                            {c.name}
+                          </h4>
+                          {c.userId ? (
+                            <span className="px-1.5 py-0.2 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                              Member
+                            </span>
+                          ) : (
+                            <span className="px-1.5 py-0.2 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
+                              Guest
+                            </span>
+                          )}
+                        </div>
+
+                        {c.email && (
+                          <p className="text-xs text-slate-500 truncate mt-0.5">{c.email}</p>
+                        )}
+                        {(c.studentId || c.department) && (
+                          <p className="text-[11px] text-slate-400 font-mono mt-0.5">
+                            {[c.studentId ? `ID: ${c.studentId}` : "", c.department].filter(Boolean).join(" · ")}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (isEditing) {
+                            setEditingIdx(null);
+                          } else {
+                            setEditingIdx(origIdx);
+                            setEditRole(VOLUNTEER_ROLES.includes(c.role) ? c.role : "Other");
+                            setEditCustomRole(VOLUNTEER_ROLES.includes(c.role) ? "" : c.role);
+                          }
+                        }}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition"
+                        title="Edit Role"
+                      >
+                        <Edit size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveContributor(origIdx)}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+                        title="Remove"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Inline Role Editor */}
+                  {isEditing ? (
+                    <div className="p-3 bg-surface-secondary rounded-lg border border-border-default space-y-2 mt-1">
+                      <label className="text-[11px] font-bold text-text-primary block">Update Contributor Role</label>
+                      <Select
+                        value={editRole}
+                        onChange={setEditRole}
+                        options={ROLE_OPTIONS}
+                      />
+                      {editRole === "Other" && (
+                        <input
+                          type="text"
+                          placeholder="Enter custom role title…"
+                          value={editCustomRole}
+                          onChange={(e) => setEditCustomRole(e.target.value)}
+                          className="w-full px-3 py-1.5 text-xs rounded-lg border border-border-default bg-surface-primary text-text-primary outline-none focus:border-accent-primary"
+                        />
+                      )}
+                      <div className="flex items-center justify-end gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setEditingIdx(null)}
+                          className="px-2.5 py-1 text-xs text-text-secondary hover:text-text-primary"
+                        >
+                          Cancel
+                        </button>
+                        <Button size="sm" variant="primary" onClick={() => handleSaveEditRole(origIdx)}>
+                          <Check size={12} className="mr-1" /> Save Role
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800 flex-wrap">
+                      <span className={`px-2 py-0.5 rounded text-[11px] font-bold border uppercase tracking-wider ${roleBadgeClass}`}>
+                        {c.role}
+                      </span>
+
+                      {/* Certification Pill */}
+                      {isCertified ? (
+                        <div className="flex items-center gap-1.5">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700">
+                            <Check size={12} className="text-emerald-600" />
+                            <span>Certified</span>
+                          </span>
+                          {cert && (
+                            <Link
+                              href={cert.digitalUrl || `/verify?cert=${cert.certificateId}`}
+                              target="_blank"
+                              className="text-[11px] font-mono text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-0.5"
+                              title={`View Certificate (${cert.certificateId})`}
+                            >
+                              <span>{cert.certificateId}</span>
+                              <ExternalLink size={10} />
+                            </Link>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                            <Clock size={11} /> Not Certified
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => openCertifyModal([origIdx])}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 bg-accent-primary-light hover:bg-accent-primary text-text-primary rounded text-[11px] font-bold border border-accent-primary/40 transition"
+                          >
+                            <Award size={12} />
+                            <span>Certify</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </SectionCard>
+
+      {/* ── Enlist New Organizer / Volunteer Section ── */}
+      <SectionCard title="Enlist New Organizer or Volunteer">
+        <div className="flex gap-2 mb-4 border-b border-slate-200 dark:border-slate-700 pb-2">
+          <button
+            type="button"
+            onClick={() => setAddMode("member")}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
+              addMode === "member"
+                ? "bg-accent-primary text-white shadow-sm"
+                : "bg-surface-secondary text-text-secondary hover:text-text-primary"
+            }`}
+          >
+            Club Member
+          </button>
+          <button
+            type="button"
+            onClick={() => setAddMode("guest")}
+            className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
+              addMode === "guest"
+                ? "bg-accent-primary text-white shadow-sm"
+                : "bg-surface-secondary text-text-secondary hover:text-text-primary"
+            }`}
+          >
+            Guest / External Volunteer
+          </button>
+        </div>
+
+        {addMode === "member" ? (
+          <div className="space-y-4">
+            <p className="text-xs text-slate-500">
+              Search a registered MEC Computer Club member by full name, student ID, or email:
+            </p>
+
+            <MemberSearch
+              placeholder="Search club member to enlist…"
+              onSelect={(member) => setSelectedMember(member)}
+            />
+
+            {selectedMember && (
+              <div className="p-4 rounded-xl border border-indigo-200 dark:border-indigo-900 bg-indigo-50/40 dark:bg-indigo-950/20 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Avatar user={selectedMember} size={40} />
+                    <div>
+                      <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                        {selectedMember.fullName}
+                      </h4>
+                      <p className="text-xs text-slate-500">
+                        {selectedMember.email} · ID: {selectedMember.studentId || "—"} · {selectedMember.department || "—"}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedMember(null)}
+                    className="text-slate-400 hover:text-slate-600 p-1"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-indigo-100 dark:border-indigo-900/60">
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">
+                      Assigned Role / Designation *
+                    </label>
+                    <Select
+                      value={memberRole}
+                      onChange={setMemberRole}
+                      options={ROLE_OPTIONS}
+                    />
+                  </div>
+                  {memberRole === "Other" && (
+                    <div>
+                      <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">
+                        Custom Role Title *
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Stage Host, Head of Security…"
+                        value={customMemberRole}
+                        onChange={(e) => setCustomMemberRole(e.target.value)}
+                        className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-accent-primary"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-end pt-1">
+                  <Button size="sm" variant="primary" onClick={handleAddMember} disabled={saving}>
+                    {saving ? <Loader2 size={13} className="animate-spin mr-1.5" /> : <Plus size={13} className="mr-1.5" />}
+                    Add {selectedMember.fullName} to Team
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <form onSubmit={handleAddGuest} className="space-y-4">
+            <p className="text-xs text-slate-500">
+              Enlist an external volunteer, judge, guest organizer, or speaker:
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. John Doe"
+                  value={guestName}
+                  onChange={(e) => setGuestName(e.target.value)}
+                  required
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-accent-primary"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  placeholder="e.g. john@example.com"
+                  value={guestEmail}
+                  onChange={(e) => setGuestEmail(e.target.value)}
+                  required
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-accent-primary"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">
+                  Student ID / Roll (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. 2023-01-04-001"
+                  value={guestStudentId}
+                  onChange={(e) => setGuestStudentId(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-accent-primary"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">
+                  Department / Institution (Optional)
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. CSE / MEC"
+                  value={guestDept}
+                  onChange={(e) => setGuestDept(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-accent-primary"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">
+                  Assigned Role *
+                </label>
+                <Select
+                  value={guestRole}
+                  onChange={setGuestRole}
+                  options={ROLE_OPTIONS}
+                />
+              </div>
+
+              {guestRole === "Other" && (
+                <div>
+                  <label className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-1 block">
+                    Custom Role Title *
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Stage Host, Head of Security…"
+                    value={guestCustomRole}
+                    onChange={(e) => setGuestCustomRole(e.target.value)}
+                    required
+                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-accent-primary"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end pt-1">
+              <Button size="sm" type="submit" disabled={addingGuest || !guestName.trim() || !guestEmail.trim()}>
+                {addingGuest ? <Loader2 size={13} className="animate-spin mr-1.5" /> : <Plus size={13} className="mr-1.5" />}
+                Enlist Guest Volunteer
+              </Button>
+            </div>
+          </form>
+        )}
+      </SectionCard>
+
+      {/* ── MODAL: Issue Certificates to Organizers & Volunteers ── */}
+      {showCertModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto animate-in fade-in duration-200">
+          <div className="bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-2xl p-6 w-full max-w-2xl shadow-[8px_8px_0px_var(--accent-primary)] max-h-[90vh] flex flex-col my-auto">
+            <div className="flex items-center justify-between pb-4 border-b border-border-default">
+              <div className="flex items-center gap-2">
+                <Award size={20} className="text-accent-primary" />
+                <h3 className="font-heading font-black text-lg text-text-primary">
+                  Certify Organizers &amp; Volunteers
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCertModal(false)}
+                className="p-1 rounded-lg text-text-tertiary hover:text-text-primary hover:bg-surface-secondary"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleIssueCertificates} className="flex-1 overflow-y-auto py-4 space-y-4 pr-1">
+              {/* Template Picker */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-bold text-text-primary">
+                    Certificate Template *
+                  </label>
+                  {certTemplateId && templates.find((t) => t._id === certTemplateId) && (
+                    <button
+                      type="button"
+                      onClick={() => setPreviewTemplate(templates.find((t) => t._id === certTemplateId) || null)}
+                      className="text-xs text-accent-primary hover:underline flex items-center gap-1 font-semibold"
+                    >
+                      <Eye size={12} /> Preview Template
+                    </button>
+                  )}
+                </div>
+
+                {loadingTemplates ? (
+                  <div className="p-3 bg-surface-secondary rounded-xl text-xs text-text-secondary flex items-center gap-2">
+                    <Loader2 size={13} className="animate-spin" /> Loading certificate templates…
+                  </div>
+                ) : (
+                  <Select
+                    value={certTemplateId}
+                    onChange={setCertTemplateId}
+                    options={templates.map((t) => ({
+                      value: t._id,
+                      label: `${t.name}${t.isDefault ? " (Default)" : ""}`,
+                    }))}
+                    placeholder="Choose a Certificate Template…"
+                  />
+                )}
+              </div>
+
+              {/* Certificate Type & Issue Date */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-text-primary mb-1 block">
+                    Certificate Type *
+                  </label>
+                  <Select
+                    value={certType}
+                    onChange={setCertType}
+                    options={CERT_TYPE_OPTIONS}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-text-primary mb-1 block">
+                    Issue Date *
+                  </label>
+                  <input
+                    type="date"
+                    value={certIssueDate}
+                    onChange={(e) => setCertIssueDate(e.target.value)}
+                    required
+                    className="w-full px-3.5 py-2 rounded-xl border border-border-default bg-surface-primary text-xs text-text-primary outline-none focus:border-accent-primary"
+                  />
+                </div>
+              </div>
+
+              {/* Title & Description */}
+              <div>
+                <label className="text-xs font-bold text-text-primary mb-1 block">
+                  Certificate Title *
+                </label>
+                <input
+                  type="text"
+                  value={certTitle}
+                  onChange={(e) => setCertTitle(e.target.value)}
+                  required
+                  placeholder="e.g. Spring Hackathon 2026 - Certificate of Appreciation"
+                  className="w-full px-3.5 py-2 rounded-xl border border-border-default bg-surface-primary text-xs text-text-primary outline-none focus:border-accent-primary"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-text-primary mb-1 block">
+                  Citation Description *
+                </label>
+                <textarea
+                  rows={2}
+                  value={certDesc}
+                  onChange={(e) => setCertDesc(e.target.value)}
+                  required
+                  className="w-full px-3.5 py-2 rounded-xl border border-border-default bg-surface-primary text-xs text-text-primary outline-none focus:border-accent-primary resize-none"
+                />
+              </div>
+
+              {/* Recipient Selection Checklist */}
+              <div className="space-y-2 pt-2 border-t border-border-default">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <label className="text-xs font-bold text-text-primary">
+                    Recipients ({selectedContributorKeys.size} of {contributors.length} selected)
+                  </label>
+                  <div className="flex items-center gap-2 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedContributorKeys(new Set(contributors.map((_, idx) => idx)))}
+                      className="text-accent-primary hover:underline font-bold"
+                    >
+                      Select All
+                    </button>
+                    <span className="text-text-tertiary">·</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const uncertified = contributors
+                          .map((c, idx) => ({ c, idx }))
+                          .filter(({ c }) => !findContributorCertificate(c, event.certificates || []))
+                          .map(({ idx }) => idx);
+                        setSelectedContributorKeys(new Set(uncertified));
+                      }}
+                      className="text-accent-primary hover:underline font-bold"
+                    >
+                      Uncertified Only
+                    </button>
+                    <span className="text-text-tertiary">·</span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedContributorKeys(new Set())}
+                      className="text-text-secondary hover:text-text-primary"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                </div>
+
+                <div className="max-h-56 overflow-y-auto space-y-1.5 border border-border-default rounded-xl p-2 bg-surface-secondary/40">
+                  {contributors.map((c, idx) => {
+                    const isChecked = selectedContributorKeys.has(idx);
+                    const cert = findContributorCertificate(c, event.certificates || []);
+
+                    return (
+                      <label
+                        key={idx}
+                        className={`flex items-center justify-between p-2 rounded-lg cursor-pointer transition text-xs border ${
+                          isChecked
+                            ? "bg-accent-primary-light border-accent-primary/40 font-semibold"
+                            : "bg-surface-primary border-border-default/60 hover:bg-surface-secondary"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={(e) => {
+                              const next = new Set(selectedContributorKeys);
+                              if (e.target.checked) next.add(idx);
+                              else next.delete(idx);
+                              setSelectedContributorKeys(next);
+                            }}
+                            className="rounded border-border-default text-accent-primary focus:ring-accent-primary"
+                          />
+                          <div className="min-w-0">
+                            <span className="font-bold text-text-primary truncate">{c.name}</span>
+                            <span className="text-text-tertiary ml-2 font-mono text-[11px]">({c.role})</span>
+                          </div>
+                        </div>
+
+                        {cert && (
+                          <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-800 flex-shrink-0">
+                            Already Certified
+                          </span>
+                        )}
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Submit Buttons */}
+              <div className="pt-4 border-t border-border-default flex items-center justify-end gap-2">
+                <Button variant="outline" type="button" onClick={() => setShowCertModal(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  type="submit"
+                  disabled={issuing || selectedContributorKeys.size === 0 || !certTemplateId}
+                  className="shadow-[2px_2px_0px_var(--border-brutalist)]"
+                >
+                  {issuing ? (
+                    <Loader2 size={14} className="animate-spin mr-1.5" />
+                  ) : (
+                    <Award size={14} className="mr-1.5" />
+                  )}
+                  Issue {selectedContributorKeys.size} Certificates
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── MODAL: Certificate Template Preview ── */}
+      {previewTemplate && (
+        <CertificateTemplatePreviewModal
+          template={previewTemplate}
+          onClose={() => setPreviewTemplate(null)}
+        />
+      )}
     </div>
   );
 }
@@ -3015,7 +4094,7 @@ function CertificatesTab({
 // ─────────────────────────────────────────────────────────────────────────────
 // Main Page Component
 // ─────────────────────────────────────────────────────────────────────────────
-type TabId = "overview" | "participants" | "winners" | "sponsors" | "media" | "certificates";
+type TabId = "overview" | "participants" | "volunteers" | "winners" | "sponsors" | "media" | "certificates" | "mailing";
 
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -3058,6 +4137,7 @@ export default function EventDetailPage() {
         media: raw.media || [],
         certificates: certs,
         tags: raw.tags || [],
+        contributors: raw.contributors || [],
       });
     } catch (err) {
       const msg = axios.isAxiosError(err)
@@ -3265,6 +4345,28 @@ export default function EventDetailPage() {
     }
   }, [id, addInFlight, removeInFlight, showToast]);
 
+  const isWinnerNeeded = useMemo(() => {
+    if (!event) return false;
+    return WINNER_CATEGORIES.includes(event.category) || (event.winners && event.winners.length > 0);
+  }, [event]);
+
+  useEffect(() => {
+    if (activeTab === "winners" && !isWinnerNeeded) {
+      setActiveTab("overview");
+    }
+  }, [activeTab, isWinnerNeeded]);
+
+  const TABS: { id: TabId; label: string; icon: React.ElementType }[] = useMemo(() => [
+    { id: "overview", label: "Overview", icon: Tag },
+    { id: "participants", label: "Participants", icon: Users },
+    { id: "volunteers", label: "Organizers", icon: UserCheck },
+    ...(isWinnerNeeded ? [{ id: "winners" as TabId, label: "Winners", icon: Trophy }] : []),
+    { id: "sponsors", label: "Sponsors", icon: Building2 },
+    { id: "media", label: "Media", icon: ImageIcon },
+    { id: "certificates", label: "Certificates", icon: Award },
+    { id: "mailing", label: "Email", icon: Mail },
+  ], [isWinnerNeeded]);
+
   // ── Loading skeleton ──────────────────────────────────────────────────────
   if (loading) {
     return (
@@ -3293,15 +4395,6 @@ export default function EventDetailPage() {
     );
   }
 
-  const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
-    { id: "overview", label: "Overview", icon: Tag },
-    { id: "participants", label: "Participants", icon: Users },
-    { id: "winners", label: "Winners", icon: Trophy },
-    { id: "sponsors", label: "Sponsors", icon: Building2 },
-    { id: "media", label: "Media", icon: ImageIcon },
-    { id: "certificates", label: "Certificates", icon: Award },
-  ];
-
   return (
     <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
       {/* Header */}
@@ -3326,7 +4419,13 @@ export default function EventDetailPage() {
               key={tabId}
               active={activeTab === tabId}
               onClick={() => setActiveTab(tabId)}
-              badge={tabId === "participants" ? event.pendingParticipants.length : undefined}
+              badge={
+                tabId === "participants"
+                  ? event.pendingParticipants.length
+                  : tabId === "volunteers"
+                  ? (event.contributors?.length || undefined)
+                  : undefined
+              }
             >
               <Icon size={14} />
               {label}
@@ -3349,6 +4448,16 @@ export default function EventDetailPage() {
           onAdd={handleAddAttendee}
           onAddNonMember={handleAddNonMemberAttendee}
           inFlight={inFlight}
+          onRefresh={fetchEvent}
+          showToast={showToast}
+        />
+      )}
+
+      {activeTab === "volunteers" && (
+        <VolunteersTab
+          event={event}
+          onRefresh={fetchEvent}
+          showToast={showToast}
         />
       )}
 
@@ -3382,6 +4491,13 @@ export default function EventDetailPage() {
         <CertificatesTab
           event={event}
           onRefresh={fetchEvent}
+          showToast={showToast}
+        />
+      )}
+
+      {activeTab === "mailing" && (
+        <EventMailingTab
+          event={event}
           showToast={showToast}
         />
       )}

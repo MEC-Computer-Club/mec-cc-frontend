@@ -83,7 +83,7 @@ export function formatDeptSession(
     }
   }
 
-  // If no department could be detected anywhere but we have a session, default to CSE for MEC-CC
+  // If no department could be detected anywhere but we have a session, default to CSE for MEC Computer Club
   if (!cleanDept && cleanSession) {
     cleanDept = "CSE";
   }
@@ -102,4 +102,22 @@ export function formatDeptSession(
     return `CSE (${cleanSession})`;
   }
   return "";
+}
+
+/**
+ * Formats numbers into compact notation with k, m (e.g. 1.2k, 15k, 2.4m)
+ */
+export function formatCompactNumber(num: number | string | undefined | null): string {
+  if (num === null || num === undefined) return "0";
+  const val = typeof num === "string" ? parseFloat(num) : num;
+  if (isNaN(val)) return "0";
+  if (Math.abs(val) < 1000) return val.toString();
+
+  return new Intl.NumberFormat("en", {
+    notation: "compact",
+    compactDisplay: "short",
+    maximumFractionDigits: 1,
+  })
+    .format(val)
+    .toLowerCase();
 }

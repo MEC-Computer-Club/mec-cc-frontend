@@ -1,86 +1,60 @@
 import type { Metadata } from "next";
-import { ProfileCard, ProfileGrid } from "@/components/ui/ProfileCard";
-import { getExecutives, getExecutiveDesignationRank } from "@/data/executives";
+import { getCommitteeTerms, getCommitteeByTerm } from "@/lib/api/executives";
+import ExecutivePanelClient from "./components/ExecutivePanelClient";
 
-export const revalidate = 120;
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Executive Committee & Student Leaders | MEC Computer Club",
+  title: "Executive Committee & Leadership Archive | MEC Computer Club",
   description:
-    "Meet the executive committee and student leadership driving the MEC Computer Club forward at Mymensingh Engineering College, Mymensingh. Hierarchical executive panels, presidents, and secretaries.",
+    "Explore current executive panels and historical committee archives of the MEC Computer Club at Mymensingh Engineering College. Meet the student leaders driving club governance.",
   keywords: [
     "MEC Computer Club executives",
     "MEC CC executive committee",
-    "MEC CC leadership",
+    "MEC CC leadership archive",
     "Mymensingh Engineering College computer club leaders",
     "MEC CSE executives",
     "MEC Computer Club president",
+    "MEC CC past committees",
   ],
   alternates: {
     canonical: "https://meccomputerclub.org/executives",
   },
   openGraph: {
-    title: "Executive Committee & Leadership | MEC Computer Club",
+    title: "Executive Committee & Leadership Archive | MEC Computer Club",
     description:
-      "Meet the student leaders driving the MEC Computer Club at Mymensingh Engineering College, Mymensingh. Executive panel hierarchy and leads.",
+      "Explore current executive panels and historical committee archives of the MEC Computer Club at Mymensingh Engineering College.",
     url: "https://meccomputerclub.org/executives",
     images: ["/mec-club-photo.jpg"],
   },
 };
 
-export default async function ExecutivesPage() {
-  const executivesList = await getExecutives();
+interface ExecutivesPageProps {
+  searchParams?: Promise<{ term?: string }> | { term?: string };
+}
 
-  // Sort strictly by designation hierarchy
-  const sortedExecutives = [...executivesList].sort((a, b) => {
-    const rankA = getExecutiveDesignationRank(a.role);
-    const rankB = getExecutiveDesignationRank(b.role);
-    if (rankA !== rankB) return rankA - rankB;
-    return a.name.localeCompare(b.name);
-  });
+export default async function ExecutivesPage({ searchParams }: ExecutivesPageProps) {
+  // Resolve searchParams safely
+  const resolvedParams = searchParams ? await searchParams : {};
+  const requestedTerm = resolvedParams.term;
+
+  // 1. Fetch all available committee terms
+  const terms = await getCommitteeTerms();
+
+  // 2. Identify default term (requested from URL or current active term or first available)
+  const currentTerm = terms.find((t) => t.isCurrent) || terms[0];
+  const activeTermKey = requestedTerm && terms.some((t) => t.term === requestedTerm)
+    ? requestedTerm
+    : (currentTerm?.term || "2026-2027");
+
+  // 3. Fetch committee details for the chosen term
+  const committee = await getCommitteeByTerm(activeTermKey);
 
   return (
-    <>
-      <section className="pt-10 md:pt-14 pb-8 md:pb-10 text-center">
-        <div className="container mx-auto px-4 md:px-8">
-          <span className="kicker">Leadership</span>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-text-primary my-3">
-            Root Users (Executive Panel)
-          </h1>
-          <p className="text-base sm:text-lg text-text-secondary max-w-[600px] mx-auto">
-            Meet the dedicated student leaders who run the operations and drive the vision of the MEC Computer Club.
-          </p>
-        </div>
-      </section>
-
-      <section className="py-8 md:py-12 bg-surface-secondary">
-        <div className="container mx-auto px-4 md:px-8">
-          {sortedExecutives.length === 0 ? (
-            <p className="text-center text-text-secondary py-12">
-              No executive records found yet.
-            </p>
-          ) : (
-            <ProfileGrid className="stagger-children">
-              {sortedExecutives.map((exec) => (
-                <ProfileCard
-                  key={exec.id}
-                  slug={exec.id}
-                  name={exec.name}
-                  role={exec.role}
-                  department={exec.department}
-                  session={exec.session}
-                  batch={exec.batch}
-                  category="executive"
-                  hideRoleBadges={true}
-                  image={exec.image}
-                  imagePosition={exec.imagePosition}
-                  socials={exec.socials}
-                />
-              ))}
-            </ProfileGrid>
-          )}
-        </div>
-      </section>
-    </>
+    <ExecutivePanelClient
+      initialTerms={terms}
+      initialCommittee={committee}
+      initialSelectedTerm={activeTermKey}
+    />
   );
 }

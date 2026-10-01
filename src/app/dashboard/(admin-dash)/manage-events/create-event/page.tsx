@@ -18,6 +18,9 @@ import { useSiteSettings } from "@/context/SiteSettingsContext";
 import { compressImage } from "@/lib/imageCompressor";
 import UniversalImageDropzone from "@/components/ui/shared/UniversalImageDropzone";
 import toast from "react-hot-toast";
+import { useRoleGuard } from "@/hooks/useRoleGuard";
+import { EventImagePositionModal } from "../components/EventImagePositionModal";
+import { EventPreviewModal } from "../components/EventPreviewModal";
 
 // ── Reusable field wrapper ──────────────────────────────────────────────────
 function Field({ label, required, hint, children }: {
@@ -121,7 +124,9 @@ function CreateEventFormContent() {
     maxParticipants: "",
     registrationFee: "0",
     coverImageUrl: "",
+    coverImagePosition: "50% 50%",
     bannerImageUrl: "",
+    bannerImagePosition: "50% 50%",
     organizer: "",
     contactEmail: "",
     contactPhone: "",
@@ -131,6 +136,20 @@ function CreateEventFormContent() {
     customHtmlSection: "",
     allowParticipationClaims: false,
   });
+
+  const [positionModal, setPositionModal] = useState<{
+    isOpen: boolean;
+    type: "cover" | "banner";
+  }>({
+    isOpen: false,
+    type: "cover",
+  });
+
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+
+  const openPositionModal = (type: "cover" | "banner") => {
+    setPositionModal({ isOpen: true, type });
+  };
 
   const [availableForms, setAvailableForms] = useState<{ _id: string; title: string; eventId?: any }[]>([]);
   const [tags, setTags] = useState<string[]>([]);
@@ -211,7 +230,9 @@ function CreateEventFormContent() {
             maxParticipants: ev.maxParticipants ? String(ev.maxParticipants) : "",
             registrationFee: ev.registrationFee !== undefined ? String(ev.registrationFee) : "0",
             coverImageUrl: ev.coverImageUrl || "",
+            coverImagePosition: ev.coverImagePosition || "50% 50%",
             bannerImageUrl: ev.bannerImageUrl || "",
+            bannerImagePosition: ev.bannerImagePosition || "50% 50%",
             organizer: ev.organizer || "",
             contactEmail: ev.contactEmail || "",
             contactPhone: ev.contactPhone || "",
@@ -343,6 +364,14 @@ function CreateEventFormContent() {
               className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
             <span className="hidden sm:inline">Publish</span>
           </label>
+          <button
+            type="button"
+            onClick={() => setPreviewModalOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 rounded-xl font-medium text-sm transition shadow-sm"
+          >
+            <Eye size={15} />
+            <span>Preview</span>
+          </button>
           <button type="submit" form="event-form" disabled={saving}
             className="flex items-center gap-2 px-4 sm:px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold text-sm shadow-sm transition disabled:opacity-60">
             <Save size={15} />
@@ -402,9 +431,19 @@ function CreateEventFormContent() {
 
         {/* ── 2. Event Images (Placed directly below General Info per user request) ── */}
         <Section icon={ImageIcon} title="Event Images" color="text-purple-500">
-          <p className="text-xs text-slate-500 leading-relaxed">
-            Drag and drop your event images below. Images will be automatically compressed and uploaded to the cloud only when you click <strong>Create Event</strong>.
-          </p>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Upload event cover and banner images below. You can position and frame both images to ensure they fit cards and headers perfectly.
+            </p>
+            <button
+              type="button"
+              onClick={() => setPreviewModalOpen(true)}
+              className="inline-flex items-center gap-1.5 text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+            >
+              <Eye size={13} />
+              <span>Preview Card &amp; Details Layout →</span>
+            </button>
+          </div>
 
           <div className="space-y-5">
             <UniversalImageDropzone
@@ -413,10 +452,13 @@ function CreateEventFormContent() {
               aspectRatioHint="Recommended: 16:9 (e.g. 1280×720 or min 800×450px)"
               currentUrl={form.coverImageUrl}
               selectedFile={coverFile}
+              imagePosition={form.coverImagePosition}
+              onAdjustPosition={() => openPositionModal("cover")}
               onFileSelect={(file) => setCoverFile(file)}
               onClear={() => {
                 setCoverFile(null);
                 set("coverImageUrl", "");
+                set("coverImagePosition", "50% 50%");
               }}
             />
 
@@ -426,10 +468,13 @@ function CreateEventFormContent() {
               aspectRatioHint="Recommended: 21:9 or 16:9 widescreen"
               currentUrl={form.bannerImageUrl}
               selectedFile={bannerFile}
+              imagePosition={form.bannerImagePosition}
+              onAdjustPosition={() => openPositionModal("banner")}
               onFileSelect={(file) => setBannerFile(file)}
               onClear={() => {
                 setBannerFile(null);
                 set("bannerImageUrl", "");
+                set("bannerImagePosition", "50% 50%");
               }}
             />
           </div>
@@ -915,18 +960,81 @@ function CreateEventFormContent() {
             className="px-5 py-2.5 rounded-xl text-slate-600 dark:text-slate-400 font-medium hover:bg-slate-100 dark:hover:bg-slate-800 transition text-sm">
             Cancel
           </Link>
-          <button type="submit" disabled={saving}
-            className="flex items-center gap-2 px-8 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold shadow-lg shadow-indigo-200 dark:shadow-none transition disabled:opacity-60 text-sm">
-            <Save size={16} />
-            {saving ? (savingProgress || "Saving…") : editId ? "Update Event" : "Create Event"}
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setPreviewModalOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 font-semibold hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition text-sm cursor-pointer shadow-2xs"
+            >
+              <Eye size={16} />
+              <span>Preview Event</span>
+            </button>
+            <button type="submit" disabled={saving}
+              className="flex items-center gap-2 px-8 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold shadow-lg shadow-indigo-200 dark:shadow-none transition disabled:opacity-60 text-sm cursor-pointer">
+              <Save size={16} />
+              {saving ? (savingProgress || "Saving…") : editId ? "Update Event" : "Create Event"}
+            </button>
+          </div>
         </div>
       </form>
+
+      {/* Event Image Positioner Modal */}
+      <EventImagePositionModal
+        isOpen={positionModal.isOpen}
+        onClose={() => setPositionModal((prev) => ({ ...prev, isOpen: false }))}
+        imageUrl={
+          positionModal.type === "cover"
+            ? coverFile
+              ? URL.createObjectURL(coverFile)
+              : form.coverImageUrl
+            : bannerFile
+            ? URL.createObjectURL(bannerFile)
+            : form.bannerImageUrl
+        }
+        imageTitle={positionModal.type === "cover" ? "Cover Image" : "Banner / Hero Image"}
+        aspectRatio={positionModal.type === "cover" ? "16:9" : "21:9"}
+        currentPosition={
+          positionModal.type === "cover"
+            ? form.coverImagePosition
+            : form.bannerImagePosition
+        }
+        onSavePosition={(pos) => {
+          if (positionModal.type === "cover") {
+            set("coverImagePosition", pos);
+          } else {
+            set("bannerImagePosition", pos);
+          }
+          toast.success(
+            `${positionModal.type === "cover" ? "Cover" : "Banner"} image position saved!`
+          );
+        }}
+      />
+
+      {/* Event Live Preview Modal */}
+      <EventPreviewModal
+        isOpen={previewModalOpen}
+        onClose={() => setPreviewModalOpen(false)}
+        event={{
+          ...form,
+          tags,
+          rewards,
+          schedule,
+          rules,
+          contributors,
+        }}
+        coverFile={coverFile}
+        bannerFile={bannerFile}
+        onOpenPositioner={(type) => {
+          openPositionModal(type);
+        }}
+      />
     </div>
   );
 }
 
 export default function CreateEventPage() {
+  const { isAllowed, isLoading } = useRoleGuard(["admin", "moderator", "executive"]);
+  if (isLoading || !isAllowed) return null;
   return (
     <Suspense fallback={<div className="p-8 text-center text-slate-500">Loading form...</div>}>
       <CreateEventFormContent />

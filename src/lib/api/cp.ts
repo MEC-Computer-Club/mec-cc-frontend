@@ -3,8 +3,6 @@ import { API_BASE_URL } from "@/lib/api";
 
 const API_URL = API_BASE_URL;
 
-export const leaderboard: LeaderboardEntry[] = [];
-
 export async function getClubLeaderboard(): Promise<LeaderboardEntry[]> {
   try {
     const res = await fetch(`${API_URL}/api/users/public/leaderboard`, {
@@ -28,7 +26,7 @@ export async function getClubLeaderboard(): Promise<LeaderboardEntry[]> {
   return [];
 }
 
+/** @deprecated CP contests and resources are now managed via the backend */
+export const leaderboard: LeaderboardEntry[] = [];
 export const contests: CPContest[] = [];
-
-export const cpResources: CPResource[] = [
-];
+export const cpResources: CPResource[] = [];

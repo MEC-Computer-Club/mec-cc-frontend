@@ -2,7 +2,7 @@
 
 import { School } from "lucide-react";
 import { Select } from "@/components/ui/Select";
-import { DU_TECH_UNIT_INSTITUTES } from "@/data/syllabusCourses";
+import { DU_TECH_UNIT_INSTITUTES } from "@/lib/api/syllabusCourses";
 
 interface InstituteSelectorProps {
   selectedInstitute: string;

@@ -2,8 +2,6 @@ import { Project } from "@/types";
 import { getProjectCoverImage, extractProjectRepositories } from "@/lib/projectUtils";
 import { API_BASE_URL } from "@/lib/api";
 
-export const projects: Project[] = [];
-
 const API_URL = API_BASE_URL;
 
 function mapBackendProject(p: any): Project {
@@ -84,8 +82,7 @@ export async function getFeaturedProjects(): Promise<Project[]> {
 export async function getProjectBySlug(slug: string): Promise<Project | undefined> {
   try {
     const all = await getProjects();
-    const found = all.find((p) => p.slug === slug || p.id === slug);
-    if (found) return found;
+    return all.find((p) => p.slug === slug || p.id === slug);
   } catch (err) {
     console.warn("Error looking up project by slug:", err);
   }

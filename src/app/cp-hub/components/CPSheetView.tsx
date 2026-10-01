@@ -6,7 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import {
   CP_SHEET_PROBLEMS,
   CPProblem,
-} from "@/data/cpSheetProblems";
+} from "@/lib/api/cpSheetProblems";
 import {
   fetchCodeforcesSolved,
   cleanCfHandle,

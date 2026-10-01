@@ -5,7 +5,7 @@ import { AuthUser } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Calendar, MapPin, Clock, ExternalLink, CheckCircle2 } from "lucide-react";
-import { isEventUpcoming } from "@/data/events";
+import { isEventUpcoming } from "@/lib/api/events";
 
 import { useState } from "react";
 
@@ -43,7 +43,7 @@ export function EventsTab({
         return false;
       });
 
-  const upcomingEvents = allEvents.filter(isEventUpcoming);
+  const upcomingEvents = allEvents.filter((ev) => isEventUpcoming(ev) || (ev.status || "").toLowerCase() === "ongoing");
 
   return (
     <div className="flex flex-col gap-6">
@@ -203,8 +203,20 @@ export function EventsTab({
                           <div className="font-mono text-[10px] font-bold text-text-tertiary uppercase">
                             <span className="opacity-70">TYPE:</span> {type.toUpperCase()}
                           </div>
-                          <Badge variant={isDateUpcoming ? "upcoming" : "past"}>
-                            {isDateUpcoming ? "UPCOMING" : "PAST"}
+                          <Badge
+                            variant={
+                              (ev.status || "").toLowerCase() === "ongoing"
+                                ? "ongoing"
+                                : (ev.status || "").toLowerCase() === "scheduled" || isDateUpcoming
+                                ? "upcoming"
+                                : "past"
+                            }
+                          >
+                            {(ev.status || "").toLowerCase() === "ongoing"
+                              ? "ONGOING"
+                              : (ev.status || "").toLowerCase() === "scheduled" || isDateUpcoming
+                              ? "UPCOMING"
+                              : "PAST"}
                           </Badge>
                         </div>
 

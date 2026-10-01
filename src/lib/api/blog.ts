@@ -1,11 +1,9 @@
 import { BlogPost } from "@/types";
-
-export const blogPosts: BlogPost[] = [];
-
 import { API_BASE_URL } from "@/lib/api";
+
 const API_URL = API_BASE_URL;
 
-function mapBackendBlog(b: any): BlogPost {
+export function mapBackendBlog(b: any): BlogPost {
   const authorId =
     b.author?._id ||
     b.author?.id ||
@@ -42,7 +40,7 @@ function mapBackendBlog(b: any): BlogPost {
 
 export async function getBlogs(): Promise<BlogPost[]> {
   try {
-    const res = await fetch(`${API_URL}/api/blogs`, { next: { revalidate: 30 } });
+    const res = await fetch(`${API_URL}/api/blogs`, { next: { revalidate: 0 } });
     if (res.ok) {
       const data = await res.json();
       const backendBlogs: any[] = data.data || data.blogs || [];
@@ -56,18 +54,10 @@ export async function getBlogs(): Promise<BlogPost[]> {
   return [];
 }
 
-export function getBlogBySlug(slug: string): BlogPost | undefined {
-  return blogPosts.find((p) => p.slug === slug);
-}
-
-export function getFeaturedPosts(): BlogPost[] {
-  return blogPosts.filter((p) => p.featured);
-}
-
 /** Fetch featured blogs for the home page (at most 3) */
 export async function getFeaturedBlogs(): Promise<BlogPost[]> {
   try {
-    const res = await fetch(`${API_URL}/api/blogs?featured=true&limit=3`, { next: { revalidate: 60 } });
+    const res = await fetch(`${API_URL}/api/blogs?featured=true&limit=3`, { next: { revalidate: 0 } });
     if (res.ok) {
       const data = await res.json();
       const backendBlogs: any[] = data.data || data.blogs || [];

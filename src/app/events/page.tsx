@@ -1,7 +1,8 @@
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 import type { Metadata } from "next";
 import EventsFilterView from "./components/EventsFilterView";
-import { getUpcomingEvents, getPastEvents } from "@/data/events";
+import { getOngoingEvents, getUpcomingEvents, getPastEvents } from "@/lib/api/events";
 
 export const metadata: Metadata = {
   title: "Tech Events, Contests & Workshops | MEC Computer Club",
@@ -28,13 +29,14 @@ export const metadata: Metadata = {
 };
 
 export default async function EventsPage() {
+  const ongoing = await getOngoingEvents();
   const upcoming = await getUpcomingEvents();
   const past = await getPastEvents();
 
   const jsonLdEvents = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    "itemListElement": upcoming.slice(0, 10).map((event, idx) => ({
+    "itemListElement": [...ongoing, ...upcoming].slice(0, 10).map((event, idx) => ({
       "@type": "ListItem",
       "position": idx + 1,
       "item": {
@@ -81,7 +83,7 @@ export default async function EventsPage() {
         </div>
       </section>
 
-      <EventsFilterView initialUpcoming={upcoming} initialPast={past} />
+      <EventsFilterView initialOngoing={ongoing} initialUpcoming={upcoming} initialPast={past} />
     </>
   );
 }

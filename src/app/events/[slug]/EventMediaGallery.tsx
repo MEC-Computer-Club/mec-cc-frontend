@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { EventMediaItem } from "@/types";
-import { getYoutubeEmbedUrl, getYoutubeThumbnail, getCleanMediaTitle, getOptimizedImageUrl } from "@/data/gallery";
+import { getYoutubeEmbedUrl, getYoutubeThumbnail, getCleanMediaTitle, getOptimizedImageUrl } from "@/lib/api/gallery";
 import {
   Play,
   Image as ImageIcon,

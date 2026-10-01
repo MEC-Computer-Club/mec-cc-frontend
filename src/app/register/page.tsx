@@ -130,6 +130,56 @@ function getBatchOptions(dept: string, config: Record<string, number>, count = 1
   return options;
 }
 
+/**
+ * Builds academic session select options (e.g. "2026-27", "2025-26", ... down to "2008-09").
+ * MEC was established in 2008.
+ */
+function getSessionOptions(startYear = 2008, endYear = new Date().getFullYear() + 1) {
+  const options = [];
+  for (let y = endYear; y >= startYear; y--) {
+    const nextYY = String(y + 1).slice(-2);
+    const sessionVal = `${y}-${nextYY}`;
+    options.push({ value: sessionVal, label: sessionVal });
+  }
+  return options;
+}
+
+/**
+ * Builds passing year select options (e.g. from currentYear + 4 down to 2008).
+ */
+function getPassingYearOptions(startYear = 2008, endYear = new Date().getFullYear() + 4) {
+  const options = [];
+  for (let y = endYear; y >= startYear; y--) {
+    const yearStr = String(y);
+    options.push({ value: yearStr, label: yearStr });
+  }
+  return options;
+}
+
+/**
+ * Helper to derive session from batch string (e.g. "CSE-5th" -> "2021-22")
+ */
+function deriveSessionFromBatch(batchStr: string, deptStr: string): string {
+  if (!batchStr) return "";
+  const d = (deptStr || "").toUpperCase();
+  const numMatch = batchStr.match(/\b([1-9]\d{0,1})(?:st|nd|rd|th)?\b/i);
+  if (!numMatch) return "";
+  const num = parseInt(numMatch[1], 10);
+  let startYear = 0;
+  if (d === "CSE" || batchStr.includes("CSE")) {
+    startYear = 2016 + num; // CSE-1st was 2017-18
+  } else if (d === "EEE" || batchStr.includes("EEE")) {
+    startYear = 2007 + num; // EEE-1st was 2008-09
+  } else if (d === "CE" || batchStr.includes("CE")) {
+    startYear = 2013 + num; // CE-1st was 2014-15
+  }
+  if (startYear > 0) {
+    const nextYY = String(startYear + 1).slice(-2);
+    return `${startYear}-${nextYY}`;
+  }
+  return "";
+}
+
 
 const ADVISOR_HONORIFICS = [
   { value: "None", label: "None" },
@@ -333,7 +383,7 @@ function LiveCardPreview({
       )}
       {roleType === "member" && (
         <div className="jc-preview-card__badge">
-          MEC CC
+          MEC COMPUTER CLUB
         </div>
       )}
 
@@ -734,7 +784,7 @@ function RegisterContent() {
 
     if ((formRole === "member" || formRole === "alumni" || isGraduated) && !session.trim()) {
       setFormError("Academic session is required.");
-      toast.error("Please enter your academic session.");
+      toast.error("Please select your academic session.");
       return;
     }
 
@@ -752,7 +802,7 @@ function RegisterContent() {
 
     if ((isGraduated || formRole === "alumni") && !passingYear.toString().trim()) {
       setFormError("Passing year is required for graduates.");
-      toast.error("Please enter your passing year.");
+      toast.error("Please select your passing year.");
       return;
     }
 
@@ -968,7 +1018,6 @@ function RegisterContent() {
       ? [
           alumniDepartment ? `${alumniDepartment}` : "",
           session.trim() ? `Session: ${session.trim()}` : "",
-          passingYear.trim() ? `Class of ${passingYear.trim()}` : "",
         ]
           .filter(Boolean)
           .join(" • ") || "Alumni Network Member"
@@ -1546,7 +1595,15 @@ function RegisterContent() {
                           <Select
                             id="alumniBatch"
                             value={alumniBatch}
-                            onChange={setAlumniBatch}
+                            onChange={(val) => {
+                              setAlumniBatch(val);
+                              const derived = deriveSessionFromBatch(val, alumniDepartment);
+                              if (derived && !session) {
+                                setSession(derived);
+                                const startYr = parseInt(derived.slice(0, 4), 10);
+                                if (!passingYear) setPassingYear(String(startYr + 4));
+                              }
+                            }}
                             options={getBatchOptions(alumniDepartment, batchConfig)}
                             placeholder="Select batch…"
                           />
@@ -1558,32 +1615,30 @@ function RegisterContent() {
                           <label htmlFor="session">
                             Session <span className="jc-required">*</span>
                           </label>
-                          <input
+                          <Select
                             id="session"
-                            name="session"
-                            autoComplete="off"
-                            data-lpignore="true"
-                            type="text"
-                            value={session}
-                            onChange={(e) => setSession(e.target.value)}
-                            required
-                            placeholder="e.g. 2019-2020"
+                            value={session.replace(/^(\d{4})-(\d{4})$/, (_, y1, y2) => `${y1}-${y2.slice(-2)}`)}
+                            onChange={(val) => {
+                              setSession(val);
+                              const startYr = parseInt(val.slice(0, 4), 10);
+                              if (startYr && !passingYear) {
+                                setPassingYear(String(startYr + 4));
+                              }
+                            }}
+                            options={getSessionOptions()}
+                            placeholder="Select session…"
                           />
                         </div>
                         <div className="jc-form-group">
                           <label htmlFor="passingYear">
                             Passing Year <span className="jc-required">*</span>
                           </label>
-                          <input
+                          <Select
                             id="passingYear"
-                            name="passingYear"
-                            type="number"
-                            min="1990"
-                            max={new Date().getFullYear() + 2}
                             value={passingYear}
-                            onChange={(e) => setPassingYear(e.target.value)}
-                            required
-                            placeholder="e.g. 2024"
+                            onChange={setPassingYear}
+                            options={getPassingYearOptions()}
+                            placeholder="Select passing year…"
                           />
                         </div>
                       </div>
@@ -1923,7 +1978,15 @@ function RegisterContent() {
                           <Select
                             id="memberBatch"
                             value={batch}
-                            onChange={setBatch}
+                            onChange={(val) => {
+                              setBatch(val);
+                              const derived = deriveSessionFromBatch(val, department);
+                              if (derived && !session) {
+                                setSession(derived);
+                                const startYr = parseInt(derived.slice(0, 4), 10);
+                                if (!passingYear && isGraduated) setPassingYear(String(startYr + 4));
+                              }
+                            }}
                             options={getBatchOptions(department, batchConfig)}
                             placeholder="Select batch…"
                           />
@@ -1932,19 +1995,21 @@ function RegisterContent() {
 
                       <div className="jc-form__row--2">
                         <div className="jc-form-group">
-                          <label htmlFor="session">
+                          <label htmlFor="memberSession">
                             Academic Session <span className="jc-required">*</span>
                           </label>
-                          <input
-                            id="session"
-                            name="session"
-                            autoComplete="off"
-                            data-lpignore="true"
-                            type="text"
-                            value={session}
-                            onChange={(e) => setSession(e.target.value)}
-                            required
-                            placeholder="e.g. 2021-2022"
+                          <Select
+                            id="memberSession"
+                            value={session.replace(/^(\d{4})-(\d{4})$/, (_, y1, y2) => `${y1}-${y2.slice(-2)}`)}
+                            onChange={(val) => {
+                              setSession(val);
+                              const startYr = parseInt(val.slice(0, 4), 10);
+                              if (startYr && isGraduated && !passingYear) {
+                                setPassingYear(String(startYr + 4));
+                              }
+                            }}
+                            options={getSessionOptions()}
+                            placeholder="Select session…"
                           />
                         </div>
                         <div className="jc-form-group">
@@ -2031,33 +2096,17 @@ function RegisterContent() {
 
                         {isGraduated && (
                           <div className="jc-form-group" style={{ marginTop: "12px" }}>
-                            <label htmlFor="passingYear" style={{ fontWeight: 700, color: "var(--text-primary)" }}>
+                            <label htmlFor="memberPassingYear" style={{ fontWeight: 700, color: "var(--text-primary)" }}>
                               Passing Year <span className="jc-required">*</span>
                             </label>
-                            <input
-                              id="passingYear"
-                              name="passingYear"
-                              type="number"
-                              min="1990"
-                              max={new Date().getFullYear() + 2}
+                            <Select
+                              id="memberPassingYear"
                               value={passingYear}
-                              onChange={(e) => setPassingYear(e.target.value)}
-                              required={isGraduated}
-                              placeholder="e.g. 2023"
-                              style={{
-                                width: "100%",
-                                padding: "10px 14px",
-                                border: "1px solid var(--border-brutalist)",
-                                borderRadius: "var(--radius-md)",
-                                background: "var(--surface-primary)",
-                                color: "var(--text-primary)",
-                                fontSize: "var(--text-sm)",
-                                fontWeight: 600,
-                                boxShadow: "2px 2px 0 var(--border-brutalist)",
-                                display: "block",
-                              }}
+                              onChange={setPassingYear}
+                              options={getPassingYearOptions()}
+                              placeholder="Select passing year…"
                             />
-                            <span style={{ fontSize: "0.8rem", color: "var(--text-tertiary)", marginTop: "2px" }}>
+                            <span style={{ fontSize: "0.8rem", color: "var(--text-tertiary)", marginTop: "6px", display: "block" }}>
                               Your profile will be designated as Alumni in the club directory.
                             </span>
                           </div>

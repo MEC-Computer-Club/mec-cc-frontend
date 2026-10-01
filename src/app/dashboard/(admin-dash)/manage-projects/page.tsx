@@ -25,8 +25,14 @@ import { Button } from "@/components/ui/Button";
 import { ProjectModal } from "@/components/projects/ProjectModal";
 import FilterSelect from "@/app/dashboard/components/FilterSelect";
 import { getProjectCoverImage, extractProjectRepositories } from "@/lib/projectUtils";
+import { useAuth } from "@/context/AuthContext";
+import { useRoleGuard } from "@/hooks/useRoleGuard";
 
 export default function AdminProjectsPage() {
+  const { isAllowed, isLoading: guardLoading } = useRoleGuard(["admin", "moderator", "executive", "advisor"]);
+  const { user } = useAuth();
+  const canManage = ["admin", "moderator", "executive"].includes(user?.role || "");
+
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -134,6 +140,8 @@ export default function AdminProjectsPage() {
   const featuredCount = projects.filter((p) => p.featured).length;
   const completedCount = projects.filter((p) => p.status === "completed").length;
 
+  if (guardLoading || !isAllowed) return null;
+
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-[fadeIn_0.2s_ease-out]">
       {/* Header */}
@@ -154,9 +162,11 @@ export default function AdminProjectsPage() {
           </div>
         </div>
 
+        {canManage && (
         <Button onClick={handleOpenAdd} variant="primary" size="md">
           <Plus size={16} style={{ marginRight: "6px" }} /> Add Project
         </Button>
+        )}
       </div>
 
       {/* Stats Counter Row */}
@@ -350,6 +360,7 @@ export default function AdminProjectsPage() {
                         </div>
                       </td>
                       <td className="py-3 px-4">
+                        {canManage ? (
                         <button
                           type="button"
                           onClick={() => handleToggleFeatured(project)}
@@ -364,6 +375,16 @@ export default function AdminProjectsPage() {
                           <Sparkles size={11} className={project.featured ? "text-white" : "text-text-secondary"} />
                           <span>{project.featured ? "Featured (Home)" : "Standard"}</span>
                         </button>
+                        ) : (
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border ${
+                            project.featured
+                              ? "bg-accent-primary text-white border-accent-primary"
+                              : "bg-surface-secondary text-text-secondary border-border-default"
+                          }`} style={project.featured ? { color: "#FFFFFF" } : undefined}>
+                            <Sparkles size={11} className={project.featured ? "text-white" : "text-text-secondary"} />
+                            <span>{project.featured ? "Featured (Home)" : "Standard"}</span>
+                          </span>
+                        )}
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-1.5">
@@ -393,6 +414,7 @@ export default function AdminProjectsPage() {
                         </div>
                       </td>
                       <td className="py-3 px-4 text-right">
+                        {canManage && (
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             type="button"
@@ -411,6 +433,7 @@ export default function AdminProjectsPage() {
                             <Trash2 size={13} />
                           </button>
                         </div>
+                        )}
                       </td>
                     </tr>
                   );
@@ -463,7 +486,8 @@ export default function AdminProjectsPage() {
                     )}
                   </div>
 
-                  {/* Action Buttons Top Right */}
+                  {/* Action Buttons Top Right - managers only */}
+                  {canManage && (
                   <div className="absolute top-3 right-3 flex items-center gap-1.5">
                     <button
                       onClick={() => handleToggleFeatured(project)}
@@ -491,6 +515,7 @@ export default function AdminProjectsPage() {
                       <Trash2 size={14} />
                     </button>
                   </div>
+                  )}
                 </div>
 
                 {/* Card Content */}

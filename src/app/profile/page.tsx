@@ -24,8 +24,7 @@ import {
 } from "./components";
 import type { ProfileEditTabHandle } from "./components/ProfileEditTab";
 
-import { events as staticEvents } from "@/data/events";
-import { CoverPreset } from "@/data/coverPresets";
+import { CoverPreset } from "@/lib/api/coverPresets";
 
 function ProfileContent() {
   const router = useRouter();
@@ -52,7 +51,7 @@ function ProfileContent() {
   };
 
   // Datasets for personal profile
-  const [allEvents, setAllEvents] = useState<any[]>(staticEvents);
+  const [allEvents, setAllEvents] = useState<any[]>([]);
   const [myEvents, setMyEvents] = useState<any[]>([]);
   const [certificates, setCertificates] = useState<any[]>([]);
   const [myProjects, setMyProjects] = useState<any[]>([]);
@@ -143,6 +142,7 @@ function ProfileContent() {
   const [uploadingAvatar, setUploadingAvatar] = useState<boolean>(false);
   const [applyingPreset, setApplyingPreset] = useState<string | null>(null);
   const [isRepositioningCover, setIsRepositioningCover] = useState<boolean>(false);
+  const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(null);
 
   // Direct Avatar Upload from Hero Card
   const handleAvatarDirectUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,35 +153,20 @@ function ProfileContent() {
     if (avatarInputRef.current) avatarInputRef.current.value = "";
   };
 
-  // Cover Banner Upload (Supports custom PNG, JPG, WebP)
-  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Cover Banner Upload (Opens Cover positioning modal before saving)
+  const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Cover photo exceeds 5MB size limit.");
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error("Cover photo exceeds 15MB size limit.");
       if (coverInputRef.current) coverInputRef.current.value = "";
       return;
     }
 
-    setUploadingCover(true);
-    try {
-      const formData = new FormData();
-      formData.append("cover", file);
-
-      // Call authenticated cover update endpoint
-      await api.upload("/api/users/me/cover", formData, { method: "PATCH" });
-      toast.success("Cover banner updated successfully!");
-      setShowCoverModal(false);
-      await refreshUser();
-      scrollToTopSection();
-    } catch (err: any) {
-      const msg = err instanceof ApiError ? err.message : err?.message || "Failed to upload cover banner";
-      toast.error(msg);
-    } finally {
-      setUploadingCover(false);
-      if (coverInputRef.current) coverInputRef.current.value = "";
-    }
+    setPendingCoverFile(file);
+    setShowCoverModal(true);
+    if (coverInputRef.current) coverInputRef.current.value = "";
   };
 
   // Select Preset Cover
@@ -438,11 +423,32 @@ function ProfileContent() {
       {/* ════ 3. PRESET COVER MODAL ════ */}
       <CoverPresetModal
         isOpen={showCoverModal}
-        onClose={() => setShowCoverModal(false)}
+        onClose={() => {
+          setShowCoverModal(false);
+          setPendingCoverFile(null);
+        }}
         currentCoverUrl={user?.coverUrl}
+        currentUserRole={user?.role}
+        initialFile={pendingCoverFile}
         onSelectPreset={handleSelectPresetCover}
-        onSelectCustomUrl={handleSelectCustomUrl}
-        onUploadCustomClick={() => coverInputRef.current?.click()}
+        onUploadFile={async (file: File, position?: string) => {
+          setUploadingCover(true);
+          try {
+            const formData = new FormData();
+            formData.append("cover", file);
+            if (position) {
+              formData.append("coverPosition", position);
+            }
+            await api.upload("/api/users/me/cover", formData, { method: "PATCH" });
+            toast.success("Cover banner updated successfully!");
+            setShowCoverModal(false);
+            setPendingCoverFile(null);
+            await refreshUser();
+            scrollToTopSection();
+          } finally {
+            setUploadingCover(false);
+          }
+        }}
         onTriggerReposition={() => setIsRepositioningCover(true)}
         applyingPresetId={applyingPreset}
       />

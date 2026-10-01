@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ProfileCard, ProfileGrid } from "@/components/ui/ProfileCard";
-import { getActiveMembers } from "@/data/members";
+import { getActiveMembers } from "@/lib/api/members";
 import { groupPeopleByBatch } from "@/lib/batchUtils";
 
 export const revalidate = 120;

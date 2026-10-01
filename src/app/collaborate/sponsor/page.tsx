@@ -2,6 +2,7 @@ export const revalidate = 60;
 
 import { Metadata } from "next";
 import { getPageContent } from "@/lib/pageContent";
+import { getPartners } from "@/lib/api/partners";
 import SponsorView from "./components/SponsorView";
 
 export const metadata: Metadata = {
@@ -20,8 +21,11 @@ export const metadata: Metadata = {
 };
 
 export default async function SponsorPage() {
-  const sponsorContent = await getPageContent("sponsor");
+  const [sponsorContent, partners] = await Promise.all([
+    getPageContent("sponsor"),
+    getPartners(),
+  ]);
 
-  return <SponsorView initialContent={sponsorContent} />;
+  return <SponsorView initialContent={sponsorContent} partners={partners} />;
 }
 

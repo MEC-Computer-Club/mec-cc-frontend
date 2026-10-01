@@ -13,10 +13,8 @@ const footerLinks = {
   explore: [
     { label: "Home", href: "/" },
     { label: "About", href: "/about" },
-    { label: "Alumni", href: "/alumni" },
     { label: "Events", href: "/events" },
     { label: "Projects", href: "/projects" },
-    { label: "Developers", href: "/developers" },
   ],
   resources: [
     { label: "Questions Archive", href: "/utilities/questions-archive" },

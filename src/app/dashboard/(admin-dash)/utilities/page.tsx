@@ -14,11 +14,7 @@ import {
   AlertCircle,
   RefreshCw,
   Award,
-  BarChart3,
-  Building2,
-  ExternalLink,
   Layers,
-  List,
   Shuffle,
   ArrowLeftRight,
   RotateCcw,
@@ -31,6 +27,7 @@ import FilterSelect, { FilterOption } from "@/app/dashboard/components/FilterSel
 import { QuestionArchiveTab } from "./QuestionArchiveTab";
 import { api } from "@/lib/api";
 import toast from "react-hot-toast";
+import { useRoleGuard } from "@/hooks/useRoleGuard";
 
 interface CourseItem {
   _id: string;
@@ -52,26 +49,6 @@ interface CourseItem {
   isDiscontinued?: boolean;
   isReplaced?: boolean;
   deltaId?: string | null;
-}
-
-interface InstituteDepartmentUsage {
-  department: string;
-  coverPagePrints: number;
-  cgpaCalculations: number;
-  total: number;
-  lastUsedAt?: string;
-}
-
-interface InstituteAnalyticsItem {
-  _id?: string;
-  name: string;
-  usageCount: {
-    cgpaCalculations: number;
-    coverPagePrints: number;
-    total: number;
-  };
-  departments?: InstituteDepartmentUsage[];
-  lastUsedAt: string;
 }
 
 interface InstructorItem {
@@ -127,17 +104,17 @@ const SEMESTER_FORM_OPTIONS: SelectOption[] = [
 ];
 
 export default function UtilitiesAdminPage() {
-  const [activeTab, setActiveTab] = useState<"courses" | "instructors" | "analytics" | "questions">("courses");
+  const { isAllowed, isLoading: guardLoading } = useRoleGuard(["admin", "moderator", "executive"]);
+  const [activeTab, setActiveTab] = useState<"courses" | "instructors" | "questions">("courses");
 
   // Courses state - only holds one department at a time, CSE by default
   const [courses, setCourses] = useState<CourseItem[]>([]);
   const [courseCounts, setCourseCounts] = useState({ pending: 0, approved: 0, total: 0 });
-  const [courseDeptFilter, setCourseDeptFilter] = useState<"CSE" | "EEE" | "CE">("CSE");
+  const [courseDeptFilter, setCourseDeptFilter] = useState<"all" | "CSE" | "EEE" | "CE">("CSE");
   const [courseStatusFilter, setCourseStatusFilter] = useState("all");
   const [courseSessionFilter, setCourseSessionFilter] = useState("2021-22");
   const [courseSemesterFilter, setCourseSemesterFilter] = useState("all");
   const [courseSearch, setCourseSearch] = useState("");
-  const [courseViewMode, setCourseViewMode] = useState<"semester" | "table">("semester");
   const [activeSemesterTab, setActiveSemesterTab] = useState<string>("all");
   const [availableSessions, setAvailableSessions] = useState<string[]>(["2021-22"]);
   const [loadingCourses, setLoadingCourses] = useState(false);
@@ -149,13 +126,6 @@ export default function UtilitiesAdminPage() {
   const [instructorStatusFilter, setInstructorStatusFilter] = useState("all");
   const [instructorSearch, setInstructorSearch] = useState("");
   const [loadingInstructors, setLoadingInstructors] = useState(false);
-
-  // Analytics state
-  const [analyticsOverview, setAnalyticsOverview] = useState<{
-    summary: { totalEvents: number; totalPrints: number; totalCalculations: number };
-    topInstitutes: InstituteAnalyticsItem[];
-  } | null>(null);
-  const [loadingAnalytics, setLoadingAnalytics] = useState(false);
 
   // Modal state
   const [courseModalOpen, setCourseModalOpen] = useState(false);
@@ -256,27 +226,29 @@ export default function UtilitiesAdminPage() {
     return { map, unassigned };
   }, [courses]);
 
-  // Fetch analytics overview
-  const fetchAnalytics = useCallback(async () => {
-    try {
-      setLoadingAnalytics(true);
-      const res = await api.get("/api/analytics/overview");
-      if (res.status === "success") {
-        setAnalyticsOverview(res.data);
-      }
-    } catch (err: any) {
-      toast.error(err.message || "Failed to load analytics overview");
-    } finally {
-      setLoadingAnalytics(false);
+  // Determine which semesters to render in Semester View
+  const visibleSemesters = useMemo(() => {
+    if (activeSemesterTab !== "all") {
+      if (activeSemesterTab === "unassigned") return [];
+      return [parseInt(activeSemesterTab, 10)];
     }
-  }, []);
+    // When filtering by pending status or specific search query, display only semesters that contain matching courses
+    if (courseStatusFilter !== "all" || courseSearch.trim()) {
+      const matching = [1, 2, 3, 4, 5, 6, 7, 8].filter(
+        (s) => (coursesBySemester.map[s]?.length || 0) > 0
+      );
+      return matching;
+    }
+    // Default full curriculum: show all 8 semesters
+    return [1, 2, 3, 4, 5, 6, 7, 8];
+  }, [activeSemesterTab, courseStatusFilter, courseSearch, coursesBySemester]);
 
   // Fetch courses with department, status, session, and search filters
   const fetchCourses = useCallback(async () => {
     try {
       setLoadingCourses(true);
       const params = new URLSearchParams();
-      params.append("department", courseDeptFilter);
+      if (courseDeptFilter !== "all") params.append("department", courseDeptFilter);
       if (courseStatusFilter !== "all") params.append("status", courseStatusFilter);
       params.append("session", courseSessionFilter);
       if (courseSemesterFilter !== "all") params.append("semester", courseSemesterFilter);
@@ -309,7 +281,7 @@ export default function UtilitiesAdminPage() {
       courseName: "",
       courseCode: "",
       courseCredit: "3.0",
-      department: courseDeptFilter,
+      department: courseDeptFilter === "all" ? "CSE" : courseDeptFilter,
       semester: String(semNumber),
       session: courseSessionFilter || "2021-22",
       status: "approved",
@@ -338,6 +310,12 @@ export default function UtilitiesAdminPage() {
       setLoadingInstructors(false);
     }
   }, [instructorDeptFilter, instructorStatusFilter, instructorSearch]);
+
+  // Initial mount: load both courses and instructors so all 4 top metric cards show global totals
+  useEffect(() => {
+    fetchCourses();
+    fetchInstructors();
+  }, []);
 
   useEffect(() => {
     if (activeTab === "courses") {
@@ -578,6 +556,8 @@ export default function UtilitiesAdminPage() {
     }
   };
 
+  if (guardLoading || !isAllowed) return null;
+
   return (
     <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
       {/* Header */}
@@ -644,13 +624,12 @@ export default function UtilitiesAdminPage() {
             icon={
               <RefreshCw
                 size={15}
-                className={loadingCourses || loadingInstructors || loadingAnalytics ? "animate-spin" : ""}
+                className={loadingCourses || loadingInstructors ? "animate-spin" : ""}
               />
             }
             onClick={() => {
-              if (activeTab === "courses") fetchCourses();
-              else if (activeTab === "instructors") fetchInstructors();
-              else fetchAnalytics();
+              fetchCourses();
+              fetchInstructors();
             }}
           >
             Refresh
@@ -658,36 +637,116 @@ export default function UtilitiesAdminPage() {
         </div>
       </div>
 
-      {/* Metric Cards */}
+      {/* Metric Cards - Clickable to open filtered tab */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 bg-surface-primary border-2 border-text-primary dark:border-border-default rounded-lg shadow-[3px_3px_0px_0px_var(--accent-primary)]">
-          <div className="text-xs font-mono font-bold text-text-secondary uppercase">Pending Courses</div>
+        {/* Pending Courses Card */}
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab("courses");
+            setCourseStatusFilter("pending");
+            setCourseDeptFilter("all");
+            setActiveSemesterTab("all");
+          }}
+          className={`p-4 bg-surface-primary border-2 rounded-lg text-left transition-all cursor-pointer group hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_var(--accent-primary)] ${
+            activeTab === "courses" && courseStatusFilter === "pending"
+              ? "border-accent-primary shadow-[4px_4px_0px_0px_var(--accent-primary)] ring-2 ring-accent-primary/20"
+              : "border-text-primary dark:border-border-default shadow-[3px_3px_0px_0px_var(--accent-primary)]"
+          }`}
+          title="Click to view all pending courses across all departments"
+        >
+          <div className="flex items-center justify-between text-xs font-mono font-bold text-text-secondary uppercase">
+            <span>Pending Courses</span>
+            <span className="text-[10px] opacity-0 group-hover:opacity-100 transition-opacity text-amber-500 font-mono lowercase">
+              view →
+            </span>
+          </div>
           <div className="text-2xl font-black text-amber-500 mt-1 flex items-center justify-between">
             {courseCounts.pending}
-            <Clock size={20} className="opacity-40" />
+            <Clock size={20} className="opacity-40 group-hover:opacity-80 transition-opacity" />
           </div>
-        </div>
-        <div className="p-4 bg-surface-primary border-2 border-text-primary dark:border-border-default rounded-lg shadow-[3px_3px_0px_0px_var(--border-default)]">
-          <div className="text-xs font-mono font-bold text-text-secondary uppercase">Approved Courses</div>
+        </button>
+
+        {/* Approved Courses Card */}
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab("courses");
+            setCourseStatusFilter("approved");
+            setCourseDeptFilter("all");
+            setActiveSemesterTab("all");
+          }}
+          className={`p-4 bg-surface-primary border-2 rounded-lg text-left transition-all cursor-pointer group hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_var(--accent-primary)] ${
+            activeTab === "courses" && courseStatusFilter === "approved"
+              ? "border-accent-primary shadow-[4px_4px_0px_0px_var(--accent-primary)] ring-2 ring-accent-primary/20"
+              : "border-text-primary dark:border-border-default shadow-[3px_3px_0px_0px_var(--border-default)]"
+          }`}
+          title="Click to view approved courses"
+        >
+          <div className="flex items-center justify-between text-xs font-mono font-bold text-text-secondary uppercase">
+            <span>Approved Courses</span>
+            <span className="text-[10px] opacity-0 group-hover:opacity-100 transition-opacity text-emerald-500 font-mono lowercase">
+              view →
+            </span>
+          </div>
           <div className="text-2xl font-black text-emerald-500 mt-1 flex items-center justify-between">
             {courseCounts.approved}
-            <CheckCircle size={20} className="opacity-40" />
+            <CheckCircle size={20} className="opacity-40 group-hover:opacity-80 transition-opacity" />
           </div>
-        </div>
-        <div className="p-4 bg-surface-primary border-2 border-text-primary dark:border-border-default rounded-lg shadow-[3px_3px_0px_0px_var(--accent-primary)]">
-          <div className="text-xs font-mono font-bold text-text-secondary uppercase">Pending Instructors</div>
+        </button>
+
+        {/* Pending Instructors Card */}
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab("instructors");
+            setInstructorStatusFilter("pending");
+            setInstructorDeptFilter("all");
+          }}
+          className={`p-4 bg-surface-primary border-2 rounded-lg text-left transition-all cursor-pointer group hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_var(--accent-primary)] ${
+            activeTab === "instructors" && instructorStatusFilter === "pending"
+              ? "border-accent-primary shadow-[4px_4px_0px_0px_var(--accent-primary)] ring-2 ring-accent-primary/20"
+              : "border-text-primary dark:border-border-default shadow-[3px_3px_0px_0px_var(--accent-primary)]"
+          }`}
+          title="Click to view all pending instructors"
+        >
+          <div className="flex items-center justify-between text-xs font-mono font-bold text-text-secondary uppercase">
+            <span>Pending Instructors</span>
+            <span className="text-[10px] opacity-0 group-hover:opacity-100 transition-opacity text-amber-500 font-mono lowercase">
+              view →
+            </span>
+          </div>
           <div className="text-2xl font-black text-amber-500 mt-1 flex items-center justify-between">
             {instructorCounts.pending}
-            <Clock size={20} className="opacity-40" />
+            <Clock size={20} className="opacity-40 group-hover:opacity-80 transition-opacity" />
           </div>
-        </div>
-        <div className="p-4 bg-surface-primary border-2 border-text-primary dark:border-border-default rounded-lg shadow-[3px_3px_0px_0px_var(--border-default)]">
-          <div className="text-xs font-mono font-bold text-text-secondary uppercase">Approved Instructors</div>
+        </button>
+
+        {/* Approved Instructors Card */}
+        <button
+          type="button"
+          onClick={() => {
+            setActiveTab("instructors");
+            setInstructorStatusFilter("approved");
+          }}
+          className={`p-4 bg-surface-primary border-2 rounded-lg text-left transition-all cursor-pointer group hover:-translate-y-0.5 hover:shadow-[4px_4px_0px_0px_var(--accent-primary)] ${
+            activeTab === "instructors" && instructorStatusFilter === "approved"
+              ? "border-accent-primary shadow-[4px_4px_0px_0px_var(--accent-primary)] ring-2 ring-accent-primary/20"
+              : "border-text-primary dark:border-border-default shadow-[3px_3px_0px_0px_var(--border-default)]"
+          }`}
+          title="Click to view approved instructors"
+        >
+          <div className="flex items-center justify-between text-xs font-mono font-bold text-text-secondary uppercase">
+            <span>Approved Instructors</span>
+            <span className="text-[10px] opacity-0 group-hover:opacity-100 transition-opacity text-emerald-500 font-mono lowercase">
+              view →
+            </span>
+          </div>
           <div className="text-2xl font-black text-emerald-500 mt-1 flex items-center justify-between">
             {instructorCounts.approved}
-            <CheckCircle size={20} className="opacity-40" />
+            <CheckCircle size={20} className="opacity-40 group-hover:opacity-80 transition-opacity" />
           </div>
-        </div>
+        </button>
       </div>
 
       {/* Tabs */}
@@ -723,20 +782,6 @@ export default function UtilitiesAdminPage() {
               {instructorCounts.pending}
             </span>
           )}
-        </button>
-        <button
-          onClick={() => {
-            setActiveTab("analytics");
-            fetchAnalytics();
-          }}
-          className={`flex items-center gap-2 px-5 py-2.5 font-mono text-sm font-bold border-b-4 transition-all duration-150 whitespace-nowrap ${
-            activeTab === "analytics"
-              ? "border-accent-primary text-text-primary bg-surface-secondary/40 rounded-t-md"
-              : "border-transparent text-text-secondary hover:text-text-primary"
-          }`}
-        >
-          <BarChart3 size={16} />
-          Institute Analytics
         </button>
         <button
           onClick={() => setActiveTab("questions")}
@@ -793,9 +838,9 @@ export default function UtilitiesAdminPage() {
                   </Button>
                 </div>
 
-                {/* Department Selector: Single department at a time, CSE default */}
+                {/* Department Selector */}
                 <div className="inline-flex p-0.5 rounded-lg bg-surface-secondary border border-border-default">
-                  {(["CSE", "EEE", "CE"] as const).map((dept) => (
+                  {(["all", "CSE", "EEE", "CE"] as const).map((dept) => (
                     <button
                       key={dept}
                       type="button"
@@ -806,7 +851,7 @@ export default function UtilitiesAdminPage() {
                           : "text-text-secondary hover:text-text-primary"
                       }`}
                     >
-                      {dept}
+                      {dept === "all" ? "All Depts" : dept}
                     </button>
                   ))}
                 </div>
@@ -818,34 +863,6 @@ export default function UtilitiesAdminPage() {
                   options={STATUS_FILTER_OPTIONS}
                   placeholder="Status"
                 />
-              </div>
-
-              {/* View Mode Toggle (Semester-wise vs Flat Table) */}
-              <div className="inline-flex p-0.5 rounded-lg bg-surface-secondary border border-border-default">
-                <button
-                  type="button"
-                  onClick={() => setCourseViewMode("semester")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-mono font-bold transition-all ${
-                    courseViewMode === "semester"
-                      ? "bg-accent-primary text-white shadow-sm"
-                      : "text-text-secondary hover:text-text-primary"
-                  }`}
-                >
-                  <BookOpen size={13} />
-                  <span>Semester View</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCourseViewMode("table")}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-mono font-bold transition-all ${
-                    courseViewMode === "table"
-                      ? "bg-accent-primary text-white shadow-sm"
-                      : "text-text-secondary hover:text-text-primary"
-                  }`}
-                >
-                  <List size={13} />
-                  <span>Table View</span>
-                </button>
               </div>
             </div>
 
@@ -872,11 +889,10 @@ export default function UtilitiesAdminPage() {
             )}
 
             {/* Semester Jump Tabs in Semester View */}
-            {courseViewMode === "semester" && (
-              <div className="flex flex-wrap items-center gap-1 pt-1 border-t border-border-default/60">
-                <span className="text-[11px] font-mono font-bold uppercase text-text-muted mr-1.5">
-                  Filter Semester:
-                </span>
+            <div className="flex flex-wrap items-center gap-1 pt-1 border-t border-border-default/60">
+              <span className="text-[11px] font-mono font-bold uppercase text-text-muted mr-1.5">
+                Filter Semester:
+              </span>
                 <button
                   type="button"
                   onClick={() => setActiveSemesterTab("all")}
@@ -933,24 +949,39 @@ export default function UtilitiesAdminPage() {
                   </button>
                 )}
               </div>
-            )}
           </div>
 
-          {/* COURSES VIEW (SEMESTER-WISE OR FLAT TABLE) */}
-          {courseViewMode === "semester" ? (
-            /* SEMESTER-WISE VIEW */
-            loadingCourses ? (
-              <div className="p-12 text-center text-text-muted font-mono bg-surface-primary border-2 border-text-primary dark:border-border-default rounded-xl">
-                Loading courses for {courseSessionFilter !== "all" ? `Session ${courseSessionFilter}` : "selected filters"}...
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {(activeSemesterTab === "all"
-                  ? [1, 2, 3, 4, 5, 6, 7, 8]
-                  : activeSemesterTab === "unassigned"
-                  ? []
-                  : [parseInt(activeSemesterTab, 10)]
-                ).map((semNum) => {
+          {/* COURSES VIEW - SEMESTER-WISE LISTING */}
+          {loadingCourses ? (
+            <div className="p-12 text-center text-text-muted font-mono bg-surface-primary border-2 border-text-primary dark:border-border-default rounded-xl shadow-[4px_4px_0px_0px_var(--border-default)]">
+              Loading courses for {courseSessionFilter !== "all" ? `Session ${courseSessionFilter}` : "selected filters"}...
+            </div>
+          ) : visibleSemesters.length === 0 && coursesBySemester.unassigned.length === 0 ? (
+            <div className="p-12 text-center bg-surface-primary border-2 border-text-primary dark:border-border-default rounded-xl shadow-[4px_4px_0px_0px_var(--border-default)] space-y-3 font-mono">
+              <AlertCircle className="w-8 h-8 text-amber-500 mx-auto" />
+              <h4 className="font-heading font-bold text-sm text-text-primary">
+                No courses found matching current filters
+              </h4>
+              <p className="text-xs text-text-muted max-w-md mx-auto">
+                {courseStatusFilter !== "all" ? `No ${courseStatusFilter} courses` : "No courses"} registered for {courseDeptFilter === "all" ? "any department" : courseDeptFilter} in {courseSessionFilter !== "all" ? `Session ${courseSessionFilter}` : "this session"}.
+              </p>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  setCourseStatusFilter("all");
+                  setCourseDeptFilter("all");
+                  setCourseSearch("");
+                  setActiveSemesterTab("all");
+                }}
+                className="mt-2"
+              >
+                Reset Filters
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {visibleSemesters.map((semNum) => {
                   const semCourses = coursesBySemester.map[semNum] || [];
                   const totalCr = semCourses.reduce(
                     (acc, c) => acc + (parseFloat(c.courseCredit) || 0),
@@ -979,7 +1010,7 @@ export default function UtilitiesAdminPage() {
                             </h3>
                             <div className="flex flex-wrap items-center gap-2 mt-0.5 text-[11px] font-mono">
                               <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-accent-primary/10 text-accent-primary border border-accent-primary/20">
-                                {courseDeptFilter}
+                                {courseDeptFilter === "all" ? "All Depts" : courseDeptFilter}
                               </span>
                               <span className="font-bold text-accent-primary">
                                 {semCourses.length} {semCourses.length === 1 ? "Course" : "Courses"}
@@ -1384,264 +1415,7 @@ export default function UtilitiesAdminPage() {
                     </div>
                   )}
               </div>
-            )
-          ) : (
-            /* FLAT TABLE VIEW */
-            <div className="border-2 border-text-primary dark:border-border-default rounded-lg overflow-x-auto shadow-[4px_4px_0px_0px_var(--border-default)] bg-surface-primary">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="border-b-2 border-border-default bg-surface-secondary text-text-secondary font-mono uppercase">
-                    <th className="p-3">Course Code</th>
-                    <th className="p-3">Course Name</th>
-                    <th className="p-3">Credit</th>
-                    <th className="p-3">Department</th>
-                    <th className="p-3">Session</th>
-                    <th className="p-3">Status</th>
-                    <th className="p-3">Submitted By</th>
-                    <th className="p-3 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border-default font-mono">
-                  {loadingCourses ? (
-                    <tr>
-                      <td colSpan={8} className="p-8 text-center text-text-muted">
-                        Loading courses...
-                      </td>
-                    </tr>
-                  ) : courses.length === 0 ? (
-                    <tr>
-                      <td colSpan={8} className="p-8 text-center text-text-muted">
-                        No courses found matching criteria.
-                      </td>
-                    </tr>
-                  ) : (
-                    courses.map((course) => (
-                      <tr
-                        key={course._id}
-                        className={`hover:bg-surface-secondary/40 transition-colors ${
-                          course.isDiscontinued || course.isReplaced ? "bg-red-500/5 dark:bg-red-500/10" : ""
-                        }`}
-                      >
-                        <td className="p-3 font-bold text-accent-primary">
-                          <div className="flex flex-col">
-                            <span className={course.isDiscontinued || course.isReplaced ? "line-through opacity-60" : ""}>
-                              {course.courseCode}
-                            </span>
-                            {course.replacesCourseCode && (
-                              <span className="text-[10px] text-blue-500 font-normal">
-                                replaces {course.replacesCourseCode}
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="p-3 font-sans font-medium text-text-primary max-w-xs">
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <span
-                              className={
-                                course.isDiscontinued || course.isReplaced
-                                  ? "line-through opacity-60 text-text-muted"
-                                  : ""
-                              }
-                            >
-                              {course.courseName}
-                            </span>
-                            {course.changeType === "addition" && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">
-                                <Plus size={10} /> Added ({courseSessionFilter})
-                              </span>
-                            )}
-                            {course.changeType === "replace" && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/30">
-                                <ArrowLeftRight size={10} /> Replaces {course.replacesCourseCode}
-                              </span>
-                            )}
-                            {course.isReplaced && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                                <ArrowLeftRight size={10} /> Replaced by {course.replacedByCourseCode}
-                              </span>
-                            )}
-                            {course.changeType === "shuffle" && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30">
-                                <Shuffle size={10} /> Shuffled (Sem {course.shuffledFromSemester} → Sem {course.semester})
-                              </span>
-                            )}
-                            {(course.changeType === "reduction" || course.isDiscontinued) && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-mono font-bold bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30">
-                                <X size={10} /> Dropped ({courseSessionFilter})
-                              </span>
-                            )}
-                            {course.isBaseline && courseSessionFilter !== "2021-22" && courseSessionFilter !== "default" && !course.isReplaced && !course.isDiscontinued && !course.changeType && (
-                              <span className="inline-flex items-center px-1.5 py-0.2 rounded text-[10px] font-mono text-text-muted border border-border-default/60 bg-surface-secondary/40">
-                                Inherited
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="p-3 text-text-secondary">{course.courseCredit || "—"}</td>
-                        <td className="p-3">
-                          <div className="flex flex-wrap items-center gap-1">
-                            <span className="px-2 py-0.5 rounded text-[11px] font-bold bg-surface-secondary border border-border-default">
-                              {course.department}
-                            </span>
-                            {course.semester && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-accent-primary/10 text-accent-primary-hover border border-accent-primary/20">
-                                Sem {course.semester}
-                              </span>
-                            )}
-                          </div>
-                        </td>
-                        <td className="p-3">
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-mono text-text-muted border border-border-default">
-                            {course.session || "default"}
-                          </span>
-                        </td>
-                        <td className="p-3">
-                          {course.status === "approved" ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
-                              <CheckCircle size={12} /> Approved
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-bold bg-amber-500/15 text-amber-500 border border-amber-500/30">
-                              <Clock size={12} /> Pending Review
-                            </span>
-                          )}
-                        </td>
-                        <td className="p-3 text-text-muted">
-                          {course.submittedBy?.fullName || "Auto-detected"}
-                        </td>
-                        <td className="p-3 text-right space-x-1 whitespace-nowrap">
-                          {courseSessionFilter !== "2021-22" && courseSessionFilter !== "default" ? (
-                            /* Evolved Session Delta Actions */
-                            <>
-                              {(!course.isBaseline || course.changeType === "addition" || course.changeType === "shuffle" || course.changeType === "replace" || course.isDiscontinued || course.isReplaced) ? (
-                                <>
-                                  <Button
-                                    variant="secondary"
-                                    size="sm"
-                                    icon={<RotateCcw size={11} className="text-accent-primary" />}
-                                    onClick={() => handleExecuteRevert(course)}
-                                    title="Revert this change back to baseline"
-                                    className="!h-7 !px-2 text-xs"
-                                  >
-                                    Revert
-                                  </Button>
-                                  {course.changeType === "addition" && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      icon={<Trash2 size={11} className="text-red-500" />}
-                                      onClick={() => onRequestDeleteCourse(course)}
-                                      title="Delete this added course"
-                                      className="!h-7 !px-2 hover:bg-red-500/10"
-                                    >
-                                      Delete
-                                    </Button>
-                                  )}
-                                </>
-                              ) : (
-                                /* Inherited baseline course actions */
-                                <>
-                                  <Button
-                                    variant="secondary"
-                                    size="sm"
-                                    icon={<Shuffle size={11} />}
-                                    onClick={() => {
-                                      setShufflingCourse(course);
-                                      setShuffleTargetSemester(course.semester ? String(course.semester) : "1");
-                                      setShuffleModalOpen(true);
-                                    }}
-                                    title="Move to another semester for this session"
-                                    className="!h-7 !px-2 text-xs"
-                                  >
-                                    Shuffle
-                                  </Button>
-                                  <Button
-                                    variant="secondary"
-                                    size="sm"
-                                    icon={<ArrowLeftRight size={11} />}
-                                    onClick={() => {
-                                      setReplacingCourse(course);
-                                      setReplaceFormData({
-                                        newCourseCode: "",
-                                        newCourseName: "",
-                                        newCourseCredit: course.courseCredit || "3.00",
-                                        isElective: Boolean(course.isElective),
-                                      });
-                                      setReplaceModalOpen(true);
-                                    }}
-                                    title="Replace with new course for this session"
-                                    className="!h-7 !px-2 text-xs"
-                                  >
-                                    Replace
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    icon={<X size={11} className="text-red-500" />}
-                                    onClick={() => setDropConfirm({ course })}
-                                    title="Drop / discontinue course for this session"
-                                    className="!h-7 !px-2 text-xs text-red-500 hover:bg-red-500/10"
-                                  >
-                                    Drop
-                                  </Button>
-                                </>
-                              )}
-                            </>
-                          ) : (
-                            /* Baseline 2021-22 Syllabus Management */
-                            <>
-                              <Button
-                                variant={course.status === "approved" ? "ghost" : "primary"}
-                                size="sm"
-                                onClick={() => handleToggleCourseStatus(course)}
-                                title={course.status === "approved" ? "Set to Pending" : "Approve Course"}
-                                className="!h-7 !px-2 text-xs"
-                              >
-                                {course.status === "approved" ? "Reject" : "Approve"}
-                              </Button>
-                              <Button
-                                variant="secondary"
-                                size="sm"
-                                icon={<Edit2 size={13} />}
-                                onClick={() => {
-                                  setEditingCourse(course);
-                                  setCourseFormData({
-                                    courseName: course.courseName,
-                                    courseCode: course.courseCode,
-                                    courseCredit: course.courseCredit || "",
-                                    department: course.department || "CSE",
-                                    semester: course.semester ? String(course.semester) : "1",
-                                    session: course.session || "2021-22",
-                                    status: course.status,
-                                  });
-                                  setIsCustomSession(
-                                    course.session ? !availableSessions.includes(course.session) : false
-                                  );
-                                  setCourseModalOpen(true);
-                                }}
-                                className="!h-7 !px-2"
-                              >
-                                Edit
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                icon={<Trash2 size={13} className="text-red-500" />}
-                                onClick={() => onRequestDeleteCourse(course)}
-                                className="!h-7 !px-2 hover:bg-red-500/10"
-                              >
-                                Delete
-                              </Button>
-                            </>
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
+            )}
         </div>
       )}
 
@@ -1779,129 +1553,9 @@ export default function UtilitiesAdminPage() {
       )}
 
       {/* TAB 3: INSTITUTE ANALYTICS CONTENT */}
-      {activeTab === "analytics" && (
-        <div className="space-y-6">
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="p-4 bg-surface-primary border border-text-primary dark:border-border-default rounded-lg shadow-[3px_3px_0px_0px_var(--accent-primary)]">
-              <div className="text-xs font-mono font-bold text-text-secondary uppercase">
-                Cover Page Prints
-              </div>
-              <div className="text-2xl font-black text-accent-primary mt-1 flex items-center justify-between">
-                {analyticsOverview?.summary.totalPrints || 0}
-                <BookOpen size={20} className="opacity-40" />
-              </div>
-            </div>
-            <div className="p-4 bg-surface-primary border border-text-primary dark:border-border-default rounded-lg shadow-[3px_3px_0px_0px_var(--border-default)]">
-              <div className="text-xs font-mono font-bold text-text-secondary uppercase">
-                CGPA Calculations
-              </div>
-              <div className="text-2xl font-black text-emerald-500 mt-1 flex items-center justify-between">
-                {analyticsOverview?.summary.totalCalculations || 0}
-                <Award size={20} className="opacity-40" />
-              </div>
-            </div>
-            <div className="p-4 bg-surface-primary border border-text-primary dark:border-border-default rounded-lg shadow-[3px_3px_0px_0px_var(--border-default)]">
-              <div className="text-xs font-mono font-bold text-text-secondary uppercase">
-                Total Events Tracked
-              </div>
-              <div className="text-2xl font-black text-text-primary mt-1 flex items-center justify-between">
-                {analyticsOverview?.summary.totalEvents || 0}
-                <BarChart3 size={20} className="opacity-40" />
-              </div>
-            </div>
-          </div>
-
-          {/* Leaderboard Table with Department Breakdown */}
-          <div className="border border-text-primary dark:border-border-default rounded-lg overflow-x-auto shadow-[4px_4px_0px_0px_var(--border-default)] bg-surface-primary">
-            <div className="p-3.5 bg-surface-secondary border-b border-border-default flex items-center justify-between">
-              <h3 className="font-mono font-bold text-xs uppercase text-text-primary flex items-center gap-2">
-                <Building2 size={15} className="text-accent-primary" /> Active Institutes & Departments
-              </h3>
-              <span className="text-[11px] font-mono text-text-muted">
-                Usage breakdown with departmental logs under each institute
-              </span>
-            </div>
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-border-default bg-surface-secondary/60 text-text-secondary font-mono uppercase">
-                  <th className="p-3">#</th>
-                  <th className="p-3">Institute Name & Logged Departments</th>
-                  <th className="p-3 text-center">Cover Page Prints</th>
-                  <th className="p-3 text-center">CGPA Calculations</th>
-                  <th className="p-3 text-center">Total Uses</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border-default font-mono">
-                {loadingAnalytics ? (
-                  <tr>
-                    <td colSpan={5} className="p-8 text-center text-text-muted">
-                      Loading analytics data...
-                    </td>
-                  </tr>
-                ) : !analyticsOverview?.topInstitutes || analyticsOverview.topInstitutes.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="p-8 text-center text-text-muted">
-                      No usage data tracked yet.
-                    </td>
-                  </tr>
-                ) : (
-                  analyticsOverview.topInstitutes.map((inst, idx) => (
-                    <tr key={inst._id || inst.name} className="hover:bg-surface-secondary/40 transition-colors">
-                      <td className="p-3 font-bold text-text-muted align-top">{idx + 1}</td>
-                      <td className="p-3.5 font-bold text-text-primary align-top">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Building2 size={16} className="text-accent-primary shrink-0" />
-                          <span>{inst.name}</span>
-                        </div>
-                        {/* Under institute name, keep all dept which have a log to store */}
-                        {inst.departments && inst.departments.length > 0 && (
-                          <div className="mt-2.5 pt-2 border-t border-border-default/60 space-y-1.5">
-                            <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-text-muted flex items-center gap-1">
-                              <GraduationCap size={12} className="text-accent-primary" />
-                              Departments with Logged Usage:
-                            </div>
-                            <div className="flex flex-wrap gap-1.5">
-                              {inst.departments.map((dept, dIdx) => (
-                                <div
-                                  key={dIdx}
-                                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-surface-secondary border border-border-default text-xs font-mono shadow-sm"
-                                  title={`Total: ${dept.total} | Calculations: ${dept.cgpaCalculations} | Prints: ${dept.coverPagePrints}`}
-                                >
-                                  <span className="font-bold text-text-primary">{dept.department}</span>
-                                  <span className="px-1.5 py-0.2 rounded bg-accent-primary/10 text-accent-primary font-bold text-[10px]">
-                                    {dept.total} uses
-                                  </span>
-                                  <span className="text-[10px] text-text-muted">
-                                    ({dept.cgpaCalculations} calcs, {dept.coverPagePrints} prints)
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </td>
-                      <td className="p-3 text-center font-bold text-accent-primary align-top">
-                        {inst.usageCount.coverPagePrints || 0}
-                      </td>
-                      <td className="p-3 text-center font-bold text-emerald-500 align-top">
-                        {inst.usageCount.cgpaCalculations || 0}
-                      </td>
-                      <td className="p-3 text-center font-black text-text-primary text-sm align-top">
-                        {inst.usageCount.total || 0}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
 
       {/* TAB 4: QUESTIONS ARCHIVE */}
       {activeTab === "questions" && <QuestionArchiveTab />}
-
       {/* COURSE CREATE/EDIT MODAL */}
       {courseModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">

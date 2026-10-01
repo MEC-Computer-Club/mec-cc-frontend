@@ -10,8 +10,6 @@ import {
   Eye,
   EyeOff,
   ShieldCheck,
-  ShieldAlert,
-  CheckCircle2,
   Mail,
   Fingerprint,
 } from "lucide-react";
@@ -68,19 +66,7 @@ export function SecurityTab({ user }: SecurityTabProps) {
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="flex flex-col gap-1.5">
-            <label className="flex items-center gap-1.5 font-body text-xs font-bold text-text-primary">Institutional Account Verification</label>
-            <div className={`flex items-center gap-2 py-2.5 px-3.5 rounded-md font-mono text-xs sm:text-sm font-bold border shadow-[2px_2px_0px_0px_currentColor] ${
-              user.isVerified
-                ? "bg-emerald-500/10 border-accent-success text-accent-success"
-                : "bg-amber-500/10 border-accent-warning text-accent-warning"
-            }`}>
-              {user.isVerified ? <CheckCircle2 size={16} className="shrink-0" /> : <ShieldAlert size={16} className="shrink-0" />}
-              <span className="truncate">{user.isVerified ? "Verified Institutional Email" : "Email Pending Verification"}</span>
-            </div>
-          </div>
-
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="flex flex-col gap-1.5">
             <label className="flex items-center gap-1.5 font-body text-xs font-bold text-text-primary">Primary Login Email</label>
             <div className="flex items-center bg-surface-primary border-[1.5px] border-text-primary dark:border-border-default rounded-md shadow-[2px_2px_0px_0px_var(--border-brutalist)] dark:shadow-[2px_2px_0px_0px_var(--border-default)] overflow-hidden">
@@ -93,9 +79,7 @@ export function SecurityTab({ user }: SecurityTabProps) {
               />
             </div>
           </div>
-        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
           <div className="flex flex-col gap-1.5">
             <label className="flex items-center gap-1.5 font-body text-xs font-bold text-text-primary">Security Role Clearance</label>
             <div className="flex items-center bg-surface-primary border-[1.5px] border-text-primary dark:border-border-default rounded-md shadow-[2px_2px_0px_0px_var(--border-brutalist)] dark:shadow-[2px_2px_0px_0px_var(--border-default)] overflow-hidden">

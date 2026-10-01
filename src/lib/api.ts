@@ -1,8 +1,20 @@
 import Cookies from "js-cookie";
+import axios from "axios";
 
 export const API_BASE_URL = (
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
 ).replace(/\/+$/, "");
+
+// Global Axios interceptor for caller source attribution
+if (typeof window !== "undefined") {
+  axios.interceptors.request.use((config) => {
+    config.headers = config.headers || {};
+    if (!config.headers["X-Caller-Page"] && !config.headers["x-caller-page"]) {
+      config.headers["X-Caller-Page"] = window.location.pathname || "/";
+    }
+    return config;
+  });
+}
 
 export class ApiError extends Error {
   status: number;
@@ -30,6 +42,9 @@ async function request<T = any>(
   }
 
   if (typeof window !== "undefined") {
+    if (!headers.has("X-Caller-Page")) {
+      headers.set("X-Caller-Page", window.location.pathname || "/");
+    }
     if (!headers.has("Authorization")) {
       const token =
         localStorage.getItem("auth_token") || Cookies.get("auth_token");

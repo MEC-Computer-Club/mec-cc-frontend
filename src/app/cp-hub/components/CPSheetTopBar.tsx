@@ -13,7 +13,7 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-import { CPProblem } from "@/data/cpSheetProblems";
+import { CPProblem } from "@/lib/api/cpSheetProblems";
 import { CFUserInfo } from "../services/cfSyncService";
 
 interface CPSheetTopBarProps {

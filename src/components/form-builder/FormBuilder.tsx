@@ -47,6 +47,7 @@ const initialForm = {
 
 type InitialData = {
   _id: string;
+  code?: string;
   title: string;
   description?: string;
   eventId?: string;
@@ -271,7 +272,7 @@ export default function FormBuilder({ initialData }: { initialData?: InitialData
         );
       }
 
-      const createdId = res.data?.data?._id || res.data?.data?.id || initialData?._id;
+      const createdCodeOrId = res.data?.data?.code || res.data?.data?._id || res.data?.data?.id || initialData?.code || initialData?._id;
 
       if (res.data?.success || res.status === 201 || res.status === 200) {
         toast.success(isEditMode ? "Form updated successfully!" : "Form created and published successfully!");
@@ -280,10 +281,10 @@ export default function FormBuilder({ initialData }: { initialData?: InitialData
         if (isEditMode) {
           // After editing, go back to responses page
           router.push(`/dashboard/manage-events/forms/${initialData!._id}`);
-        } else if (createdId) {
+        } else if (createdCodeOrId) {
           setCreatedFormModal({
             isOpen: true,
-            formId: createdId,
+            formId: createdCodeOrId,
             title: formInfo.title,
           });
         } else {

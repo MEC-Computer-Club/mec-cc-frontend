@@ -22,6 +22,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     userRole === "admin" ||
     userRole === "moderator" ||
     userRole === "executive" ||
+    userRole === "advisor" ||
+    String(user?.clubRole || "").toLowerCase() === "advisor" ||
     String(user?.clubRole || "").toLowerCase() === "executive";
 
   // Redirect to login if not authenticated, or to /profile if not executive
@@ -65,7 +67,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const currentMenu = useMemo(() => {
     if (!user) return [];
-    return DASHBOARD_MENU[role || user.role] || [];
+    const r = String(role || user.role || "member").toLowerCase();
+    const cr = String(user?.clubRole || "").toLowerCase();
+    if (r === "advisor" || cr === "advisor") {
+      return DASHBOARD_MENU.advisor || [];
+    }
+    return DASHBOARD_MENU[r] || [];
   }, [user, role]);
 
   const handleTabChange = (tabKey: string) => {

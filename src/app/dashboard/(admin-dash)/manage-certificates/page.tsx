@@ -5,7 +5,7 @@ import axios from "axios";
 import Link from "next/link";
 import Image from "next/image";
 import toast from "react-hot-toast";
-import { getOptimizedImageUrl } from "@/data/gallery";
+import { getOptimizedImageUrl } from "@/lib/api/gallery";
 import {
   Award,
   Plus,
@@ -34,6 +34,8 @@ import FilterSelect from "@/app/dashboard/components/FilterSelect";
 import { CertificateTemplateCard, TemplateItem } from "@/components/certificates/CertificateTemplateCard";
 import { CertificateTemplateModal } from "@/components/certificates/CertificateTemplateModal";
 import { CertificateTemplatePreviewModal } from "@/components/certificates/CertificateTemplatePreviewModal";
+import { useAuth } from "@/context/AuthContext";
+import { useRoleGuard } from "@/hooks/useRoleGuard";
 
 import { API_BASE_URL } from "@/lib/api";
 
@@ -104,6 +106,10 @@ interface EventOption {
 }
 
 export default function CertificatesManagementPage() {
+  const { isAllowed, isLoading: guardLoading } = useRoleGuard(["admin", "moderator", "executive", "advisor"]);
+  const { user } = useAuth();
+  const canManage = ["admin", "moderator", "executive"].includes(user?.role || "");
+
   const [certificates, setCertificates] = useState<CertificateItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -620,6 +626,8 @@ export default function CertificatesManagementPage() {
     toast.success(`${label} copied to clipboard!`);
   };
 
+  if (guardLoading || !isAllowed) return null;
+
   return (
     <div className="space-y-6 pb-12 font-sans">
       {/* Top Header */}
@@ -635,6 +643,7 @@ export default function CertificatesManagementPage() {
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
+          {canManage && (
           <button
             type="button"
             onClick={() => setShowBulkModal(true)}
@@ -642,6 +651,8 @@ export default function CertificatesManagementPage() {
           >
             <Users size={16} /> Batch Issue Event (100+)
           </button>
+          )}
+          {canManage && (
           <button
             type="button"
             onClick={() => setShowSingleModal(true)}
@@ -649,6 +660,7 @@ export default function CertificatesManagementPage() {
           >
             <Plus size={16} /> Issue Single Award
           </button>
+          )}
         </div>
       </div>
 
@@ -834,7 +846,7 @@ export default function CertificatesManagementPage() {
                         <div className="w-7 h-7 rounded-md bg-surface-secondary border border-border-default flex items-center justify-center font-bold text-xs text-text-primary flex-shrink-0 overflow-hidden relative">
                           {cert.recipient?.imageUrl ? (
                             <img
-                              src={getOptimizedImageUrl(cert.recipient.imageUrl, 160)}
+                              src={getOptimizedImageUrl(cert.recipient.imageUrl, 200)}
                               alt=""
                               className="w-full h-full object-cover block"
                               style={{ objectPosition: cert.recipient.imagePosition || "50% 50%" }}

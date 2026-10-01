@@ -141,7 +141,10 @@ function CardPreview({
   );
 }
 
+import { useRoleGuard } from "@/hooks/useRoleGuard";
+
 export default function MemberApplicationReviewPage() {
+  const { isAllowed, isLoading: guardLoading } = useRoleGuard(["admin", "moderator", "executive"]);
   const params = useParams();
   const router = useRouter();
   const { user: currentUser, loading: authLoading } = useAuth();
@@ -158,6 +161,8 @@ export default function MemberApplicationReviewPage() {
 
   const isExecutive =
     currentUser?.role === "admin" || currentUser?.role === "moderator";
+
+  if (guardLoading || !isAllowed) return null;
 
   const fetchApplication = useCallback(async () => {
     if (!applicantId) return;

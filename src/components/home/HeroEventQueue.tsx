@@ -16,11 +16,11 @@ export function HeroEventQueue({ events }: HeroEventQueueProps) {
         <div className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
           <span className="font-mono text-xs font-extrabold tracking-wider uppercase text-text-primary">
-            Upcoming Events Queue
+            Club Events Schedule
           </span>
         </div>
-        <span className="font-mono text-[10px] font-bold py-0.5 px-2 bg-accent-primary-light text-accent-primary-text border border-accent-primary/20 rounded uppercase">
-          Live Schedule
+        <span className="font-mono text-[10px] font-bold py-0.5 px-2 bg-accent-primary-light text-text-primary border border-accent-primary/30 rounded uppercase">
+          Events
         </span>
       </div>
 
@@ -79,7 +79,7 @@ export function HeroEventQueue({ events }: HeroEventQueueProps) {
           })
         ) : (
           <div className="p-6 text-center text-sm text-text-secondary font-mono">
-            No upcoming events scheduled right now. Check back soon!
+            No events scheduled right now. Check back soon!
           </div>
         )}
       </div>

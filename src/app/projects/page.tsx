@@ -1,6 +1,6 @@
 export const revalidate = 60;
 import type { Metadata } from "next";
-import { getProjects } from "@/data/projects";
+import { getProjects } from "@/lib/api/projects";
 import { ProjectsClient } from "./components/ProjectsClient";
 
 export const metadata: Metadata = {

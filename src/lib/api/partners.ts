@@ -23,27 +23,30 @@ export interface ClubPartner {
   isActive: boolean;
 }
 
-export const partners: Partner[] = [];
-
 import { API_BASE_URL } from "@/lib/api";
 const API_URL = API_BASE_URL;
 
 export async function getPartners(options?: { forHome?: boolean }): Promise<Partner[]> {
   try {
-    const res = await fetch(`${API_URL}/api/sponsors?limit=50`, { next: { revalidate: 60 } });
+    const url = options?.forHome
+      ? `${API_URL}/api/sponsors?showOnHome=true&limit=50`
+      : `${API_URL}/api/sponsors?limit=50`;
+    let res = await fetch(url, { next: { revalidate: 0 } });
     if (res.ok) {
       const data = await res.json();
       let backendSponsors: any[] = (data.data || data.sponsors || []).filter(
         (s: any) => s.category !== "club_as_partner"
       );
 
-      if (options?.forHome) {
-        const hasExplicitHome = backendSponsors.some((s: any) => s.showOnHome === true);
-        if (hasExplicitHome) {
-          backendSponsors = backendSponsors.filter((s: any) => s.showOnHome === true);
-        } else {
-          // If no sponsor has been explicitly selected yet, default to active sponsors
-          backendSponsors = backendSponsors.filter((s: any) => s.showOnHome !== false && s.isActive !== false);
+      if (options?.forHome && backendSponsors.length === 0) {
+        const fallbackRes = await fetch(`${API_URL}/api/sponsors?active=true&limit=50`, {
+          next: { revalidate: 0 },
+        });
+        if (fallbackRes.ok) {
+          const fallbackData = await fallbackRes.json();
+          backendSponsors = (fallbackData.data || fallbackData.sponsors || []).filter(
+            (s: any) => s.category !== "club_as_partner"
+          );
         }
       }
 
@@ -84,7 +87,7 @@ export async function getPartners(options?: { forHome?: boolean }): Promise<Part
 export async function getClubPartners(): Promise<ClubPartner[]> {
   try {
     const res = await fetch(`${API_URL}/api/sponsors?category=club_as_partner&limit=50`, {
-      next: { revalidate: 60 },
+      next: { revalidate: 0 },
     });
     if (res.ok) {
       const data = await res.json();

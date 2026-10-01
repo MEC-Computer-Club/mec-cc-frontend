@@ -1,29 +1,30 @@
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 import type { Metadata } from "next";
 import Link from "next/link";
-import dynamic from "next/dynamic";
+import nextDynamic from "next/dynamic";
 import { Button } from "@/components/ui/Button";
 import { EventCard, ProjectCard } from "@/components/ui/Card";
-import { departments } from "@/data/departments";
-import { getHomeEvents } from "@/data/events";
-import { getFeaturedProjects } from "@/data/projects";
-import { getFeaturedBlogs } from "@/data/blog";
-import { getClubLeaderboard } from "@/data/cp";
-import { getHomeGalleryItems, getOptimizedImageUrl } from "@/data/gallery";
-import { getPartners } from "@/data/partners";
+import { departments } from "@/lib/api/departments";
+import { getHomeEvents } from "@/lib/api/events";
+import { getFeaturedProjects } from "@/lib/api/projects";
+import { getFeaturedBlogs } from "@/lib/api/blog";
+import { getClubLeaderboard } from "@/lib/api/cp";
+import { getHomeGalleryItems, getOptimizedImageUrl } from "@/lib/api/gallery";
+import { getPartners } from "@/lib/api/partners";
 import { getPageContent } from "@/lib/pageContent";
 import { HomeGallery } from "@/components/home/HomeGallery";
 import { HomeSponsors } from "@/components/home/HomeSponsors";
 import { HomeBlogs } from "@/components/home/HomeBlogs";
 
-const AlgorithmVisualizer = dynamic(
+const AlgorithmVisualizer = nextDynamic(
   () => import("@/components/ui/AlgorithmVisualizer").then((m) => m.AlgorithmVisualizer),
   {
     loading: () => <div className="w-full max-w-[500px] h-[380px] bg-surface-secondary rounded-xl animate-pulse" />,
   }
 );
 
-const AboutContactGlimpse = dynamic(
+const AboutContactGlimpse = nextDynamic(
   () => import("@/components/home/AboutContactGlimpse").then((m) => m.AboutContactGlimpse),
   {
     loading: () => <div className="w-full h-96 bg-surface-secondary/50 rounded-xl animate-pulse" />,
@@ -137,14 +138,14 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ===== 3. UPCOMING EVENTS SECTION (Max 5, 3+2 Centered Desktop) ===== */}
-      <section className="section" id="upcoming-events">
+      {/* ===== 3. CLUB EVENTS SECTION (Upcoming, Ongoing, or Past) ===== */}
+      <section className="section" id="events">
         <div className="container">
           <div className="text-center max-w-[640px] mx-auto mb-[var(--space-6)] max-[768px]:mb-[var(--space-4)]">
-            <span className="kicker">What&apos;s happening</span>
-            <h2>Upcoming Events Queue</h2>
+            <span className="kicker">Events & Activities</span>
+            <h2>Club Events</h2>
             <p className="text-lg text-text-tertiary max-[768px]:text-base">
-              Never an empty calendar. Here&apos;s what&apos;s on the horizon.
+              Workshops, programming contests, tech seminars, and hackathons — check out what&apos;s happening and explore past highlights.
             </p>
           </div>
 
@@ -263,7 +264,7 @@ export default async function HomePage() {
                     entry.imageUrl ||
                     entry.avatar ||
                     `https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(entry.name)}&backgroundColor=transparent`;
-                  const avatarSrc = getOptimizedImageUrl(rawAvatarSrc, 64);
+                  const avatarSrc = getOptimizedImageUrl(rawAvatarSrc, 200);
                   const isTop1 = entry.rank === 1;
                   const isTop2 = entry.rank === 2;
                   const isTop3 = entry.rank === 3;

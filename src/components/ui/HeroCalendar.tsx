@@ -54,7 +54,7 @@ export function HeroCalendar({ events }: HeroCalendarProps) {
         className={`aspect-square flex items-center justify-center relative cursor-default rounded-md transition-all duration-150 text-text-primary hover:bg-white/40 dark:hover:bg-white/5 ${
           isToday ? "font-bold before:content-[''] before:absolute before:inset-[2px] before:border-2 before:border-accent-primary before:rounded-md before:z-10" : ""
         } ${
-          hasEvent ? "bg-accent-primary-light text-accent-primary-text dark:bg-accent-primary/20 dark:text-accent-primary cursor-pointer hover:!bg-accent-primary hover:!text-accent-primary-text hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(132,204,22,0.3)]" : ""
+          hasEvent ? "bg-accent-primary-light text-text-primary font-bold dark:bg-accent-primary/20 dark:text-accent-primary cursor-pointer hover:!bg-accent-primary hover:!text-accent-primary-text hover:-translate-y-0.5 hover:shadow-[0_4px_12px_rgba(132,204,22,0.3)]" : ""
         }`}
         onMouseEnter={() => hasEvent && setHoveredEvent(dayEvents[0].title)}
         onMouseLeave={() => setHoveredEvent(null)}

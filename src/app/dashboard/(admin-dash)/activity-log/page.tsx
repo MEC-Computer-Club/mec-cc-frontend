@@ -4,29 +4,25 @@ import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
   ShieldAlert,
-  ShieldCheck,
   Search,
   RotateCcw,
-  Calendar,
   User,
   Clock,
-  ArrowRight,
   ChevronDown,
   ChevronUp,
   FileText,
-  UserCheck,
-  Package,
-  Sparkles,
-  AlertCircle,
-  Filter,
-  CheckCircle2,
   Lock,
+  Download,
+  Activity,
+  Layers,
+  Users,
+  Award,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import FilterSelect, { FilterOption } from "@/app/dashboard/components/FilterSelect";
-import { getAdminLogs, AdminLogEntry, AdminActionType, AdminTargetType } from "@/lib/auditLogger";
+import { getAdminLogs, AdminLogEntry } from "@/lib/auditLogger";
 
-export default function AdminLogPage() {
+export default function DashboardActivityLogPage() {
   const { user, isLoading, isAuthenticated } = useAuth();
   const [logs, setLogs] = useState<AdminLogEntry[]>(() => getAdminLogs());
   const [searchQuery, setSearchQuery] = useState("");
@@ -35,8 +31,7 @@ export default function AdminLogPage() {
   const [actorFilter, setActorFilter] = useState("all");
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
 
-  // Strictly enforce Admin only access:
-  // "In activity log admin and moderator both's activity will be stored. but it will be accessible by only admins"
+  // Strictly enforce Admin only access for staff activity log
   const isStrictAdmin = user?.role === "admin";
 
   // Subscribe to live audit log updates
@@ -87,8 +82,9 @@ export default function AdminLogPage() {
   // Filtered log list
   const filteredLogs = useMemo(() => {
     return logs.filter((entry) => {
-      const q = searchQuery.toLowerCase();
+      const q = searchQuery.toLowerCase().trim();
       const matchesSearch =
+        !q ||
         entry.description.toLowerCase().includes(q) ||
         entry.actorName.toLowerCase().includes(q) ||
         entry.targetTitle.toLowerCase().includes(q) ||
@@ -107,10 +103,21 @@ export default function AdminLogPage() {
     setExpandedLogId((prev) => (prev === id ? null : id));
   };
 
+  // Export logs to JSON
+  const handleExportLogs = () => {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(filteredLogs, null, 2));
+    const downloadAnchor = document.createElement("a");
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `mec-activity-logs-${new Date().toISOString().split("T")[0]}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  };
+
   // ── Access Denied Screen if user is not strictly an admin ──
   if (!isLoading && (!isAuthenticated || !isStrictAdmin)) {
     return (
-      <div className="min-h-[75vh] flex items-center justify-center p-4">
+      <div className="min-h-[60vh] flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-surface-elevated border-2 border-accent-error rounded-xl p-6 sm:p-8 text-center shadow-[6px_6px_0px_var(--accent-error)]">
           <div className="w-14 h-14 rounded-full bg-accent-error/20 border-2 border-accent-error flex items-center justify-center mx-auto mb-4 text-accent-error">
             <Lock size={28} />
@@ -124,16 +131,10 @@ export default function AdminLogPage() {
           </p>
           <div className="flex flex-col gap-2.5">
             <Link
-              href="/login?redirect=/admin/log"
-              className="w-full py-2.5 rounded-lg bg-text-primary text-surface-primary dark:bg-white dark:text-black font-bold text-xs sm:text-sm border-2 border-border-default shadow-[3px_3px_0px_var(--accent-primary)] hover:translate-x-0.5 hover:translate-y-0.5 transition block text-center"
-            >
-              Sign In as Administrator
-            </Link>
-            <Link
               href="/dashboard"
-              className="text-xs font-mono font-bold text-text-tertiary hover:text-text-primary pt-2"
+              className="w-full py-2.5 rounded-lg bg-accent-primary text-text-inverse font-bold text-xs sm:text-sm border-2 border-border-default shadow-[3px_3px_0px_var(--border-default)] hover:translate-x-0.5 hover:translate-y-0.5 transition block text-center"
             >
-              Return to Dashboard
+              Return to Platform Overview
             </Link>
           </div>
         </div>
@@ -142,52 +143,63 @@ export default function AdminLogPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto py-8 px-4 sm:px-6 space-y-6">
+    <div className="space-y-6 pb-12">
       {/* ── Page Header ── */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-border-default pb-5">
         <div>
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-accent-error/15 text-accent-error font-mono font-bold text-[11px] mb-2 border border-accent-error/40">
-            <ShieldAlert size={13} />
-            <span>UNLINKED INTERNAL AUDIT TRAIL — ADMIN ACCESS ONLY</span>
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-accent-primary-light text-text-primary font-mono font-bold text-[11px] mb-2 border border-border-default">
+            <Activity size={13} className="text-accent-primary" />
+            <span>INSIGHTS & AUDIT LOG</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-text-primary tracking-tight flex items-center gap-3">
-            <span>Staff Activity & System Audit Log</span>
+          <h1 className="text-2xl sm:text-3xl font-black text-text-primary tracking-tight">
+            Activity Log
           </h1>
           <p className="text-xs sm:text-sm text-text-secondary font-mono mt-1">
             Immutable tracking of actions performed by Admins and Moderators with previous-version diffs
           </p>
         </div>
 
-        {/* Current user badge */}
-        <div className="flex items-center gap-3 bg-surface-elevated border border-border-default rounded-xl p-3 shadow-[3px_3px_0px_var(--border-default)]">
-          <div className="w-9 h-9 rounded-lg bg-accent-primary text-accent-primary-text font-black text-sm flex items-center justify-center border border-border-brutalist">
-            {user?.fullName?.[0] || "A"}
-          </div>
-          <div>
-            <div className="text-xs font-bold text-text-primary flex items-center gap-1.5">
-              <span>{user?.fullName || "Admin"}</span>
-              <span className="text-[10px] font-mono px-1.5 py-0.2 bg-text-primary text-surface-primary dark:bg-white dark:text-black rounded font-bold">
-                ADMIN
-              </span>
+        {/* Header Actions */}
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleExportLogs}
+            className="flex items-center gap-2 px-3.5 py-2 rounded-lg border border-border-default bg-surface-elevated text-xs font-bold text-text-secondary hover:text-text-primary transition shadow-[2px_2px_0px_0px_var(--border-default)] hover:shadow-[3px_3px_0px_0px_var(--accent-primary)] hover:border-accent-primary cursor-pointer"
+          >
+            <Download size={14} />
+            <span>Export JSON</span>
+          </button>
+
+          <div className="flex items-center gap-2.5 bg-surface-elevated border border-border-default rounded-xl p-2.5 shadow-[2px_2px_0px_var(--border-default)]">
+            <div className="w-8 h-8 rounded-lg bg-accent-primary text-text-inverse font-black text-xs flex items-center justify-center border border-border-brutalist">
+              {user?.fullName?.[0] || "A"}
             </div>
-            <p className="text-[11px] text-text-tertiary font-mono">{user?.email || "admin@meccomputerclub.org"}</p>
+            <div>
+              <div className="text-xs font-bold text-text-primary flex items-center gap-1">
+                <span>{user?.fullName || "Admin"}</span>
+                <span className="text-[9px] font-mono px-1 py-0.2 bg-text-primary text-surface-primary dark:bg-white dark:text-black rounded font-bold uppercase">
+                  {user?.role || "ADMIN"}
+                </span>
+              </div>
+              <p className="text-[10px] text-text-tertiary font-mono">{user?.email || "admin@meccomputerclub.org"}</p>
+            </div>
           </div>
         </div>
       </div>
 
       {/* ── Summary Counters ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <div className="bg-surface-elevated border border-border-default rounded-xl p-3.5 shadow-[3px_3px_0px_var(--border-default)]">
+        <div className="bg-surface-elevated border border-border-default rounded-xl p-4 shadow-[3px_3px_0px_var(--border-default)]">
           <span className="text-[11px] font-mono font-bold text-text-secondary uppercase">Total Logged Actions</span>
-          <div className="mt-1 flex items-baseline gap-2">
+          <div className="mt-1.5 flex items-baseline gap-2">
             <span className="text-2xl sm:text-3xl font-black text-text-primary">{logs.length}</span>
             <span className="text-xs font-mono text-text-tertiary">events</span>
           </div>
         </div>
 
-        <div className="bg-surface-elevated border border-border-default rounded-xl p-3.5 shadow-[3px_3px_0px_var(--border-default)]">
+        <div className="bg-surface-elevated border border-border-default rounded-xl p-4 shadow-[3px_3px_0px_var(--border-default)]">
           <span className="text-[11px] font-mono font-bold text-text-secondary uppercase">Asset Status Changes</span>
-          <div className="mt-1 flex items-baseline gap-2">
+          <div className="mt-1.5 flex items-baseline gap-2">
             <span className="text-2xl sm:text-3xl font-black text-text-primary">
               {logs.filter((l) => l.targetType === "ASSET").length}
             </span>
@@ -195,9 +207,9 @@ export default function AdminLogPage() {
           </div>
         </div>
 
-        <div className="bg-surface-elevated border border-border-default rounded-xl p-3.5 shadow-[3px_3px_0px_var(--border-default)]">
+        <div className="bg-surface-elevated border border-border-default rounded-xl p-4 shadow-[3px_3px_0px_var(--border-default)]">
           <span className="text-[11px] font-mono font-bold text-text-secondary uppercase">Member Decisions</span>
-          <div className="mt-1 flex items-baseline gap-2">
+          <div className="mt-1.5 flex items-baseline gap-2">
             <span className="text-2xl sm:text-3xl font-black text-text-primary">
               {logs.filter((l) => l.targetType === "MEMBER").length}
             </span>
@@ -205,9 +217,9 @@ export default function AdminLogPage() {
           </div>
         </div>
 
-        <div className="bg-surface-elevated border border-border-default rounded-xl p-3.5 shadow-[3px_3px_0px_var(--border-default)]">
+        <div className="bg-surface-elevated border border-border-default rounded-xl p-4 shadow-[3px_3px_0px_var(--border-default)]">
           <span className="text-[11px] font-mono font-bold text-text-secondary uppercase">Content & Events</span>
-          <div className="mt-1 flex items-baseline gap-2">
+          <div className="mt-1.5 flex items-baseline gap-2">
             <span className="text-2xl sm:text-3xl font-black text-text-primary">
               {logs.filter((l) => l.targetType === "EVENT" || l.targetType === "PAGE").length}
             </span>
@@ -216,8 +228,8 @@ export default function AdminLogPage() {
         </div>
       </div>
 
-      {/* ── Search & Filter Controls (Using Neo-Brutalist FilterSelect) ── */}
-      <div className="bg-surface-elevated border border-border-default rounded-xl p-4 shadow-[4px_4px_0px_var(--border-default)] flex flex-col md:flex-row gap-3 md:items-center justify-between">
+      {/* ── Search & Filter Controls (Neo-Brutalist FilterSelect) ── */}
+      <div className="bg-surface-elevated border border-border-default rounded-xl p-4 shadow-[3px_3px_0px_var(--border-default)] flex flex-col md:flex-row gap-3 md:items-center justify-between">
         {/* Search bar */}
         <div className="relative flex-1">
           <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-tertiary" />
@@ -281,7 +293,7 @@ export default function AdminLogPage() {
       {/* ── Log Stream ── */}
       <div className="space-y-3">
         {filteredLogs.length === 0 ? (
-          <div className="bg-surface-elevated border border-border-default rounded-xl p-12 text-center text-text-tertiary shadow-[4px_4px_0px_var(--border-default)]">
+          <div className="bg-surface-elevated border border-border-default rounded-xl p-12 text-center text-text-tertiary shadow-[3px_3px_0px_var(--border-default)]">
             <FileText size={40} className="mx-auto mb-2 opacity-40" />
             <p className="font-semibold text-text-secondary">No activity log entries match your filter</p>
             <p className="text-xs mt-1">Try resetting the filters or modifying assets in the dashboard</p>
@@ -309,7 +321,7 @@ export default function AdminLogPage() {
                           className={`text-[9px] px-1 py-0.2 rounded uppercase font-black ${
                             entry.actorRole === "admin"
                               ? "bg-text-primary text-surface-primary dark:bg-white dark:text-black"
-                              : "bg-accent-primary text-black font-extrabold"
+                              : "bg-accent-primary text-text-inverse font-extrabold"
                           }`}
                         >
                           {entry.actorRole}
@@ -322,11 +334,11 @@ export default function AdminLogPage() {
                           entry.action === "STATUS_CHANGE"
                             ? "bg-accent-primary/25 text-text-primary dark:text-white border border-accent-primary"
                             : entry.action === "APPROVE"
-                            ? "bg-accent-success/20 text-accent-success border border-accent-success"
+                            ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/40"
                             : entry.action === "CREATE"
                             ? "bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/40"
                             : entry.action === "DELETE"
-                            ? "bg-accent-error/20 text-accent-error border border-accent-error"
+                            ? "bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/40"
                             : "bg-surface-secondary text-text-secondary border border-border-default"
                         }`}
                       >
@@ -395,12 +407,12 @@ export default function AdminLogPage() {
                             <tr key={idx} className="hover:bg-surface-secondary/40">
                               <td className="py-2.5 px-3 font-bold text-text-primary">{d.field}</td>
                               <td className="py-2.5 px-3">
-                                <span className="inline-block px-2 py-0.5 rounded bg-accent-error/15 text-accent-error font-semibold line-through decoration-accent-error/60">
+                                <span className="inline-block px-2 py-0.5 rounded bg-rose-500/15 text-rose-600 dark:text-rose-400 font-semibold line-through decoration-rose-500/60">
                                   {String(d.previousValue ?? "N/A")}
                                 </span>
                               </td>
                               <td className="py-2.5 px-3">
-                                <span className="inline-block px-2 py-0.5 rounded bg-accent-success/15 text-accent-success font-bold">
+                                <span className="inline-block px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 font-bold">
                                   {String(d.newValue ?? "N/A")}
                                 </span>
                               </td>

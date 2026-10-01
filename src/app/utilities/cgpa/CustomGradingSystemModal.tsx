@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { X, Plus, Trash2, Check, RotateCcw, SlidersHorizontal } from "lucide-react";
-import { GradeScale, DEFAULT_GRADING_SCALES } from "@/data/syllabusCourses";
+import { GradeScale, DEFAULT_GRADING_SCALES } from "@/lib/api/syllabusCourses";
 import { toast } from "react-hot-toast";
 
 interface CustomGradingSystemModalProps {

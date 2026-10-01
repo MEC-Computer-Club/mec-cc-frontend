@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Upload, X, Loader2, Sparkles, ClipboardPaste, Trash2, CheckCircle2 } from "lucide-react";
+import { Upload, X, Loader2, Sparkles, ClipboardPaste, Trash2, CheckCircle2, Move } from "lucide-react";
 import Image from "next/image";
 import axios from "axios";
 import { API_BASE_URL } from "@/lib/api";
@@ -24,6 +24,9 @@ export interface UniversalImageDropzoneProps {
   value?: string;
   onChange?: (url: string) => void;
   folder?: string;
+  // Positioning support
+  imagePosition?: string;
+  onAdjustPosition?: () => void;
   // Common
   currentUrl?: string; // fallback if selectedFile is null
   onClear?: () => void;
@@ -40,6 +43,8 @@ export default function UniversalImageDropzone({
   value,
   onChange,
   folder = "uploads",
+  imagePosition,
+  onAdjustPosition,
   currentUrl,
   onClear,
   disabled = false,
@@ -323,6 +328,7 @@ export default function UniversalImageDropzone({
                 src={preview}
                 alt="Image Preview"
                 className="w-full h-full object-cover"
+                style={{ objectPosition: imagePosition || "50% 50%" }}
               />
             </div>
             <div className="flex-1 min-w-0 text-center sm:text-left space-y-1 pointer-events-none">
@@ -334,6 +340,11 @@ export default function UniversalImageDropzone({
                 ) : (
                   <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700">
                     <CheckCircle2 size={12} className="text-indigo-500" /> Saved Cloud Image
+                  </span>
+                )}
+                {imagePosition && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 border border-slate-300 dark:border-slate-700">
+                    <Move size={11} /> {imagePosition}
                   </span>
                 )}
               </div>
@@ -349,14 +360,30 @@ export default function UniversalImageDropzone({
                 Click, drag new image, or paste (Ctrl+V) to replace
               </p>
             </div>
-            <button
-              type="button"
-              onClick={handleClear}
-              className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition shrink-0 z-10 pointer-events-auto"
-              title="Remove image"
-            >
-              <Trash2 size={16} />
-            </button>
+            <div className="flex items-center gap-1.5 shrink-0 z-10 pointer-events-auto">
+              {onAdjustPosition && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onAdjustPosition();
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition cursor-pointer shadow-2xs"
+                  title="Adjust image position & framing"
+                >
+                  <Move size={13} />
+                  <span>Position</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleClear}
+                className="p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 transition cursor-pointer"
+                title="Remove image"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
           </div>
         ) : (
           <div className="flex flex-col items-center justify-center text-center py-4 space-y-2 pointer-events-none">

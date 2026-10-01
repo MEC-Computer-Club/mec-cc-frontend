@@ -134,7 +134,7 @@ function VerifyContent() {
         <div className="text-center max-w-2xl mx-auto mb-8 print:hidden">
           <span className="kicker">
             <ShieldCheck size={14} className="inline align-middle mr-1" />
-            Official Registry &bull; MEC-CC
+            Official Registry &bull; MEC Computer Club
           </span>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-text-primary tracking-tight mb-3">
             Verification &amp; Member Lookup
@@ -387,7 +387,7 @@ function VerifyContent() {
                         ) : (
                           <div className="col-span-2">
                             <span className="block text-[10px] text-slate-400 uppercase font-semibold">Issuer Authority</span>
-                            <strong className="text-slate-900">MEC-CC Executive Board</strong>
+                            <strong className="text-slate-900">MEC Computer Club Executive Board</strong>
                           </div>
                         )}
                       </div>
@@ -508,7 +508,7 @@ function VerifyContent() {
                           <h3 className="text-2xl font-black text-text-primary">
                             {memberData.member.fullName}
                           </h3>
-                          <span className="font-mono text-[10px] font-extrabold uppercase py-0.5 px-2 rounded bg-accent-primary-light text-accent-primary-text border border-accent-primary/20">
+                          <span className="font-mono text-[10px] font-extrabold uppercase py-0.5 px-2 rounded bg-accent-primary-light text-text-primary border border-accent-primary/30">
                             {memberData.member.clubRole || "MEMBER"}
                           </span>
                         </div>

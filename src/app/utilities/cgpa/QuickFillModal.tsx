@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Sparkles, X, BookOpen, GraduationCap, Calendar, Layers, Loader2 } from "lucide-react";
 import { Select } from "@/components/ui/Select";
 import { InstituteSelector } from "./InstituteSelector";
-import { getAvailableDepartmentsForCollege } from "@/data/syllabusCourses";
+import { getAvailableDepartmentsForCollege } from "@/lib/api/syllabusCourses";
 
 interface QuickFillModalProps {
   isOpen: boolean;

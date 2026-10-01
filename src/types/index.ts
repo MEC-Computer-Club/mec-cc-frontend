@@ -98,8 +98,12 @@ export interface Event {
   type: "workshop" | "contest" | "seminar" | "social" | "hackathon" | "gaming" | string;
   department?: string;
   image: string;
+  coverImageUrl?: string;
+  bannerImageUrl?: string;
+  coverImagePosition?: string;
+  bannerImagePosition?: string;
   speakers?: string[];
-  status: "upcoming" | "ongoing" | "past";
+  status: "scheduled" | "ongoing" | "completed" | "cancelled" | "postponed" | "upcoming" | "past";
   registrationUrl?: string;
   registrationType?: "individual" | "team";
   teamSize?: { min: number; max: number };
@@ -113,6 +117,7 @@ export interface Event {
   sponsors?: EventSponsorItem[];
   customHtmlSection?: string;
   attendeeCount?: number;
+  registeredCount?: number;
   tags?: string[];
   linkedForm?: string;
   media?: EventMediaItem[];
@@ -271,7 +276,7 @@ export interface AuthUser {
   email: string;
   fullName: string;
   studentId: string;
-  role: "guest" | "member" | "moderator" | "admin" | "alumni" | "executive";
+  role: "guest" | "member" | "moderator" | "admin" | "alumni" | "executive" | "advisor";
   clubRole?: "member" | "executive" | "alumni" | "advisor";
   /** @deprecated Use designation */
   customRole?: string;
@@ -318,7 +323,6 @@ export interface DesignationItem {
   title: string;
   slug: string;
   category: "executive" | "advisor" | "general" | "alumni";
-  wing?: string;
   order: number;
   maxSeats?: number;
   defaultRole?: "admin" | "moderator" | "member";
@@ -369,8 +373,13 @@ export interface MembersData {
   imageUrl: string;
   imagePosition?: string;
   email: string;
+  contactNumber?: string;
   role: string;
+  clubRole?: string;
+  studentId?: string;
   applicationStatus: string;
   profileStatus: string;
   activityCounts: number;
+  isOnline?: boolean;
+  lastActiveAt?: string | null;
 }

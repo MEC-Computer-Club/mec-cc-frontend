@@ -45,3 +45,8 @@ next-env.d.ts
 club.db
 *.log
 .vscode/
+
+# Media Management (Kept in local development)
+src/app/dashboard/(admin-dash)/media/
+src/lib/api/mediaManager.ts
+

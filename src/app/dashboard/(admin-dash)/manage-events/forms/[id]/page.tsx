@@ -42,6 +42,7 @@ interface FormField {
 }
 interface FormData {
   _id: string;
+  code?: string;
   title: string;
   description?: string;
   fields: FormField[];
@@ -267,7 +268,7 @@ export default function FormResponsesPage() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / ROWS_PER_PAGE));
   const paginated = filtered.slice((page - 1) * ROWS_PER_PAGE, page * ROWS_PER_PAGE);
 
-  const publicLink = typeof window !== "undefined" ? `${window.location.origin}/forms/${id}` : `/forms/${id}`;
+  const publicLink = typeof window !== "undefined" ? `${window.location.origin}/forms/${form?.code || id}` : `/forms/${form?.code || id}`;
   const handleCopy = () => {
     navigator.clipboard.writeText(publicLink).then(() => {
       setCopied(true);
@@ -342,17 +343,23 @@ export default function FormResponsesPage() {
   return (
     <div className="space-y-8 pb-12">
       {/* Header */}
-      <div className="flex items-start gap-3">
-        <button onClick={() => router.back()} className="flex items-center gap-1.5 text-sm font-semibold text-text-secondary hover:text-text-primary transition mt-1.5 shrink-0">
-          <ArrowLeft size={16} /> Back
-        </button>
-        <div className="flex-1 min-w-0">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div className="min-w-0 flex-1 space-y-2">
+          <button
+            onClick={() => router.back()}
+            className="inline-flex items-center gap-1.5 text-sm font-semibold text-text-secondary hover:text-text-primary transition"
+          >
+            <ArrowLeft size={16} /> Back
+          </button>
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-2xl font-semibold text-text-primary" style={{ wordBreak: "break-word" }}>{form?.title}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-text-primary break-words">
+              {form?.title}
+            </h1>
             {form?.status && <StatusBadge status={form.status} />}
           </div>
         </div>
-        <div className="flex items-center gap-1.5 shrink-0 mt-1">
+
+        <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap shrink-0 self-start sm:self-auto">
           {/* Icon-only action buttons */}
           <button
             title="Edit Form"
@@ -372,7 +379,7 @@ export default function FormResponsesPage() {
           </button>
           <a
             title="View Form"
-            href={`/forms/${id}`}
+            href={`/forms/${form?.code || id}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center border border-border-default rounded-lg bg-surface-elevated hover:border-accent-primary hover:shadow-[2px_2px_0px_0px_var(--accent-primary)] transition"

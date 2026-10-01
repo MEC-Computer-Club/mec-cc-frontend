@@ -11,7 +11,7 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-import { CPProblem, getRatingColor } from "@/data/cpSheetProblems";
+import { CPProblem, getRatingColor } from "@/lib/api/cpSheetProblems";
 
 interface CPSheetProblemTableProps {
   problems: CPProblem[];

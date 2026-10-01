@@ -23,7 +23,8 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { AvatarPositionModal } from "./AvatarPositionModal";
-import { coverPresets, CoverPreset } from "@/data/coverPresets";
+import { CoverPresetModal } from "./CoverPresetModal";
+import { coverPresets, CoverPreset } from "@/lib/api/coverPresets";
 
 /* Helper to format social handles into clean URLs */
 function toSocialUrl(platform: string, input: string): string {
@@ -364,42 +365,24 @@ export const ProfileEditTab = forwardRef<ProfileEditTabHandle, ProfileEditTabPro
 
   const [uploadingCover, setUploadingCover] = useState(false);
   const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
+  const [showCoverPresetModal, setShowCoverPresetModal] = useState<boolean>(false);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
-  const handleCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const [pendingCoverFile, setPendingCoverFile] = useState<File | null>(null);
+
+  const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Cover photo exceeds 5MB size limit.");
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error("Cover photo exceeds 15MB size limit.");
       if (coverInputRef.current) coverInputRef.current.value = "";
       return;
     }
 
-    const localUrl = URL.createObjectURL(file);
-    setCoverPreviewUrl(localUrl);
-    setUploadingCover(true);
-
-    try {
-      const formData = new FormData();
-      formData.append("cover", file);
-
-      const userId = user.id || user._id;
-      const res = await api.upload(`/api/users/update/cover/${userId}`, formData, { method: "PATCH" });
-      toast.success("Cover photo updated successfully!");
-      if (res?.user?.coverUrl) {
-        setCoverPreviewUrl(res.user.coverUrl);
-      }
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      await onProfileUpdated();
-    } catch (err: any) {
-      setCoverPreviewUrl(null);
-      const msg = err instanceof ApiError ? err.message : err?.message || "Failed to upload cover photo";
-      toast.error(msg);
-    } finally {
-      setUploadingCover(false);
-      if (coverInputRef.current) coverInputRef.current.value = "";
-    }
+    setPendingCoverFile(file);
+    setShowCoverPresetModal(true);
+    if (coverInputRef.current) coverInputRef.current.value = "";
   };
 
   const [applyingPreset, setApplyingPreset] = useState<string | null>(null);
@@ -477,78 +460,144 @@ export const ProfileEditTab = forwardRef<ProfileEditTabHandle, ProfileEditTabPro
           <div>
             <div className="mb-4 pb-2 border-b-[1.5px] border-border-default">
               <h2 className="flex items-center gap-2 font-heading text-base sm:text-lg font-extrabold text-text-primary m-0">
-                <span className="inline-flex items-center justify-center w-6 h-6 rounded-sm bg-accent-primary text-accent-primary-text font-mono text-xs font-black border border-black">01</span> Identity &amp; Profile Photo
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-sm bg-accent-primary text-accent-primary-text font-mono text-xs font-black border border-black">01</span> Identity, Profile Photo &amp; Cover Banner
               </h2>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 mt-4 text-center sm:text-left">
-              <button 
-                type="button" 
-                className="w-20 h-20 sm:w-[90px] sm:h-[90px] rounded-md border-2 border-dashed border-border-brutalist dark:border-border-default bg-surface-secondary cursor-pointer overflow-hidden flex items-center justify-center relative transition-all duration-150 shrink-0 hover:border-accent-primary hover:bg-accent-primary-light" 
-                onClick={() => {
-                  setPendingAvatarFile(null);
-                  setShowAvatarModal(true);
-                }} 
-                disabled={uploadingPhoto}
-                aria-label="Upload profile picture"
-              >
-                {(previewUrl || user.imageUrl) ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img 
-                    key={previewUrl || user.imageUrl}
-                    src={previewUrl || user.imageUrl} 
-                    alt={user.fullName} 
-                    className="w-full h-full object-cover" 
-                    style={{ objectPosition: (user as any).imagePosition || "50% 50%" }}
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                      const fallback = e.currentTarget.parentElement?.querySelector('.avatar-upload-placeholder');
-                      if (fallback) (fallback as HTMLElement).style.display = 'flex';
-                    }}
-                  />
-                ) : null}
-                <div 
-                  className="avatar-upload-placeholder flex flex-col items-center gap-1 text-[10px] font-bold text-text-secondary" 
-                  style={{ display: (previewUrl || user.imageUrl) ? 'none' : 'flex' }}
+            {/* Visual Assets Grid: Profile Picture + Cover Banner */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4 pb-5 border-b border-border-default">
+              {/* Profile Photo */}
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 text-center sm:text-left">
+                <button 
+                  type="button" 
+                  className="w-20 h-20 sm:w-[90px] sm:h-[90px] rounded-md border-2 border-dashed border-border-brutalist dark:border-border-default bg-surface-secondary cursor-pointer overflow-hidden flex items-center justify-center relative transition-all duration-150 shrink-0 hover:border-accent-primary hover:bg-accent-primary-light" 
+                  onClick={() => {
+                    setPendingAvatarFile(null);
+                    setShowAvatarModal(true);
+                  }} 
+                  disabled={uploadingPhoto}
+                  aria-label="Upload profile picture"
                 >
-                  <Upload size={22} className="text-text-primary" />
-                  <span>{uploadingPhoto ? "Uploading..." : "Upload Photo"}</span>
-                </div>
-              </button>
-
-              <input 
-                ref={fileInputRef} 
-                type="file" 
-                accept="image/png,image/jpeg,image/webp" 
-                onChange={handleAvatarUpload} 
-                className="hidden" 
-              />
-
-              <div className="flex flex-col gap-1 text-xs">
-                <p className="font-bold text-text-primary m-0">Profile Photo <span className="text-accent-error">*</span></p>
-                <div className="font-bold text-xs text-accent-primary">
-                  <p className="m-0">Requirements:</p>
-                  <ul className="pl-5 mt-0.5 list-disc text-text-secondary font-normal">
-                    <li>PNG, JPG, or WEBP (auto-compressed).</li>
-                    <li>Easily reposition and align with interactive crop.</li>
-                  </ul>
-                </div>
-                {(user.imageUrl || previewUrl) && (
-                  <div className="mt-1">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPendingAvatarFile(null);
-                        setShowAvatarModal(true);
+                  {(previewUrl || user.imageUrl) ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img 
+                      key={previewUrl || user.imageUrl}
+                      src={previewUrl || user.imageUrl} 
+                      alt={user.fullName} 
+                      className="w-full h-full object-cover" 
+                      style={{ objectPosition: (user as any).imagePosition || "50% 50%" }}
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none';
+                        const fallback = e.currentTarget.parentElement?.querySelector('.avatar-upload-placeholder');
+                        if (fallback) (fallback as HTMLElement).style.display = 'flex';
                       }}
-                      className="inline-flex items-center gap-1.5 px-2 py-1 text-[11px] font-bold text-accent-text-on-surface bg-surface-secondary border border-border-default rounded hover:border-accent-primary transition-colors cursor-pointer"
-                    >
-                      <Move size={12} />
-                      <span>Adjust / Reposition Photo</span>
-                    </button>
+                    />
+                  ) : null}
+                  <div 
+                    className="avatar-upload-placeholder flex flex-col items-center gap-1 text-[10px] font-bold text-text-secondary" 
+                    style={{ display: (previewUrl || user.imageUrl) ? 'none' : 'flex' }}
+                  >
+                    <Upload size={22} className="text-text-primary" />
+                    <span>{uploadingPhoto ? "Uploading..." : "Upload Photo"}</span>
                   </div>
-                )}
-                {photoError && <p role="alert" className="text-xs text-accent-error font-semibold m-0">{photoError}</p>}
+                </button>
+
+                <input 
+                  ref={fileInputRef} 
+                  type="file" 
+                  accept="image/png,image/jpeg,image/webp" 
+                  onChange={handleAvatarUpload} 
+                  className="hidden" 
+                />
+
+                <div className="flex flex-col gap-1 text-xs">
+                  <p className="font-bold text-text-primary m-0">Profile Picture <span className="text-accent-error">*</span></p>
+                  <div className="font-bold text-xs text-accent-primary">
+                    <p className="m-0">Requirements:</p>
+                    <ul className="pl-5 mt-0.5 list-disc text-text-secondary font-normal">
+                      <li>PNG, JPG, or WEBP (auto-compressed).</li>
+                      <li>Easily reposition and align with interactive crop.</li>
+                    </ul>
+                  </div>
+                  {(user.imageUrl || previewUrl) && (
+                    <div className="mt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPendingAvatarFile(null);
+                          setShowAvatarModal(true);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-2 py-1 text-[11px] font-bold text-accent-text-on-surface bg-surface-secondary border border-border-default rounded hover:border-accent-primary transition-colors cursor-pointer"
+                      >
+                        <Move size={12} />
+                        <span>Adjust / Reposition Photo</span>
+                      </button>
+                    </div>
+                  )}
+                  {photoError && <p role="alert" className="text-xs text-accent-error font-semibold m-0">{photoError}</p>}
+                </div>
+              </div>
+
+              {/* Cover Banner */}
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <p className="font-bold text-xs text-text-primary m-0">Profile Cover Banner</p>
+                  <span className="text-[11px] font-mono text-text-tertiary">Ideal: 1200 × 300 px</span>
+                </div>
+
+                {/* Banner Thumbnail Preview */}
+                <div className="w-full h-24 sm:h-26 rounded-lg border-2 border-border-brutalist dark:border-border-default overflow-hidden relative bg-surface-secondary shadow-[2px_2px_0px_0px_var(--border-brutalist)] dark:shadow-[2px_2px_0px_0px_var(--border-default)]">
+                  {(coverPreviewUrl || user.coverUrl) ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={coverPreviewUrl || user.coverUrl}
+                      alt="Cover banner preview"
+                      className="w-full h-full object-cover"
+                      style={{ objectPosition: (user as any).coverPosition || "50% 50%" }}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-r from-gray-900 via-slate-800 to-gray-900 flex items-center justify-center text-text-tertiary text-xs font-mono">
+                      Default Cyber Background
+                    </div>
+                  )}
+                  {uploadingCover && (
+                    <div className="absolute inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center text-white text-xs font-bold gap-2 z-10">
+                      <div className="w-4 h-4 border-2 border-accent-primary border-t-transparent rounded-full animate-spin" />
+                      Uploading cover banner...
+                    </div>
+                  )}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                  <button
+                    type="button"
+                    onClick={() => coverInputRef.current?.click()}
+                    disabled={uploadingCover}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent-primary text-accent-primary-text font-bold text-xs rounded-md border border-text-primary shadow-[2px_2px_0px_0px_var(--text-primary)] hover:-translate-x-px hover:-translate-y-px transition cursor-pointer disabled:opacity-50"
+                  >
+                    <Upload size={13} />
+                    <span>Upload Custom Cover</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowCoverPresetModal(true)}
+                    disabled={uploadingCover}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-surface-secondary text-text-primary font-bold text-xs rounded-md border border-border-default shadow-[2px_2px_0px_0px_var(--border-default)] hover:border-accent-primary transition cursor-pointer disabled:opacity-50"
+                  >
+                    <Sparkles size={13} className="text-accent-primary" />
+                    <span>Choose Presets</span>
+                  </button>
+                </div>
+
+                <input
+                  ref={coverInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  onChange={handleCoverUpload}
+                  className="hidden"
+                />
               </div>
             </div>
 
@@ -569,7 +618,7 @@ export const ProfileEditTab = forwardRef<ProfileEditTabHandle, ProfileEditTabPro
               </div>
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="email" className="flex items-center gap-1.5 font-body text-xs font-bold text-text-primary">
-                  Institutional Email <span className="text-[11px] text-text-tertiary font-medium">(Read Only)</span>
+                  Primary Login Email <span className="text-[11px] text-text-tertiary font-medium">(Read Only)</span>
                 </label>
                 <input
                   id="email"
@@ -1398,107 +1447,6 @@ export const ProfileEditTab = forwardRef<ProfileEditTabHandle, ProfileEditTabPro
         </div>
       )}
 
-      {/* Section 07: Profile Cover Banner */}
-      <div className="bg-surface-elevated border-[1.5px] border-border-brutalist dark:border-border-default rounded-xl shadow-[4px_4px_0px_0px_var(--border-brutalist)] dark:shadow-[4px_4px_0px_0px_var(--border-default)] p-4 sm:p-6">
-        <div className="mb-4 pb-2 border-b-[1.5px] border-border-default">
-          <h2 className="flex items-center gap-2 font-heading text-base sm:text-lg font-extrabold text-text-primary m-0">
-            <span className="inline-flex items-center justify-center w-6 h-6 rounded-sm bg-accent-primary text-accent-primary-text font-mono text-xs font-black border border-black">07</span> Profile Cover Banner
-          </h2>
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <div
-            key={coverPreviewUrl || user.coverUrl || "pf-tab-cover"}
-            className="w-full aspect-[4/1] rounded-md border-2 border-dashed border-border-brutalist dark:border-border-default bg-gradient-to-br from-gray-900 via-gray-800 to-slate-900 overflow-hidden relative flex items-center justify-center cursor-pointer"
-            onClick={() => coverInputRef.current?.click()}
-          >
-            {coverPreviewUrl || user.coverUrl ? (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                key={coverPreviewUrl || user.coverUrl}
-                src={coverPreviewUrl || user.coverUrl}
-                alt="Cover Preview"
-                className="w-full h-full object-cover"
-                style={{ objectPosition: (user as any).coverPosition || "50% 50%" }}
-                onError={(e) => { e.currentTarget.style.display = 'none'; }}
-              />
-            ) : (
-              <div className="flex flex-col items-center gap-1.5 text-text-secondary">
-                <Upload size={24} />
-                <span className="text-xs font-bold font-mono">
-                  {uploadingCover ? "Uploading Cover..." : "Click to Upload Cover Banner"}
-                </span>
-              </div>
-            )}
-          </div>
-
-          <input
-            ref={coverInputRef}
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            onChange={handleCoverUpload}
-            className="hidden"
-          />
-
-          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
-            <div className="text-[11px] text-text-secondary">
-              Recommended: 1200×300 (4:1 panoramic ratio). Max size 5MB.
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={uploadingCover}
-              onClick={() => coverInputRef.current?.click()}
-            >
-              <Upload size={13} style={{ marginRight: "4px" }} />
-              {uploadingCover ? "Uploading..." : "Upload from Computer"}
-            </Button>
-          </div>
-
-          {/* Brutalist CSE Preset Gallery */}
-          <div className="mt-3 border-t border-border-default pt-4">
-            <p className="font-bold text-xs text-text-primary uppercase font-mono mb-3">
-              Or Select a Handcrafted Brutalist CSE Cover:
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-              {coverPresets.map((preset) => {
-                const isSelected = (coverPreviewUrl || user.coverUrl) === preset.url;
-                return (
-                  <div
-                    key={preset.id}
-                    className={`rounded-md overflow-hidden bg-surface-secondary cursor-pointer flex flex-col transition-all duration-150 ${
-                      isSelected
-                        ? "border-[1.5px] border-accent-primary shadow-[3px_3px_0px_0px_var(--accent-primary)]"
-                        : "border border-border-brutalist dark:border-border-default shadow-[2px_2px_0px_0px_var(--border-brutalist)] dark:shadow-[2px_2px_0px_0px_var(--border-default)]"
-                    }`}
-                    onClick={() => handleSelectPresetCover(preset)}
-                  >
-                    <div className="w-full h-20 relative overflow-hidden bg-black">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={preset.url} alt={preset.name} className="w-full h-full object-cover" />
-                      {isSelected && (
-                        <div className="absolute top-1 right-1 bg-accent-primary text-black px-1.5 py-0.5 rounded-sm text-[9px] font-extrabold font-mono">
-                          ✓ ACTIVE
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-2 sm:px-2.5 flex justify-between items-center">
-                      <div>
-                        <div className="font-extrabold text-xs text-text-primary">{preset.name}</div>
-                        <div className="text-[10px] text-text-secondary font-mono">{preset.category}</div>
-                      </div>
-                      <span className={`text-[11px] font-bold ${isSelected ? "text-accent-primary" : "text-text-tertiary"}`}>
-                        {applyingPreset === preset.id ? "..." : isSelected ? "Active" : "Select"}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Avatar Position Modal */}
       {user && (
         <AvatarPositionModal
@@ -1516,6 +1464,38 @@ export const ProfileEditTab = forwardRef<ProfileEditTabHandle, ProfileEditTabPro
           }}
         />
       )}
+
+      {/* Cover Preset & Custom Upload Modal */}
+      <CoverPresetModal
+        isOpen={showCoverPresetModal}
+        onClose={() => {
+          setShowCoverPresetModal(false);
+          setPendingCoverFile(null);
+        }}
+        currentCoverUrl={coverPreviewUrl || user.coverUrl}
+        currentUserRole={user.role}
+        initialFile={pendingCoverFile}
+        onSelectPreset={async (preset) => {
+          await handleSelectPresetCover(preset);
+          setShowCoverPresetModal(false);
+        }}
+        onUploadFile={async (file, position) => {
+          const formData = new FormData();
+          formData.append("cover", file);
+          if (position) {
+            formData.append("coverPosition", position);
+          }
+          const res: any = await api.upload("/api/users/me/cover", formData, { method: "PATCH" });
+          toast.success("Cover banner updated successfully!");
+          const newUrl = res?.data?.coverUrl || res?.coverUrl || res?.user?.coverUrl;
+          if (newUrl) {
+            setCoverPreviewUrl(newUrl);
+          }
+          setShowCoverPresetModal(false);
+          setPendingCoverFile(null);
+          await onProfileUpdated?.();
+        }}
+      />
     </div>
   );
 });

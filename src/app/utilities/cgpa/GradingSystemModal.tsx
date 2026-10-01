@@ -1,7 +1,7 @@
 "use client";
 
 import { X, Award, CheckCircle2, Calculator } from "lucide-react";
-import { GradeScale } from "@/data/syllabusCourses";
+import { GradeScale } from "@/lib/api/syllabusCourses";
 
 interface GradingSystemModalProps {
   isOpen: boolean;

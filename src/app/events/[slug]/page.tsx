@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { events, getEventBySlug } from "@/data/events";
+import { getEventBySlug } from "@/lib/api/events";
 import { EventRegisterButton } from "./EventRegisterButton";
 import { EventParticipationClaim } from "./EventParticipationClaim";
 import { EventMediaGallery } from "./EventMediaGallery";
@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 
 export async function generateStaticParams() {
-  return events.map((event) => ({ slug: event.slug }));
+  return [];
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -76,17 +76,31 @@ export default async function EventDetailPage({
           {event.image && (
             <div className="relative w-full h-48 sm:h-72 md:h-80 bg-surface-secondary overflow-hidden border-b-2 border-border-brutalist">
               <Image
-                src={event.image}
+                src={event.bannerImageUrl || event.image}
                 alt={event.title}
                 fill
                 className="object-cover"
+                style={{ objectPosition: event.bannerImagePosition || event.coverImagePosition || "50% 50%" }}
                 unoptimized
                 priority
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
               <div className="absolute top-4 left-4 flex flex-wrap gap-2">
-                <Badge variant={event.status === "upcoming" ? "upcoming" : "past"} size="md">
-                  {event.status}
+                <Badge
+                  variant={
+                    event.status === "ongoing"
+                      ? "ongoing"
+                      : event.status === "scheduled" || event.status === "upcoming"
+                      ? "upcoming"
+                      : "past"
+                  }
+                  size="md"
+                >
+                  {event.status === "ongoing"
+                    ? "ONGOING"
+                    : event.status === "scheduled" || event.status === "upcoming"
+                    ? "UPCOMING"
+                    : "COMPLETED"}
                 </Badge>
                 <span className="px-3 py-1 rounded-full text-xs font-mono font-bold uppercase bg-surface-elevated text-text-primary border border-border-default shadow-sm">
                   {event.type}
@@ -161,7 +175,7 @@ export default async function EventDetailPage({
                 )}
               </div>
 
-              {event.status === "upcoming" ? (
+              {event.status === "upcoming" || event.status === "scheduled" || event.status === "ongoing" ? (
                 <EventRegisterButton event={event} />
               ) : (
                 <EventParticipationClaim event={event} />

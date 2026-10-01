@@ -1,6 +1,6 @@
 import { MetadataRoute } from "next";
-import { getProjects } from "@/data/projects";
-import { getBlogs } from "@/data/blog";
+import { getProjects } from "@/lib/api/projects";
+import { getBlogs } from "@/lib/api/blog";
 
 const BASE_URL = "https://meccomputerclub.org";
 

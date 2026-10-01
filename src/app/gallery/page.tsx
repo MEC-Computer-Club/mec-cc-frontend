@@ -1,7 +1,7 @@
 export const revalidate = 60;
 
 import { Metadata } from "next";
-import { getGalleryItems } from "@/data/gallery";
+import { getGalleryItems } from "@/lib/api/gallery";
 import { GalleryClient } from "./GalleryClient";
 
 export const metadata: Metadata = {

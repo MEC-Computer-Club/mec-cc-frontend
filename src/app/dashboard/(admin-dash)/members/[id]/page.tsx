@@ -167,10 +167,17 @@ export default function DashboardMemberDetailsPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_URL}/api/users/profile/${encodeURIComponent(userId)}`, {
+      let res = await fetch(`${API_URL}/api/users/admin/member/${encodeURIComponent(userId)}`, {
         cache: "no-store",
         credentials: "include",
       });
+
+      if (!res.ok) {
+        res = await fetch(`${API_URL}/api/users/profile/${encodeURIComponent(userId)}`, {
+          cache: "no-store",
+          credentials: "include",
+        });
+      }
 
       if (res.ok) {
         const json = await res.json();
@@ -733,7 +740,7 @@ export default function DashboardMemberDetailsPage() {
                   <span className="text-text-primary font-bold text-right">
                     {member.isGraduated
                       ? member.passingYear
-                        ? `Graduated (Class of ${member.passingYear})`
+                        ? `Graduated (${member.passingYear})`
                         : "Graduated Alumni"
                       : "Undergraduate Student"}
                   </span>
@@ -1180,7 +1187,16 @@ export default function DashboardMemberDetailsPage() {
                   <input
                     type="checkbox"
                     checked={Boolean(editData.isGraduated)}
-                    onChange={(e) => setEditData((prev) => ({ ...prev, isGraduated: e.target.checked }))}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setEditData((prev) => ({
+                        ...prev,
+                        isGraduated: checked,
+                        clubRole: checked ? "alumni" : (prev.clubRole === "alumni" ? "member" : prev.clubRole),
+                        role: checked && prev.role === "member" ? "alumni" : (!checked && prev.role === "alumni" ? "member" : prev.role),
+                        passingYear: checked ? (prev.passingYear || new Date().getFullYear()) : undefined,
+                      }));
+                    }}
                     className="w-4 h-4 accent-accent-primary rounded cursor-pointer"
                   />
                   <span className="text-xs sm:text-sm font-bold text-text-primary">
@@ -1225,7 +1241,19 @@ export default function DashboardMemberDetailsPage() {
                   <Select
                     value={editData.role || "member"}
                     options={SYSTEM_ROLE_OPTIONS}
-                    onChange={(val: any) => setEditData((prev) => ({ ...prev, role: val }))}
+                    onChange={(val: any) =>
+                      setEditData((prev) => {
+                        const isAlumni = val === "alumni";
+                        const isMember = val === "member";
+                        return {
+                          ...prev,
+                          role: val,
+                          clubRole: isAlumni ? "alumni" : (isMember && prev.clubRole === "alumni" ? "member" : prev.clubRole),
+                          isGraduated: isAlumni ? true : (isMember && prev.clubRole === "alumni" ? false : prev.isGraduated),
+                          passingYear: isMember && prev.clubRole === "alumni" ? undefined : prev.passingYear,
+                        };
+                      })
+                    }
                   />
                 </div>
                 <div>
@@ -1235,7 +1263,18 @@ export default function DashboardMemberDetailsPage() {
                   <Select
                     value={editData.clubRole || "member"}
                     options={CLUB_ROLE_OPTIONS}
-                    onChange={(val: any) => setEditData((prev) => ({ ...prev, clubRole: val }))}
+                    onChange={(val: any) =>
+                      setEditData((prev) => {
+                        const isAlumni = val === "alumni";
+                        return {
+                          ...prev,
+                          clubRole: val,
+                          isGraduated: isAlumni ? true : (val === "member" ? false : prev.isGraduated),
+                          passingYear: val === "member" ? undefined : prev.passingYear,
+                          role: isAlumni && prev.role === "member" ? "alumni" : (val === "member" && prev.role === "alumni" ? "member" : prev.role),
+                        };
+                      })
+                    }
                   />
                 </div>
               </div>

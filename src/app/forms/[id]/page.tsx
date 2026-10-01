@@ -1,9 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
 import { API_BASE_URL } from "@/lib/api";
+import { useAccent } from "@/components/AccentProvider";
 import {
   Calendar,
   Send,
@@ -23,6 +26,7 @@ import toast from "react-hot-toast";
 
 interface FormData {
   _id: string;
+  code?: string;
   title: string;
   description?: string;
   eventId?: { _id: string; title: string } | string;
@@ -38,6 +42,7 @@ export default function PublicFormViewPage() {
   const params = useParams();
   const router = useRouter();
   const formId = params?.id as string;
+  const { currentVibe } = useAccent();
 
   const [form, setForm] = useState<FormData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -52,15 +57,102 @@ export default function PublicFormViewPage() {
   useEffect(() => {
     if (!formId) return;
 
-    const fetchForm = async () => {
+    const fetchFormAndUser = async () => {
       setLoading(true);
       try {
         const apiUrl = API_BASE_URL;
-        const res = await axios.get(`${apiUrl}/api/forms/${formId}`);
-        if (res.data?.data) {
-          setForm(res.data.data);
-        } else {
-          setForm(res.data);
+        const res = await axios.get(`${apiUrl}/api/forms/${formId}`, { withCredentials: true });
+        const formData: FormData = res.data?.data || res.data;
+        setForm(formData);
+
+        // If form has a short 6-char code and URL was accessed with ObjectId, silently replace URL in address bar
+        if (formData.code && formId !== formData.code) {
+          window.history.replaceState(null, "", `/forms/${formData.code}`);
+        }
+
+        // Fetch current user profile to auto-fill matching fields
+        try {
+          const userRes = await axios.get(`${apiUrl}/api/users/me`, { withCredentials: true });
+          const user = userRes.data?.user;
+          if (user && formData.fields) {
+            const prefilled: Record<string, any> = {};
+            for (const field of formData.fields) {
+              const key = field.name;
+              const labelLower = (field.label || "").toLowerCase();
+              const nameLower = (field.name || "").toLowerCase();
+
+              // Full Name (exclude team name, father/mother name)
+              if (
+                (nameLower.includes("name") || labelLower.includes("name")) &&
+                !labelLower.includes("team") &&
+                !labelLower.includes("father") &&
+                !labelLower.includes("mother") &&
+                !labelLower.includes("guardian") &&
+                user.fullName
+              ) {
+                prefilled[key] = user.fullName;
+              }
+              // Email
+              else if (
+                (nameLower.includes("email") || labelLower.includes("email")) &&
+                user.email
+              ) {
+                prefilled[key] = user.email;
+              }
+              // Student ID / Roll
+              else if (
+                (nameLower.includes("studentid") ||
+                  nameLower.includes("student_id") ||
+                  nameLower.includes("roll") ||
+                  labelLower.includes("student id") ||
+                  labelLower.includes("student id no") ||
+                  labelLower.includes("roll number") ||
+                  labelLower.includes("roll no")) &&
+                user.studentId
+              ) {
+                prefilled[key] = user.studentId;
+              }
+              // Department
+              else if (
+                (nameLower.includes("dept") ||
+                  nameLower.includes("department") ||
+                  labelLower.includes("department") ||
+                  labelLower.includes("dept")) &&
+                user.department
+              ) {
+                prefilled[key] = user.department;
+              }
+              // Batch / Session
+              else if (
+                (nameLower.includes("batch") ||
+                  nameLower.includes("session") ||
+                  labelLower.includes("batch") ||
+                  labelLower.includes("session")) &&
+                user.batch
+              ) {
+                prefilled[key] = user.batch;
+              }
+              // Phone / Contact
+              else if (
+                (nameLower.includes("phone") ||
+                  nameLower.includes("mobile") ||
+                  nameLower.includes("contact") ||
+                  labelLower.includes("phone") ||
+                  labelLower.includes("mobile") ||
+                  labelLower.includes("contact") ||
+                  labelLower.includes("whatsapp")) &&
+                user.phone
+              ) {
+                prefilled[key] = user.phone;
+              }
+            }
+
+            if (Object.keys(prefilled).length > 0) {
+              setResponses((prev) => ({ ...prefilled, ...prev }));
+            }
+          }
+        } catch {
+          // User is not logged in or session expired, skip prefill
         }
       } catch (err: any) {
         console.error("Error fetching form:", err);
@@ -70,7 +162,7 @@ export default function PublicFormViewPage() {
       }
     };
 
-    fetchForm();
+    fetchFormAndUser();
   }, [formId]);
 
   const handleInputChange = (fieldName: string, value: any) => {
@@ -154,7 +246,7 @@ export default function PublicFormViewPage() {
 
       // Submit responses to form submission endpoint
       const res = await axios.post(
-        `${apiUrl}/api/forms/submit/${formId}`,
+        `${apiUrl}/api/forms/submit/${form?.code || form?._id || formId}`,
         { responses: finalResponses },
         { withCredentials: true }
       );
@@ -483,22 +575,39 @@ export default function PublicFormViewPage() {
             </div>
 
             {/* ── Submit Action Card ── */}
-            <div className="p-5 rounded-2xl bg-surface-elevated border border-border-default shadow-[4px_4px_0px_0px_var(--border-default)] flex items-center justify-between">
-              <span className="text-xs text-text-tertiary font-semibold">
-                {form.fields.length} Question{form.fields.length === 1 ? "" : "s"}
-              </span>
+            <div className="p-4 sm:p-5 rounded-2xl bg-surface-elevated border border-border-default shadow-[4px_4px_0px_0px_var(--border-default)] flex items-center justify-between gap-4">
+              <Link
+                href="/"
+                className="inline-flex items-center h-9 sm:h-10 opacity-90 hover:opacity-100 transition-opacity"
+                title="MEC Computer Club Home"
+              >
+                <Image
+                  src={`/logo-${currentVibe || "lime"}-light.png`}
+                  alt="MEC Computer Club"
+                  width={160}
+                  height={40}
+                  className="w-36 sm:w-40 h-auto object-contain block dark:hidden"
+                />
+                <Image
+                  src={`/logo-${currentVibe || "lime"}-dark.png`}
+                  alt="MEC Computer Club"
+                  width={160}
+                  height={40}
+                  className="w-36 sm:w-40 h-auto object-contain hidden dark:block"
+                />
+              </Link>
 
               <button
                 type="submit"
                 disabled={submitting}
-                className="bg-text-primary text-surface-primary py-2.5 px-6 rounded-xl font-semibold hover:bg-surface-inverse transition flex items-center gap-2 shadow-[3px_3px_0px_0px_var(--border-default)] text-sm disabled:opacity-50"
+                className="bg-text-primary text-surface-primary py-2.5 px-6 rounded-xl font-semibold hover:bg-surface-inverse transition flex items-center gap-2 shadow-[3px_3px_0px_0px_var(--border-default)] text-sm disabled:opacity-50 cursor-pointer"
               >
                 {submitting ? (
                   <Loader2 className="w-4 h-4 animate-spin" />
                 ) : (
                   <Send className="w-4 h-4" />
                 )}
-                Submit Application
+                Submit
               </button>
             </div>
           </form>

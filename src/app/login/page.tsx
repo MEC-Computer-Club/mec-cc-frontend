@@ -156,7 +156,7 @@ function LoginForm() {
           sessionStorage.removeItem("redirect_loop_count");
           sessionStorage.removeItem("last_auto_redirect");
         }
-        toast.success("Welcome back to MEC CC!");
+        toast.success("Welcome back to MEC Computer Club!");
         const isExecutive =
           res.user?.role === "admin" ||
           res.user?.role === "moderator" ||

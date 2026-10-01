@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import ImageUpload from "@/components/ui/shared/ImageUpload";
 import PageContentManager from "./components/PageContentManager";
+import { useRoleGuard } from "@/hooks/useRoleGuard";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface CustomPage {
@@ -52,10 +53,13 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 const INPUT = "w-full px-3 py-2.5 rounded-xl border border-border-default bg-surface-elevated text-text-primary focus:ring-2 focus:ring-accent-primary outline-none text-sm";
 
 function PageEditorContent() {
+  const { isAllowed, isLoading: guardLoading } = useRoleGuard(["admin", "moderator", "executive"]);
   const searchParams = useSearchParams();
   const router = useRouter();
   const initialTab = searchParams.get("tab") === "content" || searchParams.get("tab") === "sections" ? "content" : "pages";
   const [mainTab, setMainTab] = useState<"pages" | "content">(initialTab);
+
+  if (guardLoading || !isAllowed) return null;
 
   const [pages, setPages] = useState<CustomPage[]>([]);
   const [loading, setLoading] = useState(true);

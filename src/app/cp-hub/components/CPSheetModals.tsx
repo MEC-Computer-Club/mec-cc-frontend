@@ -7,7 +7,7 @@ import {
   Code2,
   Sparkles,
 } from "lucide-react";
-import { CPProblem, getRatingColor } from "@/data/cpSheetProblems";
+import { CPProblem, getRatingColor } from "@/lib/api/cpSheetProblems";
 import MonokaiCodeViewer from "./MonokaiCodeViewer";
 
 interface HintModalProps {

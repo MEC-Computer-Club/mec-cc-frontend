@@ -57,7 +57,7 @@ export function AboutContactGlimpse({ contactData }: AboutContactGlimpseProps = 
                   sizes="(max-width: 768px) 100vw, 400px"
                 />
                 <div className="absolute top-2.5 left-2.5 bg-black/75 backdrop-blur-sm text-white font-mono text-[10px] px-2.5 py-1 rounded-md uppercase font-bold tracking-wider">
-                  MEC-CC LAB
+                  MEC COMPUTER CLUB LAB
                 </div>
               </div>
 

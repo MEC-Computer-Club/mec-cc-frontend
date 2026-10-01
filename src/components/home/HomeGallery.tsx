@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { GalleryItem, getYoutubeEmbedUrl, getCleanMediaTitle, getOptimizedImageUrl } from "@/data/gallery";
+import { GalleryItem, getYoutubeEmbedUrl, getCleanMediaTitle, getOptimizedImageUrl } from "@/lib/api/gallery";
 import { X, Play, Image as ImageIcon, Maximize2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
@@ -26,7 +26,7 @@ export function HomeGallery({ items }: HomeGalleryProps) {
           <span className="kicker">Visual Archive</span>
           <h2>Campus Moments & Hackathons</h2>
           <p className="text-lg text-text-tertiary max-[768px]:text-base">
-            From overnight coding sprints to national stages — a glimpse into life at MEC-CC.
+            From overnight coding sprints to national stages — a glimpse into life at MEC Computer Club.
           </p>
         </div>
 

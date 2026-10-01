@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getAlumniMembers } from "@/data/alumni";
+import { getAlumniMembers } from "@/lib/api/alumni";
 import PeopleDirectory from "@/components/people/PeopleDirectory";
 
 export const revalidate = 120;

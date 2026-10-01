@@ -12,8 +12,8 @@ const Footer = dynamic(
   () => import("@/components/layout/Footer").then((m) => m.Footer)
 );
 
-const AccentIndicator = dynamic(
-  () => import("@/components/AccentIndicator").then((m) => m.AccentIndicator)
+const ClubRoomIndicator = dynamic(
+  () => import("@/components/layout/ClubRoomIndicator").then((m) => m.ClubRoomIndicator)
 );
 import { AuthProvider } from "@/context/AuthContext";
 import { SiteSettingsProvider } from "@/context/SiteSettingsContext";
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://meccomputerclub.org"),
   title: {
     template: "%s | MEC Computer Club",
-    default: "MEC Computer Club | Official Website — CP Practice, Real Projects & Tech Community",
+    default: "MEC Computer Club",
   },
   description:
     "The official computer club of Mymensingh Engineering College (MEC), Mymensingh. Weekly competitive programming, ICPC training, real-world software development, AI/ML, cybersecurity, and tech events.",
@@ -78,6 +78,9 @@ export const metadata: Metadata = {
     "MEC programming club",
     "MEC tech events",
     "Mymensingh Engineering College tech club",
+    "Computer club",
+    "IT Club",
+    "Programming Club"
   ],
   authors: [{ name: "MEC Computer Club", url: "https://meccomputerclub.org" }],
   creator: "MEC Computer Club",
@@ -95,9 +98,9 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: "https://meccomputerclub.org",
     siteName: "MEC Computer Club",
-    title: "MEC Computer Club | Weekly CP Practice, Real Projects, One Club",
+    title: "MEC Computer Club",
     description:
-      "The official computer club of MEC, Mymensingh. Join 70+ members competing in ICPC, building production software, and advancing student technology careers.",
+      "The official computer club of MEC, Mymensingh. Join numerous members competing in ICPC, building production software, and advancing student technology careers.",
     images: [
       {
         url: "/mec-club-photo.jpg",
@@ -168,7 +171,7 @@ const jsonLdOrg = {
   },
   "contactPoint": {
     "@type": "ContactPoint",
-    "telephone": "+8801700000000",
+    "telephone": "+8801773758374",
     "contactType": "general inquiries",
     "email": "meccomputerclub@gmail.com",
     "areaServed": "BD",
@@ -203,6 +206,7 @@ const jsonLdOrg = {
   ]
 };
 
+import AnalyticsTracker from "@/components/analytics/AnalyticsTracker";
 import { getInitialThemeCss, type VibeName } from "@/lib/accent-themes";
 
 export default function RootLayout({
@@ -229,6 +233,7 @@ export default function RootLayout({
         <ThemeProvider initialVibe={initialVibe}>
           <AuthProvider>
             <SiteSettingsProvider>
+              <AnalyticsTracker />
               <ScaleWrapper>
                 <Toaster position="bottom-right" containerStyle={{ zIndex: 99999 }} />
                 <Navbar />
@@ -236,7 +241,7 @@ export default function RootLayout({
                   {children}
                 </main>
                 <Footer />
-                <AccentIndicator />
+                <ClubRoomIndicator />
               </ScaleWrapper>
             </SiteSettingsProvider>
           </AuthProvider>

@@ -31,24 +31,6 @@ interface DesignationManagerProps {
   isAdminUser: boolean;
 }
 
-const WING_SUGGESTIONS = {
-  executive: [
-    "Core Board",
-    "Tech Wing",
-    "Competitive Programming Wing",
-    "Media & PR Wing",
-    "Event & Logistics Wing",
-    "General Panel",
-  ],
-  advisor: [
-    "College Administration",
-    "CSE Department",
-    "Faculty Advisory",
-    "Industry Advisory",
-    "Research Mentorship",
-  ],
-};
-
 export function DesignationManager({
   category,
   allMembers,
@@ -63,7 +45,6 @@ export function DesignationManager({
   const [editingDesig, setEditingDesig] = useState<DesignationItem | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [formTitle, setFormTitle] = useState("");
-  const [formWing, setFormWing] = useState("Core Board");
   const [formDefaultRole, setFormDefaultRole] = useState<"admin" | "moderator" | "member">("member");
   const [formMaxSeats, setFormMaxSeats] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
@@ -77,6 +58,14 @@ export function DesignationManager({
   const [savingAssignments, setSavingAssignments] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const activeSearchQueryRef = useRef<string>("");
+
+  // Inline Confirm Modal State (replaces window.confirm which is blocked in some browsers)
+  const [confirmModal, setConfirmModal] = useState<{
+    title: string;
+    message: string;
+    warning?: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   // Fetch designations for this category
   const fetchDesignations = async () => {
@@ -104,7 +93,6 @@ export function DesignationManager({
   const handleOpenAdd = () => {
     setEditingDesig(null);
     setFormTitle("");
-    setFormWing(category === "executive" ? "Core Board" : "Faculty Advisory");
     setFormDefaultRole("member");
     setFormMaxSeats("");
     setIsAddModalOpen(true);
@@ -114,7 +102,6 @@ export function DesignationManager({
   const handleOpenEdit = (d: DesignationItem) => {
     setEditingDesig(d);
     setFormTitle(d.title);
-    setFormWing(d.wing || (category === "executive" ? "Core Board" : "Faculty Advisory"));
     setFormDefaultRole(d.defaultRole || "member");
     setFormMaxSeats(d.maxSeats ? String(d.maxSeats) : "");
     setIsAddModalOpen(true);
@@ -133,7 +120,6 @@ export function DesignationManager({
       const payload: any = {
         title: formTitle.trim(),
         category,
-        wing: formWing.trim(),
         defaultRole: formDefaultRole,
         maxSeats: formMaxSeats ? parseInt(formMaxSeats, 10) : null,
       };
@@ -189,25 +175,29 @@ export function DesignationManager({
     }
   };
 
-  // Delete Designation
-  const handleDeleteDesignation = async (d: DesignationItem) => {
-    const count = d.assignedCount || 0;
-    const confirmMsg =
-      count > 0
-        ? `Warning: ${count} member(s) currently hold the role "${d.title}". Deleting it will revert them to General Member. Proceed?`
-        : `Are you sure you want to delete "${d.title}"?`;
-
-    if (!window.confirm(confirmMsg)) return;
-
-    try {
-      await api.delete(`/api/designations/${d._id}`);
-      toast.success(`Designation "${d.title}" deleted.`);
-      await fetchDesignations();
-      onRefreshAllData?.();
-    } catch (err: any) {
-      const msg = err instanceof ApiError ? err.message : err?.message || "Failed to delete designation";
-      toast.error(msg);
-    }
+  // Delete Designation — uses inline confirm modal instead of window.confirm
+  const handleDeleteDesignation = (d: DesignationItem) => {
+    const count = (d.assignedMembers || []).length || d.assignedCount || 0;
+    setConfirmModal({
+      title: `Delete "${d.title}"?`,
+      message: `This designation will be permanently removed from the hierarchy.`,
+      warning:
+        count > 0
+          ? `⚠️ ${count} member(s) currently hold this role. They will be unassigned.`
+          : undefined,
+      onConfirm: async () => {
+        setConfirmModal(null);
+        try {
+          await api.delete(`/api/designations/${d._id}`);
+          toast.success(`Designation "${d.title}" deleted.`);
+          await fetchDesignations();
+          onRefreshAllData?.();
+        } catch (err: any) {
+          const msg = err instanceof ApiError ? err.message : err?.message || "Failed to delete designation";
+          toast.error(msg);
+        }
+      },
+    });
   };
 
   // Open Assign Members Modal
@@ -296,34 +286,37 @@ export function DesignationManager({
     }
   };
 
-  // Quick Remove Single Member from Designation
-  const handleQuickUnassignMember = async (d: DesignationItem, memberId: string, memberName: string) => {
-    if (!window.confirm(`Remove ${memberName} from "${d.title}"?`)) return;
-
-    const remainingIds = (d.assignedMembers || [])
-      .map((m: any) => m._id || m.id)
-      .filter((id: string) => id !== memberId);
-
-    try {
-      await api.post(`/api/designations/${d._id}/assign-members`, {
-        title: d.title,
-        category: d.category,
-        memberIds: remainingIds,
-      });
-      toast.success(`${memberName} unassigned from ${d.title}`);
-      await fetchDesignations();
-      onRefreshAllData?.();
-    } catch (err: any) {
-      toast.error("Failed to unassign member");
-    }
+  // Quick Remove Single Member from Designation — uses inline confirm modal
+  const handleQuickUnassignMember = (d: DesignationItem, memberId: string, memberName: string) => {
+    setConfirmModal({
+      title: `Remove ${memberName}?`,
+      message: `Remove ${memberName} from the "${d.title}" designation?`,
+      onConfirm: async () => {
+        setConfirmModal(null);
+        const remainingIds = (d.assignedMembers || [])
+          .map((m: any) => m._id || m.id)
+          .filter((id: string) => id !== memberId);
+        try {
+          await api.post(`/api/designations/${d._id}/assign-members`, {
+            title: d.title,
+            category: d.category,
+            memberIds: remainingIds,
+          });
+          toast.success(`${memberName} unassigned from ${d.title}`);
+          await fetchDesignations();
+          onRefreshAllData?.();
+        } catch (err: any) {
+          toast.error("Failed to unassign member");
+        }
+      },
+    });
   };
 
-  // Filtered designations for search (matches role title, wing, and assigned member names/IDs)
+  // Filtered designations for search (matches role title and assigned member names/IDs)
   const filteredDesignations = designations.filter((d) => {
     const q = searchQuery.toLowerCase().trim();
     if (!q) return true;
     const titleMatch = d.title.toLowerCase().includes(q);
-    const wingMatch = Boolean(d.wing && d.wing.toLowerCase().includes(q));
     const memberMatch = Boolean(
       d.assignedMembers?.some(
         (m: any) =>
@@ -333,7 +326,7 @@ export function DesignationManager({
           (m.department && m.department.toLowerCase().includes(q))
       )
     );
-    return titleMatch || wingMatch || memberMatch;
+    return titleMatch || memberMatch;
   });
 
   const categoryLabel = category === "executive" ? "Executive Panel Roles" : "Advisor Panel Roles";
@@ -355,7 +348,6 @@ export function DesignationManager({
           .desig-title-wrap { display: flex; flex-direction: column; gap: 2px; }
           .desig-title { font-family: var(--font-body); font-size: var(--text-base); font-weight: 700; color: var(--text-primary); line-height: 1.2; }
           .desig-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-          .desig-wing-tag { font-family: var(--font-body); font-size: 11px; font-weight: 600; text-transform: uppercase; padding: 2px 6px; background: var(--surface-secondary); border: 1px solid var(--border-default); border-radius: var(--radius-sm); color: var(--text-secondary); }
           .desig-power-tag { font-family: var(--font-body); font-size: 11px; font-weight: 600; text-transform: uppercase; padding: 2px 6px; border-radius: var(--radius-sm); border: 1px solid currentColor; }
           .desig-power-tag--admin { color: var(--accent-error); background: color-mix(in srgb, var(--accent-error) 10%, transparent); }
           .desig-power-tag--moderator { color: var(--accent-warning); background: color-mix(in srgb, var(--accent-warning) 10%, transparent); }
@@ -481,7 +473,6 @@ export function DesignationManager({
                     <div className="desig-title-wrap">
                       <div className="desig-title">{d.title}</div>
                       <div className="desig-meta">
-                        {d.wing && <span className="desig-wing-tag">{d.wing}</span>}
                         {d.defaultRole && (
                           <span className={`desig-power-tag desig-power-tag--${d.defaultRole}`}>
                             {d.defaultRole === "admin" && <Shield size={10} style={{ marginRight: 3, verticalAlign: "middle" }} />}
@@ -690,51 +681,7 @@ export function DesignationManager({
                 />
               </div>
 
-              {/* Wing / Sub-Team */}
-              <div style={{ marginBottom: "var(--space-4)" }}>
-                <label
-                  style={{
-                    display: "block",
-                    fontFamily: "var(--font-mono)",
-                    fontSize: "11px",
-                    fontWeight: 800,
-                    textTransform: "uppercase",
-                    color: "var(--text-secondary)",
-                    marginBottom: "var(--space-1)",
-                  }}
-                >
-                  Wing / Department Group:
-                </label>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", marginBottom: "8px" }}>
-                  {WING_SUGGESTIONS[category].map((w) => (
-                    <button
-                      key={w}
-                      type="button"
-                      onClick={() => setFormWing(w)}
-                      style={{
-                        padding: "3px 8px",
-                        fontSize: "11px",
-                        fontWeight: formWing === w ? 700 : 500,
-                        background: formWing === w ? "var(--accent-primary-light)" : "var(--surface-secondary)",
-                        border: formWing === w ? "1.5px solid var(--border-brutalist)" : "1px solid var(--border-default)",
-                        borderRadius: "var(--radius-sm)",
-                        cursor: "pointer",
-                        color: "var(--text-primary)",
-                      }}
-                    >
-                      {w}
-                    </button>
-                  ))}
-                </div>
-                <input
-                  type="text"
-                  className="db-search-input"
-                  placeholder="Or type custom wing..."
-                  value={formWing}
-                  onChange={(e) => setFormWing(e.target.value)}
-                  style={{ width: "100%", padding: "6px 10px", fontSize: "12px" }}
-                />
-              </div>
+
 
               {/* Default Website Power */}
               <div style={{ marginBottom: "var(--space-4)" }}>
@@ -1152,6 +1099,74 @@ export function DesignationManager({
                   {savingAssignments ? "Saving..." : `Assign (${selectedMemberIds.length})`}
                 </Button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Inline Confirm Modal (replaces window.confirm) ── */}
+      {confirmModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.6)",
+            zIndex: 2000,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "16px",
+            backdropFilter: "blur(4px)",
+          }}
+          onClick={() => setConfirmModal(null)}
+        >
+          <div
+            style={{
+              background: "var(--surface-elevated)",
+              border: "2px solid var(--border-brutalist)",
+              borderRadius: "var(--radius-lg)",
+              boxShadow: "6px 6px 0 var(--border-brutalist)",
+              padding: "24px",
+              maxWidth: "420px",
+              width: "100%",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "10px" }}>
+              <span style={{ fontSize: "20px" }}>🗑️</span>
+              <h3 style={{ margin: 0, fontSize: "15px", fontWeight: 800, color: "var(--text-primary)" }}>
+                {confirmModal.title}
+              </h3>
+            </div>
+            <p style={{ margin: "0 0 8px", fontSize: "13px", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+              {confirmModal.message}
+            </p>
+            {confirmModal.warning && (
+              <p style={{
+                margin: "0 0 16px",
+                fontSize: "12px",
+                fontWeight: 700,
+                color: "var(--accent-error)",
+                background: "color-mix(in srgb, var(--accent-error) 10%, transparent)",
+                border: "1px solid color-mix(in srgb, var(--accent-error) 30%, transparent)",
+                borderRadius: "var(--radius-sm)",
+                padding: "8px 12px",
+              }}>
+                {confirmModal.warning}
+              </p>
+            )}
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "16px" }}>
+              <Button variant="secondary" size="sm" onClick={() => setConfirmModal(null)}>
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={confirmModal.onConfirm}
+                style={{ background: "var(--accent-error)", borderColor: "var(--accent-error)" }}
+              >
+                Confirm
+              </Button>
             </div>
           </div>
         </div>

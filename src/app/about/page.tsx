@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { departments } from "@/data/departments";
+import { departments } from "@/lib/api/departments";
 import { getPageContent } from "@/lib/pageContent";
 import { AboutEditButton } from "./components/AboutEditButton";
 import {

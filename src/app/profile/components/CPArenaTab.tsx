@@ -10,7 +10,7 @@ import {
   Edit3,
   Copy,
 } from "lucide-react";
-import { leaderboard, contests as staticContests, cpResources } from "@/data/cp";
+import { leaderboard, contests as staticContests, cpResources } from "@/lib/api/cp";
 import toast from "react-hot-toast";
 
 interface CPArenaTabProps {

@@ -353,8 +353,8 @@ export function ProfileCard({
         </div>
       )}
 
-      {/* 4. Corner badge */}
-      {!actionMenu && !hideRoleBadges && (
+      {/* 4. Corner badge (never show for member or alumni) */}
+      {!actionMenu && !hideRoleBadges && category !== "member" && category !== "alumni" && (
         <div className="absolute top-2 right-2 font-bold text-[9px] tracking-wide bg-accent-primary text-accent-primary-text py-0.5 px-1.5 rounded pointer-events-none select-none z-[5] shadow-[1px_1px_0_var(--border-brutalist)]">
           {badgeLabel || CATEGORY_LABEL[category]}
         </div>

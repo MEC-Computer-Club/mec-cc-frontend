@@ -7,6 +7,8 @@ import { api, ApiError } from "@/lib/api";
 import toast from "react-hot-toast";
 import FilterSelect, { FilterOption } from "@/app/dashboard/components/FilterSelect";
 import { Button } from "@/components/ui/Button";
+import { useAuth } from "@/context/AuthContext";
+import { useRoleGuard } from "@/hooks/useRoleGuard";
 import {
   BookOpen,
   Search,
@@ -87,6 +89,11 @@ const SORT_OPTIONS: FilterOption[] = [
 ];
 
 export default function BlogManagementPage() {
+  const { isAllowed, isLoading: guardLoading } = useRoleGuard(["admin", "moderator", "executive", "advisor"]);
+  const { user } = useAuth();
+  const isAdvisor = user?.role === "advisor";
+  const canManage = ["admin", "moderator", "executive"].includes(user?.role || "");
+
   const [blogs, setBlogs] = useState<BlogItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -278,6 +285,8 @@ export default function BlogManagementPage() {
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       });
   }, [blogs, statusFilter, categoryFilter, searchQuery, sortOption]);
+
+  if (guardLoading || !isAllowed) return null;
 
   return (
     <div className="space-y-6 pb-12">
@@ -536,7 +545,8 @@ export default function BlogManagementPage() {
                         </span>
                       </div>
 
-                      {/* Featured Star Badge */}
+                      {/* Featured Star Badge - only for managers */}
+                      {canManage && (
                       <button
                         type="button"
                         onClick={() => handleToggleFeatured(blog)}
@@ -550,6 +560,7 @@ export default function BlogManagementPage() {
                       >
                         <Star size={14} className={blog.featured ? "fill-white text-white" : ""} />
                       </button>
+                      )}
                     </div>
 
                     {/* Body */}
@@ -597,6 +608,7 @@ export default function BlogManagementPage() {
                     </div>
 
                     <div className="flex items-center gap-1">
+                      {canManage && (
                       <button
                         type="button"
                         onClick={() => handleTogglePublish(blog)}
@@ -606,6 +618,7 @@ export default function BlogManagementPage() {
                       >
                         {blog.isPublished ? <Clock size={13} className="text-amber-500" /> : <CheckCircle2 size={13} className="text-emerald-500" />}
                       </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => setPreviewBlog(blog)}
@@ -621,6 +634,7 @@ export default function BlogManagementPage() {
                       >
                         <Edit size={13} />
                       </Link>
+                      {canManage && (
                       <button
                         type="button"
                         onClick={() => setBlogToDelete(blog)}
@@ -629,6 +643,7 @@ export default function BlogManagementPage() {
                       >
                         <Trash2 size={13} />
                       </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -733,6 +748,7 @@ export default function BlogManagementPage() {
 
                       {/* Status */}
                       <td className="py-3.5 px-4 whitespace-nowrap">
+                        {canManage ? (
                         <button
                           type="button"
                           onClick={() => handleTogglePublish(blog)}
@@ -752,10 +768,21 @@ export default function BlogManagementPage() {
                             </span>
                           )}
                         </button>
+                        ) : (
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${
+                            blog.isPublished
+                              ? "text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 border-emerald-500/30"
+                              : "text-amber-700 dark:text-amber-300 bg-amber-500/10 border-amber-500/30"
+                          }`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${blog.isPublished ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`} />
+                            {blog.isPublished ? "Published" : "Draft"}
+                          </span>
+                        )}
                       </td>
 
                       {/* Featured (Home) Toggle */}
                       <td className="py-3.5 px-4 whitespace-nowrap text-center">
+                        {canManage ? (
                         <button
                           type="button"
                           onClick={() => handleToggleFeatured(blog)}
@@ -777,6 +804,16 @@ export default function BlogManagementPage() {
                           />
                           <span>{blog.featured ? "Featured" : "Regular"}</span>
                         </button>
+                        ) : (
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${
+                            blog.featured
+                              ? "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/40"
+                              : "bg-surface-secondary text-text-secondary border-border-default"
+                          }`}>
+                            <Star size={12} className={blog.featured ? "text-amber-500 fill-amber-500" : "text-text-tertiary"} />
+                            <span>{blog.featured ? "Featured" : "Regular"}</span>
+                          </span>
+                        )}
                       </td>
 
                       {/* Performance Stats */}
@@ -805,7 +842,8 @@ export default function BlogManagementPage() {
                       {/* Actions */}
                       <td className="py-3.5 px-4 whitespace-nowrap text-right">
                         <div className="inline-flex items-center gap-1 justify-end">
-                          {/* Quick Toggle Featured Star */}
+                          {/* Quick Toggle Featured Star - managers only */}
+                          {canManage && (
                           <button
                             type="button"
                             onClick={() => handleToggleFeatured(blog)}
@@ -819,6 +857,7 @@ export default function BlogManagementPage() {
                           >
                             <Star size={15} className={blog.featured ? "fill-amber-500 text-amber-500" : ""} />
                           </button>
+                          )}
 
                           {/* Quick Preview Modal Trigger */}
                           <button
@@ -851,7 +890,8 @@ export default function BlogManagementPage() {
                             <Edit size={15} />
                           </Link>
 
-                          {/* Delete Prompt */}
+                          {/* Delete Prompt - managers only */}
+                          {canManage && (
                           <button
                             type="button"
                             onClick={() => setBlogToDelete(blog)}
@@ -860,6 +900,7 @@ export default function BlogManagementPage() {
                           >
                             <Trash2 size={15} />
                           </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -893,7 +934,8 @@ export default function BlogManagementPage() {
                   {previewBlog.isPublished ? "Published" : "Draft"}
                 </span>
 
-                {/* Home Featured Quick Toggle inside Modal */}
+                {/* Home Featured Quick Toggle inside Modal - managers only */}
+                {canManage && (
                 <button
                   type="button"
                   onClick={() => handleToggleFeatured(previewBlog)}
@@ -908,6 +950,7 @@ export default function BlogManagementPage() {
                   <Star size={11} className={previewBlog.featured ? "fill-amber-500 text-amber-500" : ""} />
                   {previewBlog.featured ? "★ Featured on Home" : "☆ Feature on Home"}
                 </button>
+                )}
               </div>
 
               <div className="flex items-center gap-2">

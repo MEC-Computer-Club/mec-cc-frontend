@@ -33,7 +33,7 @@ import {
   SEMESTER_CREDIT_BREAKDOWN,
   DU_TECH_UNIT_INSTITUTES,
   isDuTechUnitAffiliated,
-} from "@/data/syllabusCourses";
+} from "@/lib/api/syllabusCourses";
 import { QuickFillModal } from "./QuickFillModal";
 import { GradingSystemModal } from "./GradingSystemModal";
 import { CustomGradingSystemModal } from "./CustomGradingSystemModal";

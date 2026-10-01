@@ -3,7 +3,7 @@ export const revalidate = 60;
 import { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { getClubPartners } from "@/data/partners";
+import { getClubPartners } from "@/lib/api/partners";
 import { Button } from "@/components/ui/Button";
 import {
   ExternalLink,
@@ -15,7 +15,7 @@ import {
   Handshake,
   ArrowRight,
 } from "lucide-react";
-import { getOptimizedImageUrl } from "@/data/gallery";
+import { getOptimizedImageUrl } from "@/lib/api/gallery";
 
 export const metadata: Metadata = {
   title: "Club & Community Partners | MEC Computer Club",
@@ -77,7 +77,7 @@ export default async function ClubPartnersPage() {
               to collaborate with MEC Computer Club, get in touch with us!
             </p>
             <Button href="/contact?subject=Club%20Partnership" id="partner-invite-cta">
-              Invite MEC CC as Partner →
+              Invite MEC Computer Club as Partner →
             </Button>
           </div>
         ) : (
@@ -129,7 +129,7 @@ export default async function ClubPartnersPage() {
                                 </h3>
                                 <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-0.5 mt-1 rounded-md bg-accent-primary-light text-text-primary border border-accent-primary/30">
                                   <Award size={12} className="text-accent-primary" />
-                                  MEC CC as: {partner.role}
+                                  MEC Computer Club as: {partner.role}
                                 </span>
                               </div>
                             </div>
@@ -223,7 +223,7 @@ export default async function ClubPartnersPage() {
                                 </h3>
                                 <span className="inline-flex items-center gap-1.5 text-xs font-bold text-text-secondary mt-0.5">
                                   <Award size={12} />
-                                  MEC CC as: {partner.role}
+                                  MEC Computer Club as: {partner.role}
                                 </span>
                               </div>
                             </div>

@@ -60,6 +60,7 @@ interface ChannelSectionProps {
   onAdd: (email: string, label?: string) => void;
   onUpdateLabel: (email: string, label: string) => void;
   onRemove: (email: string) => void;
+  readOnly?: boolean;
 }
 
 function ChannelSection({
@@ -74,6 +75,7 @@ function ChannelSection({
   onAdd,
   onUpdateLabel,
   onRemove,
+  readOnly = false,
 }: ChannelSectionProps) {
   const [query, setQuery] = useState("");
   const [customLabel, setCustomLabel] = useState("");
@@ -167,7 +169,8 @@ function ChannelSection({
           <input
             type="checkbox"
             checked={enabled}
-            onChange={(e) => onToggle(e.target.checked)}
+            disabled={readOnly}
+            onChange={(e) => !readOnly && onToggle(e.target.checked)}
             className="sr-only peer"
           />
           <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
@@ -180,6 +183,7 @@ function ChannelSection({
       {enabled ? (
         <div className="mt-5 space-y-5">
           {/* Search / Selection input with Suggestions Dropdown */}
+          {!readOnly && (
           <div className="relative" ref={containerRef}>
             <label className="block text-xs sm:text-sm font-bold text-gray-700 dark:text-gray-300 mb-1.5">
               Add Recipient:
@@ -310,6 +314,7 @@ function ChannelSection({
               </div>
             )}
           </div>
+          )}
 
           {/* Selected Recipients Display */}
           <div>
@@ -390,7 +395,7 @@ function ChannelSection({
                               )}
 
                               {/* For custom email: display custom badge & label editing */}
-                              {isCustom && rec.label && (
+                              {isCustom && rec.label && !readOnly && (
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -405,7 +410,13 @@ function ChannelSection({
                                 </button>
                               )}
 
-                              {isCustom && !rec.label && (
+                              {isCustom && rec.label && readOnly && (
+                                <span className="inline-flex items-center px-1.5 py-0.2 text-[9px] font-extrabold uppercase rounded bg-blue-100 dark:bg-blue-900/60 text-blue-700 dark:text-blue-300 shrink-0">
+                                  Custom
+                                </span>
+                              )}
+
+                              {isCustom && !rec.label && !readOnly && (
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -427,14 +438,16 @@ function ChannelSection({
                         </div>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => onRemove(rec.email)}
-                        title="Remove recipient"
-                        className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition shrink-0"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
+                      {!readOnly && (
+                        <button
+                          type="button"
+                          onClick={() => onRemove(rec.email)}
+                          title="Remove recipient"
+                          className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition shrink-0"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                   );
                 })}
@@ -451,7 +464,7 @@ function ChannelSection({
   );
 }
 
-export default function EmailRoutingSettings() {
+export default function EmailRoutingSettings({ readOnly = false }: { readOnly?: boolean }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [staffUsers, setStaffUsers] = useState<StaffUser[]>([]);
@@ -623,23 +636,32 @@ export default function EmailRoutingSettings() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving}
-          className="self-start sm:self-auto flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm rounded-lg border-2 border-black dark:border-white shadow-[2px_2px_0px_0px_#000] dark:shadow-[2px_2px_0px_0px_#fff] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition disabled:opacity-50"
-        >
-          {saving ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" /> Saving...
-            </>
-          ) : (
-            <>
-              <Save className="w-4 h-4" /> Save Changes
-            </>
-          )}
-        </button>
+        {!readOnly && (
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="self-start sm:self-auto flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm rounded-lg border-2 border-black dark:border-white shadow-[2px_2px_0px_0px_#000] dark:shadow-[2px_2px_0px_0px_#fff] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition disabled:opacity-50"
+          >
+            {saving ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" /> Saving...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" /> Save Changes
+              </>
+            )}
+          </button>
+        )}
       </div>
+
+      {readOnly && (
+        <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-300 text-xs sm:text-sm font-semibold flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>Viewing email routing rules in read-only mode. System routing changes require Administrator clearance.</span>
+        </div>
+      )}
 
       {/* Channel 1: Member Registration Approvals */}
       <ChannelSection
@@ -654,6 +676,7 @@ export default function EmailRoutingSettings() {
         onAdd={(email, label) => handleAddRecipient("registrationApproval", email, label)}
         onUpdateLabel={(email, label) => handleUpdateLabel("registrationApproval", email, label)}
         onRemove={(email) => handleRemoveRecipient("registrationApproval", email)}
+        readOnly={readOnly}
       />
 
       {/* Channel 2: Contact Form Inquiries */}
@@ -669,27 +692,30 @@ export default function EmailRoutingSettings() {
         onAdd={(email, label) => handleAddRecipient("contactMessages", email, label)}
         onUpdateLabel={(email, label) => handleUpdateLabel("contactMessages", email, label)}
         onRemove={(email) => handleRemoveRecipient("contactMessages", email)}
+        readOnly={readOnly}
       />
 
       {/* Bottom Save Action */}
-      <div className="flex justify-end pt-2">
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center gap-1.5 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-lg border-2 border-black dark:border-white shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition disabled:opacity-50"
-        >
-          {saving ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" /> Saving Preferences...
-            </>
-          ) : (
-            <>
-              <Save className="w-4 h-4" /> Save Preferences
-            </>
-          )}
-        </button>
-      </div>
+      {!readOnly && (
+        <div className="flex justify-end pt-2">
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-1.5 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-lg border-2 border-black dark:border-white shadow-[3px_3px_0px_0px_#000] dark:shadow-[3px_3px_0px_0px_#fff] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none transition disabled:opacity-50"
+          >
+            {saving ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" /> Saving Preferences...
+              </>
+            ) : (
+              <>
+                <Save className="w-4 h-4" /> Save Preferences
+              </>
+            )}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

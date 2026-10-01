@@ -22,6 +22,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import SponsorLogo from "@/components/dashboard/SponsorLogo";
+import { useAuth } from "@/context/AuthContext";
+import { useRoleGuard } from "@/hooks/useRoleGuard";
 
 interface Sponsor {
   _id: string;
@@ -55,6 +57,9 @@ interface Sponsor {
 const API = `${API_BASE_URL}/api/sponsors`;
 
 function SponsorsContent() {
+  const { isAllowed, isLoading } = useRoleGuard(["admin", "moderator", "executive"]);
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab") || searchParams.get("category");
 
@@ -66,6 +71,8 @@ function SponsorsContent() {
   const [loading, setLoading] = useState(true);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [filterActive, setFilterActive] = useState<"all" | "active" | "inactive">("all");
+
+  if (isLoading || !isAllowed) return null;
 
   const fetchSponsors = async () => {
     setLoading(true);
@@ -174,7 +181,7 @@ function SponsorsContent() {
             <Handshake className="text-accent-primary" size={28} /> Sponsors &amp; Partners
           </h2>
           <p className="text-sm text-text-secondary mt-1">
-            Manage club sponsors, financial backers, and external partnerships where MEC CC is connected.
+            Manage club sponsors, financial backers, and external partnerships where MEC Computer Club is connected.
           </p>
         </div>
         <Link
@@ -338,7 +345,7 @@ function SponsorsContent() {
               <p className="text-text-secondary text-xs mt-1 max-w-sm mx-auto">
                 {filterActive !== "all"
                   ? `No ${filterActive} sponsors currently match the filter.`
-                  : "Start documenting organizations providing sponsorship or collaborating with MEC CC."}
+                  : "Start documenting organizations providing sponsorship or collaborating with MEC Computer Club."}
               </p>
               <Link
                 href="/dashboard/sponsors/create?category=sponsor"
@@ -484,29 +491,31 @@ function SponsorsContent() {
                 >
                   <Pencil size={16} />
                 </Link>
-                {deleteConfirm === sponsor._id ? (
-                  <div className="flex items-center gap-1">
+                {isAdmin && (
+                  deleteConfirm === sponsor._id ? (
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleDelete(sponsor._id)}
+                        className="px-2 py-1 text-xs bg-accent-error hover:bg-red-700 text-surface-elevated font-semibold rounded-lg transition"
+                      >
+                        Confirm
+                      </button>
+                      <button
+                        onClick={() => setDeleteConfirm(null)}
+                        className="px-2 py-1 text-xs text-text-secondary font-semibold hover:text-text-primary transition"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
                     <button
-                      onClick={() => handleDelete(sponsor._id)}
-                      className="px-2 py-1 text-xs bg-accent-error hover:bg-red-700 text-surface-elevated font-semibold rounded-lg transition"
+                      onClick={() => setDeleteConfirm(sponsor._id)}
+                      className="p-2 rounded-lg text-text-secondary hover:text-accent-error hover:bg-surface-secondary transition"
+                      title="Delete"
                     >
-                      Confirm
+                      <Trash2 size={16} />
                     </button>
-                    <button
-                      onClick={() => setDeleteConfirm(null)}
-                      className="px-2 py-1 text-xs text-text-secondary font-semibold hover:text-text-primary transition"
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => setDeleteConfirm(sponsor._id)}
-                    className="p-2 rounded-lg text-text-secondary hover:text-accent-error hover:bg-surface-secondary transition"
-                    title="Delete"
-                  >
-                    <Trash2 size={16} />
-                  </button>
+                  )
                 )}
               </div>
             </div>
@@ -535,7 +544,7 @@ function SponsorsContent() {
                     {/* Role Pill */}
                     <span className="px-2.5 py-0.5 text-xs font-bold rounded-lg bg-accent-primary-light text-text-primary border border-accent-primary/30 flex items-center gap-1.5 shadow-[1px_1px_0px_0px_var(--accent-primary)]">
                       <Award size={13} className="text-accent-primary" />
-                      MEC CC as: {partner.role || "Club Partner"}
+                      MEC Computer Club as: {partner.role || "Club Partner"}
                     </span>
 
                     {/* Active Status */}
@@ -609,29 +618,31 @@ function SponsorsContent() {
                   >
                     <Pencil size={16} />
                   </Link>
-                  {deleteConfirm === partner._id ? (
-                    <div className="flex items-center gap-1">
+                  {isAdmin && (
+                    deleteConfirm === partner._id ? (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => handleDelete(partner._id)}
+                          className="px-2 py-1 text-xs bg-accent-error hover:bg-red-700 text-surface-elevated font-semibold rounded-lg transition"
+                        >
+                          Confirm
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirm(null)}
+                          className="px-2 py-1 text-xs text-text-secondary font-semibold hover:text-text-primary transition"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
                       <button
-                        onClick={() => handleDelete(partner._id)}
-                        className="px-2 py-1 text-xs bg-accent-error hover:bg-red-700 text-surface-elevated font-semibold rounded-lg transition"
+                        onClick={() => setDeleteConfirm(partner._id)}
+                        className="p-2 rounded-lg text-text-secondary hover:text-accent-error hover:bg-surface-secondary transition"
+                        title="Delete Connection"
                       >
-                        Confirm
+                        <Trash2 size={16} />
                       </button>
-                      <button
-                        onClick={() => setDeleteConfirm(null)}
-                        className="px-2 py-1 text-xs text-text-secondary font-semibold hover:text-text-primary transition"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setDeleteConfirm(partner._id)}
-                      className="p-2 rounded-lg text-text-secondary hover:text-accent-error hover:bg-surface-secondary transition"
-                      title="Delete Connection"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    )
                   )}
                 </div>
               </div>

@@ -9,6 +9,7 @@ import { ArrowLeft, Calendar, Clock, Eye, Heart, Tag } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import toast from "react-hot-toast";
+import { formatCompactNumber } from "@/lib/formatters";
 
 interface BlogViewClientProps {
   post: BlogPost;
@@ -234,17 +235,17 @@ export default function BlogViewClient({ post, isHtml }: BlogViewClientProps) {
               {post.readTime} min read
             </span>
             <span className="opacity-50">·</span>
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1" title={`${viewsCount} views`}>
               <Eye size={12} />
-              {viewsCount} {viewsCount === 1 ? "view" : "views"}
+              {formatCompactNumber(viewsCount)} {viewsCount === 1 ? "view" : "views"}
             </span>
             <span className="opacity-50">·</span>
-            <span className="flex items-center gap-1">
+            <span className="flex items-center gap-1" title={`${likesCount} likes`}>
               <Heart
                 size={12}
                 className={isLiked ? "fill-red-500 text-red-500" : ""}
               />
-              {likesCount} {likesCount === 1 ? "like" : "likes"}
+              {formatCompactNumber(likesCount)} {likesCount === 1 ? "like" : "likes"}
             </span>
           </div>
 
@@ -253,55 +254,20 @@ export default function BlogViewClient({ post, isHtml }: BlogViewClientProps) {
             {post.title}
           </h1>
 
-          {/* Tags & Reaction Row */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            {post.tags && post.tags.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {post.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-flex items-center gap-1 font-mono text-xs py-1 px-3 bg-surface-secondary rounded-full text-text-secondary border border-border-default hover:bg-accent-primary-light hover:text-text-primary transition cursor-default"
-                  >
-                    <Tag size={10} />
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <div />
-            )}
-
-            {/* Interactive Reaction Button (Only on Details Page) */}
-            <button
-              type="button"
-              onClick={handleLike}
-              className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl font-bold text-xs border-2 transition-all cursor-pointer select-none active:scale-95 ${
-                isLiked
-                  ? "bg-red-50 text-red-600 border-red-500 shadow-[3px_3px_0px_0px_#ef4444] dark:bg-red-950/40 dark:text-red-400"
-                  : "bg-surface-elevated text-text-primary border-border-default shadow-[3px_3px_0px_0px_var(--accent-primary)] hover:border-accent-primary"
-              }`}
-              title={
-                isAuthenticated
-                  ? isLiked
-                    ? "Unlike post"
-                    : "Like post"
-                  : "Please login to react"
-              }
-            >
-              <Heart
-                size={15}
-                className={`transition-transform duration-200 ${
-                  isLiked
-                    ? "fill-red-500 text-red-500 scale-110"
-                    : "text-text-secondary"
-                }`}
-              />
-              <span>{likesCount}</span>
-              <span className="font-normal opacity-80">
-                {isLiked ? "Liked" : "Like"}
-              </span>
-            </button>
-          </div>
+          {/* Tags */}
+          {post.tags && post.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {post.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1 font-mono text-xs py-1 px-3 bg-surface-secondary rounded-full text-text-secondary border border-border-default hover:bg-accent-primary-light hover:text-text-primary transition cursor-default"
+                >
+                  <Tag size={10} />
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
         </header>
 
         {/* Cover Image inside container - 100% aligned with description below */}
@@ -381,8 +347,57 @@ export default function BlogViewClient({ post, isHtml }: BlogViewClientProps) {
             </div>
           )}
 
+          {/* Bottom Article Engagement / Like Section */}
+          <div className="mt-12 p-5 sm:p-6 bg-surface-secondary/40 rounded-2xl border-2 border-border-brutalist dark:border-border-default flex flex-col sm:flex-row items-center justify-between gap-4 shadow-[4px_4px_0px_0px_var(--border-default)]">
+            <div className="text-center sm:text-left">
+              <h4 className="text-base sm:text-lg font-bold text-text-primary m-0">
+                Did you find this post helpful?
+              </h4>
+              <p className="text-xs sm:text-sm text-text-tertiary m-0 mt-1">
+                Show your appreciation to {post.author} by giving it a like!
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleLike}
+              disabled={liking}
+              className={`group inline-flex items-center gap-3 px-6 py-2.5 rounded-xl font-bold text-sm sm:text-base border-2 transition-all duration-200 cursor-pointer select-none active:scale-95 shrink-0 ${
+                isLiked
+                  ? "bg-red-500 text-white border-red-600 shadow-[4px_4px_0px_0px_#991b1b] hover:bg-red-600 dark:bg-red-600 dark:border-red-500 dark:shadow-[4px_4px_0px_0px_#450a0a]"
+                  : "bg-surface-elevated text-text-primary border-border-brutalist dark:border-border-default shadow-[4px_4px_0px_0px_var(--accent-primary)] hover:border-accent-primary hover:shadow-[5px_5px_0px_0px_var(--accent-primary)] hover:-translate-y-0.5"
+              }`}
+              title={
+                isAuthenticated
+                  ? isLiked
+                    ? "Unlike post"
+                    : "Like post"
+                  : "Please login to react"
+              }
+            >
+              <Heart
+                size={18}
+                className={`transition-transform duration-200 ${
+                  isLiked
+                    ? "fill-white text-white scale-110"
+                    : "text-red-500 group-hover:scale-125"
+                }`}
+              />
+              <span>{isLiked ? "Liked" : "Like this post"}</span>
+              <span
+                className={`px-2 py-0.5 rounded-md font-mono text-xs font-bold ${
+                  isLiked
+                    ? "bg-white/25 text-white"
+                    : "bg-surface-secondary text-text-primary border border-border-default"
+                }`}
+              >
+                {formatCompactNumber(likesCount)}
+              </span>
+            </button>
+          </div>
+
           {/* Author Card */}
-          <div className="mt-12 pt-8 border-t-2 border-border-default">
+          <div className="mt-8 pt-8 border-t-2 border-border-default">
             <div className="flex items-center gap-4 p-4 sm:p-5 bg-surface-elevated rounded-xl border-2 border-border-default shadow-[3px_3px_0px_0px_var(--accent-primary)] max-w-full">
               <Link
                 href={authorProfileUrl}

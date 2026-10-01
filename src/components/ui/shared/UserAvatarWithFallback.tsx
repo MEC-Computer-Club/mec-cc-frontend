@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import { getOptimizedImageUrl } from "@/data/gallery";
+import { getOptimizedImageUrl } from "@/lib/api/gallery";
 
 interface UserAvatarProps {
   initialImageUrl?: string | null;
@@ -22,7 +22,12 @@ const UserAvatarWithFallback: React.FC<UserAvatarProps> = ({
 }) => {
   const getInitialSrc = () => {
     if (!initialImageUrl) return DEFAULT_AVATAR_URL;
-    return getOptimizedImageUrl(initialImageUrl, 160);
+    // Floor at 100px so even tiny avatars (36px sidebar icons) request at
+    // least 200px from Cloudinary after 2× DPR is applied — sharp on all
+    // screens. A 200px WebP at q_auto:good is only ~4-6KB.
+    const displaySize = Math.max(w, h);
+    const requestWidth = Math.max(displaySize, 100);
+    return getOptimizedImageUrl(initialImageUrl, requestWidth);
   };
 
   const [imageSrc, setImageSrc] = useState(getInitialSrc);
@@ -35,8 +40,10 @@ const UserAvatarWithFallback: React.FC<UserAvatarProps> = ({
   const pos = imagePosition && imagePosition.trim() ? imagePosition.trim() : "50% 50%";
 
   return (
+    // No border here — the border lives on the parent wrapper so there's no
+    // double-border gap that causes the blank curve artifact in the top-left.
     <div
-      className={`relative rounded-full overflow-hidden shrink-0 border border-border-default bg-surface-secondary flex items-center justify-center ${className}`}
+      className={`relative rounded-full overflow-hidden shrink-0 bg-surface-secondary flex items-center justify-center ${className}`}
       style={{
         width: `${size}px`,
         height: `${size}px`,
@@ -56,6 +63,7 @@ const UserAvatarWithFallback: React.FC<UserAvatarProps> = ({
           height: "100%",
           objectFit: "cover",
           objectPosition: pos,
+          display: "block",
         }}
         onError={() => {
           if (imageSrc !== DEFAULT_AVATAR_URL) {

@@ -672,7 +672,7 @@ function SponsorFormInner({ initialData, mode }: Props) {
               <div>
                 <p className="text-sm font-bold">External Connection</p>
                 <p className="text-xs text-text-secondary font-normal">
-                  MEC CC connected as Club / Community Partner
+                  MEC Computer Club connected as Club / Community Partner
                 </p>
               </div>
             </button>
@@ -720,7 +720,7 @@ function SponsorFormInner({ initialData, mode }: Props) {
           {isClubPartner && (
             <div className="space-y-2">
               <Field
-                label="MEC CC's Role"
+                label="MEC Computer Club's Role"
                 required
                 hint="How MEC Computer Club is credited or designated"
               >
@@ -804,7 +804,7 @@ function SponsorFormInner({ initialData, mode }: Props) {
             >
               <textarea
                 rows={3}
-                placeholder="e.g. MEC CC serves as official Club Partner. Members get direct invitation slots and our logo is placed on banners and certificate collaterals."
+                placeholder="e.g. MEC Computer Club serves as official Club Partner. Members get direct invitation slots and our logo is placed on banners and certificate collaterals."
                 value={profile.description}
                 onChange={(e) => setP("description", e.target.value)}
                 className={INPUT + " resize-y"}

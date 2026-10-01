@@ -27,7 +27,6 @@ import toast from "react-hot-toast";
 import { useAuth } from "@/context/AuthContext";
 import FilterSelect, { FilterOption } from "@/app/dashboard/components/FilterSelect";
 import { Select, SelectOption } from "@/components/ui/Select";
-import { executives } from "@/data/executives";
 import axios from "axios";
 import { API_BASE_URL } from "@/lib/api";
 import {
@@ -46,6 +45,10 @@ const STORAGE_KEY_CLUB = "mec_cc_club_assets";
 
 export default function AssetsPage() {
   const { user } = useAuth();
+  const userRole = String(user?.role || "").toLowerCase();
+  const userClubRole = String(user?.clubRole || "").toLowerCase();
+  const isAdvisor = userRole === "advisor" || userClubRole === "advisor";
+  const isAdmin = userRole === "admin";
   const currentActorName = user?.fullName || "Nasir";
   const currentActorRole = (user?.role === "admin" ? "admin" : "moderator") as "admin" | "moderator";
   const currentActorEmail = user?.email || "nasir.mec@gmail.com";
@@ -438,7 +441,11 @@ export default function AssetsPage() {
 
         {/* Action button */}
         <div className="flex items-center gap-3">
-          {activeTab === "borrowed" ? (
+          {isAdvisor ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-secondary border border-border-default font-mono text-xs font-bold text-text-secondary">
+              Faculty Oversight (View-Only)
+            </span>
+          ) : activeTab === "borrowed" ? (
             <button
               onClick={() => setIsAddBorrowedOpen(true)}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-accent-primary text-accent-primary-text font-bold text-xs sm:text-sm border-2 border-text-primary dark:border-border-default shadow-[3px_3px_0px_var(--text-primary)] dark:shadow-[3px_3px_0px_var(--accent-primary)] hover:translate-x-0.5 hover:translate-y-0.5 active:translate-x-0 active:translate-y-0 transition-all cursor-pointer"
@@ -1044,34 +1051,40 @@ export default function AssetsPage() {
 
                       {/* Actions */}
                       <td className="py-3.5 px-4 text-right whitespace-nowrap min-w-[90px]">
-                        <div className="flex items-center justify-end gap-1.5">
-                          {item.status === "In Use" && (
+                        {isAdvisor ? (
+                          <span className="text-[11px] font-mono font-bold text-text-tertiary px-2 py-1 rounded bg-surface-secondary">
+                            View Only
+                          </span>
+                        ) : (
+                          <div className="flex items-center justify-end gap-1.5">
+                            {item.status === "In Use" && (
+                              <button
+                                onClick={() => {
+                                  setReturningItem(item);
+                                  setReturnNotes("");
+                                }}
+                                className="px-2.5 py-1 rounded-md bg-accent-success/15 hover:bg-accent-success/30 text-accent-success font-bold text-xs border border-accent-success transition cursor-pointer"
+                                title="Mark as Returned to Department"
+                              >
+                                Return
+                              </button>
+                            )}
                             <button
-                              onClick={() => {
-                                setReturningItem(item);
-                                setReturnNotes("");
-                              }}
-                              className="px-2.5 py-1 rounded-md bg-accent-success/15 hover:bg-accent-success/30 text-accent-success font-bold text-xs border border-accent-success transition cursor-pointer"
-                              title="Mark as Returned to Department"
+                              onClick={() => setEditingBorrowed(item)}
+                              className="p-1.5 rounded-md hover:bg-surface-secondary text-text-tertiary hover:text-text-primary border border-transparent hover:border-border-default transition cursor-pointer"
+                              title="Edit Record"
                             >
-                              Return
+                              <Edit2 size={15} />
                             </button>
-                          )}
-                          <button
-                            onClick={() => setEditingBorrowed(item)}
-                            className="p-1.5 rounded-md hover:bg-surface-secondary text-text-tertiary hover:text-text-primary border border-transparent hover:border-border-default transition cursor-pointer"
-                            title="Edit Record"
-                          >
-                            <Edit2 size={15} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteBorrowed(item)}
-                            className="p-1.5 rounded-md hover:bg-accent-error/15 text-text-tertiary hover:text-accent-error border border-transparent hover:border-accent-error/30 transition cursor-pointer"
-                            title="Delete Record"
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        </div>
+                            <button
+                              onClick={() => handleDeleteBorrowed(item)}
+                              className="p-1.5 rounded-md hover:bg-accent-error/15 text-text-tertiary hover:text-accent-error border border-transparent hover:border-accent-error/30 transition cursor-pointer"
+                              title="Delete Record"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -1178,22 +1191,28 @@ export default function AssetsPage() {
 
                       {/* Actions */}
                       <td className="py-3.5 px-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button
-                            onClick={() => setEditingClub(asset)}
-                            className="p-1.5 rounded-md hover:bg-surface-secondary text-text-tertiary hover:text-text-primary border border-transparent hover:border-border-default transition cursor-pointer"
-                            title="Edit Asset"
-                          >
-                            <Edit2 size={15} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteClub(asset)}
-                            className="p-1.5 rounded-md hover:bg-accent-error/15 text-text-tertiary hover:text-accent-error border border-transparent hover:border-accent-error/30 transition cursor-pointer"
-                            title="Delete Asset"
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        </div>
+                        {isAdvisor ? (
+                          <span className="text-[11px] font-mono font-bold text-text-tertiary px-2 py-1 rounded bg-surface-secondary">
+                            View Only
+                          </span>
+                        ) : (
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => setEditingClub(asset)}
+                              className="p-1.5 rounded-md hover:bg-surface-secondary text-text-tertiary hover:text-text-primary border border-transparent hover:border-border-default transition cursor-pointer"
+                              title="Edit Asset"
+                            >
+                              <Edit2 size={15} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteClub(asset)}
+                              className="p-1.5 rounded-md hover:bg-accent-error/15 text-text-tertiary hover:text-accent-error border border-transparent hover:border-accent-error/30 transition cursor-pointer"
+                              title="Delete Asset"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        )}
                       </td>
                     </tr>
                   ))
@@ -1481,7 +1500,7 @@ function BorrowedEquipmentModal({
 }) {
   const { user } = useAuth();
 
-  const availableExecutives = liveExecutives && liveExecutives.length > 0 ? liveExecutives : executives;
+  const availableExecutives = liveExecutives && liveExecutives.length > 0 ? liveExecutives : [];
 
   const executiveOptions: SelectOption[] = useMemo(() => {
     const list: SelectOption[] = [

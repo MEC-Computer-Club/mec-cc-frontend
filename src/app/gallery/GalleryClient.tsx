@@ -9,7 +9,7 @@ import {
   getYoutubeThumbnail,
   getCleanMediaTitle,
   getOptimizedImageUrl,
-} from "@/data/gallery";
+} from "@/lib/api/gallery";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import {

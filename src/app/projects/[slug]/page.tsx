@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { getProjects, getProjectBySlug } from "@/data/projects";
+import { getProjects, getProjectBySlug } from "@/lib/api/projects";
 import { FaGithub } from "react-icons/fa";
 
 export async function generateStaticParams() {

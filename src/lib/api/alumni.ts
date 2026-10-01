@@ -1,5 +1,6 @@
 import { formatDeptSession } from "@/lib/formatters";
 import { groupPeopleByBatch } from "@/lib/batchUtils";
+import { API_BASE_URL } from "@/lib/api";
 
 export interface AlumniMember {
   id: string;
@@ -17,6 +18,8 @@ export interface AlumniMember {
     facebook?: string;
     email?: string;
     codeforces?: string;
+    discord?: string;
+    codechef?: string;
   };
 }
 
@@ -26,55 +29,41 @@ export interface AlumniBatch {
   members: AlumniMember[];
 }
 
-// Static fallback data
-export const alumniBatches: AlumniBatch[] = [];
-
-import { API_BASE_URL } from "@/lib/api";
-
 export async function getAlumniMembers(): Promise<AlumniMember[]> {
   const API_URL = API_BASE_URL;
   try {
-    const res = await fetch(`${API_URL}/api/users/profile/active`, {
-      next: { revalidate: 60 },
-    });
-
+    const res = await fetch(`${API_URL}/api/users/profile/active`, { next: { revalidate: 60 } });
     if (res.ok) {
       const data = await res.json();
       const backendMembers: any[] = data.data || data.members || [];
-
-      // Filter only alumni
       const alumniMembers = backendMembers.filter(
         (m: any) => m.clubRole === "alumni" || m.role === "alumni"
       );
 
-      if (alumniMembers.length > 0) {
-        return alumniMembers.map((m: any) => ({
-          id: m._id || m.id,
-          name: m.fullName,
-          role:
-            m.designation ||
-            m.customRole ||
-            (m.role === "alumni" ? "Alumni" : "Club Alumni"),
-          batch: m.batch || "",
-          session: formatDeptSession(m.department, m.session, m.batch) || "",
-          department: m.department || "",
-          image: m.imageUrl || "",
-          imagePosition: m.imagePosition || "50% 50%",
-          bio: m.bio || "",
-          socials: {
-            linkedin: m.socialLinks?.linkedin || undefined,
-            github: m.socialLinks?.github || undefined,
-            facebook: m.socialLinks?.facebook || undefined,
-            codeforces: m.socialLinks?.codeforces || undefined,
-            email: m.email || undefined,
-          },
-        }));
-      }
+      return alumniMembers.map((m: any) => ({
+        id: m._id || m.id,
+        name: m.fullName,
+        role: m.designation || m.customRole || (m.role === "alumni" ? "Alumni" : "Club Alumni"),
+        batch: m.batch || "",
+        session: formatDeptSession(m.department, m.session, m.batch) || "",
+        department: m.department || "",
+        image: m.imageUrl || "",
+        imagePosition: m.imagePosition || "50% 50%",
+        bio: m.bio || "",
+        socials: {
+          facebook: m.socialLinks?.facebook || undefined,
+          linkedin: m.socialLinks?.linkedin || undefined,
+          github: m.socialLinks?.github || undefined,
+          codeforces: m.socialLinks?.codeforces || undefined,
+          discord: m.socialLinks?.discord || undefined,
+          codechef: m.socialLinks?.codechef || undefined,
+          email: m.email || undefined,
+        },
+      }));
     }
   } catch (err) {
-    console.warn("Could not fetch alumni from backend, using static fallback:", err);
+    console.warn("Could not fetch alumni from backend:", err);
   }
-
   return [];
 }
 
@@ -90,3 +79,6 @@ export async function getAlumni(): Promise<AlumniBatch[]> {
   }
   return [];
 }
+
+/** @deprecated Use getAlumniMembers() instead */
+export const alumniBatches: AlumniBatch[] = [];

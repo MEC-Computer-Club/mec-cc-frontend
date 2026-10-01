@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { LeaderboardEntry } from "@/types";
 import FilterSelect from "@/app/dashboard/components/FilterSelect";
-import { CP_SHEET_PROBLEMS } from "@/data/cpSheetProblems";
+import { CP_SHEET_PROBLEMS } from "@/lib/api/cpSheetProblems";
 import { useAuth } from "@/context/AuthContext";
 import { cleanCfHandle } from "../services/cfSyncService";
 

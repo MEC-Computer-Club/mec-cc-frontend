@@ -14,7 +14,7 @@ import {
   Share2,
 } from "lucide-react";
 import { getPageContent } from "@/lib/pageContent";
-import { cpResources } from "@/data/cp";
+import { cpResources } from "@/lib/api/cp";
 import { CPResource } from "@/types";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";

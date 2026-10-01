@@ -1,7 +1,7 @@
 export const revalidate = 60;
 
 import type { Metadata } from "next";
-import { getClubLeaderboard, cpResources } from "@/data/cp";
+import { getClubLeaderboard, cpResources } from "@/lib/api/cp";
 import { getPageContent } from "@/lib/pageContent";
 import CPHubView from "./components/CPHubView";
 

@@ -1,21 +1,33 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { Badge } from "./Badge";
 import { Eye, Heart } from "lucide-react";
-import { getOptimizedImageUrl } from "@/data/gallery";
+import { getOptimizedImageUrl } from "@/lib/api/gallery";
+import { formatCompactNumber } from "@/lib/formatters";
 
 /* ===== Event Card ===== */
 interface EventCardProps {
+  id?: string;
   title: string;
   description: string;
   date: string;
   time?: string;
   location: string;
   type: string;
-  status: "upcoming" | "ongoing" | "past";
-  image: string;
+  status: "upcoming" | "ongoing" | "past" | "scheduled" | "completed" | "cancelled" | "postponed" | string;
+  image?: string;
+  coverImageUrl?: string;
+  bannerImageUrl?: string;
+  coverImagePosition?: string;
+  bannerImagePosition?: string;
   slug: string;
   attendeeCount?: number;
+  registeredCount?: number;
+  linkedForm?: string;
+  registrationUrl?: string;
+  registrationLink?: string;
 }
 
 export function EventCard({
@@ -27,14 +39,48 @@ export function EventCard({
   type,
   status,
   image,
+  coverImageUrl,
+  bannerImageUrl,
+  coverImagePosition,
+  bannerImagePosition,
   slug,
   attendeeCount,
+  registeredCount,
+  linkedForm,
+  registrationUrl,
+  registrationLink,
 }: EventCardProps) {
   const eventDate = date ? new Date(date) : null;
   const isValidDate = eventDate && !isNaN(eventDate.getTime());
   const month = isValidDate ? eventDate.toLocaleDateString("en-US", { month: "short" }).toUpperCase() : "TBA";
   const day = isValidDate ? eventDate.getDate() : "--";
-  const isUpcoming = status === "upcoming";
+  const isOngoing = status === "ongoing";
+  const isUpcoming = status === "upcoming" || status === "scheduled";
+  const isCancelled = status === "cancelled";
+  const isPostponed = status === "postponed";
+
+  const displayImage = coverImageUrl || bannerImageUrl || image;
+  const displayPosition = coverImagePosition || bannerImagePosition || "50% 50%";
+
+  const statusLabel = isOngoing
+    ? "LIVE NOW"
+    : isUpcoming
+    ? "UPCOMING"
+    : isCancelled
+    ? "CANCELLED"
+    : isPostponed
+    ? "POSTPONED"
+    : "COMPLETED";
+
+  const statusTextClass = isOngoing
+    ? "text-rose-600 dark:text-rose-400 font-black"
+    : isUpcoming
+    ? "text-emerald-600 dark:text-emerald-400"
+    : isCancelled
+    ? "text-red-600 dark:text-red-400"
+    : isPostponed
+    ? "text-amber-600 dark:text-amber-400"
+    : "text-text-tertiary";
 
   return (
     <Link
@@ -42,22 +88,41 @@ export function EventCard({
       className="flex flex-col w-full h-full min-h-[240px] bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl overflow-hidden transition-all duration-200 hover:shadow-[6px_6px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5 no-underline text-inherit group"
       id={`event-${slug}`}
     >
+      {/* Event Cover Image (with custom focal positioning) */}
+      {displayImage && (
+        <div className="w-full h-44 relative overflow-hidden bg-surface-secondary border-b border-border-default">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={displayImage}
+            alt={title}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            style={{ objectPosition: displayPosition }}
+            onError={(e) => {
+              (e.currentTarget.parentElement as HTMLElement)?.style.setProperty("display", "none");
+            }}
+          />
+        </div>
+      )}
+
       {/* Top Header Bar with Level/Badge on Top Left */}
       <div className="flex items-center justify-between px-4 py-2 border-b border-border-default/60 bg-surface-secondary/40">
         <div className="inline-flex items-center gap-1.5">
+          {isOngoing ? (
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500" />
+            </span>
+          ) : (
+            <span
+              className={`w-2 h-2 rounded-full ${
+                isUpcoming ? "bg-emerald-500 animate-pulse" : "bg-text-tertiary"
+              }`}
+            />
+          )}
           <span
-            className={`w-2 h-2 rounded-full ${
-              isUpcoming ? "bg-emerald-500 animate-pulse" : "bg-text-tertiary"
-            }`}
-          />
-          <span
-            className={`font-mono [font-feature-settings:'liga'_0,'calt'_0] text-[0.7rem] font-extrabold tracking-wider uppercase ${
-              isUpcoming
-                ? "text-emerald-600 dark:text-emerald-400"
-                : "text-text-tertiary"
-            }`}
+            className={`font-mono [font-feature-settings:'liga'_0,'calt'_0] text-[0.7rem] font-extrabold tracking-wider uppercase ${statusTextClass}`}
           >
-            {isUpcoming ? "UPCOMING" : "PAST EVENT"}
+            {statusLabel}
           </span>
         </div>
         <div className="font-mono [font-feature-settings:'liga'_0,'calt'_0] text-[0.65rem] font-bold text-text-secondary bg-surface-secondary py-0.5 px-2 border border-border-brutalist dark:border-border-default rounded">
@@ -87,15 +152,16 @@ export function EventCard({
           
           <p className="text-sm text-text-secondary leading-normal line-clamp-2 overflow-hidden min-h-[2.6em]">{description}</p>
           
-          <div className="flex items-center justify-between mt-auto pt-3 border-t border-text-primary/15 dark:border-border-default bg-surface-primary dark:bg-transparent">
-            <div className="font-mono [font-feature-settings:'liga'_0,'calt'_0] text-xs font-bold uppercase text-text-secondary">
-              DETAILS →
+          <div className="flex items-center justify-between mt-auto pt-3 border-t border-text-primary/15 dark:border-border-default bg-surface-primary dark:bg-transparent gap-2 flex-wrap">
+            <div className="font-mono [font-feature-settings:'liga'_0,'calt'_0] text-xs text-text-primary font-bold">
+              {(status === "past" || status === "completed")
+                ? `${attendeeCount ?? 0} ATTENDED`
+                : `${registeredCount ?? attendeeCount ?? 0} REGISTERED`}
             </div>
-            {attendeeCount ? (
-              <div className="font-mono [font-feature-settings:'liga'_0,'calt'_0] text-xs text-text-primary font-bold">
-                {attendeeCount} {status === "past" ? "ATTENDED" : "ATTENDING"}
-              </div>
-            ) : null}
+
+            <span className="font-mono [font-feature-settings:'liga'_0,'calt'_0] text-xs font-bold uppercase text-text-secondary group-hover:text-accent-primary transition-colors">
+              DETAILS →
+            </span>
           </div>
         </div>
       </div>
@@ -196,7 +262,7 @@ export function ProjectCard({
             </span>
           ))}
           {safeTechStack.length > 4 && (
-            <span className="font-mono [font-feature-settings:'liga'_0,'calt'_0] text-[0.65rem] py-0.5 px-2 bg-accent-primary-light text-accent-primary-text rounded tracking-wide">
+            <span className="font-mono [font-feature-settings:'liga'_0,'calt'_0] text-[0.65rem] py-0.5 px-2 bg-accent-primary-light text-text-primary font-bold rounded tracking-wide border border-accent-primary/30">
               +{safeTechStack.length - 4}
             </span>
           )}
@@ -344,12 +410,12 @@ export function BlogCard({
           <div className="flex items-center gap-2 font-mono text-xs text-text-tertiary">
             {views !== undefined && (
               <span className="flex items-center gap-1 font-semibold" title={`${views} views`}>
-                <Eye size={12} /> {views}
+                <Eye size={12} /> {formatCompactNumber(views)}
               </span>
             )}
             {likesCount !== undefined && (
               <span className="flex items-center gap-1 font-semibold" title={`${likesCount} likes`}>
-                <Heart size={12} className={likesCount > 0 ? "fill-red-500/80 text-red-500" : ""} /> {likesCount}
+                <Heart size={12} className={likesCount > 0 ? "fill-red-500/80 text-red-500" : ""} /> {formatCompactNumber(likesCount)}
               </span>
             )}
             <time className="font-bold">{formattedDate}</time>

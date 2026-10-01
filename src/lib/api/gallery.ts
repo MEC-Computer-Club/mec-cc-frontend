@@ -6,14 +6,14 @@ export type GalleryItem = {
   thumbnailUrl?: string;
   event: string;
   eventSlug?: string;
-  date: string; // YYYY-MM-DD for sorting
+  date: string;
   isYoutube?: boolean;
 };
 
 export function getYoutubeEmbedUrl(url: string): string | null {
   if (!url) return null;
   const match = url.match(
-    /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/|live\/))([\w-]{11})/i
+    /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/|live\/))([\\w-]{11})/i
   );
   return match ? `https://www.youtube.com/embed/${match[1]}` : null;
 }
@@ -21,7 +21,7 @@ export function getYoutubeEmbedUrl(url: string): string | null {
 export function getYoutubeThumbnail(url: string): string | null {
   if (!url) return null;
   const match = url.match(
-    /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/|live\/))([\w-]{11})/i
+    /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/|live\/))([\\w-]{11})/i
   );
   return match ? `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg` : null;
 }
@@ -35,23 +35,31 @@ export function getCleanMediaTitle(title?: string, event?: string): string {
 }
 
 /**
- * Transforms Cloudinary media URLs on the fly for lightweight, responsive delivery.
- * Automatically injects WebP/AVIF format and responsive max width.
+ * Transforms Cloudinary media URLs on the fly for crisp, responsive delivery.
+ *
+ * @param url    - The original Cloudinary (or any) image URL
+ * @param width  - The *logical* display width in CSS pixels
+ * @param dpr    - Device pixel ratio multiplier (default 2 for retina clarity)
+ *
+ * Strategy:
+ *   - f_auto       → serves WebP/AVIF automatically (40-60% smaller than JPEG)
+ *   - q_auto:good  → Cloudinary's "good" quality preset (~q_78), visually
+ *                    identical to q_90 but ~25% smaller files.
+ *   - w_{n},c_limit → caps width but never upscales (no wasted bytes)
+ *   - dpr=2         → requests 2× CSS pixels for sharp retina rendering
  */
-export function getOptimizedImageUrl(url?: string | null, width = 800): string {
+export function getOptimizedImageUrl(url?: string | null, width = 800, dpr = 2): string {
   if (!url) return "/mec-club-photo.jpg";
-  // If Cloudinary URL and not already transformed
   if (url.includes("res.cloudinary.com") && url.includes("/upload/")) {
-    if (url.includes("/upload/f_auto") || url.includes("/upload/w_") || url.includes("/upload/q_")) {
-      return url;
-    }
-    return url.replace("/upload/", `/upload/f_auto,q_auto,w_${width},c_limit/`);
+    const cleanUrl = url.replace(
+      /(\/upload\/)([a-z][a-z0-9_,:/]+,|[a-z]+_[a-z0-9_,:/]+\/)/,
+      "/upload/"
+    );
+    const effectiveWidth = Math.round(width * dpr);
+    return cleanUrl.replace("/upload/", `/upload/f_auto,q_auto:good,w_${effectiveWidth},c_limit/`);
   }
   return url;
 }
-
-export const rawGalleryItems: GalleryItem[] = [];
-export const galleryItems: GalleryItem[] = [];
 
 import { API_BASE_URL } from "@/lib/api";
 const API_URL = API_BASE_URL;
@@ -88,7 +96,6 @@ export async function getGalleryItems(): Promise<GalleryItem[]> {
           };
         });
 
-        // Only return backend media sorted by date descending
         return liveItems.sort(
           (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
         );
@@ -97,7 +104,6 @@ export async function getGalleryItems(): Promise<GalleryItem[]> {
   } catch (err) {
     console.warn("Could not fetch live gallery items from backend:", err);
   }
-
   return [];
 }
 
@@ -119,7 +125,5 @@ export async function getHomeGalleryItems(limit = 5): Promise<GalleryItem[]> {
   } catch (err) {
     console.warn("Could not fetch featured gallery items from backend:", err);
   }
-
   return allItems.slice(0, limit);
 }
-

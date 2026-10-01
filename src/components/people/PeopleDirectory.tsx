@@ -11,7 +11,6 @@ export interface DirectoryPerson {
   name: string;
   role: string;
   department?: string;
-  systemRole?: string;
   batch?: string;
   session?: string;
   image?: string;
@@ -22,6 +21,8 @@ export interface DirectoryPerson {
     linkedin?: string;
     facebook?: string;
     codeforces?: string;
+    discord?: string;
+    codechef?: string;
     email?: string;
   };
 }
@@ -476,12 +477,12 @@ export default function PeopleDirectory<T extends DirectoryPerson>({
                     slug={person.id}
                     name={person.name}
                     role={person.role}
-                    systemRole={person.systemRole}
                     department={person.department}
                     session={person.session}
                     batch={person.batch}
                     sublabel={batch.batchNumber}
                     category={category}
+                    hideRoleBadges={true}
                     image={person.image}
                     imagePosition={person.imagePosition}
                     socials={person.socials}

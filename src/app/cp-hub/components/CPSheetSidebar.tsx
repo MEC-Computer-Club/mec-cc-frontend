@@ -5,7 +5,7 @@ import {
   RATINGS_LIST,
   getRatingColor,
   CPProblem,
-} from "@/data/cpSheetProblems";
+} from "@/lib/api/cpSheetProblems";
 import { CheckCircle2, Flame } from "lucide-react";
 
 interface CPSheetSidebarProps {

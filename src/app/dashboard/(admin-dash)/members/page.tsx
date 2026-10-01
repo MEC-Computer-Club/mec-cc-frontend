@@ -69,16 +69,29 @@ function MemberManagementContent() {
     banned: 0,
   });
 
-  const [activeTab, setActiveTab] = useState<MainTab>(tabParam === "pending" ? "pending" : "all");
+  const { user: currentUser } = useAuth();
+  const currentRole = String(currentUser?.role || "").toLowerCase();
+  const currentClubRole = String(currentUser?.clubRole || "").toLowerCase();
+  const isAdvisor = currentRole === "advisor" || currentClubRole === "advisor";
+  const isAdmin = currentRole === "admin";
+
+  const [activeTab, setActiveTab] = useState<MainTab>(
+    isAdvisor ? "all" : (tabParam === "pending" ? "pending" : "all")
+  );
 
   useEffect(() => {
+    if (isAdvisor) {
+      setActiveTab("all");
+      return;
+    }
     const currentTabParam = searchParams.get("tab");
     if (currentTabParam === "pending") {
       setActiveTab("pending");
     } else if (currentTabParam === "all") {
       setActiveTab("all");
     }
-  }, [searchParams]);
+  }, [searchParams, isAdvisor]);
+
   const [pendingFilter, setPendingFilter] = useState("pending");
   const [allFilter, setAllFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -88,7 +101,6 @@ function MemberManagementContent() {
   const [rowLoading, setRowLoading] = useState<Record<string, boolean>>({});
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
-  const { user: currentUser } = useAuth();
   const [userToDelete, setUserToDelete] = useState<MembersData | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -129,9 +141,9 @@ function MemberManagementContent() {
     setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
-  const fetchMembers = useCallback(async () => {
+  const fetchMembers = useCallback(async (isSilent = false) => {
     try {
-      setLoading(true);
+      if (!isSilent) setLoading(true);
       const currentFilter = activeTab === "pending" ? pendingFilter : allFilter;
       const res = await axios.get(
         `${API_BASE_URL}/api/dashboard/members`,
@@ -160,12 +172,19 @@ function MemberManagementContent() {
     } catch (error) {
       console.error("Error fetching members:", error);
     } finally {
-      setLoading(false);
+      if (!isSilent) setLoading(false);
     }
   }, [activeTab, pendingFilter, allFilter, debouncedSearch, pagination.page, pagination.limit]);
 
   useEffect(() => {
     fetchMembers();
+    // Live presence polling silently every 25 seconds (zero flicker or table reloading)
+    const interval = setInterval(() => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        fetchMembers(true);
+      }
+    }, 25000);
+    return () => clearInterval(interval);
   }, [fetchMembers]);
 
   const handleTabChange = (tab: MainTab) => {
@@ -239,14 +258,16 @@ function MemberManagementContent() {
             Manage club members, executive roles, advisors, and student registrations.
           </p>
         </div>
-        <button
-          onClick={() => setIsAddModalOpen(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-text-primary hover:bg-surface-inverse text-white rounded-lg text-sm font-semibold transition shadow-[3px_3px_0px_0px_var(--border-default)] hover:shadow-md whitespace-nowrap"
-          style={{ color: "#fff" }}
-        >
-          <UserPlus size={16} />
-          <span>Add Member / Advisor</span>
-        </button>
+        {!isAdvisor && (
+          <button
+            onClick={() => setIsAddModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-text-primary hover:bg-surface-inverse text-white rounded-lg text-sm font-semibold transition shadow-[3px_3px_0px_0px_var(--border-default)] hover:shadow-md whitespace-nowrap"
+            style={{ color: "#fff" }}
+          >
+            <UserPlus size={16} />
+            <span>Add Member / Advisor</span>
+          </button>
+        )}
       </div>
 
       {/* ── Sticky Filter & Search Control Bar ── */}
@@ -280,27 +301,29 @@ function MemberManagementContent() {
               </button>
 
               {/* Pending Tab */}
-              <button
-                type="button"
-                onClick={() => handleTabChange("pending")}
-                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${activeTab === "pending"
-                    ? "bg-surface-elevated text-text-primary border border-border-default shadow-[2px_2px_0px_0px_var(--accent-primary)]"
-                    : "text-text-secondary hover:text-text-primary"
-                  }`}
-              >
-                <Clock size={14} className={activeTab === "pending" ? "text-accent-primary" : ""} />
-                <span>Pending</span>
-                {counts.pending > 0 && (
-                  <span
-                    className={`px-1.5 py-0.2 text-[10px] font-semibold rounded-full ${activeTab === "pending"
-                        ? "bg-accent-primary text-accent-primary-text"
-                        : "bg-surface-elevated text-text-secondary border border-border-default"
-                      }`}
-                  >
-                    {counts.pending}
-                  </span>
-                )}
-              </button>
+              {!isAdvisor && (
+                <button
+                  type="button"
+                  onClick={() => handleTabChange("pending")}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${activeTab === "pending"
+                      ? "bg-surface-elevated text-text-primary border border-border-default shadow-[2px_2px_0px_0px_var(--accent-primary)]"
+                      : "text-text-secondary hover:text-text-primary"
+                    }`}
+                >
+                  <Clock size={14} className={activeTab === "pending" ? "text-accent-primary" : ""} />
+                  <span>Pending</span>
+                  {counts.pending > 0 && (
+                    <span
+                      className={`px-1.5 py-0.2 text-[10px] font-semibold rounded-full ${activeTab === "pending"
+                          ? "bg-accent-primary text-accent-primary-text"
+                          : "bg-surface-elevated text-text-secondary border border-border-default"
+                        }`}
+                    >
+                      {counts.pending}
+                    </span>
+                  )}
+                </button>
+              )}
             </div>
 
             {/* Filter Dropdown alongside the selected tab */}
@@ -422,7 +445,12 @@ function MemberManagementContent() {
                       </div>
                     </td>
                     <td className="px-5 py-3.5 text-xs font-medium text-text-secondary whitespace-nowrap">
-                      {u.email}
+                      <div>{u.email}</div>
+                      {u.contactNumber && (
+                        <div className="text-[11px] font-mono text-text-tertiary mt-0.5">
+                          📞 {u.contactNumber}
+                        </div>
+                      )}
                     </td>
                     <td className="px-5 py-3.5 whitespace-nowrap">
                       <ClubRoleBadge role={(u as any).clubRole || u.role} />
@@ -431,6 +459,8 @@ function MemberManagementContent() {
                       <StatusBadge
                         status={u.profileStatus}
                         applicationStatus={u.applicationStatus}
+                        isOnline={u.isOnline}
+                        lastActiveAt={u.lastActiveAt}
                       />
                     </td>
                     <td className="px-5 py-3.5 whitespace-nowrap">
@@ -467,6 +497,11 @@ function MemberManagementContent() {
                   <div className="min-w-0">
                     <p className="font-semibold text-text-primary truncate">{u.fullName}</p>
                     <p className="text-xs text-text-secondary truncate">{u.email}</p>
+                    {u.contactNumber && (
+                      <p className="text-[11px] font-mono text-text-tertiary">
+                        📞 {u.contactNumber}
+                      </p>
+                    )}
                     {(u as any).studentId && (
                       <p className="text-[11px] font-mono text-text-secondary font-semibold">
                         ID: {(u as any).studentId}
@@ -479,6 +514,8 @@ function MemberManagementContent() {
                   <StatusBadge
                     status={u.profileStatus}
                     applicationStatus={u.applicationStatus}
+                    isOnline={u.isOnline}
+                    lastActiveAt={u.lastActiveAt}
                   />
                 </div>
                 <ActionCell
@@ -653,41 +690,80 @@ function ClubRoleBadge({ role }: { role: string }) {
   );
 }
 
+function formatLastActive(dateString?: string | null): string {
+  if (!dateString) return "Offline";
+  const date = new Date(dateString);
+  const diffMs = Date.now() - date.getTime();
+  if (isNaN(diffMs)) return "Offline";
+
+  const diffSec = Math.floor(diffMs / 1000);
+  if (diffSec < 60) return "just now";
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHours = Math.floor(diffMin / 60);
+  if (diffHours < 24) return `${diffHours}h ago`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 7) return `${diffDays}d ago`;
+
+  return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
 function StatusBadge({
   status,
   applicationStatus,
+  isOnline,
+  lastActiveAt,
 }: {
   status: string;
   applicationStatus?: string;
+  isOnline?: boolean;
+  lastActiveAt?: string | null;
 }) {
   if (applicationStatus === "pending") {
     return (
-      <span className="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-accent-warning text-surface-elevated">
+      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-semibold rounded-full bg-accent-warning text-surface-elevated">
         Pending
       </span>
     );
   }
   if (applicationStatus === "rejected") {
     return (
-      <span className="px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full bg-accent-error text-surface-elevated">
+      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-semibold rounded-full bg-accent-error text-surface-elevated">
         Rejected
       </span>
     );
   }
+  if (status === "banned") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-400 border border-red-300 dark:border-red-800">
+        Banned
+      </span>
+    );
+  }
 
-  const colorMap: Record<string, string> = {
-    active: "bg-accent-success text-surface-elevated",
-    incomplete: "bg-accent-warning text-surface-elevated",
-    deleted: "bg-accent-error text-surface-elevated",
-    banned: "bg-accent-error text-surface-elevated",
-  };
+  const lastSeenText = lastActiveAt
+    ? `Last active: ${formatLastActive(lastActiveAt)} (${new Date(lastActiveAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })})`
+    : "No recent activity recorded";
+
+  if (isOnline) {
+    return (
+      <span
+        title="User is currently online and active"
+        className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/70 shadow-[1px_1px_0px_0px_var(--border-default)] select-none"
+      >
+        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+        Online
+      </span>
+    );
+  }
 
   return (
     <span
-      className={`px-2.5 py-0.5 inline-flex text-xs leading-5 font-semibold rounded-full ${colorMap[status] || "bg-surface-secondary text-text-primary"
-        }`}
+      title={lastSeenText}
+      className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold rounded-full bg-surface-secondary text-text-secondary border border-border-default hover:text-text-primary transition-colors cursor-default select-none"
     >
-      {capitalizeFirstLetter(status || "active")}
+      <span className="w-1.5 h-1.5 rounded-full bg-neutral-400 dark:bg-neutral-500 shrink-0" />
+      Offline
     </span>
   );
 }

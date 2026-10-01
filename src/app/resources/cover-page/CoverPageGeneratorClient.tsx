@@ -638,7 +638,7 @@ export function CoverPageGeneratorClient() {
         department: dept,
       };
     });
-    toast.success("Synchronized with your MEC CC account profile!");
+    toast.success("Synchronized with your MEC Computer Club account profile!");
   };
 
   const handleChange = (field: keyof FormData, value: any) => {

@@ -1,17 +1,21 @@
 import { Event } from "@/types";
 import { API_BASE_URL } from "@/lib/api";
 
-export const events: Event[] = [];
-
 const API_URL = API_BASE_URL;
+
+export function isEventOngoing(e: any): boolean {
+  if (!e) return false;
+  const status = (e.status || "").toLowerCase();
+  return status === "ongoing";
+}
 
 export function isEventUpcoming(e: any): boolean {
   if (!e) return false;
   const status = (e.status || "").toLowerCase();
-  if (status === "completed" || status === "past" || status === "cancelled") {
+  if (status === "ongoing" || status === "completed" || status === "past" || status === "cancelled") {
     return false;
   }
-  if (status === "upcoming" || status === "scheduled" || status === "ongoing") {
+  if (status === "upcoming" || status === "scheduled") {
     return true;
   }
   if (!e.date || e.date === "TBA") return true;
@@ -22,14 +26,46 @@ export function isEventUpcoming(e: any): boolean {
   return d >= today;
 }
 
+export function isEventCompleted(e: any): boolean {
+  if (!e) return false;
+  const status = (e.status || "").toLowerCase();
+  if (status === "completed" || status === "past") {
+    return true;
+  }
+  if (status === "upcoming" || status === "scheduled" || status === "ongoing") {
+    return false;
+  }
+  if (!e.date || e.date === "TBA") return false;
+  const d = new Date(e.date);
+  if (isNaN(d.getTime())) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return d < today;
+}
+
 export function isEventPast(e: any): boolean {
-  return !isEventUpcoming(e);
+  return isEventCompleted(e);
 }
 
 function mapBackendEvent(e: any): Event {
   const eventDate = e.date ? new Date(e.date) : null;
   const isDateValid = eventDate && !isNaN(eventDate.getTime());
-  const isUpcoming = isEventUpcoming(e);
+  
+  const rawStatus = (e.status || "").toLowerCase();
+  let mappedStatus: Event["status"] = "scheduled";
+  if (rawStatus === "ongoing") {
+    mappedStatus = "ongoing";
+  } else if (rawStatus === "completed" || rawStatus === "past") {
+    mappedStatus = "completed";
+  } else if (rawStatus === "cancelled") {
+    mappedStatus = "cancelled";
+  } else if (rawStatus === "postponed") {
+    mappedStatus = "postponed";
+  } else if (rawStatus === "scheduled" || rawStatus === "upcoming") {
+    mappedStatus = "scheduled";
+  } else {
+    mappedStatus = isEventUpcoming(e) ? "scheduled" : "completed";
+  }
 
   return {
     id: e._id ? String(e._id) : String(e.id),
@@ -44,9 +80,13 @@ function mapBackendEvent(e: any): Event {
     onlineLink: e.onlineLink || undefined,
     type: e.category || e.type || "workshop",
     department: e.department || "General",
-    image: e.coverImageUrl || e.bannerImageUrl || "/images/events/free-fire.jpg",
+    image: e.coverImageUrl || e.bannerImageUrl || undefined,
+    coverImageUrl: e.coverImageUrl || undefined,
+    bannerImageUrl: e.bannerImageUrl || undefined,
+    coverImagePosition: e.coverImagePosition || "50% 50%",
+    bannerImagePosition: e.bannerImagePosition || "50% 50%",
     speakers: e.organizer ? [e.organizer] : (e.speakers || []),
-    status: isUpcoming ? "upcoming" : "past",
+    status: mappedStatus,
     registrationUrl: e.registrationLink || e.registrationUrl || undefined,
     registrationType: e.registrationType || "individual",
     teamSize: e.teamSize || { min: 1, max: 4 },
@@ -60,8 +100,9 @@ function mapBackendEvent(e: any): Event {
     sponsors: e.eventSponsors || [],
     customHtmlSection: e.customHtmlSection,
     attendeeCount: e.participants?.length ?? (Array.isArray(e.attendees) ? e.attendees.length : (typeof e.attendeeCount === "number" ? e.attendeeCount : 0)),
+    registeredCount: typeof e.registeredCount === "number" ? e.registeredCount : undefined,
     tags: e.tags || [],
-    linkedForm: e.linkedForm?._id ? String(e.linkedForm._id) : (e.linkedForm ? String(e.linkedForm) : (e.forms && e.forms[0]?._id ? String(e.forms[0]._id) : (e.forms && e.forms[0] ? String(e.forms[0]) : undefined))),
+    linkedForm: e.linkedForm?.code || (e.linkedForm?._id ? String(e.linkedForm._id) : (e.linkedForm ? String(e.linkedForm) : (e.forms && e.forms[0]?.code ? String(e.forms[0].code) : (e.forms && e.forms[0]?._id ? String(e.forms[0]._id) : (e.forms && e.forms[0] ? String(e.forms[0]) : undefined))))),
     media: Array.isArray(e.media) ? e.media : [],
     allowParticipationClaims: Boolean(e.allowParticipationClaims),
     participationClaims: Array.isArray(e.participationClaims) ? e.participationClaims : [],
@@ -92,7 +133,7 @@ export function sortUpcomingEvents(eventsList: Event[]): Event[] {
     if (tA === null && tB === null) return 0;
     if (tA === null) return 1;
     if (tB === null) return -1;
-    return tA - tB; // Earliest/soonest upcoming first
+    return tA - tB;
   });
 }
 
@@ -107,20 +148,38 @@ export function sortPastEvents(eventsList: Event[]): Event[] {
     if (tA === null && tB === null) return 0;
     if (tA === null) return 1;
     if (tB === null) return -1;
-    return tB - tA; // Most recent/newest past event first
+    return tB - tA;
   });
 }
 
-export async function getUpcomingEvents(): Promise<Event[]> {
+export async function getOngoingEvents(): Promise<Event[]> {
   try {
-    const res = await fetch(`${API_URL}/api/events?sort=asc`, { next: { revalidate: 60 } });
+    const res = await fetch(`${API_URL}/api/events?sort=asc`, { cache: "no-store" });
     if (res.ok) {
       const data = await res.json();
       const backendEvents: any[] = data.data || data.events || [];
       if (backendEvents && backendEvents.length > 0) {
-        const mapped = backendEvents.map(mapBackendEvent);
-        const upcoming = mapped.filter(isEventUpcoming);
-        return sortUpcomingEvents(upcoming);
+        const publishedOnly = backendEvents.filter((e) => e.isPublished !== false);
+        const mapped = publishedOnly.map(mapBackendEvent);
+        return sortUpcomingEvents(mapped.filter(isEventOngoing));
+      }
+    }
+  } catch (err) {
+    console.warn("Could not fetch backend ongoing events:", err);
+  }
+  return [];
+}
+
+export async function getUpcomingEvents(): Promise<Event[]> {
+  try {
+    const res = await fetch(`${API_URL}/api/events?sort=asc`, { cache: "no-store" });
+    if (res.ok) {
+      const data = await res.json();
+      const backendEvents: any[] = data.data || data.events || [];
+      if (backendEvents && backendEvents.length > 0) {
+        const publishedOnly = backendEvents.filter((e) => e.isPublished !== false);
+        const mapped = publishedOnly.map(mapBackendEvent);
+        return sortUpcomingEvents(mapped.filter(isEventUpcoming));
       }
     }
   } catch (err) {
@@ -131,14 +190,14 @@ export async function getUpcomingEvents(): Promise<Event[]> {
 
 export async function getPastEvents(): Promise<Event[]> {
   try {
-    const res = await fetch(`${API_URL}/api/events?sort=desc`, { next: { revalidate: 60 } });
+    const res = await fetch(`${API_URL}/api/events?sort=desc`, { cache: "no-store" });
     if (res.ok) {
       const data = await res.json();
       const backendEvents: any[] = data.data || data.events || [];
       if (backendEvents && backendEvents.length > 0) {
-        const mapped = backendEvents.map(mapBackendEvent);
-        const past = mapped.filter(isEventPast);
-        return sortPastEvents(past);
+        const publishedOnly = backendEvents.filter((e) => e.isPublished !== false);
+        const mapped = publishedOnly.map(mapBackendEvent);
+        return sortPastEvents(mapped.filter(isEventCompleted));
       }
     }
   } catch (err) {
@@ -147,18 +206,21 @@ export async function getPastEvents(): Promise<Event[]> {
   return [];
 }
 
+export const getCompletedEvents = getPastEvents;
+
 export async function getHomeEvents(limit = 5): Promise<Event[]> {
   try {
-    const res = await fetch(`${API_URL}/api/events`, { next: { revalidate: 60 } });
+    const res = await fetch(`${API_URL}/api/events`, { cache: "no-store" });
     if (res.ok) {
       const data = await res.json();
       const backendEvents: any[] = data.data || data.events || [];
       if (backendEvents && backendEvents.length > 0) {
-        const mapped = backendEvents.map(mapBackendEvent);
+        const publishedOnly = backendEvents.filter((e) => e.isPublished !== false);
+        const mapped = publishedOnly.map(mapBackendEvent);
+        const ongoing = sortUpcomingEvents(mapped.filter(isEventOngoing));
         const upcoming = sortUpcomingEvents(mapped.filter(isEventUpcoming));
-        const past = sortPastEvents(mapped.filter(isEventPast));
-        const combined = [...upcoming, ...past].slice(0, limit);
-        return combined;
+        const past = sortPastEvents(mapped.filter(isEventCompleted));
+        return [...ongoing, ...upcoming, ...past].slice(0, limit);
       }
     }
   } catch (err) {
@@ -168,9 +230,8 @@ export async function getHomeEvents(limit = 5): Promise<Event[]> {
 }
 
 export async function getEventBySlug(slug: string): Promise<Event | undefined> {
-  // 1. Try backend lookup first
   try {
-    const res = await fetch(`${API_URL}/api/events/${slug}`, { next: { revalidate: 60 } });
+    const res = await fetch(`${API_URL}/api/events/${slug}`, { cache: "no-store" });
     if (res.ok) {
       const data = await res.json();
       if (data && data.data) {
@@ -180,6 +241,5 @@ export async function getEventBySlug(slug: string): Promise<Event | undefined> {
   } catch {
     // Ignore
   }
-
   return undefined;
 }

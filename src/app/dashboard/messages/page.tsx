@@ -8,6 +8,7 @@ import {
   Mail, MailOpen, Trash2, Clock, User, Reply,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useRoleGuard } from "@/hooks/useRoleGuard";
 
 interface ReplyItem {
   _id: string;
@@ -30,7 +31,10 @@ interface ContactMessage {
 const API = `${API_BASE_URL}/api/contact-messages`;
 
 function MessagesPageContent() {
+  const { isAllowed, isLoading: guardLoading } = useRoleGuard(["admin", "moderator", "executive"]);
   const { user } = useAuth();
+
+  if (guardLoading || !isAllowed) return null;
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

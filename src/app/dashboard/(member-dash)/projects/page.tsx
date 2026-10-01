@@ -3,12 +3,11 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { ProjectsTab } from "@/components/dashboard/legacy/ProjectsTab";
-import { projects as staticProjects } from "@/data/projects";
 import { api } from "@/lib/api";
 
 export default function ProjectsPage() {
   const { user } = useAuth();
-  const [projects, setProjects] = useState<any[]>(staticProjects);
+  const [projects, setProjects] = useState<any[]>([]);
 
   useEffect(() => {
     async function load() {
@@ -18,7 +17,7 @@ export default function ProjectsPage() {
           setProjects(res.data);
         }
       } catch (err) {
-        console.warn("Could not fetch user projects, using static fallback:", err);
+        console.warn("Could not fetch user projects:", err);
       }
     }
     load();

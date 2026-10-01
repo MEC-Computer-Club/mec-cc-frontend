@@ -16,6 +16,8 @@ const NotificationCenter = dynamic(
 import toast from "react-hot-toast";
 import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ThemePaletteButton } from "@/components/ThemePaletteButton";
+import { ThemeColorPicker } from "@/components/ThemeColorPicker";
 import { User, Shield, LayoutDashboard, LogOut, Menu, X, ChevronDown } from "lucide-react";
 
 const navItems = [
@@ -334,6 +336,7 @@ export function Navbar() {
         {/* Right side — CTA & Auth */}
         <div className="navbar__actions">
           <ThemeToggle />
+          {!user && <ThemePaletteButton />}
           {user ? (
             <>
               <NotificationCenter />
@@ -414,7 +417,10 @@ export function Navbar() {
                           </Link>
                         </li>
                       )}
-                      <li role="none">
+                      <li className="px-3.5 py-2.5 border-t border-border-default" role="none">
+                        <ThemeColorPicker onSelect={() => setUserDropdownOpen(false)} />
+                      </li>
+                      <li role="none" className="border-t border-border-default">
                         <button
                           type="button"
                           onClick={() => {
@@ -533,6 +539,11 @@ export function Navbar() {
                   </li>
                 ))}
               </ul>
+
+              {/* Mobile Theme Color Picker */}
+              <div className="p-4 border-t border-border-default bg-surface-secondary/40">
+                <ThemeColorPicker onSelect={() => setMobileMenuOpen(false)} />
+              </div>
 
               {/* Mobile Auth and Action Section */}
               <div className="navbar__mobile-footer">

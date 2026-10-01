@@ -4,12 +4,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { useTheme } from "next-themes";
 import { useAccent } from "@/components/AccentProvider";
-import { Menu, User, ChevronDown, LogOut, Settings } from "lucide-react";
+import { Menu, User, ChevronDown, LogOut, Settings, Sun, Moon } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { NotificationCenter } from "@/components/layout/NotificationCenter";
 import { AuthUser } from "@/types";
-import { getOptimizedImageUrl } from "@/data/gallery";
+import { getOptimizedImageUrl } from "@/lib/api/gallery";
 
 interface DashboardNavbarProps {
   role: AuthUser["role"];
@@ -28,7 +28,7 @@ export const DashboardNavbar: React.FC<DashboardNavbarProps> = ({
   const { logout, user: authUser } = useAuth();
   const router = useRouter();
   const menuRef = useRef<HTMLDivElement>(null);
-  const { resolvedTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const { currentVibe } = useAccent();
   const [mounted, setMounted] = useState(false);
 
@@ -81,20 +81,49 @@ export const DashboardNavbar: React.FC<DashboardNavbarProps> = ({
             >
               <Menu className="w-6 h-6" />
             </button>
-            <Link href="/" className="lg:hidden flex items-center h-8" aria-label="MEC Computer Club — Home">
+            <Link
+              href="/"
+              className="lg:hidden flex items-center justify-center h-9 w-[115px] overflow-hidden hover:opacity-85 transition-opacity flex-shrink-0"
+              aria-label="MEC Computer Club — Home"
+            >
               <Image
                 src={logoSrc}
                 alt="MEC Computer Club Logo"
-                width={140}
-                height={35}
+                width={160}
+                height={40}
                 priority
-                className="h-8 w-auto object-contain"
+                className="h-[120px] w-auto max-w-none object-contain pointer-events-none select-none"
               />
             </Link>
           </div>
 
-          {/* Right side — Notifications & User menu */}
-          <div className="ml-auto flex items-center gap-2">
+          {/* Right side — Theme toggle, Notifications & User menu */}
+          <div className="ml-auto flex items-center gap-2.5">
+            {/* Dark / Light Theme Toggle */}
+            <button
+              type="button"
+              onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+              aria-label={mounted ? (resolvedTheme === "dark" ? "Switch to light theme" : "Switch to dark theme") : "Toggle theme"}
+              title={mounted ? (resolvedTheme === "dark" ? "Switch to light theme" : "Switch to dark theme") : "Toggle theme"}
+              className="relative inline-flex items-center justify-center w-9 h-9 rounded-md border border-border-default bg-surface-elevated text-text-secondary shadow-none hover:bg-surface-secondary hover:text-text-primary hover:border-text-primary dark:hover:border-accent-primary hover:shadow-[3px_3px_0px_0px_var(--text-primary)] dark:hover:shadow-[3px_3px_0px_0px_var(--accent-primary)] dark:hover:text-white hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-150 cursor-pointer group flex-shrink-0"
+            >
+              {mounted ? (
+                resolvedTheme === "dark" ? (
+                  <Sun
+                    size={17}
+                    className="text-amber-400 group-hover:rotate-45 transition-transform duration-200"
+                  />
+                ) : (
+                  <Moon
+                    size={17}
+                    className="text-text-primary group-hover:-rotate-12 transition-transform duration-200"
+                  />
+                )
+              ) : (
+                <div className="w-4 h-4" />
+              )}
+            </button>
+
             <NotificationCenter />
 
             <div className="relative" ref={menuRef}>

@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/context/AuthContext";
 import { api, API_BASE_URL } from "@/lib/api";
 import ConfirmationModal from "@/components/ui/shared/ConfirmModal";
+import { mapBackendBlog } from "@/lib/api/blog";
+import { formatCompactNumber } from "@/lib/formatters";
 import {
   PenLine,
   Pencil,
@@ -39,12 +41,7 @@ interface BackendBlog {
   likes?: string[];
 }
 
-// Static posts for fallback
-const staticSlugs = [
-  "getting-started-competitive-programming",
-  "deploying-nextjs-production",
-  "first-kaggle-competition",
-];
+
 
 export default function BlogPageClient() {
   const router = useRouter();
@@ -86,49 +83,13 @@ export default function BlogPageClient() {
       );
       if (res.ok) {
         const data = await res.json();
-        const backendBlogs = (data.data || []).map((b: any) => ({
-          id: b._id || b.id,
-          slug: b.slug || b._id,
-          title: b.title,
-          excerpt:
-            b.excerpt ||
-            (b.content
-              ? b.content.replace(/<[^>]*>/g, "").slice(0, 140) + "..."
-              : ""),
-          content: b.content || "",
-          author: b.author?.fullName || "Club Member",
-          authorImage: b.author?.imageUrl || "",
-          authorImagePosition: b.author?.imagePosition || "50% 50%",
-          authorDepartment: b.author?.department || "",
-          authorBatch: b.author?.batch || "",
-          authorSession: b.author?.session || "",
-          date: b.createdAt
-            ? new Date(b.createdAt).toISOString().split("T")[0]
-            : "2025-08-01",
-          readTime:
-            b.readTime ||
-            Math.max(
-              1,
-              Math.ceil(
-                (b.content || "").replace(/<[^>]*>/g, "").split(/\s+/).length /
-                  200
-              )
-            ),
-          tags: b.tags || [],
-          image: b.coverImageUrl || "",
-          featured: !!b.featured,
-        }));
-
-        // Merge with static blog posts
-        const { blogPosts } = await import("@/data/blog");
-        setAllBlogs([...backendBlogs, ...blogPosts]);
+        const backendBlogs = (data.data || []).map(mapBackendBlog);
+        setAllBlogs(backendBlogs);
       } else {
-        const { blogPosts } = await import("@/data/blog");
-        setAllBlogs(blogPosts);
+        setAllBlogs([]);
       }
     } catch {
-      const { blogPosts } = await import("@/data/blog");
-      setAllBlogs(blogPosts);
+      setAllBlogs([]);
     } finally {
       setLoading(false);
     }
@@ -366,11 +327,11 @@ export default function BlogPageClient() {
                             <Clock size={11} />
                             {formatDate(blog.createdAt)}
                           </span>
-                          <span className="font-mono text-xs text-text-tertiary flex items-center gap-1">
+                          <span className="font-mono text-xs text-text-tertiary flex items-center gap-1" title={`${blog.views || 0} views`}>
                             <Eye size={11} />
-                            {blog.views} views
+                            {formatCompactNumber(blog.views || 0)} views
                           </span>
-                          <span className="font-mono text-xs text-text-tertiary flex items-center gap-1">
+                          <span className="font-mono text-xs text-text-tertiary flex items-center gap-1" title={`${blog.likesCount ?? (blog.likes ? blog.likes.length : 0)} likes`}>
                             <Heart
                               size={11}
                               className={
@@ -379,7 +340,7 @@ export default function BlogPageClient() {
                                   : ""
                               }
                             />
-                            {blog.likesCount ?? (blog.likes ? blog.likes.length : 0)} likes
+                            {formatCompactNumber(blog.likesCount ?? (blog.likes ? blog.likes.length : 0))} likes
                           </span>
                         </div>
 

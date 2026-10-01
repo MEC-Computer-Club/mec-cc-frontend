@@ -15,12 +15,15 @@ import {
   type VibeName,
 } from "@/lib/accent-themes";
 
+const STORAGE_KEY = "mec-cc-accent-vibe";
 const ROTATION_INTERVAL = 120_000; // 2 minutes
 
 interface AccentContextValue {
   currentVibe: VibeName;
   setManualVibe: (vibe: VibeName) => void;
   cycleManualVibe: () => void;
+  enableAutoMode: () => void;
+  isAuto: boolean;
   isManual: boolean;
 }
 
@@ -28,7 +31,9 @@ const AccentContext = createContext<AccentContextValue>({
   currentVibe: "lime",
   setManualVibe: () => {},
   cycleManualVibe: () => {},
-  isManual: false
+  enableAutoMode: () => {},
+  isAuto: true,
+  isManual: false,
 });
 
 export function useAccent() {
@@ -46,19 +51,53 @@ export function AccentProvider({
   const [vibeIndex, setVibeIndex] = useState(initialIndex);
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [isManual, setIsManual] = useState(false);
+  const [isAuto, setIsAuto] = useState(true);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Load saved preference from localStorage on mount
+  useEffect(() => {
+    setMounted(true);
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved && saved !== "auto" && VIBE_ORDER.includes(saved as VibeName)) {
+        setIsAuto(false);
+        setVibeIndex(VIBE_ORDER.indexOf(saved as VibeName));
+        return;
+      }
+    } catch {
+      // LocalStorage access restricted or unavailable
+    }
+
+    // Default to auto with random start
+    setIsAuto(true);
+    const randomIndex = Math.floor(Math.random() * VIBE_ORDER.length);
+    setVibeIndex(randomIndex);
+  }, []);
+
   const setManualVibe = useCallback((vibe: VibeName) => {
-    setIsManual(true);
+    setIsAuto(false);
+    try {
+      localStorage.setItem(STORAGE_KEY, vibe);
+    } catch {}
+
     const index = VIBE_ORDER.indexOf(vibe);
     if (index !== -1) {
       setVibeIndex(index);
     }
+
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
   }, []);
 
-  const cycleManualVibe = useCallback(() => {
-    setIsManual(true);
+  const enableAutoMode = useCallback(() => {
+    setIsAuto(true);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {}
+
+    // Switch to auto and immediately shuffle
     setVibeIndex((prev) => {
       if (VIBE_ORDER.length <= 1) return 0;
       let nextIndex: number;
@@ -69,16 +108,14 @@ export function AccentProvider({
     });
   }, []);
 
+  const cycleManualVibe = useCallback(() => {
+    enableAutoMode();
+  }, [enableAutoMode]);
+
   const currentVibe = VIBE_ORDER[vibeIndex];
   const mode = (resolvedTheme === "light" ? "light" : "dark") as
     | "light"
     | "dark";
-
-  useEffect(() => {
-    setMounted(true);
-    const randomIndex = Math.floor(Math.random() * VIBE_ORDER.length);
-    setVibeIndex(randomIndex);
-  }, []);
 
   // Apply accent tokens whenever vibe or mode changes
   const applyTokens = useCallback(() => {
@@ -90,8 +127,16 @@ export function AccentProvider({
     applyTokens();
   }, [applyTokens]);
 
-  // Start the 2-minute rotation interval with random, non-sequential transitions
+  // Rotation interval only active when isAuto is true
   useEffect(() => {
+    if (!mounted || !isAuto) {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      return;
+    }
+
     intervalRef.current = setInterval(() => {
       setVibeIndex((prev) => {
         if (VIBE_ORDER.length <= 1) return 0;
@@ -104,12 +149,24 @@ export function AccentProvider({
     }, ROTATION_INTERVAL);
 
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
     };
-  }, []);
+  }, [mounted, isAuto]);
 
   return (
-    <AccentContext.Provider value={{ currentVibe, setManualVibe, cycleManualVibe, isManual }}>
+    <AccentContext.Provider
+      value={{
+        currentVibe,
+        setManualVibe,
+        cycleManualVibe,
+        enableAutoMode,
+        isAuto,
+        isManual: !isAuto,
+      }}
+    >
       {children}
     </AccentContext.Provider>
   );

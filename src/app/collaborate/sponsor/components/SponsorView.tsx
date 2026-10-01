@@ -2,15 +2,16 @@
 
 import React from "react";
 import { Button } from "@/components/ui/Button";
-import { partners } from "@/data/partners";
+import { Partner } from "@/lib/api/partners";
 import { Target, Shield, Zap, Check } from "lucide-react";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
 
 interface SponsorViewProps {
   initialContent?: any;
+  partners?: Partner[];
 }
 
-export default function SponsorView({ initialContent }: SponsorViewProps) {
+export default function SponsorView({ initialContent, partners = [] }: SponsorViewProps) {
   const { settings } = useSiteSettings();
 
   const contactEmail = settings.contact_email || "meccomputerclub@gmail.com";
@@ -89,17 +90,19 @@ export default function SponsorView({ initialContent }: SponsorViewProps) {
           </div>
 
           {/* B) Sponsor Logo Row */}
-          <div className="flex gap-6 justify-center items-center flex-wrap mt-6">
-            {partners.slice(0, 5).map((partner, i) => (
-              <div
-                key={i}
-                className="grayscale opacity-70 hover:grayscale-0 hover:opacity-100 hover:text-text-primary hover:-translate-y-0.5 transition-all font-bold text-2xl text-text-secondary flex items-center justify-center py-2 px-4 select-none"
-                title={partner.name}
-              >
-                {partner.logoPlaceholder}
-              </div>
-            ))}
-          </div>
+          {partners.length > 0 && (
+            <div className="flex gap-6 justify-center items-center flex-wrap mt-6">
+              {partners.slice(0, 5).map((partner, i) => (
+                <div
+                  key={partner.id || i}
+                  className="grayscale opacity-70 hover:grayscale-0 hover:opacity-100 hover:text-text-primary hover:-translate-y-0.5 transition-all font-bold text-2xl text-text-secondary flex items-center justify-center py-2 px-4 select-none"
+                  title={partner.name}
+                >
+                  {partner.logoPlaceholder}
+                </div>
+              ))}
+            </div>
+          )}
           <div className="text-center mt-4">
             <a
               href="/collaborate/partners"

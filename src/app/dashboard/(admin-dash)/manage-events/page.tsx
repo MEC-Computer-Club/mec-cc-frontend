@@ -22,6 +22,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { API_BASE_URL } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
+import { useRoleGuard } from "@/hooks/useRoleGuard";
 
 type EventItem = {
   title: string;
@@ -36,6 +38,7 @@ type EventItem = {
   description: string;
   category: string;
   createdAt?: string;
+  registeredCount?: number;
 };
 
 type FormItem = {
@@ -50,6 +53,9 @@ type FormItem = {
 const PAGE_SIZE = 6;
 
 export default function EventsManagementPage() {
+  const { isAllowed, isLoading: guardLoading } = useRoleGuard(["admin", "moderator", "executive", "advisor"]);
+  const { user } = useAuth();
+  const canManage = ["admin", "moderator", "executive"].includes(user?.role || "");
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("All");
@@ -170,6 +176,8 @@ export default function EventsManagementPage() {
     return filteredForms.slice(start, start + PAGE_SIZE);
   }, [filteredForms, formPage]);
 
+  if (guardLoading || !isAllowed) return null;
+
   return (
     <div className="max-w-7xl mx-auto space-y-8">
       {/* Header */}
@@ -184,6 +192,7 @@ export default function EventsManagementPage() {
             </p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
+            {canManage && (
             <Link
               href="/dashboard/manage-events/create-event"
               className="flex items-center gap-2 whitespace-nowrap bg-text-primary hover:bg-surface-inverse text-white px-4 py-2.5 rounded-lg font-semibold transition-all shadow-[3px_3px_0px_0px_var(--border-default)] text-sm border border-border-default"
@@ -192,6 +201,8 @@ export default function EventsManagementPage() {
               <Plus size={16} />
               New Event
             </Link>
+            )}
+            {canManage && (
             <Link
               href="/dashboard/manage-events/create-form"
               className="flex items-center gap-2 whitespace-nowrap bg-surface-elevated border border-border-default hover:bg-surface-secondary text-text-primary px-4 py-2.5 rounded-lg font-semibold transition-all shadow-[3px_3px_0px_0px_var(--border-default)] text-sm"
@@ -199,6 +210,7 @@ export default function EventsManagementPage() {
               <FilePlus size={16} />
               Create Form
             </Link>
+            )}
           </div>
         </div>
 
@@ -339,10 +351,15 @@ export default function EventsManagementPage() {
                         {event.location || "TBA"}
                       </td>
                       <td className="py-3.5 px-4">
-                        <span className="font-bold text-text-primary">{event.attendees?.length || 0}</span>{" "}
+                        <span className="font-bold text-text-primary">
+                          {typeof event.registeredCount === "number"
+                            ? event.registeredCount
+                            : event.attendees?.length || 0}
+                        </span>{" "}
                         registered
                       </td>
                       <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                        {canManage && (
                         <div className="flex items-center justify-end gap-1.5">
                           <button
                             onClick={() => router.push(`/dashboard/manage-events/event-detail/${event._id}`)}
@@ -359,6 +376,7 @@ export default function EventsManagementPage() {
                             <Trash2 size={13} />
                           </button>
                         </div>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -395,6 +413,7 @@ export default function EventsManagementPage() {
                         className="absolute right-0 mt-1 w-44 bg-surface-elevated rounded-xl shadow-[4px_4px_0px_0px_var(--border-default)] border border-border-default z-20 py-1 overflow-hidden"
                         onClick={(e) => e.stopPropagation()}
                       >
+                        {canManage && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -405,6 +424,8 @@ export default function EventsManagementPage() {
                         >
                           <Pencil size={13} /> Edit / Manage
                         </button>
+                        )}
+                        {canManage && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -414,6 +435,12 @@ export default function EventsManagementPage() {
                         >
                           <Trash2 size={13} /> Delete Event
                         </button>
+                        )}
+                        {!canManage && (
+                          <span className="flex items-center gap-2 w-full px-3 py-2 text-xs text-text-secondary">
+                            <Eye size={13} /> View Only
+                          </span>
+                        )}
                       </div>
                     )}
                   </div>
@@ -454,7 +481,9 @@ export default function EventsManagementPage() {
                       <div className="flex items-center text-sm text-text-secondary gap-2">
                         <Users size={14} />
                         <span className="font-semibold text-text-primary">
-                          {event.attendees?.length ?? 0}
+                          {typeof event.registeredCount === "number"
+                            ? event.registeredCount
+                            : event.attendees?.length ?? 0}
                         </span>{" "}
                         registered
                       </div>
@@ -612,6 +641,7 @@ export default function EventsManagementPage() {
                           >
                             Responses
                           </button>
+                          {canManage && (
                           <button
                             onClick={() => router.push(`/dashboard/manage-events/forms/${form._id}/edit`)}
                             className="p-1.5 rounded-lg border border-border-default bg-surface-elevated text-text-secondary hover:text-accent-primary transition"
@@ -619,6 +649,8 @@ export default function EventsManagementPage() {
                           >
                             <Pencil size={13} />
                           </button>
+                          )}
+                          {canManage && (
                           <button
                             onClick={() => handleDelete(form._id, "form")}
                             className="p-1.5 rounded-lg border border-border-default bg-surface-elevated text-text-secondary hover:text-accent-error transition"
@@ -626,6 +658,7 @@ export default function EventsManagementPage() {
                           >
                             <Trash2 size={13} />
                           </button>
+                          )}
                         </div>
                       </td>
                     </tr>

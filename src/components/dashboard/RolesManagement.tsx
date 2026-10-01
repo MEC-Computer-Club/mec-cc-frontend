@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { AuthUser } from "@/types";
 import CustomInput from "../ui/shared/CustomInput";
-import { Loader2, Search, UserIcon, UserCheck } from "lucide-react";
+import { Loader2, Search, UserIcon, UserCheck, Check, Users } from "lucide-react";
 import { capitalizeFirstLetter, handleKeyDown } from "@/lib/utils";
 import UserAvatarWithFallback from "../ui/shared/UserAvatarWithFallback";
 import ProfileCard from "../ui/shared/ProfileCard";
@@ -13,39 +13,72 @@ import ToastNotification, { Toast } from "@/components/ui/shared/ToastNotificati
 import ConfirmationModal from "../ui/shared/ConfirmModal";
 import { Select } from "@/components/ui/Select";
 
-type UserRole = "admin" | "moderator" | "alumni" | "member" | "guest" | "executive";
+type UserRole = "admin" | "moderator" | "alumni" | "member" | "guest" | "executive" | "advisor";
 
 const RolesManagement = () => {
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [searchIdentifier, setSearchIdentifier] = useState("");
-  const [searchedUser, setSearchedUser] = useState<AuthUser | null>(null);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchedUser, setSearchedUser] = useState<any | null>(null);
   const [editedRole, setEditedRole] = useState<UserRole | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
-  const roles: UserRole[] = ["admin", "moderator", "alumni", "member", "guest"];
+  const roles: UserRole[] = ["admin", "moderator", "executive", "advisor", "alumni", "member", "guest"];
+
+  const selectMember = (u: any) => {
+    setSearchedUser(u);
+    setEditedRole((u.role || u.clubRole || "member") as UserRole);
+    setIsEditing(null);
+    setError(null);
+  };
 
   // --- Handlers for User Search & Role Modification ---
   const handleUserSearch = async () => {
-    if (!searchIdentifier.trim()) return;
+    const q = searchIdentifier.trim();
+    if (!q) return;
     try {
       setLoading(true);
       setSearchedUser(null);
+      setSearchResults([]);
       setEditedRole(null);
       setError(null);
 
+      // Search all members matching the query (searches name, email, student ID, dept, designation)
       const res = await axios.get(
-        `${API_BASE_URL}/api/users/profile/${encodeURIComponent(searchIdentifier.trim())}`,
+        `${API_BASE_URL}/api/users/all-members?q=${encodeURIComponent(q)}`,
         { withCredentials: true }
       );
-      setSearchedUser(res.data.data);
+      const members: any[] = res.data?.members || res.data?.data || [];
+
+      if (members.length > 0) {
+        setSearchResults(members);
+        selectMember(members[0]);
+      } else {
+        // Fallback: try direct profile lookup
+        try {
+          const singleRes = await axios.get(
+            `${API_BASE_URL}/api/users/profile/${encodeURIComponent(q)}`,
+            { withCredentials: true }
+          );
+          if (singleRes.data?.data) {
+            const single = singleRes.data.data;
+            setSearchResults([single]);
+            selectMember(single);
+            return;
+          }
+        } catch {
+          // Ignore fallback error
+        }
+        setError(`No active member found matching "${q}". Please check the spelling or try searching by Student ID or Email.`);
+      }
     } catch (err: any) {
       console.error("User search error:", err);
       if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || "User not found with this identifier.");
+        setError(err.response?.data?.message || "User search failed. Please try again.");
       } else {
-        setError("Something went wrong!");
+        setError("Something went wrong while searching.");
       }
     } finally {
       setLoading(false);
@@ -58,7 +91,8 @@ const RolesManagement = () => {
 
   const handleSaveRole = async () => {
     if (!searchedUser || editedRole === null) return;
-    if (searchedUser.role === editedRole) {
+    const currentRole = searchedUser.role || searchedUser.clubRole || "member";
+    if (currentRole === editedRole) {
       setToast({ message: "Role is already set to this value.", type: "warning" });
       return;
     }
@@ -77,7 +111,10 @@ const RolesManagement = () => {
         { role: editedRole },
         { withCredentials: true }
       );
-      setSearchedUser((prev) => ({ ...prev!, role: editedRole }));
+      setSearchedUser((prev: any) => ({ ...prev!, role: editedRole }));
+      setSearchResults((prev) =>
+        prev.map((u) => (u._id === searchedUser._id ? { ...u, role: editedRole } : u))
+      );
       setToast({
         message: `Role updated to ${editedRole} for ${searchedUser.fullName}`,
         type: "success",
@@ -93,7 +130,7 @@ const RolesManagement = () => {
 
   const handleDiscardRole = () => {
     if (searchedUser) {
-      setEditedRole(searchedUser.role);
+      setEditedRole((searchedUser.role || searchedUser.clubRole || "member") as UserRole);
     }
     setIsEditing(null);
   };
@@ -106,6 +143,10 @@ const RolesManagement = () => {
     setToast(null);
   };
 
+  const getEffectiveRole = (u: any) => {
+    return u?.role || u?.clubRole || "member";
+  };
+
   return (
     <div className="space-y-6">
       {/* ── Existing Member Role Modification ── */}
@@ -115,7 +156,7 @@ const RolesManagement = () => {
             <UserCheck className="w-5 h-5 text-accent-primary" /> Member Role &amp; Clearance Modification
           </h3>
           <p className="text-text-secondary text-sm font-semibold mt-1">
-            Search for an active member by Email, Student ID, or Registration Number to update their administrative role.
+            Search for an active member by Name, Email, Student ID, or Registration Number to update their administrative role.
           </p>
         </div>
 
@@ -125,7 +166,7 @@ const RolesManagement = () => {
             type="text"
             value={searchIdentifier}
             onChange={(e) => setSearchIdentifier(e.target.value)}
-            placeholder="Search by Email, Student ID, or Registration Number..."
+            placeholder="Search by Name, Email, Student ID, or Registration Number..."
             onKeyDown={(e) => handleKeyDown(e, handleUserSearch)}
             className="w-full border border-border-default p-3 rounded-lg bg-surface-elevated text-text-primary focus:ring-2 focus:ring-accent-primary focus:outline-none transition shadow-sm text-sm"
             disabled={loading}
@@ -133,7 +174,7 @@ const RolesManagement = () => {
           <button
             onClick={handleUserSearch}
             disabled={loading || !searchIdentifier.trim()}
-            className="bg-text-primary text-surface-primary border border-border-default py-3 px-6 rounded-lg hover:bg-surface-inverse font-semibold transition flex items-center justify-center shadow-[4px_4px_0px_0px_var(--border-default)] hover:shadow-md disabled:opacity-50 text-sm whitespace-nowrap"
+            className="bg-text-primary text-surface-primary border border-border-default py-3 px-6 rounded-lg hover:bg-surface-inverse font-semibold transition flex items-center justify-center shadow-[4px_4px_0px_0px_var(--border-default)] hover:shadow-md disabled:opacity-50 text-sm whitespace-nowrap cursor-pointer"
           >
             {loading ? (
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -145,6 +186,65 @@ const RolesManagement = () => {
         </div>
 
         {error && <p className="text-accent-error font-semibold text-sm">{error}</p>}
+
+        {/* Multi-member search results list */}
+        {searchResults.length > 1 && (
+          <div className="bg-surface-primary p-4 rounded-xl border border-border-default space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold text-text-primary uppercase tracking-wider flex items-center gap-1.5">
+                <Users className="w-4 h-4 text-accent-primary" />
+                Matching Members ({searchResults.length})
+              </h4>
+              <span className="text-xs text-text-secondary">
+                Select a member to view or modify their clearance
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {searchResults.map((u) => {
+                const isSelected = searchedUser?._id === u._id;
+                const roleName = getEffectiveRole(u);
+                return (
+                  <button
+                    key={u._id}
+                    type="button"
+                    onClick={() => selectMember(u)}
+                    className={`p-3 rounded-xl border text-left flex items-center gap-3 transition cursor-pointer ${
+                      isSelected
+                        ? "border-accent-primary bg-accent-primary/10 shadow-[2px_2px_0px_0px_var(--border-brutalist)]"
+                        : "border-border-default bg-surface-elevated hover:border-accent-primary/60 hover:bg-surface-secondary"
+                    }`}
+                  >
+                    <img
+                      src={u.imageUrl || "/avatar-placeholder.png"}
+                      alt=""
+                      className="w-10 h-10 rounded-full object-cover border border-border-default flex-shrink-0"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-1">
+                        <strong className="text-xs text-text-primary truncate block">{u.fullName}</strong>
+                        {isSelected && (
+                          <Check className="w-3.5 h-3.5 text-accent-primary flex-shrink-0" />
+                        )}
+                      </div>
+                      <p className="text-[11px] text-text-secondary truncate">{u.email}</p>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className="px-1.5 py-0.2 rounded text-[10px] font-bold uppercase tracking-wider bg-accent-primary text-accent-primary-text">
+                          {capitalizeFirstLetter(roleName)}
+                        </span>
+                        {u.studentId && (
+                          <span className="text-[10px] text-text-secondary font-mono">
+                            ID: {u.studentId}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* User Profile Card Result */}
         {(searchedUser || loading) && (
@@ -170,15 +270,21 @@ const RolesManagement = () => {
                       />
                     </div>
                     <h4 className="text-lg font-semibold text-text-primary">{searchedUser?.fullName}</h4>
-                    <p className="text-xs font-semibold text-accent-primary uppercase tracking-wide">
-                      {capitalizeFirstLetter(searchedUser?.role)}
+                    <p className="text-xs font-bold text-accent-primary uppercase tracking-wide mt-0.5">
+                      {capitalizeFirstLetter(getEffectiveRole(searchedUser))}
                     </p>
+                    {searchedUser?.designation && searchedUser.designation !== "General Member" && (
+                      <p className="text-xs text-text-secondary mt-0.5 font-medium">
+                        {searchedUser.designation}
+                      </p>
+                    )}
 
                     <div
-                      className={`mt-2 py-0.5 px-2.5 inline-flex text-xs rounded-full font-semibold ${searchedUser?.profileStatus === "active"
-                          ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
-                          : "bg-rose-100 text-rose-800 border border-rose-300"
-                        }`}
+                      className={`mt-2 py-0.5 px-2.5 inline-flex text-xs rounded-full font-semibold ${
+                        searchedUser?.profileStatus === "active"
+                          ? "bg-emerald-100 text-emerald-800 border border-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800"
+                          : "bg-rose-100 text-rose-800 border border-rose-300 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800"
+                      }`}
                     >
                       Status: {capitalizeFirstLetter(searchedUser?.profileStatus || "active")}
                     </div>
@@ -211,12 +317,23 @@ const RolesManagement = () => {
 
                         {/* Current & New Role */}
                         <div className="pt-3 border-t border-border-default">
-                          <p className="text-sm font-semibold text-text-primary mb-2">
-                            Current Role:{" "}
-                            <span className="px-2.5 py-0.5 bg-accent-primary text-accent-primary-text rounded-full text-xs font-semibold uppercase tracking-wide ml-1">
-                              {capitalizeFirstLetter(searchedUser?.role)}
+                          <div className="text-sm font-semibold text-text-primary mb-2 flex items-center gap-2 flex-wrap">
+                            <span>Current Role:</span>
+                            <span
+                              className="px-3 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider shadow-xs"
+                              style={{
+                                backgroundColor: "var(--accent-primary)",
+                                color: "var(--accent-primary-text)",
+                              }}
+                            >
+                              {capitalizeFirstLetter(getEffectiveRole(searchedUser))}
                             </span>
-                          </p>
+                            {searchedUser?.designation && searchedUser.designation !== "General Member" && (
+                              <span className="text-xs text-text-secondary font-medium">
+                                ({searchedUser.designation})
+                              </span>
+                            )}
+                          </div>
 
                           <div className="mt-3">
                             {isEditing === "roleEditingSection" ? (
@@ -226,7 +343,7 @@ const RolesManagement = () => {
                                 </label>
                                 <Select
                                   id="user-role-select"
-                                  value={editedRole || searchedUser.role}
+                                  value={editedRole || getEffectiveRole(searchedUser)}
                                   onChange={(val) => handleRoleChange(val)}
                                   disabled={loading}
                                   options={roles.map((role) => ({
@@ -266,7 +383,7 @@ const RolesManagement = () => {
             You are about to modify the role of
             <span className="font-semibold text-text-primary mx-1">{searchedUser?.fullName}</span>
             from
-            <span className="font-semibold text-accent-warning mx-1">{searchedUser?.role}</span>
+            <span className="font-semibold text-accent-warning mx-1">{getEffectiveRole(searchedUser)}</span>
             to
             <span className="font-semibold text-accent-primary mx-1">{editedRole}</span>.
             <p className="mt-2 text-xs text-accent-error font-semibold">

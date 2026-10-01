@@ -1,12 +1,23 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Partner } from "@/data/partners";
+import { Partner } from "@/lib/api/partners";
 import { Button } from "@/components/ui/Button";
 import { ExternalLink } from "lucide-react";
-import { getOptimizedImageUrl } from "@/data/gallery";
+import { getOptimizedImageUrl } from "@/lib/api/gallery";
 
 interface HomeSponsorsProps {
   sponsors: Partner[];
+}
+
+function getSponsorTierTextColor(type: string): string {
+  const lower = (type || "").toLowerCase().trim();
+  if (lower.includes("gold")) return "text-amber-600 dark:text-amber-400";
+  if (lower.includes("silver")) return "text-slate-600 dark:text-slate-300";
+  if (lower.includes("platinum") || lower.includes("title") || lower.includes("diamond")) return "text-purple-600 dark:text-purple-400";
+  if (lower.includes("bronze")) return "text-orange-600 dark:text-orange-400";
+  if (lower.includes("service") || lower.includes("cloud") || lower.includes("hosting") || lower.includes("tech")) return "text-sky-600 dark:text-sky-400";
+  if (lower.includes("food") || lower.includes("snack") || lower.includes("beverage")) return "text-rose-600 dark:text-rose-400";
+  return "text-accent-primary";
 }
 
 export function HomeSponsors({ sponsors }: HomeSponsorsProps) {
@@ -77,7 +88,7 @@ export function HomeSponsors({ sponsors }: HomeSponsorsProps) {
               <ExternalLink size={10} className="text-text-tertiary group-hover:text-accent-primary opacity-60 flex-shrink-0" />
             )}
           </div>
-          <span className="font-mono text-[9px] font-bold text-accent-primary uppercase tracking-wider block truncate mt-0.5">
+          <span className={`font-mono text-[9px] font-bold uppercase tracking-wider block truncate mt-0.5 ${getSponsorTierTextColor(sponsor.type)}`}>
             {sponsor.type}
           </span>
         </div>
