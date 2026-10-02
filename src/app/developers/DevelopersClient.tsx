@@ -391,39 +391,35 @@ function DevelopersContent() {
                         </span>
                       </div>
 
-                      {/* Then: Redesigned Contribution Segment (Strictly 2 lines total: Title + 1-line content) */}
-                      <div className="mt-3 p-2.5 sm:p-3 rounded-md bg-surface-secondary/70 dark:bg-surface-secondary/40 border border-border-default border-l-[3.5px] border-l-accent-primary">
-                        {/* Line 1: Title & More Count */}
-                        <div className="flex items-center justify-between gap-1.5 mb-1">
+                      {/* Then: Redesigned Contribution Segment (Solution 2: Smooth Marquee Ticker Stream) */}
+                      <div className="mt-3 p-2.5 sm:p-3 rounded-md bg-surface-secondary/70 dark:bg-surface-secondary/40 border border-border-default border-l-[3.5px] border-l-accent-primary overflow-hidden">
+                        {/* Line 1: Header */}
+                        <div className="flex items-center justify-between gap-1.5 mb-1.5">
                           <div className="flex items-center gap-1.5">
                             <Layers size={13} className="text-accent-primary shrink-0" />
                             <span className="font-mono text-[10px] font-extrabold uppercase tracking-widest text-text-primary">
-                              Contributions
+                              Contributions ({dev.featuresWorkedOn.length})
                             </span>
                           </div>
-                          {dev.featuresWorkedOn.length > 1 && (
-                            <span className="font-mono text-[10px] text-text-tertiary font-bold tracking-wider">
-                              +{dev.featuresWorkedOn.length - 1} more
-                            </span>
-                          )}
+                          <span className="font-mono text-[9px] text-text-tertiary uppercase tracking-wider hidden sm:inline-block">
+                            Hover to pause
+                          </span>
                         </div>
 
-                        {/* Line 2: Exactly 1 line of features */}
-                        <p
-                          className="text-xs text-text-secondary leading-normal truncate font-medium"
-                          title={dev.featuresWorkedOn.map((f) => f.title).join(", ")}
-                        >
-                          {dev.featuresWorkedOn.map((feat, i) => (
-                            <span key={i}>
-                              <span className="font-semibold text-text-primary hover:text-accent-primary transition-colors">
-                                {feat.title}
+                        {/* Line 2: Smooth Marquee Tag Stream */}
+                        <div className="relative w-full overflow-hidden marquee-mask py-0.5 select-none">
+                          <div className="animate-marquee flex items-center gap-2 [animation-duration:22s] hover:[animation-play-state:paused]">
+                            {[...dev.featuresWorkedOn, ...dev.featuresWorkedOn].map((feat, i) => (
+                              <span
+                                key={i}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-[4px] bg-surface-elevated border border-border-default text-text-primary font-mono text-[11px] font-semibold whitespace-nowrap hover:border-accent-primary transition-colors cursor-default"
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full bg-accent-primary shrink-0" />
+                                <span>{feat.title}</span>
                               </span>
-                              {i < dev.featuresWorkedOn.length - 1 && (
-                                <span className="text-text-tertiary mr-1.5 font-normal">,</span>
-                              )}
-                            </span>
-                          ))}
-                        </p>
+                            ))}
+                          </div>
+                        </div>
                       </div>
                     </div>
 
