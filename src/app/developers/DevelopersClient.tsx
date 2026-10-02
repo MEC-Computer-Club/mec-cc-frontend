@@ -391,15 +391,28 @@ function DevelopersContent() {
                         </span>
                       </div>
 
-                      {/* Then: Redesigned Contribution Segment */}
+                      {/* Then: Redesigned Contribution Segment (Strictly 2 lines total: Title + 1-line content) */}
                       <div className="mt-3 p-2.5 sm:p-3 rounded-md bg-surface-secondary/70 dark:bg-surface-secondary/40 border border-border-default border-l-[3.5px] border-l-accent-primary">
-                        <div className="flex items-center gap-1.5 mb-1">
-                          <Layers size={13} className="text-accent-primary shrink-0" />
-                          <span className="font-mono text-[10px] font-extrabold uppercase tracking-widest text-text-primary">
-                            Contributions
-                          </span>
+                        {/* Line 1: Title & More Count */}
+                        <div className="flex items-center justify-between gap-1.5 mb-1">
+                          <div className="flex items-center gap-1.5">
+                            <Layers size={13} className="text-accent-primary shrink-0" />
+                            <span className="font-mono text-[10px] font-extrabold uppercase tracking-widest text-text-primary">
+                              Contributions
+                            </span>
+                          </div>
+                          {dev.featuresWorkedOn.length > 1 && (
+                            <span className="font-mono text-[10px] text-text-tertiary font-bold tracking-wider">
+                              +{dev.featuresWorkedOn.length - 1} more
+                            </span>
+                          )}
                         </div>
-                        <p className="text-xs text-text-secondary leading-relaxed line-clamp-3">
+
+                        {/* Line 2: Exactly 1 line of features */}
+                        <p
+                          className="text-xs text-text-secondary leading-normal truncate font-medium"
+                          title={dev.featuresWorkedOn.map((f) => f.title).join(", ")}
+                        >
                           {dev.featuresWorkedOn.map((feat, i) => (
                             <span key={i}>
                               <span className="font-semibold text-text-primary hover:text-accent-primary transition-colors">
