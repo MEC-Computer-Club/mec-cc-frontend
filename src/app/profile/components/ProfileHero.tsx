@@ -331,66 +331,71 @@ export function ProfileHero({
 
             {/* Bottom-right Action Buttons */}
             <div className="absolute bottom-3 right-3 sm:bottom-3.5 sm:right-4 flex items-center gap-2 z-30">
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 onClick={() => {
                   setPosX(50);
                   setPosY(50);
                 }}
-                className="px-2.5 py-1.5 bg-surface-elevated/95 hover:bg-surface-secondary text-text-primary border border-border-default rounded-lg text-xs font-mono font-bold shadow-[2px_2px_0px_0px_var(--border-default)] cursor-pointer transition-all duration-150 hover:-translate-x-px hover:-translate-y-px"
                 title="Reset position to Center (50% 50%)"
               >
                 Reset
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 id="btn-cancel-cover-reposition"
                 onClick={handleCancelReposition}
                 disabled={savingPosition}
-                className="inline-flex items-center gap-1.5 py-1.5 px-3 bg-surface-elevated/95 hover:bg-surface-secondary text-text-primary dark:text-white border-2 border-text-primary dark:border-border-default rounded-lg text-xs font-bold shadow-[2px_2px_0px_0px_var(--text-primary)] cursor-pointer transition-all duration-150 hover:-translate-x-px hover:-translate-y-px disabled:opacity-50"
+                icon={<X size={14} />}
               >
-                <X size={14} />
-                <span>Cancel</span>
-              </button>
-              <button
+                Cancel
+              </Button>
+              <Button
                 type="button"
+                variant="primary"
+                size="sm"
                 id="btn-save-cover-reposition"
                 onClick={handleSavePosition}
                 disabled={savingPosition}
-                className="inline-flex items-center gap-1.5 py-1.5 px-3.5 bg-accent-primary hover:bg-accent-primary-hover text-accent-primary-text border-2 border-text-primary rounded-lg text-xs font-heading font-black shadow-[2px_2px_0px_0px_var(--text-primary)] cursor-pointer transition-all duration-150 hover:-translate-x-px hover:-translate-y-px hover:shadow-[3px_3px_0px_0px_var(--text-primary)] disabled:opacity-50"
+                icon={<Check size={14} />}
               >
-                <Check size={14} />
-                <span>{savingPosition ? "Saving..." : "Save Position"}</span>
-              </button>
+                {savingPosition ? "Saving..." : "Save Position"}
+              </Button>
             </div>
           </>
         ) : (
           /* ── Normal Mode Action Buttons ── */
           <div className="absolute bottom-3 right-3 sm:bottom-3.5 sm:right-4 flex items-center gap-2 z-20">
             {user.coverUrl && (
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 id="btn-reposition-cover"
-                className="inline-flex items-center gap-1.5 py-1.5 px-3 bg-surface-elevated/95 border-2 border-text-primary dark:border-border-default rounded-lg shadow-[2px_2px_0px_0px_var(--text-primary)] dark:shadow-[2px_2px_0px_0px_var(--accent-primary)] font-body text-xs font-bold text-text-primary dark:text-white cursor-pointer transition-all duration-150 hover:bg-accent-primary-light dark:hover:bg-[color-mix(in_srgb,var(--accent-primary)_30%,var(--surface-primary))] dark:hover:text-white hover:-translate-x-px hover:-translate-y-px hover:shadow-[3px_3px_0px_0px_var(--accent-primary)]"
                 onClick={() => setIsRepositioning(true)}
                 title="Drag to reposition cover banner"
+                icon={<Move size={14} />}
               >
-                <Move size={14} />
-                <span>Reposition</span>
-              </button>
+                Reposition
+              </Button>
             )}
 
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              size="sm"
               id="btn-change-cover"
-              className="inline-flex items-center gap-1.5 py-1.5 px-3 bg-surface-elevated/95 border-2 border-text-primary dark:border-border-default rounded-lg shadow-[2px_2px_0px_0px_var(--text-primary)] dark:shadow-[2px_2px_0px_0px_var(--accent-primary)] font-body text-xs font-bold text-text-primary dark:text-white cursor-pointer transition-all duration-150 hover:bg-accent-primary-light dark:hover:bg-[color-mix(in_srgb,var(--accent-primary)_30%,var(--surface-primary))] dark:hover:text-white hover:-translate-x-px hover:-translate-y-px hover:shadow-[3px_3px_0px_0px_var(--accent-primary)] disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={onOpenCoverModal}
               disabled={uploadingCover}
               title="Select Built-in or Upload Custom Cover Photo (1200x300 recommended)"
+              icon={<Camera size={14} />}
             >
-              <Camera size={14} />
-              <span>{uploadingCover ? "Uploading..." : "Change Cover"}</span>
-            </button>
+              {uploadingCover ? "Uploading..." : "Change Cover"}
+            </Button>
           </div>
         )}
       </div>

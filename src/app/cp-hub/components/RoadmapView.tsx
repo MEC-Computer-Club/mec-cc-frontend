@@ -19,6 +19,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 
 export type Resource = {
   title: string;
@@ -1175,7 +1176,7 @@ export default function RoadmapView() {
   return (
     <div className="container mx-auto px-4 md:px-8 max-w-7xl pt-8 pb-16">
       {/* Mobile Stage Selector Strip */}
-      <div className="lg:hidden mb-6 flex items-center justify-between gap-3 p-3.5 bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl shadow-[3px_3px_0px_var(--border-brutalist)]">
+      <div className="lg:hidden mb-6 flex items-center justify-between gap-3 p-3.5 bg-surface-elevated border border-black dark:border-border-default rounded-xl shadow-[4px_4px_0px_var(--accent-primary)]">
         <div className="flex items-center gap-2.5 min-w-0">
           <span className="font-mono text-xs font-black uppercase text-accent-primary shrink-0">
             STAGE {activeStage.number}
@@ -1184,14 +1185,15 @@ export default function RoadmapView() {
             {activeStage.title}
           </span>
         </div>
-        <button
+        <Button
           type="button"
           onClick={() => setMobileSidebarOpen(true)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-secondary border border-border-default text-xs font-bold text-text-primary shrink-0 cursor-pointer"
+          variant="secondary"
+          size="sm"
+          icon={<Menu className="h-3.5 w-3.5" />}
         >
-          <Menu className="h-3.5 w-3.5" />
           <span>Select Stage</span>
-        </button>
+        </Button>
       </div>
 
       {/* Main 2-Column Documentation Layout (Programiz Style) */}
@@ -1230,7 +1232,7 @@ export default function RoadmapView() {
           </div>
 
           {/* Programiz Sidebar Container */}
-          <div className="lg:sticky lg:top-[calc(var(--nav-height)+80px)] space-y-3 bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl p-4 shadow-[4px_4px_0px_0px_var(--border-default)]">
+          <div className="lg:sticky lg:top-[calc(var(--nav-height)+80px)] space-y-3 bg-surface-elevated border border-black dark:border-border-default rounded-2xl p-4 shadow-[4px_4px_0px_var(--accent-primary)]">
             <div className="pb-3 border-b border-border-default flex items-center justify-between">
               <span className="font-mono text-xs font-bold uppercase tracking-wider text-text-tertiary">
                 Learning Tracks
@@ -1519,7 +1521,7 @@ export default function RoadmapView() {
           </div>
 
           {/* Practical Advice Callout */}
-          <div className="rounded-xl border border-border-brutalist dark:border-border-default bg-surface-elevated p-5 shadow-[4px_4px_0px_var(--accent-primary)]">
+          <div className="rounded-xl border border-black dark:border-border-default bg-surface-elevated p-5 shadow-[4px_4px_0px_var(--accent-primary)]">
             <div className="flex items-start gap-3.5">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent-primary text-accent-primary-text font-bold">
                 <Lightbulb className="h-4 w-4" />
@@ -1538,31 +1540,35 @@ export default function RoadmapView() {
           {/* Bottom Stage Navigation (Previous & Next Controls) */}
           <div className="pt-6 border-t border-border-default flex flex-col sm:flex-row items-center justify-between gap-4">
             {prevStage ? (
-              <button
+              <Button
                 type="button"
                 onClick={() => handleSelectStage(prevStage.slug)}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border border-border-default bg-surface-secondary hover:bg-surface-elevated px-4 py-2.5 text-xs sm:text-sm font-bold text-text-primary transition-all cursor-pointer hover:-translate-x-0.5 hover:-translate-y-0.5"
+                variant="secondary"
+                size="md"
+                icon={<ChevronLeft className="h-4 w-4" />}
+                className="w-full sm:w-auto"
               >
-                <ChevronLeft className="h-4 w-4" />
                 <span>
                   Previous: Stage {prevStage.number} ({prevStage.title})
                 </span>
-              </button>
+              </Button>
             ) : (
               <div />
             )}
 
             {nextStage && (
-              <button
+              <Button
                 type="button"
                 onClick={() => handleSelectStage(nextStage.slug)}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl border-2 border-text-primary dark:border-border-default bg-accent-primary text-accent-primary-text hover:bg-accent-primary-hover px-5 py-2.5 text-xs sm:text-sm font-bold shadow-[3px_3px_0px_0px_var(--border-brutalist)] transition-all cursor-pointer hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0 active:translate-y-0 active:shadow-none"
+                variant="primary"
+                size="md"
+                className="w-full sm:w-auto"
               >
                 <span>
                   Next: Stage {nextStage.number} ({nextStage.title})
                 </span>
                 <ArrowRight className="h-4 w-4" />
-              </button>
+              </Button>
             )}
           </div>
         </main>

@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { Button } from "@/components/ui/Button";
 import toast from "react-hot-toast";
 import {
   Crown,
@@ -358,18 +359,20 @@ export default function DashboardMemberDetailsPage() {
   if (error || !member) {
     return (
       <div className="p-6 max-w-4xl mx-auto">
-        <div className="bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-xl shadow-[6px_6px_0px_var(--border-brutalist)] dark:shadow-[6px_6px_0px_var(--accent-primary)] p-8 text-center">
+        <div className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl shadow-[4px_4px_0px_var(--accent-primary)] p-8 text-center">
           <AlertCircle size={40} className="mx-auto text-red-500 mb-3" />
           <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary mb-2">Member Not Found</h2>
           <p className="text-text-secondary text-xs sm:text-sm mb-6">
             {error || "The requested member profile could not be located in the system."}
           </p>
-          <Link
+          <Button
             href="/dashboard/members"
-            className="inline-flex items-center gap-1.5 py-2 px-4 bg-surface-elevated text-text-primary border-2 border-border-brutalist dark:border-border-default rounded-md shadow-[2px_2px_0px_var(--border-brutalist)] dark:shadow-[2px_2px_0px_var(--border-default)] text-xs font-bold transition-all hover:shadow-[3px_3px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5"
+            variant="secondary"
+            size="sm"
+            icon={<ArrowLeft size={14} />}
           >
-            <ArrowLeft size={14} /> Back to Member Directory
-          </Link>
+            Back to Member Directory
+          </Button>
         </div>
       </div>
     );
@@ -408,14 +411,16 @@ export default function DashboardMemberDetailsPage() {
   return (
     <div className="space-y-6 pb-16">
       {/* ── Action Header & Breadcrumb ── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-surface-elevated p-4 border-2 border-border-brutalist dark:border-border-default rounded-xl shadow-[4px_4px_0px_var(--border-brutalist)] dark:shadow-[4px_4px_0px_var(--border-default)]">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-surface-elevated p-4 border border-border-brutalist dark:border-border-default rounded-xl shadow-[4px_4px_0px_var(--accent-primary)]">
         <div className="flex items-center gap-3">
-          <Link
+          <Button
             href="/dashboard/members"
-            className="inline-flex items-center gap-1.5 py-1.5 px-3 bg-surface-secondary text-text-primary border border-border-brutalist dark:border-border-default rounded-md text-xs font-bold transition-all hover:shadow-[2px_2px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5"
+            variant="secondary"
+            size="sm"
+            icon={<ArrowLeft size={14} />}
           >
-            <ArrowLeft size={14} /> Back to Members
-          </Link>
+            Back to Members
+          </Button>
           <div className="hidden sm:block text-xs font-mono text-text-tertiary">
             dashboard / members / <span className="text-text-primary font-bold">{member.fullName}</span>
           </div>
@@ -423,15 +428,17 @@ export default function DashboardMemberDetailsPage() {
 
         <div className="flex items-center gap-2">
           {/* Public Profile View Link */}
-          <Link
+          <Button
             href={`/profile/${member._id || userId}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 py-1.5 px-3 bg-surface-secondary text-text-primary border border-border-brutalist dark:border-border-default rounded-md text-xs font-bold transition-all hover:bg-accent-primary-light/40"
+            variant="secondary"
+            size="sm"
+            icon={<Eye size={14} />}
             title="Open public profile page in new tab"
           >
-            <Eye size={14} /> Public View <ExternalLink size={12} className="opacity-50" />
-          </Link>
+            Public View
+          </Button>
 
           {/* Delete Member Button (Admin only) */}
           {currentUser?.role === "admin" && (
@@ -447,13 +454,15 @@ export default function DashboardMemberDetailsPage() {
 
           {/* Edit Mode Toggle */}
           {!isEditMode ? (
-            <button
+            <Button
               type="button"
+              variant="primary"
+              size="sm"
               onClick={() => setIsEditMode(true)}
-              className="inline-flex items-center gap-1.5 py-1.5 px-4 bg-accent-primary text-accent-primary-text border-2 border-border-brutalist dark:border-border-default rounded-md shadow-[2px_2px_0px_var(--border-brutalist)] dark:shadow-[2px_2px_0px_var(--border-default)] text-xs font-bold transition-all hover:shadow-[3px_3px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5 cursor-pointer"
+              icon={<Pencil size={14} />}
             >
-              <Pencil size={14} /> Edit Member Details
-            </button>
+              Edit Member Details
+            </Button>
           ) : (
             <div className="flex items-center gap-2">
               <button

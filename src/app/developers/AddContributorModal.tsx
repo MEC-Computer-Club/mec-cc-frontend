@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import { Button } from "@/components/ui/Button";
 import {
   Search,
   X,
@@ -686,30 +687,23 @@ export default function AddContributorModal({
 
           {/* ── Modal Footer ── */}
           <div className="pt-4 border-t border-border-default flex items-center justify-end gap-2.5">
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              size="sm"
               onClick={onClose}
-              className="px-4 py-2 rounded-md border border-border-default hover:bg-surface-secondary text-text-secondary font-mono text-xs font-bold transition-colors cursor-pointer"
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
+              variant="primary"
+              size="sm"
               disabled={!selectedMember}
-              className="px-5 py-2 rounded-md bg-black text-white dark:bg-white dark:text-black font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 border border-black dark:border-white transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_var(--accent-primary)] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-xs"
+              icon={editData ? <CheckCircle2 size={14} /> : <Plus size={14} />}
             >
-              {editData ? (
-                <>
-                  <CheckCircle2 size={14} />
-                  <span>Save Changes</span>
-                </>
-              ) : (
-                <>
-                  <Plus size={14} />
-                  <span>Publish Contributor Card</span>
-                </>
-              )}
-            </button>
+              {editData ? "Save Changes" : "Publish Contributor Card"}
+            </Button>
           </div>
         </form>
       </div>

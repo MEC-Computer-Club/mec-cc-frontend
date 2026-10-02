@@ -21,7 +21,7 @@ interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
   isLoading: boolean; // alias for loading — used by new dashboard
-  login: (identifier: string, password: string, securityCode?: string) => Promise<LoginResponse>;
+  login: (identifier: string, password: string, securityCode?: string, rememberMe?: boolean) => Promise<LoginResponse>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   isAuthenticated: boolean;
@@ -35,7 +35,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Synchronize token and role into document.cookie with 7-day expiration
+// Synchronize token and role into document.cookie with dynamic remember-me expiration
 const syncAuthCookie = (rawToken: string | null, role?: string | null): boolean => {
   if (typeof window === "undefined" || !rawToken) return false;
   const token = rawToken.startsWith("Bearer ") ? rawToken.slice(7).trim() : rawToken.trim();
@@ -54,8 +54,11 @@ const syncAuthCookie = (rawToken: string | null, role?: string | null): boolean 
     }
 
     const isHttps = window.location.protocol === "https:";
+    const isRemembered = localStorage.getItem("mec_cc_remember_me") === "true";
+    const cookieDays = isRemembered ? 30 : 7;
+
     Cookies.set("auth_token", token, {
-      expires: 7,
+      expires: cookieDays,
       path: "/",
       sameSite: "lax",
       secure: isHttps,
@@ -63,7 +66,7 @@ const syncAuthCookie = (rawToken: string | null, role?: string | null): boolean 
 
     const userRole = role || (decoded.role as string) || "member";
     Cookies.set("role", userRole, {
-      expires: 7,
+      expires: cookieDays,
       path: "/",
       sameSite: "lax",
       secure: isHttps,
@@ -159,7 +162,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     refreshUser();
   }, [refreshUser]);
 
-  const login = async (identifier: string, password: string, securityCode?: string): Promise<LoginResponse> => {
+  const login = async (identifier: string, password: string, securityCode?: string, rememberMe: boolean = false): Promise<LoginResponse> => {
     try {
       const res = await api.post("/api/users/login", {
         email: identifier,
@@ -167,14 +170,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         identifier,
         password,
         securityCode: securityCode ? securityCode.trim() : undefined,
+        rememberMe,
       });
       if (res && res.user) {
         if (typeof window !== "undefined") {
+          const cookieDays = rememberMe ? 30 : 7;
+          if (rememberMe) {
+            localStorage.setItem("mec_cc_remember_me", "true");
+          } else {
+            localStorage.removeItem("mec_cc_remember_me");
+          }
           if (res.token) {
             localStorage.setItem("auth_token", res.token);
             const isHttps = window.location.protocol === "https:";
             Cookies.set("auth_token", res.token, {
-              expires: 7,
+              expires: cookieDays,
               path: "/",
               sameSite: "lax",
               secure: isHttps,
@@ -183,7 +193,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (res.user.role) {
             const isHttps = window.location.protocol === "https:";
             Cookies.set("role", res.user.role, {
-              expires: 7,
+              expires: cookieDays,
               path: "/",
               sameSite: "lax",
               secure: isHttps,

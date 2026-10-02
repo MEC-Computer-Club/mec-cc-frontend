@@ -5,6 +5,7 @@ import { Search, X, Users, RefreshCw } from "lucide-react";
 import { ProfileCard, ProfileGrid } from "@/components/ui/ProfileCard";
 import { groupPeopleByBatch, BatchGroup } from "@/lib/batchUtils";
 import FilterSelect, { FilterOption } from "@/app/dashboard/components/FilterSelect";
+import { Button } from "@/components/ui/Button";
 
 export interface DirectoryPerson {
   id: string;
@@ -202,53 +203,6 @@ export default function PeopleDirectory<T extends DirectoryPerson>({
               gap: 8px;
               flex-wrap: wrap;
             }
-            .dept-btn {
-              display: inline-flex;
-              align-items: center;
-              gap: 8px;
-              height: 38px;
-              padding: 0 14px;
-              font-family: var(--font-heading);
-              font-size: 13px;
-              font-weight: 800;
-              border-radius: var(--radius-sm);
-              border: 1px solid var(--border-default);
-              background: var(--surface-primary);
-              color: var(--text-secondary);
-              cursor: pointer;
-              transition: all var(--transition-fast);
-              box-shadow: none;
-              box-sizing: border-box;
-            }
-            .dept-btn:hover {
-              background: var(--surface-secondary);
-              color: var(--text-primary);
-              border-color: var(--border-strong, var(--border-default));
-              box-shadow: none;
-            }
-            .dept-btn.is-active {
-              background: var(--accent-primary);
-              color: #FFFFFF !important;
-              border-color: var(--accent-primary);
-              box-shadow: none;
-            }
-            .dept-btn-count {
-              display: inline-flex;
-              align-items: center;
-              justify-content: center;
-              min-width: 20px;
-              height: 20px;
-              padding: 0 6px;
-              font-size: 11px;
-              font-weight: 700;
-              border-radius: 9999px;
-              background: var(--surface-secondary);
-              color: var(--text-secondary);
-            }
-            .dept-btn.is-active .dept-btn-count {
-              background: rgba(255, 255, 255, 0.25);
-              color: #FFFFFF;
-            }
             .dept-tools-group {
               display: flex;
               align-items: center;
@@ -277,12 +231,15 @@ export default function PeopleDirectory<T extends DirectoryPerson>({
               font-size: 13px;
               background: var(--surface-primary);
               color: var(--text-primary);
-              border: 1px solid var(--border-default);
-              border-radius: var(--radius-sm);
+              border: 1px solid #000000;
+              border-radius: var(--radius-md);
               outline: none;
               box-shadow: none;
               box-sizing: border-box;
               transition: border-color var(--transition-fast);
+            }
+            .dark .directory-search-input {
+              border-color: var(--border-default);
             }
             .directory-search-input:focus {
               border-color: var(--accent-primary);
@@ -300,17 +257,26 @@ export default function PeopleDirectory<T extends DirectoryPerson>({
             const isActive = selectedDept === key;
             const count = deptCounts[key] || 0;
             return (
-              <button
+              <Button
                 key={key}
                 type="button"
                 role="tab"
                 aria-selected={isActive}
                 onClick={() => setSelectedDept(key)}
-                className={`dept-btn ${isActive ? "is-active" : ""}`}
+                variant={isActive ? "primary" : "secondary"}
+                size="sm"
               >
                 <span>{label}</span>
-                <span className="dept-btn-count">{count}</span>
-              </button>
+                <span
+                  className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 text-[11px] font-mono font-bold rounded-full transition-colors ${
+                    isActive
+                      ? "bg-white/25 text-white dark:bg-black/25 dark:text-black"
+                      : "bg-black/10 text-black dark:bg-white/15 dark:text-white"
+                  }`}
+                >
+                  {count}
+                </span>
+              </Button>
             );
           })}
         </div>

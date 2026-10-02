@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { Button } from "@/components/ui/Button";
 import toast from "react-hot-toast";
 import {
   Crown,
@@ -150,26 +151,30 @@ export default function MemberProfilePage() {
         <div className="relative w-full h-[180px] sm:h-[220px] bg-gradient-to-br from-slate-900 via-emerald-950 to-emerald-800 border-b-2 border-border-brutalist overflow-hidden">
           <div className="absolute inset-0 bg-[radial-gradient(rgba(255,255,255,0.15)_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none" />
           <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
-            <Link
+            <Button
               href="/members"
-              className="inline-flex items-center gap-1.5 py-1.5 px-3.5 bg-surface-elevated text-text-primary border-2 border-border-brutalist rounded-md shadow-[2px_2px_0px_var(--border-brutalist)] text-xs font-bold transition-all hover:shadow-[3px_3px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5"
+              variant="secondary"
+              size="sm"
+              icon={<ArrowLeft size={14} />}
             >
-              <ArrowLeft size={14} /> Back to Directory
-            </Link>
+              Back to Directory
+            </Button>
           </div>
         </div>
         <div className="max-w-4xl mx-auto px-4">
-          <div className="bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-xl shadow-[6px_6px_0px_var(--border-brutalist)] dark:shadow-[6px_6px_0px_var(--accent-primary)] -mt-14 p-8 sm:p-10 text-center relative z-10 mb-6">
+          <div className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl shadow-[4px_4px_0px_var(--accent-primary)] -mt-14 p-8 sm:p-10 text-center relative z-10 mb-6">
             <h2 className="text-xl sm:text-2xl font-extrabold text-text-primary mb-2">Member Not Found</h2>
             <p className="text-text-secondary text-xs sm:text-sm mb-5">
               The requested member profile could not be located or may have been removed.
             </p>
-            <Link
+            <Button
               href="/members"
-              className="inline-flex items-center gap-1.5 py-2 px-4 bg-surface-elevated text-text-primary border-2 border-border-brutalist dark:border-border-default rounded-md shadow-[2px_2px_0px_var(--border-brutalist)] dark:shadow-[2px_2px_0px_var(--border-default)] text-xs font-bold transition-all hover:shadow-[3px_3px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5"
+              variant="secondary"
+              size="sm"
+              icon={<ArrowLeft size={14} />}
             >
-              <ArrowLeft size={14} /> Return to Member Directory
-            </Link>
+              Return to Member Directory
+            </Button>
           </div>
         </div>
       </div>
@@ -205,35 +210,41 @@ export default function MemberProfilePage() {
         )}
 
         <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-10">
-          <button
+          <Button
             type="button"
+            variant="secondary"
+            size="sm"
             onClick={() => router.back()}
-            className="inline-flex items-center gap-1.5 py-1.5 px-3.5 bg-surface-elevated text-text-primary border-2 border-border-brutalist dark:border-border-default rounded-md shadow-[2px_2px_0px_var(--border-brutalist)] dark:shadow-[2px_2px_0px_var(--border-default)] text-xs font-bold transition-all hover:shadow-[3px_3px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5 cursor-pointer"
+            icon={<ArrowLeft size={14} />}
           >
-            <ArrowLeft size={14} /> Back
-          </button>
+            Back
+          </Button>
           <div className="flex items-center gap-2">
             {currentUser &&
               (currentUser.role === "admin" ||
                 currentUser.role === "moderator" ||
                 currentUser.role === "executive") &&
               (member._id || id) && (
-                <Link
+                <Button
                   href={`/dashboard/members/${member._id || id}`}
-                  className="inline-flex items-center gap-1.5 py-1.5 px-3.5 bg-accent-primary text-accent-primary-text border-2 border-border-brutalist dark:border-border-default rounded-md shadow-[2px_2px_0px_var(--border-brutalist)] dark:shadow-[2px_2px_0px_var(--border-default)] text-xs font-bold transition-all hover:shadow-[3px_3px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5"
+                  variant="primary"
+                  size="sm"
+                  icon={<Pencil size={13} />}
                   title="Manage and edit member details in dashboard"
                 >
-                  <Pencil size={13} /> Edit Member
-                </Link>
+                  Edit Member
+                </Button>
               )}
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              size="sm"
               onClick={handleShare}
-              className="inline-flex items-center gap-1.5 py-1.5 px-3.5 bg-surface-elevated text-text-primary border-2 border-border-brutalist dark:border-border-default rounded-md shadow-[2px_2px_0px_var(--border-brutalist)] dark:shadow-[2px_2px_0px_var(--border-default)] text-xs font-bold transition-all hover:shadow-[3px_3px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5 cursor-pointer"
+              icon={<Share2 size={14} />}
               title="Share profile link"
             >
-              <Share2 size={14} /> Share Profile
-            </button>
+              Share Profile
+            </Button>
           </div>
         </div>
       </div>

@@ -8,6 +8,36 @@ import { getOptimizedImageUrl } from "@/lib/api/gallery";
 import { formatCompactNumber } from "@/lib/formatters";
 import { parseImagePosition } from "@/lib/imagePosition";
 
+/* ===== Canonical Card Design System ===== */
+export const CARD_STYLES = {
+  hoverable:
+    "bg-surface-elevated border border-black dark:border-border-default rounded-xl hover:shadow-[4px_4px_0px_var(--accent-primary)] transition-shadow duration-200",
+  fixed:
+    "bg-surface-elevated border border-black dark:border-border-default rounded-xl shadow-[4px_4px_0px_var(--accent-primary)]",
+} as const;
+
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: "fixed" | "hoverable";
+  children: React.ReactNode;
+  className?: string;
+  as?: React.ElementType;
+}
+
+export function Card({
+  variant = "fixed",
+  children,
+  className = "",
+  as: Component = "div",
+  ...props
+}: CardProps) {
+  const baseClass = CARD_STYLES[variant];
+  return (
+    <Component className={`${baseClass} ${className}`.trim()} {...props}>
+      {children}
+    </Component>
+  );
+}
+
 /* ===== Event Card ===== */
 interface EventCardProps {
   id?: string;
@@ -107,7 +137,7 @@ export function EventCard({
   return (
     <Link
       href={`/events/${slug}`}
-      className="flex flex-col w-full h-full min-h-[240px] bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl overflow-hidden transition-all duration-200 hover:shadow-[6px_6px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5 no-underline text-inherit group"
+      className="flex flex-col w-full h-full min-h-[240px] bg-surface-elevated border border-black dark:border-border-default rounded-xl overflow-hidden hover:shadow-[4px_4px_0px_var(--accent-primary)] transition-shadow duration-200 no-underline text-inherit group"
       id={`event-${slug}`}
     >
       {/* Event Cover Image (with custom focal positioning, zoom/shrink, or contain fit) */}
@@ -248,7 +278,7 @@ export function ProjectCard({
   return (
     <Link
       href={`/projects/${slug}`}
-      className="flex flex-col w-full h-full min-h-[230px] bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl overflow-hidden transition-all duration-200 hover:shadow-[6px_6px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5 no-underline text-inherit group relative"
+      className="flex flex-col w-full h-full min-h-[230px] bg-surface-elevated border border-black dark:border-border-default rounded-xl overflow-hidden hover:shadow-[4px_4px_0px_var(--accent-primary)] transition-shadow duration-200 no-underline text-inherit group relative"
       id={`project-${slug}`}
     >
       {image && (
@@ -420,7 +450,7 @@ export function BlogCard({
   return (
     <Link
       href={`/blog/${slug}`}
-      className="flex flex-col w-full h-full min-h-[230px] bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl overflow-hidden transition-all duration-200 hover:shadow-[6px_6px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5 no-underline text-inherit group"
+      className="flex flex-col w-full h-full min-h-[230px] bg-surface-elevated border border-black dark:border-border-default rounded-xl overflow-hidden hover:shadow-[4px_4px_0px_var(--accent-primary)] transition-shadow duration-200 no-underline text-inherit group"
       id={`blog-${slug}`}
     >
       {image && (
@@ -512,7 +542,7 @@ export function TeamCard({ name, role, bio, socials }: TeamCardProps) {
   const avatarUrl = `https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(name)}&backgroundColor=transparent`;
 
   return (
-    <div className="flex flex-col items-center text-center p-5 bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl overflow-hidden transition-all duration-200 hover:shadow-[6px_6px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5">
+    <div className="flex flex-col items-center text-center p-5 bg-surface-elevated border border-black dark:border-border-default rounded-xl overflow-hidden hover:shadow-[4px_4px_0px_var(--accent-primary)] transition-shadow duration-200">
       <div className="w-20 h-20 rounded-full mb-3 relative overflow-hidden border border-border-default bg-surface-secondary p-2.5">
         <Image src={avatarUrl} alt={name} fill className="object-contain" unoptimized />
       </div>

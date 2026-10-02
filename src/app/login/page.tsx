@@ -43,6 +43,30 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [statusAlert, setStatusAlert] = useState<ExtendedLoginState | null>(null);
   const [rateLimitSeconds, setRateLimitSeconds] = useState<number | null>(null);
+  const [rememberMe, setRememberMe] = useState(false);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
+
+  // Restore remembered Student ID / Email on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const savedId = localStorage.getItem("mec_cc_remembered_identifier");
+        const savedRemember = localStorage.getItem("mec_cc_remember_me") === "true";
+        if (savedId) {
+          setIdentifier(savedId);
+          setRememberMe(true);
+          // Auto-focus password field so user can instantly type password or let browser autofill
+          setTimeout(() => {
+            passwordInputRef.current?.focus();
+          }, 150);
+        } else if (savedRemember) {
+          setRememberMe(true);
+        }
+      } catch {
+        // ignore storage errors
+      }
+    }
+  }, []);
 
   // Live countdown timer for IP rate limit
   useEffect(() => {
@@ -127,11 +151,19 @@ function LoginForm() {
     }
   }, [authLoading, isAuthenticated, redirectParam, user]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setStatusAlert(null);
 
-    if (!identifier || !password) {
+    // Fallback to DOM input values in case browser autofill updated inputs without triggering React's synthetic onChange
+    const formEl = e.currentTarget;
+    const domUsername = (formEl.elements.namedItem("username") as HTMLInputElement)?.value || "";
+    const domPassword = (formEl.elements.namedItem("password") as HTMLInputElement)?.value || "";
+
+    const activeIdentifier = (identifier || domUsername).trim();
+    const activePassword = password || domPassword;
+
+    if (!activeIdentifier || !activePassword) {
       setStatusAlert({
         type: "error",
         message: "Please enter your Student ID or Email, and Password.",
@@ -149,12 +181,33 @@ function LoginForm() {
 
     setLoading(true);
     try {
-      const res = await login(identifier.trim(), password, securityCode.trim());
+      const res = await login(activeIdentifier, activePassword, securityCode.trim(), rememberMe);
       if (res.success) {
         hasRedirectedRef.current = true;
         if (typeof window !== "undefined") {
           sessionStorage.removeItem("redirect_loop_count");
           sessionStorage.removeItem("last_auto_redirect");
+          if (rememberMe) {
+            localStorage.setItem("mec_cc_remembered_identifier", activeIdentifier);
+            localStorage.setItem("mec_cc_remember_me", "true");
+          } else {
+            localStorage.removeItem("mec_cc_remembered_identifier");
+            localStorage.removeItem("mec_cc_remember_me");
+          }
+
+          // Trigger standard Browser Password Manager (Chrome, Edge, Brave) to save or update credentials
+          if ("PasswordCredential" in window && navigator.credentials) {
+            try {
+              const cred = new (window as any).PasswordCredential({
+                id: activeIdentifier,
+                password: activePassword,
+                name: res.user?.fullName || activeIdentifier,
+              });
+              await navigator.credentials.store(cred);
+            } catch {
+              // Non-blocking best-effort invocation
+            }
+          }
         }
         toast.success("Welcome back to MEC Computer Club!");
         const isExecutive =
@@ -247,7 +300,7 @@ function LoginForm() {
           </p>
         </div>
 
-        <div className="bg-surface-elevated p-6 sm:p-8 rounded-xl border border-border-brutalist dark:border-border-default shadow-[4px_4px_0px_var(--border-brutalist)] dark:shadow-[4px_4px_0px_var(--accent-primary)] flex flex-col gap-4 w-full transition-all duration-200 hover:shadow-[6px_6px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5">
+        <div className="bg-surface-elevated p-6 sm:p-8 rounded-xl border border-border-brutalist dark:border-border-default shadow-[4px_4px_0px_var(--accent-primary)] flex flex-col gap-4 w-full">
           {/* Custom Status Alerts */}
           {statusAlert && (
             <div className="mb-2">
@@ -315,18 +368,20 @@ function LoginForm() {
             </div>
           )}
 
-          <form className="flex flex-col gap-4 w-full" onSubmit={handleSubmit}>
+          <form className="flex flex-col gap-4 w-full" onSubmit={handleSubmit} method="POST" action="">
             <div className="w-full flex flex-col gap-1.5">
               <label htmlFor="login-identifier" className="block font-medium text-sm text-text-primary">
                 Student ID or Email
               </label>
               <input
                 id="login-identifier"
+                name="username"
                 type="text"
                 required
                 placeholder="e.g. 210347 or name@mec.edu.bd"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}
+                onInput={(e) => setIdentifier((e.target as HTMLInputElement).value)}
                 autoComplete="username"
                 disabled={loading || (rateLimitSeconds !== null && rateLimitSeconds > 0)}
                 className="w-full px-3.5 py-2.5 border border-border-brutalist dark:border-border-default rounded-md bg-surface-primary text-base text-text-primary shadow-[2px_2px_0px_var(--border-brutalist)] dark:shadow-[2px_2px_0px_var(--border-default)] transition-all duration-200 focus:outline-none focus:border-accent-primary focus:shadow-[4px_4px_0px_var(--accent-primary)] focus:-translate-x-0.5 focus:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed disabled:bg-surface-secondary"
@@ -339,12 +394,15 @@ function LoginForm() {
               </label>
               <div className="relative flex items-center w-full">
                 <input
+                  ref={passwordInputRef}
                   id="login-password"
+                  name="password"
                   type={showPassword ? "text" : "password"}
                   required
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  onInput={(e) => setPassword((e.target as HTMLInputElement).value)}
                   autoComplete="current-password"
                   disabled={loading || (rateLimitSeconds !== null && rateLimitSeconds > 0)}
                   className="w-full px-3.5 py-2.5 pr-11 border border-border-brutalist dark:border-border-default rounded-md bg-surface-primary text-base text-text-primary shadow-[2px_2px_0px_var(--border-brutalist)] dark:shadow-[2px_2px_0px_var(--border-default)] transition-all duration-200 focus:outline-none focus:border-accent-primary focus:shadow-[4px_4px_0px_var(--accent-primary)] focus:-translate-x-0.5 focus:-translate-y-0.5 disabled:opacity-70 disabled:cursor-not-allowed disabled:bg-surface-secondary"
@@ -373,6 +431,7 @@ function LoginForm() {
                 </label>
                 <input
                   id="login-security-code"
+                  name="securityCode"
                   type="text"
                   required
                   maxLength={6}
@@ -394,7 +453,10 @@ function LoginForm() {
               <label className="flex items-center gap-2 cursor-pointer text-sm text-text-secondary select-none">
                 <input
                   type="checkbox"
+                  id="login-remember-me"
                   name="remember"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
                   className="w-4 h-4 rounded border-border-brutalist dark:border-border-default text-accent-primary focus:ring-accent-primary cursor-pointer accent-[var(--accent-primary)]"
                 />
                 Remember me

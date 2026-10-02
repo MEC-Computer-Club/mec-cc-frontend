@@ -97,7 +97,7 @@ export default async function DocViewerPage({ params }: PageProps) {
   if (!doc) {
     return (
       <div className="container mx-auto px-4 py-20 max-w-2xl text-center space-y-6">
-        <div className="p-8 bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-2xl shadow-[6px_6px_0px_var(--accent-primary)] space-y-4">
+        <div className="p-8 bg-surface-elevated border border-black dark:border-border-default rounded-2xl shadow-[4px_4px_0px_var(--accent-primary)] space-y-4">
           <FileText className="w-12 h-12 text-text-tertiary mx-auto" />
           <h1 className="text-2xl font-bold text-text-primary">Document Not Found</h1>
           <p className="text-sm text-text-secondary">
@@ -134,7 +134,7 @@ export default async function DocViewerPage({ params }: PageProps) {
         </div>
 
         {/* Document Header Card */}
-        <div className="p-6 bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-2xl shadow-[6px_6px_0px_var(--accent-primary)] flex flex-col md:flex-row md:items-center justify-between gap-6">
+        <div className="p-6 bg-surface-elevated border border-black dark:border-border-default rounded-2xl shadow-[4px_4px_0px_var(--accent-primary)] flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-3 flex-1">
             <div className="flex items-center gap-2 flex-wrap">
               <Badge
@@ -235,7 +235,7 @@ export default async function DocViewerPage({ params }: PageProps) {
         {/* Document Reader Container */}
         {isPdf ? (
           <div className="space-y-3">
-            <div className="w-full bg-surface-secondary/40 border-2 border-border-brutalist dark:border-border-default rounded-2xl shadow-[6px_6px_0px_0px_var(--border-default)] overflow-hidden">
+            <div className="w-full bg-surface-secondary/40 border border-black dark:border-border-default rounded-2xl shadow-[4px_4px_0px_var(--accent-primary)] overflow-hidden">
               <iframe
                 src={pdfViewUrl}
                 className="w-full h-[85vh] bg-white dark:bg-slate-950"

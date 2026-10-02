@@ -110,7 +110,7 @@ function VerifyEmailContent() {
 
       <div className="max-w-[640px] mx-auto flex flex-col gap-5">
         {verifying ? (
-          <div className="bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-xl p-8 shadow-[4px_4px_0px_var(--border-brutalist)] dark:shadow-[4px_4px_0px_var(--border-default)] text-center py-12">
+          <div className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl p-8 shadow-[4px_4px_0px_var(--accent-primary)] text-center py-12">
             <div className="w-8 h-8 border-3 border-accent-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
             <h3 className="text-xl font-bold text-text-primary mb-1">Verifying Credentials...</h3>
             <p className="text-text-secondary text-sm">
@@ -119,7 +119,7 @@ function VerifyEmailContent() {
           </div>
         ) : verified ? (
           <div className="flex flex-col gap-5">
-            <div className="bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-xl p-8 shadow-[4px_4px_0px_var(--border-brutalist)] dark:shadow-[4px_4px_0px_var(--border-default)] text-center py-10">
+            <div className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl p-8 shadow-[4px_4px_0px_var(--accent-primary)] text-center py-10">
               <div className="w-14 h-14 rounded-full bg-emerald-500/10 text-accent-success flex items-center justify-center mx-auto mb-3">
                 <CheckCircle2 size={36} />
               </div>
@@ -184,7 +184,7 @@ function VerifyEmailContent() {
             </div>
           </div>
         ) : (
-          <div className="bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-xl p-6 sm:p-8 shadow-[5px_5px_0px_var(--border-brutalist)] dark:shadow-[5px_5px_0px_var(--accent-primary)]">
+          <div className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl p-6 sm:p-8 shadow-[4px_4px_0px_var(--accent-primary)]">
             <h2 className="text-xl font-bold text-text-primary mb-4 pb-2 border-b border-border-default">
               Enter Verification Code
             </h2>

@@ -7,6 +7,7 @@ import { CommitteeTermSummary, CommitteeDetail, Executive } from "@/lib/api/exec
 import { Sparkles, Users, History, Loader2, SlidersHorizontal, Check } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "@/lib/api";
+import { Button } from "@/components/ui/Button";
 
 interface ExecutivePanelClientProps {
   initialTerms: CommitteeTermSummary[];
@@ -134,76 +135,71 @@ export default function ExecutivePanelClient({
 
   return (
     <>
-      {/* ── Header Section with Title & Filter Pills ── */}
-      <section className="pt-8 pb-6 border-b border-border-default bg-surface-primary transition-colors">
-        <div className="container mx-auto px-4 md:px-8 space-y-5">
-          {/* Top Title & Subtitle */}
-          <div className="space-y-2 max-w-3xl">
-            <div className="flex items-center gap-2">
-              <span className="kicker">Leadership &amp; Governance</span>
-              {isCurrent ? (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-accent-primary-light text-accent-primary border border-accent-primary/20">
-                  <Sparkles className="w-3 h-3" /> Active Term
-                </span>
-              ) : (
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30">
-                  <History className="w-3 h-3" /> Historical Archive
-                </span>
-              )}
-            </div>
-
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-text-primary">
-              Executive Panel
-            </h1>
-
-            <p className="text-base sm:text-lg text-text-secondary leading-relaxed">
-              {committee?.description ||
-                "Meet the dedicated student leaders who govern club operations, organize hackathons, and steer technical initiatives at Mymensingh Engineering College."}
-            </p>
+      {/* ── Top Header Section (Alumni Page Style) ── */}
+      <section className="pt-10 md:pt-14 pb-8 md:pb-10 text-center">
+        <div className="container mx-auto px-4 md:px-8">
+          <div className="inline-flex items-center gap-2 justify-center mb-1">
+            <span className="kicker">Leadership &amp; Governance</span>
+            {isCurrent ? (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-accent-primary-light text-accent-primary border border-accent-primary/20">
+                <Sparkles className="w-3 h-3" /> Active Term
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                <History className="w-3 h-3" /> Historical Archive
+              </span>
+            )}
           </div>
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-text-primary my-3">
+            Executive Panel
+          </h1>
+          <p className="text-base sm:text-lg text-text-secondary max-w-[600px] mx-auto">
+            {committee?.description ||
+              "Meet the dedicated student leaders who govern club operations, organize hackathons, and steer technical initiatives at Mymensingh Engineering College."}
+          </p>
+        </div>
+      </section>
 
-          {/* ── Pill Buttons & Filter Icon Row (Clean Design as requested) ── */}
-          <div className="flex items-center gap-2 pt-2 flex-wrap">
+      {/* ── Main Content Section ── */}
+      <section className="py-8 md:py-12 bg-surface-secondary min-h-[500px]">
+        <div className="container mx-auto px-4 md:px-8 space-y-6">
+          {/* ── Pill Buttons & Filter Icon Row ── */}
+          <div className="flex items-center justify-center gap-2 flex-wrap pb-2">
             {pillsToRender.map((t) => {
               const isSelected = selectedTerm === t.term;
               const short = formatShortTerm(t.term);
               const label = t.isCurrent ? `${short} (Current)` : short;
 
               return (
-                <button
+                <Button
                   key={t.term}
                   type="button"
                   onClick={() => handleTermChange(t.term)}
-                  className={`px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer select-none ${
-                    isSelected
-                      ? "bg-[#0b2b3a] dark:bg-accent-primary text-white shadow-xs border border-transparent"
-                      : "bg-surface-primary hover:bg-surface-secondary text-text-secondary hover:text-text-primary border border-border-default hover:border-slate-400 shadow-2xs"
-                  }`}
+                  variant={isSelected ? "primary" : "secondary"}
+                  size="sm"
                 >
                   {label}
-                </button>
+                </Button>
               );
             })}
 
             {/* Filter Icon Button with Dropdown for Rest of Terms */}
             <div className="relative" ref={dropdownRef}>
-              <button
+              <Button
                 type="button"
                 onClick={() => setIsFilterDropdownOpen((prev) => !prev)}
                 title="Browse all previous committee sessions"
-                className={`p-2.5 rounded-full transition-all cursor-pointer border ${
-                  isFilterDropdownOpen
-                    ? "bg-[#0b2b3a] dark:bg-accent-primary text-white border-transparent shadow-xs"
-                    : "bg-surface-primary hover:bg-surface-secondary text-text-secondary hover:text-text-primary border-border-default hover:border-slate-400 shadow-2xs"
-                }`}
+                variant={isFilterDropdownOpen ? "primary" : "secondary"}
+                size="sm"
+                className="!px-2.5"
               >
                 <SlidersHorizontal className="w-4 h-4" />
-              </button>
+              </Button>
 
               {/* Neo-Brutalist Dropdown for previous terms */}
               {isFilterDropdownOpen && (
                 <div
-                  className="absolute left-0 sm:left-auto sm:right-0 mt-2 w-64 rounded-xl border border-border-brutalist dark:border-border-default bg-surface-primary shadow-[4px_4px_0px_0px_var(--border-brutalist)] z-50 overflow-hidden animate-scale-up"
+                  className="absolute right-0 mt-2 w-64 rounded-xl border border-black dark:border-border-default bg-surface-primary shadow-[4px_4px_0px_var(--accent-primary)] z-50 overflow-hidden animate-scale-up"
                 >
                   <div className="p-2.5 border-b border-border-default bg-surface-secondary text-[11px] font-bold text-text-secondary uppercase tracking-wider">
                     All Committee Sessions
@@ -240,12 +236,6 @@ export default function ExecutivePanelClient({
               )}
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* ── Main Content Section ── */}
-      <section className="py-8 md:py-12 bg-surface-secondary min-h-[500px]">
-        <div className="container mx-auto px-4 md:px-8 space-y-6">
           {/* Group Photo Showcase (if available) */}
           {committee?.groupPhotoUrl && (
             <div className="rounded-2xl overflow-hidden border border-border-default shadow-sm max-h-[380px] relative group">

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { CPProblem } from "@/lib/api/cpSheetProblems";
 import { CFUserInfo } from "../services/cfSyncService";
+import { Button } from "@/components/ui/Button";
 
 interface CPSheetTopBarProps {
   problems: CPProblem[];
@@ -62,7 +63,7 @@ export default function CPSheetTopBar({
   return (
     <div className="space-y-5">
       {/* Top Banner: Global Stats & Codeforces Profile Sync */}
-      <div className="p-6 md:p-7 bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-2xl shadow-[5px_5px_0px_var(--accent-primary)] space-y-6">
+      <div className="p-6 md:p-7 bg-surface-elevated border border-black dark:border-border-default rounded-2xl shadow-[4px_4px_0px_var(--accent-primary)] space-y-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
           {/* Left: Overall Solved Counter (Self Solve Count) */}
           <div className="space-y-2.5">
@@ -106,7 +107,7 @@ export default function CPSheetTopBar({
           </div>
 
           {/* Right: Codeforces Profile & Quick Sync Badge (No manual input) */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 bg-surface p-3.5 sm:px-4 sm:py-3 rounded-xl border border-border-default shadow-xs self-start lg:self-center">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 bg-surface p-3.5 sm:px-4 sm:py-3 rounded-xl border border-black/20 dark:border-border-default shadow-xs self-start lg:self-center">
             {cfHandle ? (
               <>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
@@ -131,18 +132,21 @@ export default function CPSheetTopBar({
                 </div>
 
                 <div className="flex items-center gap-2.5">
-                  <button
+                  <Button
                     type="button"
+                    variant="primary"
+                    size="sm"
                     onClick={onSync}
                     disabled={isSyncing}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-accent-primary !text-accent-primary-text hover:bg-accent-primary-hover disabled:opacity-50 transition-all shrink-0 cursor-pointer shadow-xs"
+                    icon={
+                      <RefreshCw
+                        size={13}
+                        className={isSyncing ? "animate-spin shrink-0" : "shrink-0"}
+                      />
+                    }
                   >
-                    <RefreshCw
-                      size={13}
-                      className={isSyncing ? "animate-spin shrink-0" : "shrink-0"}
-                    />
-                    <span>{isSyncing ? "Syncing..." : "Sync CF"}</span>
-                  </button>
+                    {isSyncing ? "Syncing..." : "Sync CF"}
+                  </Button>
 
                   {lastSyncedAt && (
                     <span className="text-[11px] font-mono text-text-tertiary shrink-0">
@@ -177,7 +181,7 @@ export default function CPSheetTopBar({
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3.5 bg-surface border border-border-default rounded-xl">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3.5 bg-surface border border-black dark:border-border-default rounded-xl">
         {/* Search */}
         <div className="relative flex-1 max-w-md">
           <Search
@@ -189,13 +193,13 @@ export default function CPSheetTopBar({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder={`Search ${selectedRating} problems by name, ID (e.g. 1903A), or tag...`}
-            className="w-full pl-9 pr-3.5 py-2 text-sm font-mono rounded-lg bg-surface-elevated border border-border-default focus:border-accent-primary focus:outline-none text-text-primary placeholder:text-text-tertiary font-medium"
+            className="w-full pl-9 pr-3.5 py-2 text-sm font-mono rounded-lg bg-surface-elevated border border-black dark:border-border-default focus:border-accent-primary focus:outline-none text-text-primary placeholder:text-text-tertiary font-medium"
           />
         </div>
 
         {/* Status Filters & Options */}
         <div className="flex items-center gap-2.5 flex-wrap justify-between sm:justify-end">
-          <div className="flex items-center p-0.5 rounded-lg bg-surface-elevated border border-border-default shadow-xs">
+          <div className="flex items-center p-0.5 rounded-lg bg-surface-elevated border border-black dark:border-border-default shadow-xs">
             <button
               onClick={() => setStatusFilter("all")}
               className={`px-3.5 py-1.5 rounded-md text-xs sm:text-sm font-black transition-colors cursor-pointer ${
@@ -234,8 +238,8 @@ export default function CPSheetTopBar({
             title={showAllTags ? "Hide problem topic tags (prevent spoilers)" : "Show all problem topic tags"}
             className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs sm:text-sm font-bold border transition-colors cursor-pointer ${
               showAllTags
-                ? "bg-accent-primary/15 border-accent-primary/40 text-accent-primary"
-                : "bg-surface-elevated border-border-default text-text-tertiary hover:text-text-primary"
+                ? "bg-accent-primary/15 border-black dark:border-accent-primary/40 text-accent-primary"
+                : "bg-surface-elevated border-black dark:border-border-default text-text-tertiary hover:text-text-primary"
             }`}
           >
             {showAllTags ? <Eye size={15} /> : <EyeOff size={15} />}
@@ -247,7 +251,7 @@ export default function CPSheetTopBar({
           <button
             onClick={onResetProgress}
             title="Reset All Solved Status"
-            className="p-2 rounded-lg text-text-tertiary hover:text-red-500 hover:bg-surface-elevated transition-colors border border-transparent hover:border-border-default cursor-pointer"
+            className="p-2 rounded-lg text-text-tertiary hover:text-red-500 hover:bg-surface-elevated transition-colors border border-black/20 hover:border-black dark:border-transparent dark:hover:border-border-default cursor-pointer"
           >
             <RotateCcw size={16} />
           </button>

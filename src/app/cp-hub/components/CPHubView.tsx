@@ -661,18 +661,15 @@ function CPHubViewContent({
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
               return (
-                <button
+                <Button
                   key={tab.id}
                   onClick={() => handleTabChange(tab.id)}
-                  className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all cursor-pointer ${
-                    isActive
-                      ? "bg-accent-primary !text-accent-primary-text shadow-[3px_3px_0px_var(--border-brutalist)] border-2 border-text-primary dark:border-border-default"
-                      : "bg-surface-elevated text-text-secondary hover:text-text-primary border border-border-default hover:bg-surface-secondary"
-                  }`}
+                  variant={isActive ? "primary" : "secondary"}
+                  size="sm"
+                  icon={<Icon size={15} />}
                 >
-                  <Icon size={16} />
                   <span>{tab.label}</span>
-                </button>
+                </Button>
               );
             })}
           </div>
@@ -740,7 +737,7 @@ function CPHubViewContent({
                     <div
                       key={r.id}
                       onClick={() => handleDocClick(r)}
-                      className="group relative cursor-pointer flex flex-col justify-between p-5 bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl transition-all duration-200 hover:shadow-[6px_6px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5"
+                      className="group relative cursor-pointer flex flex-col justify-between p-5 bg-surface-elevated border border-black dark:border-border-default rounded-xl transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)]"
                     >
                       <div>
                         <div className="flex items-center justify-between gap-2 mb-2">
@@ -838,7 +835,7 @@ function CPHubViewContent({
 
           {/* Main Resource Categories */}
           <div className="space-y-6">
-            <div className="p-6 bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl shadow-[4px_4px_0px_var(--accent-primary)]">
+            <div className="p-6 bg-surface-elevated border border-black dark:border-border-default rounded-2xl shadow-[4px_4px_0px_var(--accent-primary)]">
               <h2 className="text-xl sm:text-2xl font-bold text-text-primary mb-2 flex items-center gap-2">
                 <BookOpen className="text-accent-primary" /> Curated Tools, Books &amp; Judges
               </h2>
@@ -851,7 +848,7 @@ function CPHubViewContent({
               {resourceCategories.map((cat) => (
                 <div
                   key={cat.name}
-                  className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl p-5 shadow-[4px_4px_0px_0px_var(--border-default)] flex flex-col justify-between"
+                  className="bg-surface-elevated border border-black dark:border-border-default rounded-2xl p-5 shadow-[4px_4px_0px_0px_var(--accent-primary)] flex flex-col justify-between"
                 >
                   <div>
                     <h3 className="text-base font-bold text-text-primary pb-3 border-b border-border-default mb-4">
@@ -888,7 +885,7 @@ function CPHubViewContent({
       {/* Tab 5: Achievements */}
       {activeTab === "achievements" && (
         <section className="container mx-auto px-4 md:px-8 max-w-4xl space-y-6">
-          <div className="p-6 bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl shadow-[4px_4px_0px_var(--accent-primary)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="p-6 bg-surface-elevated border border-black dark:border-border-default rounded-2xl shadow-[4px_4px_0px_var(--accent-primary)] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h2 className="text-xl sm:text-2xl font-bold text-text-primary mb-1 flex items-center gap-2">
                 <Award className="text-accent-primary" /> Contest Milestones &amp; Accolades
@@ -923,7 +920,7 @@ function CPHubViewContent({
               achievements.map((ach) => (
                 <div
                   key={ach.id || ach._id || ach.title}
-                  className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl p-6 shadow-[4px_4px_0px_0px_var(--border-default)] flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all hover:shadow-[5px_5px_0px_var(--accent-primary)]"
+                  className="bg-surface-elevated border border-black dark:border-border-default rounded-xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)]"
                 >
                   <div className="space-y-1.5 flex-1">
                     <div className="flex items-center gap-2">
@@ -978,7 +975,7 @@ function CPHubViewContent({
       {/* ────────────────────────────────────────────────────────────────────── */}
       {achievementModal.open && (
         <div className="fixed inset-0 z-[1200] flex items-start sm:items-center justify-center p-3 sm:p-6 pt-20 sm:pt-24 pb-12 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
-          <div className="bg-surface-primary border border-border-brutalist dark:border-border-default rounded-2xl w-full max-w-lg shadow-[8px_8px_0px_var(--accent-primary)] overflow-hidden my-auto flex flex-col max-h-[85vh]">
+          <div className="bg-surface-primary border border-black dark:border-border-default rounded-2xl w-full max-w-lg shadow-[4px_4px_0px_var(--accent-primary)] overflow-hidden my-auto flex flex-col max-h-[85vh]">
             <div className="flex items-center justify-between p-4 sm:p-5 border-b border-border-default bg-surface-secondary shrink-0">
               <h3 className="font-bold text-lg text-text-primary flex items-center gap-2">
                 <Award className="text-accent-primary" size={20} />
@@ -1107,7 +1104,7 @@ function CPHubViewContent({
       {/* ────────────────────────────────────────────────────────────────────── */}
       {docModal.open && (
         <div className="fixed inset-0 z-[1200] flex items-start sm:items-center justify-center p-3 sm:p-6 pt-20 sm:pt-24 pb-12 bg-black/75 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
-          <div className="bg-surface-primary border border-border-brutalist dark:border-border-default rounded-2xl w-full max-w-xl shadow-[8px_8px_0px_var(--accent-primary)] overflow-hidden my-auto flex flex-col max-h-[85vh]">
+          <div className="bg-surface-primary border border-black dark:border-border-default rounded-2xl w-full max-w-xl shadow-[4px_4px_0px_var(--accent-primary)] overflow-hidden my-auto flex flex-col max-h-[85vh]">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-4 sm:p-5 border-b border-border-default bg-surface-secondary shrink-0">
               <h3 className="font-bold text-lg text-text-primary flex items-center gap-2">
@@ -1214,7 +1211,7 @@ function CPHubViewContent({
 
                       {/* Club member suggestions dropdown */}
                       {showMemberDropdown && (
-                        <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-surface-elevated border border-border-default rounded-xl shadow-[4px_4px_0px_0px_var(--border-default)] z-50 max-h-48 overflow-y-auto">
+                        <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-surface-elevated border border-black dark:border-border-default rounded-xl shadow-[4px_4px_0px_var(--accent-primary)] z-50 max-h-48 overflow-y-auto">
                           {clubMembers.length > 0 && (
                             <div className="p-2 border-b border-border-default bg-surface-secondary/50 text-[10px] font-mono text-text-tertiary uppercase font-bold">
                               Verified Club Members
@@ -1355,10 +1352,10 @@ function CPHubViewContent({
                               });
                             }
                           }}
-                          className={`py-2 px-2 text-xs font-bold rounded-lg border-2 transition-all duration-150 ${
+                          className={`py-2 px-2 text-xs font-bold rounded-lg border transition-all duration-150 ${
                             isActive
-                              ? "bg-accent-primary !text-accent-primary-text border-text-primary dark:border-border-default shadow-[2px_2px_0px_var(--border-brutalist)] dark:shadow-[2px_2px_0px_var(--accent-primary)]"
-                              : "bg-surface-elevated text-text-secondary hover:text-text-primary hover:bg-surface-secondary border-border-default font-semibold"
+                              ? "bg-accent-primary !text-accent-primary-text border-black dark:border-border-default shadow-[2px_2px_0px_var(--accent-primary)]"
+                              : "bg-surface-elevated text-text-secondary hover:text-text-primary hover:bg-surface-secondary border-black/20 dark:border-border-default font-semibold"
                           }`}
                         >
                           {tab.label}

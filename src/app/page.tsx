@@ -226,7 +226,7 @@ export default async function HomePage() {
                   className="w-full md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] max-w-[420px] flex no-underline text-inherit group"
                   id={`dept-${dept.id}`}
                 >
-                  <div className="w-full flex flex-col justify-between bg-surface-elevated border border-border-brutalist rounded-[var(--radius-lg)] p-6 text-center transition-all duration-200 hover:border-border-brutalist hover:shadow-[6px_6px_0px_var(--accent-primary)] hover:translate-x-[-2px] hover:translate-y-[-2px]">
+                  <div className="w-full flex flex-col justify-between bg-surface-elevated border border-border-brutalist rounded-[var(--radius-lg)] p-6 text-center hover:shadow-[4px_4px_0px_var(--accent-primary)] transition-shadow duration-200">
                     <div>
                       <div className="font-mono text-xs font-bold text-accent-primary-hover mb-2 uppercase tracking-widest">
                         {dept.icon}
@@ -264,7 +264,7 @@ export default async function HomePage() {
           </div>
           <div className="max-w-[850px] mx-auto max-[768px]:max-w-full">
             <div className="w-full p-1 sm:p-3 pb-3 sm:pb-6">
-              <div className="w-full bg-surface-elevated border border-border-brutalist rounded-[var(--radius-lg)] overflow-hidden transition-all duration-200 hover:border-border-brutalist hover:shadow-[6px_6px_0px_var(--accent-primary)] hover:translate-x-[-2px] hover:translate-y-[-2px]">
+              <div className="w-full bg-surface-elevated border border-border-brutalist rounded-[var(--radius-lg)] overflow-hidden hover:shadow-[4px_4px_0px_var(--accent-primary)] transition-shadow duration-200">
                 <div className="grid grid-cols-[40px_1fr_65px_55px] sm:grid-cols-[50px_1.6fr_1.1fr_80px_70px] p-3 sm:px-4 bg-surface-secondary font-mono text-xs font-semibold uppercase tracking-wider text-text-tertiary">
                   <span>Rank</span>
                   <span>Member</span>

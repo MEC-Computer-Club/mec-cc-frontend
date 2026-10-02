@@ -80,7 +80,7 @@ export function EventsTab({
                 <div
                   key={eventId}
                   id={`event-${slug}`}
-                  className="bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-xl shadow-[4px_4px_0px_0px_var(--border-brutalist)] dark:shadow-[4px_4px_0px_0px_var(--border-default)] hover:shadow-[6px_6px_0px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-150 flex flex-col overflow-hidden"
+                  className="bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-xl hover:shadow-[4px_4px_0px_var(--accent-primary)] transition-shadow duration-200 flex flex-col overflow-hidden"
                 >
                   <div className="p-4 sm:p-5 flex gap-3.5 sm:gap-4 flex-1">
                     {/* Left Date Column */}
@@ -123,9 +123,9 @@ export function EventsTab({
                       <div className="mt-auto pt-2 border-t border-dashed border-border-default flex items-center justify-between">
                         <Link
                           href={`/events/${slug}`}
-                          className="font-mono text-xs font-bold uppercase text-text-secondary hover:text-accent-primary transition-colors"
+                          className="font-mono text-xs font-bold text-text-secondary hover:text-accent-primary transition-colors"
                         >
-                          DETAILS →
+                          Details →
                         </Link>
                         <div className="font-mono text-xs text-text-primary font-bold">
                           {ev.time || "15:00"}
@@ -186,7 +186,7 @@ export function EventsTab({
                   <div
                     key={eventId}
                     id={`event-${slug}`}
-                    className="bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-xl shadow-[4px_4px_0px_0px_var(--border-brutalist)] dark:shadow-[4px_4px_0px_0px_var(--border-default)] hover:shadow-[6px_6px_0px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-150 flex flex-col overflow-hidden"
+                    className="bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-xl hover:shadow-[4px_4px_0px_var(--accent-primary)] transition-shadow duration-200 flex flex-col overflow-hidden"
                   >
                     <div className="p-4 sm:p-5 flex gap-3.5 sm:gap-4 flex-1">
                       {/* Left Date Column */}
@@ -257,9 +257,9 @@ export function EventsTab({
 
                           <Link
                             href={`/events/${slug}`}
-                            className="font-mono text-xs font-bold uppercase text-text-secondary hover:text-accent-primary inline-flex items-center gap-1 transition-colors"
+                            className="font-mono text-xs font-bold text-text-secondary hover:text-accent-primary inline-flex items-center gap-1 transition-colors"
                           >
-                            <span>DETAILS</span>
+                            <span>Details</span>
                             <ExternalLink size={11} />
                           </Link>
                         </div>

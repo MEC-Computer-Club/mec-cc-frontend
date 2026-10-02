@@ -2105,7 +2105,7 @@ export function CoverPageGeneratorClient() {
                   setMobileViewMode("preview");
                   window.scrollTo({ top: 0, behavior: "smooth" });
                 }}
-                className="w-full py-3 px-4 bg-accent-primary text-white font-mono font-bold text-sm uppercase rounded-xl border border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-2 hover:opacity-95 active:translate-y-0.5 transition-all"
+                className="w-full py-3 px-4 bg-accent-primary text-white font-mono font-bold text-sm rounded-xl border border-black shadow-[3px_3px_0px_rgba(0,0,0,1)] flex items-center justify-center gap-2 hover:opacity-95 active:translate-y-0.5 transition-all"
               >
                 <Printer size={16} /> View A4 Preview & Print
               </button>

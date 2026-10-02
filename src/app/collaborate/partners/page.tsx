@@ -86,7 +86,7 @@ export default async function PartnersPage() {
               partner.logoUrl?.includes("1777010120574");
 
             const CardContent = (
-              <div className="flex flex-col justify-between h-full p-6 bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-2xl shadow-[4px_4px_0px_0px_var(--border-brutalist)] hover:shadow-[6px_6px_0px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all duration-200 group text-center">
+              <div className="flex flex-col justify-between h-full p-6 bg-surface-elevated border border-black dark:border-border-default rounded-xl transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)] group text-center">
                 <div>
                   {/* Logo Container */}
                   <div className="relative h-20 w-full flex items-center justify-center p-2 mb-4 overflow-hidden bg-transparent">

@@ -16,15 +16,19 @@ interface ButtonProps {
   style?: React.CSSProperties;
   target?: string;
   rel?: string;
+  role?: string;
+  "aria-selected"?: boolean;
+  "aria-label"?: string;
+  "aria-expanded"?: boolean;
 }
 
 const BUTTON_VARIANTS: Record<string, string> = {
   primary:
-    "bg-black text-white border-0 hover:not-disabled:bg-neutral-800 hover:not-disabled:shadow-[4px_4px_0px_0px_var(--accent-primary)] dark:bg-white dark:text-black dark:hover:not-disabled:bg-neutral-200 dark:hover:not-disabled:shadow-[4px_4px_0px_0px_var(--accent-primary)] hover:not-disabled:-translate-x-0.5 hover:not-disabled:-translate-y-0.5 active:not-disabled:translate-x-0 active:not-disabled:translate-y-0 active:not-disabled:shadow-none",
+    "bg-black text-white border-0 hover:not-disabled:bg-neutral-800 hover:not-disabled:shadow-[4px_4px_0px_0px_var(--accent-primary)] dark:bg-white dark:text-black dark:hover:not-disabled:bg-neutral-200 dark:hover:not-disabled:shadow-[4px_4px_0px_0px_var(--accent-primary)] hover:not-disabled:-translate-x-1 hover:not-disabled:-translate-y-1 active:not-disabled:translate-x-0 active:not-disabled:translate-y-0 active:not-disabled:shadow-none",
   secondary:
-    "bg-transparent text-black border border-black hover:not-disabled:bg-neutral-100 hover:not-disabled:shadow-[4px_4px_0px_0px_black] dark:bg-transparent dark:text-white dark:border-white dark:hover:not-disabled:bg-neutral-900 dark:hover:not-disabled:shadow-[4px_4px_0px_0px_white] hover:not-disabled:-translate-x-0.5 hover:not-disabled:-translate-y-0.5 active:not-disabled:translate-x-0 active:not-disabled:translate-y-0 active:not-disabled:shadow-none",
+    "bg-transparent text-black border border-black hover:not-disabled:bg-neutral-100 hover:not-disabled:shadow-[4px_4px_0px_0px_black] dark:bg-transparent dark:text-white dark:border-white dark:hover:not-disabled:bg-neutral-900 dark:hover:not-disabled:shadow-[4px_4px_0px_0px_white] hover:not-disabled:-translate-x-1 hover:not-disabled:-translate-y-1 active:not-disabled:translate-x-0 active:not-disabled:translate-y-0 active:not-disabled:shadow-none",
   outline:
-    "bg-transparent text-black border border-black hover:not-disabled:bg-neutral-100 hover:not-disabled:shadow-[4px_4px_0px_0px_black] dark:bg-transparent dark:text-white dark:border-white dark:hover:not-disabled:bg-neutral-900 dark:hover:not-disabled:shadow-[4px_4px_0px_0px_white] hover:not-disabled:-translate-x-0.5 hover:not-disabled:-translate-y-0.5 active:not-disabled:translate-x-0 active:not-disabled:translate-y-0 active:not-disabled:shadow-none",
+    "bg-transparent text-black border border-black hover:not-disabled:bg-neutral-100 hover:not-disabled:shadow-[4px_4px_0px_0px_black] dark:bg-transparent dark:text-white dark:border-white dark:hover:not-disabled:bg-neutral-900 dark:hover:not-disabled:shadow-[4px_4px_0px_0px_white] hover:not-disabled:-translate-x-1 hover:not-disabled:-translate-y-1 active:not-disabled:translate-x-0 active:not-disabled:translate-y-0 active:not-disabled:shadow-none",
   ghost:
     "bg-transparent text-text-secondary font-semibold hover:not-disabled:text-text-primary hover:not-disabled:bg-surface-secondary",
 };
@@ -51,6 +55,10 @@ export function Button({
   style,
   target,
   rel,
+  role,
+  "aria-selected": ariaSelected,
+  "aria-label": ariaLabel,
+  "aria-expanded": ariaExpanded,
 }: ButtonProps) {
   const variantClass = BUTTON_VARIANTS[variant] || BUTTON_VARIANTS.primary;
   const sizeClass = BUTTON_SIZES[size] || BUTTON_SIZES.md;
@@ -68,7 +76,19 @@ export function Button({
 
   if (href) {
     return (
-      <Link href={href} className={classes} id={id} title={title} style={style} target={target} rel={rel}>
+      <Link
+        href={href}
+        className={classes}
+        id={id}
+        title={title}
+        style={style}
+        target={target}
+        rel={rel}
+        role={role}
+        aria-selected={ariaSelected}
+        aria-label={ariaLabel}
+        aria-expanded={ariaExpanded}
+      >
         {icon && <span className="inline-flex items-center text-[1.1em]">{icon}</span>}
         {children}
       </Link>
@@ -84,6 +104,10 @@ export function Button({
       id={id}
       title={title}
       style={style}
+      role={role}
+      aria-selected={ariaSelected}
+      aria-label={ariaLabel}
+      aria-expanded={ariaExpanded}
     >
       {icon && <span className="inline-flex items-center text-[1.1em]">{icon}</span>}
       {children}

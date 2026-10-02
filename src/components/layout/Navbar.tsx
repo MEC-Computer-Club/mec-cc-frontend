@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -81,6 +81,18 @@ export function Navbar() {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileExpandedItem, setMobileExpandedItem] = useState<string | null>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close user dropdown on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
 
   const pathname = usePathname();
   const router = useRouter();
@@ -193,19 +205,19 @@ export function Navbar() {
           .navbar__login:hover { color: #000000 !important; font-weight: 700 !important; }
           .dark .navbar__login:hover { color: #FFFFFF !important; font-weight: 700 !important; }
           .navbar__user-menu-wrap { position: relative; }
-          .navbar__user-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); height: 36px; padding: 0 var(--space-3); background-color: transparent; color: var(--text-primary); border: 1.5px solid var(--text-primary); border-radius: var(--radius-md); font-family: var(--font-body); font-size: var(--text-sm); font-weight: var(--weight-semibold); cursor: pointer; box-shadow: none; transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast); white-space: nowrap; line-height: 1; outline: none; }
-          .dark .navbar__user-btn { border-color: var(--border-default); background-color: transparent; box-shadow: none; color: var(--text-primary); }
-          .navbar__user-btn:hover { background-color: var(--surface-secondary); color: var(--text-primary); border-color: var(--text-primary); box-shadow: 3px 3px 0px 0px var(--text-primary); transform: translate(-1.5px, -1.5px); }
-          .dark .navbar__user-btn:hover { border-color: var(--accent-primary); box-shadow: 3px 3px 0px 0px var(--accent-primary); color: #FFFFFF; }
-          .navbar__user-btn--open { border-color: var(--accent-primary) !important; box-shadow: 3px 3px 0px 0px var(--accent-primary) !important; background-color: var(--surface-secondary); color: var(--text-primary) !important; transform: none; }
-          .dark .navbar__user-btn--open { color: #FFFFFF !important; }
-          .navbar__user-btn:active { transform: translateY(0); box-shadow: none; }
-          .navbar__chevron { transition: transform var(--transition-fast); flex-shrink: 0; }
+          .navbar__user-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); height: 36px; padding: 0 var(--space-3); background-color: transparent; color: #000000; border: 1px solid #000000; border-radius: var(--radius-md); font-family: var(--font-body); font-size: var(--text-sm); font-weight: var(--weight-bold); cursor: pointer; box-shadow: none; transition: all 150ms ease; white-space: nowrap; line-height: 1; outline: none; box-sizing: border-box; }
+          .dark .navbar__user-btn { border-color: #FFFFFF; color: #FFFFFF; background-color: transparent; box-shadow: none; }
+          .navbar__user-btn:hover { background-color: #f5f5f5 !important; color: #000000 !important; border-color: #000000 !important; box-shadow: 4px 4px 0px 0px #000000 !important; transform: translate(-4px, -4px) !important; }
+          .dark .navbar__user-btn:hover { background-color: #171717 !important; color: #FFFFFF !important; border-color: #FFFFFF !important; box-shadow: 4px 4px 0px 0px #FFFFFF !important; transform: translate(-4px, -4px) !important; }
+          .navbar__user-btn:active { transform: translate(0, 0) !important; box-shadow: none !important; }
+          .navbar__user-btn--open { background-color: var(--surface-secondary); border-color: #000000; color: #000000; }
+          .dark .navbar__user-btn--open { border-color: #FFFFFF; color: #FFFFFF; }
+          .navbar__chevron { transition: transform 150ms ease; flex-shrink: 0; }
           .navbar__user-btn--open .navbar__chevron { transform: rotate(180deg); }
-          .navbar__user-avatar { width: 22px; height: 22px; border-radius: var(--radius-sm); border: 1.5px solid var(--text-primary); object-fit: cover; flex-shrink: 0; }
-          .dark .navbar__user-avatar { border-color: var(--border-default); }
-          .navbar__user-initials { width: 22px; height: 22px; border-radius: var(--radius-sm); border: 1.5px solid var(--text-primary); background: var(--accent-primary); color: var(--accent-primary-text, #000); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 11px; font-weight: 800; flex-shrink: 0; }
-          .dark .navbar__user-initials { border-color: var(--border-default); }
+          .navbar__user-avatar { width: 22px; height: 22px; border-radius: var(--radius-sm); border: 1px solid #000000; object-fit: cover; flex-shrink: 0; }
+          .dark .navbar__user-avatar { border-color: #FFFFFF; }
+          .navbar__user-initials { width: 22px; height: 22px; border-radius: var(--radius-sm); border: 1px solid #000000; background: var(--accent-primary); color: var(--accent-primary-text, #000); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 11px; font-weight: 800; flex-shrink: 0; }
+          .dark .navbar__user-initials { border-color: #FFFFFF; }
           .navbar__user-name { max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-body); font-size: var(--text-sm); font-weight: var(--weight-semibold); }
           .navbar__user-dropdown-wrapper { right: 0; left: auto; }
           .navbar__user-dropdown { min-width: 210px; border: 1.5px solid var(--text-primary); border-radius: var(--radius-md); box-shadow: 4px 4px 0px 0px var(--accent-primary); background: var(--surface-elevated); overflow: hidden; padding: 0; margin: 0; list-style: none; }
@@ -216,17 +228,24 @@ export function Navbar() {
           .navbar__dropdown-link--danger { width: 100%; border: none; background: transparent; cursor: pointer; text-align: left; }
           .navbar__dropdown-link--danger:hover { background-color: rgba(239, 68, 68, 0.1); color: var(--accent-error, #ef4444); }
           .navbar__desktop-auth { display: flex; align-items: center; gap: var(--space-3); }
-          .navbar__hamburger-btn { display: none; align-items: center; justify-content: center; width: 38px; height: 38px; background-color: var(--surface-elevated); border: 2px solid var(--text-primary); border-radius: var(--radius-md); color: var(--text-primary); cursor: pointer; transition: all var(--transition-fast); box-shadow: 2px 2px 0px 0px var(--text-primary); flex-shrink: 0; order: -1; }
-          .dark .navbar__hamburger-btn { border-color: var(--border-default); box-shadow: 2px 2px 0px 0px var(--accent-primary); }
-          .navbar__hamburger-btn:hover { background-color: var(--surface-secondary); transform: translate(-1px, -1px); box-shadow: 3px 3px 0px 0px var(--accent-primary); }
+          .navbar__hamburger-btn { display: none; align-items: center; justify-content: center; width: 36px; height: 36px; background-color: transparent; border: 1px solid #000000; border-radius: var(--radius-md); color: #000000; cursor: pointer; transition: all 150ms ease; box-shadow: none; flex-shrink: 0; order: -1; box-sizing: border-box; }
+          .dark .navbar__hamburger-btn { border-color: #FFFFFF; color: #FFFFFF; background-color: transparent; box-shadow: none; }
+          .navbar__hamburger-btn:hover { background-color: #f5f5f5; color: #000000; border-color: #000000; box-shadow: 4px 4px 0px 0px #000000; transform: translate(-4px, -4px); }
+          .dark .navbar__hamburger-btn:hover { background-color: #171717; color: #FFFFFF; border-color: #FFFFFF; box-shadow: 4px 4px 0px 0px #FFFFFF; transform: translate(-4px, -4px); }
+          .navbar__hamburger-btn:active { transform: translate(0, 0); box-shadow: none; }
+          .navbar__hamburger-btn--active { background-color: var(--surface-secondary); border-color: #000000 !important; box-shadow: none !important; transform: translate(0, 0) !important; color: #000000 !important; }
+          .dark .navbar__hamburger-btn--active { border-color: #FFFFFF !important; color: #FFFFFF !important; }
           .navbar__mobile-drawer-overlay { position: fixed; inset: 0; background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); z-index: 9999; display: flex; justify-content: flex-start; animation: fadeIn 0.2s ease forwards; }
           .navbar__mobile-drawer { width: 88vw; max-width: 360px; height: 100%; background-color: var(--surface-primary); border-right: 2px solid var(--text-primary); border-left: none; display: flex; flex-direction: column; box-shadow: 6px 0px 0px 0px var(--accent-primary); animation: slideInLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; overflow: hidden; }
           .dark .navbar__mobile-drawer { border-right-color: var(--border-default); border-left: none; }
           @keyframes slideInLeft { from { transform: translateX(-100%); } to { transform: translateX(0); } }
           @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
           .navbar__mobile-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border-default); background-color: var(--surface-secondary); }
-          .navbar__mobile-close-btn { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; background: var(--surface-primary); border: 1.5px solid var(--text-primary); border-radius: var(--radius-sm); color: var(--text-primary); cursor: pointer; transition: all var(--transition-fast); }
-          .navbar__mobile-close-btn:hover { background-color: var(--accent-primary-light); transform: rotate(90deg); }
+          .navbar__mobile-close-btn { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; background: transparent; border: 1px solid #000000; border-radius: var(--radius-md); color: #000000; cursor: pointer; transition: all 150ms ease; box-shadow: none; }
+          .dark .navbar__mobile-close-btn { border-color: #FFFFFF; color: #FFFFFF; background: transparent; box-shadow: none; }
+          .navbar__mobile-close-btn:hover { background-color: #f5f5f5; color: #000000; border-color: #000000; box-shadow: 4px 4px 0px 0px #000000; transform: translate(-4px, -4px); }
+          .dark .navbar__mobile-close-btn:hover { background-color: #171717; color: #FFFFFF; border-color: #FFFFFF; box-shadow: 4px 4px 0px 0px #FFFFFF; transform: translate(-4px, -4px); }
+          .navbar__mobile-close-btn:active { transform: translate(0, 0); box-shadow: none; }
           .navbar__mobile-body { flex: 1; overflow-y: auto; padding: 16px 20px 24px; display: flex; flex-direction: column; gap: 20px; }
           .navbar__mobile-nav-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
           .navbar__mobile-nav-item { border-bottom: 1px solid var(--border-default); padding-bottom: 4px; }
@@ -239,9 +258,14 @@ export function Navbar() {
           .navbar__mobile-sub-link:hover, .navbar__mobile-sub-link--active { background-color: var(--accent-primary-light); color: var(--text-primary); padding-left: 12px; }
           .navbar__mobile-footer { margin-top: auto; padding-top: 16px; border-top: 2px solid var(--border-default); }
           .navbar__mobile-auth-actions { display: flex; flex-direction: column; gap: 8px; }
-          .navbar__mobile-btn { display: flex; align-items: center; justify-content: center; padding: 10px 16px; font-family: var(--font-body); font-size: 14px; font-weight: 700; border-radius: var(--radius-md); text-decoration: none; text-align: center; transition: all var(--transition-fast); }
-          .navbar__mobile-btn--primary { background-color: var(--accent-primary); color: var(--accent-primary-text) !important; border: 2px solid var(--text-primary); box-shadow: 3px 3px 0px 0px var(--text-primary); }
-          .navbar__mobile-btn--secondary { background-color: var(--surface-elevated); color: var(--text-primary); border: 2px solid var(--text-primary); box-shadow: 3px 3px 0px 0px var(--border-default); }
+          .navbar__mobile-btn { display: flex; align-items: center; justify-content: center; padding: 10px 16px; font-family: var(--font-body); font-size: 14px; font-weight: 700; border-radius: var(--radius-md); text-decoration: none; text-align: center; transition: all 150ms ease; }
+          .navbar__mobile-btn--primary { background-color: #000000; color: #FFFFFF !important; border: 0; box-shadow: none; }
+          .dark .navbar__mobile-btn--primary { background-color: #FFFFFF; color: #000000 !important; }
+          .navbar__mobile-btn--primary:hover { transform: translate(-4px, -4px); box-shadow: 4px 4px 0px 0px var(--accent-primary); }
+          .navbar__mobile-btn--secondary { background-color: transparent; color: #000000; border: 1px solid #000000; box-shadow: none; }
+          .dark .navbar__mobile-btn--secondary { border-color: #FFFFFF; color: #FFFFFF; background-color: transparent; }
+          .navbar__mobile-btn--secondary:hover { background-color: #f5f5f5; transform: translate(-4px, -4px); box-shadow: 4px 4px 0px 0px #000000; }
+          .dark .navbar__mobile-btn--secondary:hover { background-color: #171717; box-shadow: 4px 4px 0px 0px #FFFFFF; }
           .navbar__mobile-user-box { background-color: var(--surface-secondary); border: 1.5px solid var(--border-default); border-radius: var(--radius-md); padding: 12px; display: flex; flex-direction: column; gap: 12px; }
           .navbar__mobile-user-info { display: flex; align-items: center; gap: 10px; }
           .navbar__mobile-user-name { font-size: 13px; font-weight: 700; color: var(--text-primary); margin: 0; }
@@ -340,13 +364,18 @@ export function Navbar() {
           {user ? (
             <>
               <NotificationCenter />
-              <div className="navbar__user-menu-wrap" onMouseLeave={() => setUserDropdownOpen(false)}>
+              <div
+                className="navbar__user-menu-wrap"
+                ref={userMenuRef}
+                onMouseEnter={() => setUserDropdownOpen(true)}
+                onMouseLeave={() => setUserDropdownOpen(false)}
+              >
                 <button
                   type="button"
                   className={`navbar__user-btn ${userDropdownOpen ? "navbar__user-btn--open" : ""}`}
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                  onMouseEnter={() => setUserDropdownOpen(true)}
                   aria-label="User menu"
+                  aria-expanded={userDropdownOpen}
                 >
                   {user.imageUrl ? (
                     /* eslint-disable-next-line @next/next/no-img-element */

@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { EventCard } from "@/components/ui/Card";
 import { Event } from "@/types";
 import { sortUpcomingEvents, sortPastEvents } from "@/lib/api/events";
+import { Button } from "@/components/ui/Button";
 import {
   Layers,
   BookOpen,
@@ -169,25 +170,24 @@ function EventsFilterContent({ initialOngoing = [], initialUpcoming, initialPast
                     initialPast.filter((e) => matchEventCategory(e, cat.id)).length;
 
               return (
-                <button
+                <Button
                   key={cat.id}
                   onClick={() => handleCategorySelect(cat.id)}
-                  className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-                    isSelected
-                      ? "bg-accent-primary !text-accent-primary-text shadow-[3px_3px_0px_var(--border-brutalist)] border-2 border-text-primary dark:border-border-default"
-                      : "bg-surface-elevated text-text-secondary hover:text-text-primary border border-border-default hover:bg-surface-secondary"
-                  }`}
+                  variant={isSelected ? "primary" : "secondary"}
+                  size="sm"
+                  icon={<Icon size={15} />}
                 >
-                  <Icon size={15} />
                   <span>{cat.label}</span>
                   <span
-                    className={`text-[11px] font-mono px-1.5 py-0.5 rounded ${
-                      isSelected ? "bg-current/20 text-inherit" : "bg-surface-secondary text-text-tertiary"
+                    className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 text-[11px] font-mono font-bold rounded-full transition-colors ${
+                      isSelected
+                        ? "bg-white/25 text-white dark:bg-black/25 dark:text-black"
+                        : "bg-black/10 text-black dark:bg-white/15 dark:text-white"
                     }`}
                   >
                     {count}
                   </span>
-                </button>
+                </Button>
               );
             })}
           </div>

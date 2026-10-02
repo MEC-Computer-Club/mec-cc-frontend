@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { usePathname, useRouter } from "next/navigation";
 import { DoorOpen, X, Home, PhoneCall, Users, Clock } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import axios from "axios";
 import { API_BASE_URL } from "@/lib/api";
 
@@ -139,11 +140,11 @@ export function ClubRoomIndicator() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="club-room-modal-title"
-            className="w-full max-w-md bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-2xl shadow-[6px_6px_0px_0px_var(--border-brutalist)] dark:shadow-[6px_6px_0px_0px_var(--border-default)] overflow-hidden transition-all transform animate-in zoom-in-95 duration-150"
+            className="w-full max-w-md bg-surface-elevated border border-black dark:border-border-default rounded-xl shadow-[4px_4px_0px_var(--accent-primary)] overflow-hidden transition-all transform animate-in zoom-in-95 duration-150"
           >
             {/* Modal Header */}
             <div
-              className={`p-5 border-b-2 border-border-brutalist dark:border-border-default flex items-center justify-between ${
+              className={`p-5 border-b border-black dark:border-border-default flex items-center justify-between ${
                 isOpen
                   ? "bg-emerald-500/10 dark:bg-emerald-950/40"
                   : "bg-red-500/10 dark:bg-red-950/40"
@@ -220,53 +221,61 @@ export function ClubRoomIndicator() {
               <div className="pt-2 border-t border-border-default flex items-center gap-3">
                 {isOpen ? (
                   <>
-                    <button
+                    <Button
                       type="button"
+                      variant="secondary"
+                      size="sm"
                       onClick={() => {
                         setModalOpen(false);
                         router.push("/");
                       }}
-                      className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-mono text-xs font-bold bg-surface-secondary text-text-primary border border-border-default hover:bg-surface-elevated transition cursor-pointer"
+                      className="flex-1 font-mono text-xs"
+                      icon={<Home size={14} />}
                     >
-                      <Home size={14} />
                       Home
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
+                      variant="primary"
+                      size="sm"
                       onClick={() => {
                         setModalOpen(false);
                         router.push("/contact");
                       }}
-                      className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-mono text-xs font-bold bg-accent-primary text-accent-primary-text border border-border-brutalist shadow-[2px_2px_0px_var(--border-brutalist)] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_var(--border-brutalist)] transition cursor-pointer"
+                      className="flex-1 font-mono text-xs"
+                      icon={<PhoneCall size={14} />}
                     >
-                      <PhoneCall size={14} />
                       Contact Us
-                    </button>
+                    </Button>
                   </>
                 ) : (
                   <>
-                    <button
+                    <Button
                       type="button"
+                      variant="primary"
+                      size="sm"
                       onClick={() => {
                         setModalOpen(false);
                         router.push("/executives");
                       }}
-                      className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-mono text-xs font-bold bg-accent-primary text-accent-primary-text border border-border-brutalist shadow-[2px_2px_0px_var(--border-brutalist)] hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_var(--border-brutalist)] transition cursor-pointer"
+                      className="flex-1 font-mono text-xs"
+                      icon={<Users size={14} />}
                     >
-                      <Users size={14} />
                       Executives
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
+                      variant="secondary"
+                      size="sm"
                       onClick={() => {
                         setModalOpen(false);
                         router.push("/contact");
                       }}
-                      className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-mono text-xs font-bold bg-surface-secondary text-text-primary border border-border-default hover:bg-surface-elevated transition cursor-pointer"
+                      className="flex-1 font-mono text-xs"
+                      icon={<PhoneCall size={14} />}
                     >
-                      <PhoneCall size={14} />
                       Contact Us
-                    </button>
+                    </Button>
                   </>
                 )}
               </div>
