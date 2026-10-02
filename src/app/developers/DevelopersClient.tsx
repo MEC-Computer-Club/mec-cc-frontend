@@ -14,10 +14,7 @@ import {
   CheckCircle2,
   MoreVertical,
   Pencil,
-  Copy,
-  Check,
   GitPullRequest,
-  Terminal,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import AddContributorModal, {
@@ -115,15 +112,6 @@ function DevelopersContent() {
   const [notification, setNotification] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [editingDev, setEditingDev] = useState<Developer | null>(null);
-  const [copied, setCopied] = useState(false);
-
-  const handleCopyClone = () => {
-    if (typeof window !== "undefined" && navigator.clipboard) {
-      navigator.clipboard.writeText("git clone https://github.com/meccomputerclub/mec-cc-frontend.git");
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2200);
-    }
-  };
 
   // Close 3-dot menu when clicking outside
   useEffect(() => {
@@ -488,62 +476,31 @@ function DevelopersContent() {
             </p>
           </div>
 
-          {/* Interactive Steps Roadmap */}
-          <div className="flex flex-wrap items-center gap-2 font-mono text-xs font-semibold">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-surface-secondary text-text-primary border border-border-default hover:border-black dark:hover:border-white transition-colors cursor-default">
-              <span className="text-accent-primary font-bold">01.</span>
-              <span>Fork Repository</span>
-            </div>
-            <span className="text-text-tertiary font-bold">→</span>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-surface-secondary text-text-primary border border-border-default hover:border-black dark:hover:border-white transition-colors cursor-default">
-              <span className="text-accent-primary font-bold">02.</span>
-              <span>Build Feature</span>
-            </div>
-            <span className="text-text-tertiary font-bold">→</span>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-surface-secondary text-text-primary border border-border-default hover:border-black dark:hover:border-white transition-colors cursor-default">
-              <span className="text-accent-primary font-bold">03.</span>
-              <span>Submit PR</span>
-            </div>
-          </div>
-
-          {/* Interactive Terminal Bar + GitHub Action */}
-          <div className="pt-4 border-t border-border-default/70 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-            {/* 1-Click Copy Command */}
-            <button
-              type="button"
-              onClick={handleCopyClone}
-              className="flex-1 max-w-xl group flex items-center justify-between gap-3 px-3.5 py-2 rounded-lg bg-surface-secondary hover:bg-neutral-100 dark:hover:bg-surface-secondary/80 border border-border-default hover:border-black dark:hover:border-white transition-all text-left cursor-pointer"
-              title="Click to copy clone command"
-            >
-              <div className="flex items-center gap-2 overflow-hidden">
-                <Terminal size={14} className="text-accent-primary shrink-0" />
-                <span className="font-mono text-xs text-text-secondary truncate">
-                  <span className="text-accent-primary font-bold mr-1.5">$</span>
-                  git clone https://github.com/meccomputerclub/mec-cc-frontend.git
-                </span>
+          {/* Bottom Row: Interactive Steps Roadmap on left + GitHub Action on right */}
+          <div className="pt-4 border-t border-border-default/70 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div className="flex flex-wrap items-center gap-2 font-mono text-xs font-semibold">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-surface-secondary text-text-primary border border-border-default hover:border-black dark:hover:border-white transition-colors cursor-default">
+                <span className="text-accent-primary font-bold">01.</span>
+                <span>Fork Repository</span>
               </div>
-
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-black text-white dark:bg-white dark:text-black font-mono text-[11px] font-bold shrink-0 transition-transform group-hover:scale-105">
-                {copied ? (
-                  <>
-                    <Check size={12} className="text-emerald-400" />
-                    <span>Copied!</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy size={12} />
-                    <span>Copy</span>
-                  </>
-                )}
+              <span className="text-text-tertiary font-bold">→</span>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-surface-secondary text-text-primary border border-border-default hover:border-black dark:hover:border-white transition-colors cursor-default">
+                <span className="text-accent-primary font-bold">02.</span>
+                <span>Build Feature</span>
               </div>
-            </button>
+              <span className="text-text-tertiary font-bold">→</span>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-surface-secondary text-text-primary border border-border-default hover:border-black dark:hover:border-white transition-colors cursor-default">
+                <span className="text-accent-primary font-bold">03.</span>
+                <span>Submit PR</span>
+              </div>
+            </div>
 
             {/* Direct Action Button */}
             <a
               href="https://github.com/meccomputerclub/mec-cc-frontend"
               target="_blank"
               rel="noopener noreferrer"
-              className="h-10 px-5 rounded-md bg-black text-white dark:bg-white dark:text-black font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 border border-black dark:border-white transition-all hover:-translate-y-0.5 hover:shadow-[3.5px_3.5px_0px_var(--accent-primary)] shrink-0 whitespace-nowrap"
+              className="h-10 px-5 rounded-md bg-black text-white dark:bg-white dark:text-black font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 border border-black dark:border-white transition-all hover:-translate-y-0.5 hover:shadow-[3.5px_3.5px_0px_var(--accent-primary)] shrink-0 whitespace-nowrap self-start md:self-auto"
             >
               <span>Contribute on GitHub</span>
               <ExternalLink size={14} />
