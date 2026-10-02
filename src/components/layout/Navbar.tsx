@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import dynamic from "next/dynamic";
@@ -81,6 +81,18 @@ export function Navbar() {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileExpandedItem, setMobileExpandedItem] = useState<string | null>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close user dropdown on outside click
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
 
   const pathname = usePathname();
   const router = useRouter();
@@ -195,11 +207,11 @@ export function Navbar() {
           .navbar__user-menu-wrap { position: relative; }
           .navbar__user-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); height: 36px; padding: 0 var(--space-3); background-color: transparent; color: #000000; border: 1px solid #000000; border-radius: var(--radius-md); font-family: var(--font-body); font-size: var(--text-sm); font-weight: var(--weight-bold); cursor: pointer; box-shadow: none; transition: all 150ms ease; white-space: nowrap; line-height: 1; outline: none; box-sizing: border-box; }
           .dark .navbar__user-btn { border-color: #FFFFFF; color: #FFFFFF; background-color: transparent; box-shadow: none; }
-          .navbar__user-btn:hover { background-color: #f5f5f5; color: #000000; border-color: #000000; box-shadow: 4px 4px 0px 0px #000000; transform: translate(-4px, -4px); }
-          .dark .navbar__user-btn:hover { background-color: #171717; color: #FFFFFF; border-color: #FFFFFF; box-shadow: 4px 4px 0px 0px #FFFFFF; transform: translate(-4px, -4px); }
-          .navbar__user-btn--open { border-color: #000000 !important; box-shadow: none !important; background-color: var(--surface-secondary); color: #000000 !important; transform: translate(0, 0) !important; }
-          .dark .navbar__user-btn--open { border-color: #FFFFFF !important; color: #FFFFFF !important; }
-          .navbar__user-btn:active { transform: translate(0, 0); box-shadow: none; }
+          .navbar__user-btn:hover { background-color: #f5f5f5 !important; color: #000000 !important; border-color: #000000 !important; box-shadow: 4px 4px 0px 0px #000000 !important; transform: translate(-4px, -4px) !important; }
+          .dark .navbar__user-btn:hover { background-color: #171717 !important; color: #FFFFFF !important; border-color: #FFFFFF !important; box-shadow: 4px 4px 0px 0px #FFFFFF !important; transform: translate(-4px, -4px) !important; }
+          .navbar__user-btn:active { transform: translate(0, 0) !important; box-shadow: none !important; }
+          .navbar__user-btn--open { background-color: var(--surface-secondary); border-color: #000000; color: #000000; }
+          .dark .navbar__user-btn--open { border-color: #FFFFFF; color: #FFFFFF; }
           .navbar__chevron { transition: transform 150ms ease; flex-shrink: 0; }
           .navbar__user-btn--open .navbar__chevron { transform: rotate(180deg); }
           .navbar__user-avatar { width: 22px; height: 22px; border-radius: var(--radius-sm); border: 1px solid #000000; object-fit: cover; flex-shrink: 0; }
@@ -352,13 +364,13 @@ export function Navbar() {
           {user ? (
             <>
               <NotificationCenter />
-              <div className="navbar__user-menu-wrap" onMouseLeave={() => setUserDropdownOpen(false)}>
+              <div className="navbar__user-menu-wrap" ref={userMenuRef}>
                 <button
                   type="button"
                   className={`navbar__user-btn ${userDropdownOpen ? "navbar__user-btn--open" : ""}`}
                   onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                  onMouseEnter={() => setUserDropdownOpen(true)}
                   aria-label="User menu"
+                  aria-expanded={userDropdownOpen}
                 >
                   {user.imageUrl ? (
                     /* eslint-disable-next-line @next/next/no-img-element */

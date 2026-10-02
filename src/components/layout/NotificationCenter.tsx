@@ -433,11 +433,11 @@ export function NotificationCenter() {
           .notif-container { position: relative; display: inline-flex; align-items: center; }
           .notif-trigger { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: var(--radius-md); border: 1px solid #000000; background: transparent; color: #000000; cursor: pointer; box-shadow: none; transition: all 150ms ease; outline: none; padding: 0; flex-shrink: 0; box-sizing: border-box; }
           .dark .notif-trigger { border-color: #FFFFFF; color: #FFFFFF; background: transparent; box-shadow: none; }
-          .notif-trigger:hover { background-color: #f5f5f5; color: #000000; border-color: #000000; box-shadow: 4px 4px 0px 0px #000000; transform: translate(-4px, -4px); }
-          .dark .notif-trigger:hover { background-color: #171717; color: #FFFFFF; border-color: #FFFFFF; box-shadow: 4px 4px 0px 0px #FFFFFF; transform: translate(-4px, -4px); }
-          .notif-trigger:active { transform: translate(0, 0); box-shadow: none; }
-          .notif-trigger--open { background-color: var(--surface-secondary); border-color: #000000 !important; box-shadow: none !important; transform: translate(0, 0) !important; color: #000000 !important; }
-          .dark .notif-trigger--open { border-color: #FFFFFF !important; color: #FFFFFF !important; }
+          .notif-trigger:hover { background-color: #f5f5f5 !important; color: #000000 !important; border-color: #000000 !important; box-shadow: 4px 4px 0px 0px #000000 !important; transform: translate(-4px, -4px) !important; }
+          .dark .notif-trigger:hover { background-color: #171717 !important; color: #FFFFFF !important; border-color: #FFFFFF !important; box-shadow: 4px 4px 0px 0px #FFFFFF !important; transform: translate(-4px, -4px) !important; }
+          .notif-trigger:active { transform: translate(0, 0) !important; box-shadow: none !important; }
+          .notif-trigger--open { background-color: var(--surface-secondary); border-color: #000000; color: #000000; }
+          .dark .notif-trigger--open { border-color: #FFFFFF; color: #FFFFFF; }
           .notif-trigger__icon { transition: transform 150ms ease; }
           .notif-trigger:hover .notif-trigger__icon { transform: rotate(12deg); }
           .notif-badge { position: absolute; top: -5px; right: -5px; min-width: 17px; height: 17px; padding: 0 4px; background-color: var(--accent-error, #ef4444); color: #FFFFFF; border: 1.5px solid var(--surface-primary); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 9px; font-weight: 800; line-height: 1; pointer-events: none; box-shadow: none; }
