@@ -20,11 +20,11 @@ interface ThemeColorPickerProps {
   compact?: boolean;
 }
 
-export function ThemeColorPicker({ onSelect }: ThemeColorPickerProps) {
+export function ThemeColorPicker({ onSelect, compact }: ThemeColorPickerProps) {
   const { currentVibe, setManualVibe, enableAutoMode, isAuto } = useAccent();
 
   return (
-    <div className="space-y-2">
+    <div className={compact ? "space-y-1.5" : "space-y-2"}>
       <div className="flex items-center justify-between">
         <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-text-tertiary">
           Theme Color
@@ -50,7 +50,13 @@ export function ThemeColorPicker({ onSelect }: ThemeColorPickerProps) {
         </button>
       </div>
 
-      <div className="flex flex-wrap items-center justify-start gap-2.5 p-2 bg-surface-secondary rounded-xl border border-border-default">
+      <div
+        className={
+          compact
+            ? "flex flex-wrap items-center justify-start gap-2 pt-0.5"
+            : "flex flex-wrap items-center justify-start gap-2.5 p-2 bg-surface-secondary rounded-xl border border-border-default"
+        }
+      >
         {VIBE_ORDER.map((vibe) => {
           const info = VIBE_INFO[vibe];
           const isSelected = currentVibe === vibe;
@@ -67,7 +73,7 @@ export function ThemeColorPicker({ onSelect }: ThemeColorPickerProps) {
               aria-label={`Select ${info.label} theme`}
               className={`w-5 h-5 rounded-full shrink-0 flex items-center justify-center transition-all cursor-pointer border ${
                 isSelected
-                  ? "ring-2 ring-text-primary ring-offset-2 ring-offset-surface-secondary scale-110 shadow-sm"
+                  ? "ring-2 ring-text-primary ring-offset-2 ring-offset-surface-elevated scale-110 shadow-sm"
                   : "border-black/15 dark:border-white/20 hover:scale-110 opacity-85 hover:opacity-100"
               }`}
               style={{ backgroundColor: info.color }}

@@ -18,6 +18,13 @@ import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ThemePaletteButton } from "@/components/ThemePaletteButton";
 import { ThemeColorPicker } from "@/components/ThemeColorPicker";
+import {
+  OptionCard,
+  OptionCardHeader,
+  OptionCardList,
+  OptionCardItem,
+  OptionCardDivider,
+} from "@/components/ui/OptionCard";
 import { User, Shield, LayoutDashboard, LogOut, Menu, X, ChevronDown } from "lucide-react";
 
 const navItems = [
@@ -192,14 +199,13 @@ export function Navbar() {
           .navbar__chevron { transition: transform var(--transition-fast); }
           .navbar__item--has-dropdown:hover .navbar__chevron { transform: rotate(180deg); }
           .navbar__dropdown-wrapper { position: absolute; top: 100%; left: 0; padding-top: var(--space-2); z-index: 100; }
-          .navbar__dropdown { min-width: 180px; background-color: var(--surface-primary); border: 1px solid var(--text-primary); border-radius: var(--radius-md); box-shadow: 4px 4px 0px 0px var(--accent-primary); list-style: none; margin: 0; padding: 0; overflow: hidden; animation: slideDown var(--transition-fast) forwards; }
+          .navbar__dropdown { min-width: 180px; background-color: var(--surface-elevated); border: 1px solid black; border-radius: 12px; box-shadow: 4px 4px 0px 0px var(--accent-primary); list-style: none; margin: 0; padding: 4px 0; overflow: hidden; animation: slideDown var(--transition-fast) forwards; }
           .dark .navbar__dropdown { border-color: var(--border-default); box-shadow: 4px 4px 0px 0px var(--accent-primary); }
           .navbar__dropdown li { margin: 0; }
           @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-          .navbar__dropdown-link { display: flex; align-items: center; padding: var(--space-2) var(--space-3); font-family: var(--font-body); font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--text-secondary); text-decoration: none; border-bottom: 1px solid var(--border-default); transition: background var(--transition-fast), color var(--transition-fast), font-weight var(--transition-fast); }
-          li:last-child .navbar__dropdown-link { border-bottom: none; }
-          .navbar__dropdown-link:hover { background-color: var(--accent-primary-light); color: var(--text-primary); font-weight: 700; }
-          html.dark .navbar__dropdown-link:hover, .dark .navbar__dropdown-link:hover { background-color: color-mix(in srgb, var(--accent-primary) 25%, var(--surface-primary)); color: #FFFFFF !important; font-weight: 700 !important; }
+          .navbar__dropdown-link { display: flex; align-items: center; padding: 8px 14px; font-family: var(--font-body); font-size: 13px; font-weight: 600; color: var(--text-secondary); text-decoration: none; border-bottom: none; transition: background var(--transition-fast), color var(--transition-fast); }
+          .navbar__dropdown-link:hover { background-color: var(--surface-secondary); color: var(--text-primary); }
+          html.dark .navbar__dropdown-link:hover, .dark .navbar__dropdown-link:hover { background-color: var(--surface-secondary); color: #FFFFFF !important; }
           .navbar__actions { display: flex; align-items: center; gap: var(--space-3); flex-shrink: 0; }
           .navbar__login { font-size: var(--text-sm); font-weight: var(--weight-medium); color: var(--text-tertiary); text-decoration: none; transition: color var(--transition-fast), font-weight var(--transition-fast); }
           .navbar__login:hover { color: #000000 !important; font-weight: 700 !important; }
@@ -400,65 +406,63 @@ export function Navbar() {
                 </button>
 
                 {userDropdownOpen && (
-                  <div className="navbar__dropdown-wrapper navbar__user-dropdown-wrapper">
-                    <ul className="navbar__dropdown navbar__user-dropdown" role="menu">
-                      <li className="navbar__user-dropdown-header">
-                        <div className="navbar__user-dropdown-name">{user.fullName}</div>
-                        <span className="navbar__user-role-badge">{user.role}</span>
-                      </li>
-                      <li role="none">
-                        <Link
+                  <div className="absolute right-0 top-full mt-2 z-50">
+                    <OptionCard className="w-64">
+                      <OptionCardHeader
+                        title={user.fullName}
+                        badge={
+                          <span className="font-mono text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-accent-primary text-accent-primary-text border border-border-brutalist">
+                            {user.role}
+                          </span>
+                        }
+                      />
+                      <OptionCardList>
+                        <OptionCardItem
                           href="/profile"
-                          className="navbar__dropdown-link"
-                          role="menuitem"
+                          icon={<User size={15} />}
                           onClick={() => setUserDropdownOpen(false)}
                         >
-                          <User size={14} style={{ marginRight: "6px" }} />
                           Profile
-                        </Link>
-                      </li>
-                      <li role="none">
-                        <Link
+                        </OptionCardItem>
+                        <OptionCardItem
                           href="/profile?tab=security"
-                          className="navbar__dropdown-link"
-                          role="menuitem"
+                          icon={<Shield size={15} />}
                           onClick={() => setUserDropdownOpen(false)}
                         >
-                          <Shield size={14} style={{ marginRight: "6px" }} />
                           Security
-                        </Link>
-                      </li>
-                      {(isAdmin || user.role === "moderator" || user.role === "executive" || user.clubRole === "executive") && (
-                        <li role="none">
-                          <Link
+                        </OptionCardItem>
+                        {(isAdmin || user.role === "moderator" || user.role === "executive" || user.clubRole === "executive") && (
+                          <OptionCardItem
                             href="/dashboard"
-                            className="navbar__dropdown-link"
-                            role="menuitem"
+                            icon={<LayoutDashboard size={15} />}
                             onClick={() => setUserDropdownOpen(false)}
                           >
-                            <LayoutDashboard size={14} style={{ marginRight: "6px" }} />
                             Dashboard
-                          </Link>
-                        </li>
-                      )}
-                      <li className="px-3.5 py-2.5 border-t border-border-default" role="none">
-                        <ThemeColorPicker onSelect={() => setUserDropdownOpen(false)} />
-                      </li>
-                      <li role="none" className="border-t border-border-default">
-                        <button
-                          type="button"
+                          </OptionCardItem>
+                        )}
+                      </OptionCardList>
+
+                      <OptionCardDivider />
+
+                      <div className="px-3.5 py-2">
+                        <ThemeColorPicker compact onSelect={() => setUserDropdownOpen(false)} />
+                      </div>
+
+                      <OptionCardDivider />
+
+                      <OptionCardList>
+                        <OptionCardItem
+                          variant="danger"
+                          icon={<LogOut size={15} />}
                           onClick={() => {
                             setUserDropdownOpen(false);
                             handleLogout();
                           }}
-                          className="navbar__dropdown-link navbar__dropdown-link--danger"
-                          role="menuitem"
                         >
-                          <LogOut size={14} style={{ marginRight: "6px" }} />
                           Sign Out
-                        </button>
-                      </li>
-                    </ul>
+                        </OptionCardItem>
+                      </OptionCardList>
+                    </OptionCard>
                   </div>
                 )}
               </div>
