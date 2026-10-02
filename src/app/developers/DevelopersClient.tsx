@@ -391,39 +391,47 @@ function DevelopersContent() {
                         </span>
                       </div>
 
-                      {/* Then: Redesigned Contribution Segment (Strictly 2 lines total: Title + 1-line content) */}
-                      <div className="mt-3 p-2.5 sm:p-3 rounded-md bg-surface-secondary/70 dark:bg-surface-secondary/40 border border-border-default border-l-[3.5px] border-l-accent-primary">
-                        {/* Line 1: Title & More Count */}
-                        <div className="flex items-center justify-between gap-1.5 mb-1">
-                          <div className="flex items-center gap-1.5">
-                            <Layers size={13} className="text-accent-primary shrink-0" />
-                            <span className="font-mono text-[10px] font-extrabold uppercase tracking-widest text-text-primary">
-                              Contributions
-                            </span>
-                          </div>
-                          {dev.featuresWorkedOn.length > 1 && (
-                            <span className="font-mono text-[10px] text-text-tertiary font-bold tracking-wider">
-                              +{dev.featuresWorkedOn.length - 1} more
-                            </span>
-                          )}
+                      {/* Then: Redesigned Contribution Segment (Title + 1-Line Smooth Rolling Ticker) */}
+                      <div className="mt-3 p-2.5 sm:p-3 rounded-md bg-surface-secondary/70 dark:bg-surface-secondary/40 border border-border-default border-l-[3.5px] border-l-accent-primary overflow-hidden">
+                        {/* Line 1: Title */}
+                        <div className="flex items-center gap-1.5 mb-1.5">
+                          <Layers size={13} className="text-accent-primary shrink-0" />
+                          <span className="font-mono text-[10px] font-extrabold uppercase tracking-widest text-text-primary">
+                            Contributions
+                          </span>
                         </div>
 
-                        {/* Line 2: Exactly 1 line of features */}
-                        <p
-                          className="text-xs text-text-secondary leading-normal truncate font-medium"
-                          title={dev.featuresWorkedOn.map((f) => f.title).join(", ")}
-                        >
-                          {dev.featuresWorkedOn.map((feat, i) => (
-                            <span key={i}>
-                              <span className="font-semibold text-text-primary hover:text-accent-primary transition-colors">
-                                {feat.title}
-                              </span>
-                              {i < dev.featuresWorkedOn.length - 1 && (
-                                <span className="text-text-tertiary mr-1.5 font-normal">,</span>
-                              )}
+                        {/* Line 2: Smooth 1-Line Roll to the Left */}
+                        {dev.featuresWorkedOn.length > 1 ? (
+                          <div className="relative w-full overflow-hidden marquee-mask select-none py-0.5">
+                            <div className="animate-marquee flex items-center whitespace-nowrap [animation-duration:28s] hover:[animation-play-state:paused]">
+                              {(() => {
+                                const baseTrack =
+                                  dev.featuresWorkedOn.length >= 3
+                                    ? dev.featuresWorkedOn
+                                    : [...dev.featuresWorkedOn, ...dev.featuresWorkedOn];
+                                const stream = [...baseTrack, ...baseTrack];
+                                return stream.map((feat, i) => (
+                                  <span key={i} className="inline-flex items-center text-xs">
+                                    <span className="font-semibold text-text-primary hover:text-accent-primary transition-colors">
+                                      {feat.title}
+                                    </span>
+                                    <span className="text-accent-primary mx-2.5 font-bold select-none">•</span>
+                                  </span>
+                                ));
+                              })()}
+                            </div>
+                          </div>
+                        ) : (
+                          <p
+                            className="text-xs text-text-secondary leading-normal truncate font-medium"
+                            title={dev.featuresWorkedOn[0]?.title || ""}
+                          >
+                            <span className="font-semibold text-text-primary">
+                              {dev.featuresWorkedOn[0]?.title || "Platform Core Architecture"}
                             </span>
-                          ))}
-                        </p>
+                          </p>
+                        )}
                       </div>
                     </div>
 
