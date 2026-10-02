@@ -14,6 +14,10 @@ import {
   CheckCircle2,
   MoreVertical,
   Pencil,
+  Copy,
+  Check,
+  GitPullRequest,
+  Terminal,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import AddContributorModal, {
@@ -111,6 +115,15 @@ function DevelopersContent() {
   const [notification, setNotification] = useState<string | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [editingDev, setEditingDev] = useState<Developer | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyClone = () => {
+    if (typeof window !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText("git clone https://github.com/meccomputerclub/mec-cc-frontend.git");
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2200);
+    }
+  };
 
   // Close 3-dot menu when clicking outside
   useEffect(() => {
@@ -283,7 +296,7 @@ function DevelopersContent() {
       )}
 
       {/* ── Developer Cards Section (Max 2 per row, centered if 1) ── */}
-      <section className="container max-w-5xl mx-auto px-4 py-8 md:py-12">
+      <section className="container max-w-5xl mx-auto px-4 pt-8 md:pt-12 pb-14 md:pb-20">
         <div className="flex flex-wrap justify-center gap-6 md:gap-7 w-full items-stretch">
           {developers.map((dev, idx) => {
             const deptClean = dev.department.replace(/^Department of\s+/i, "").trim();
@@ -443,31 +456,99 @@ function DevelopersContent() {
         </div>
       </section>
 
-      {/* ── Contributor Node Invitation CTA ── */}
-      <section className="container max-w-5xl mx-auto px-4 pb-12">
-        <div className="p-6 md:p-8 rounded-xl bg-surface-secondary/80 border-[1.5px] border-border-brutalist dark:border-border-default flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="space-y-2 text-center md:text-left max-w-xl">
-            <div className="inline-flex items-center gap-2 font-mono text-xs font-bold text-accent-primary uppercase tracking-wider">
-              <span className="w-2 h-2 rounded-full bg-accent-primary" />
-              <span>// OPEN CALL FOR CLUB MEMBERS</span>
+      {/* ── Section Separator Line ── */}
+      <div className="container max-w-5xl mx-auto px-4">
+        <div className="w-full border-t border-border-default/80 dark:border-border-default" />
+      </div>
+
+      {/* ── Contributor Node Invitation CTA Card ── */}
+      <section className="container max-w-5xl mx-auto px-4 pt-12 md:pt-16 pb-12 md:pb-16">
+        <div className="p-6 sm:p-8 md:p-9 rounded-2xl bg-white dark:bg-surface-elevated border-[1.5px] border-black dark:border-white/30 flex flex-col gap-6 relative overflow-hidden">
+          {/* Top meta strip */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+              <span className="font-mono text-xs font-bold text-accent-primary uppercase tracking-wider">
+                // OPEN CALL FOR CLUB MEMBERS
+              </span>
             </div>
-            <h3 className="text-xl md:text-2xl font-black font-heading text-text-primary">
+            <div className="flex items-center gap-2 font-mono text-[11px] text-text-tertiary">
+              <GitPullRequest size={13} className="text-accent-primary shrink-0" />
+              <span>Welcoming contributions from all batches</span>
+            </div>
+          </div>
+
+          {/* Heading & Copy */}
+          <div className="space-y-2 max-w-3xl">
+            <h3 className="text-2xl sm:text-3xl font-black font-heading tracking-tight text-text-primary">
               Every member is a node. Leave your mark on the codebase.
             </h3>
-            <p className="text-sm text-text-secondary leading-relaxed">
+            <p className="text-sm sm:text-base text-text-secondary leading-relaxed">
               Have an idea for a student utility or spotted an issue? Fork our open-source repositories, submit your pull request, and join the platform maintainer roster.
             </p>
           </div>
 
-          <a
-            href="https://github.com/mec-computer-club"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="h-11 px-5 rounded-md bg-black text-white dark:bg-white dark:text-black font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 border border-black dark:border-white transition-all hover:-translate-y-0.5 hover:shadow-[3.5px_3.5px_0px_var(--accent-primary)] shrink-0 whitespace-nowrap"
-          >
-            <span>Contribute on GitHub</span>
-            <ExternalLink size={14} />
-          </a>
+          {/* Interactive Steps Roadmap */}
+          <div className="flex flex-wrap items-center gap-2 font-mono text-xs font-semibold">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-surface-secondary text-text-primary border border-border-default hover:border-black dark:hover:border-white transition-colors cursor-default">
+              <span className="text-accent-primary font-bold">01.</span>
+              <span>Fork Repository</span>
+            </div>
+            <span className="text-text-tertiary font-bold">→</span>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-surface-secondary text-text-primary border border-border-default hover:border-black dark:hover:border-white transition-colors cursor-default">
+              <span className="text-accent-primary font-bold">02.</span>
+              <span>Build Feature</span>
+            </div>
+            <span className="text-text-tertiary font-bold">→</span>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-surface-secondary text-text-primary border border-border-default hover:border-black dark:hover:border-white transition-colors cursor-default">
+              <span className="text-accent-primary font-bold">03.</span>
+              <span>Submit PR</span>
+            </div>
+          </div>
+
+          {/* Interactive Terminal Bar + GitHub Action */}
+          <div className="pt-4 border-t border-border-default/70 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+            {/* 1-Click Copy Command */}
+            <button
+              type="button"
+              onClick={handleCopyClone}
+              className="flex-1 max-w-xl group flex items-center justify-between gap-3 px-3.5 py-2 rounded-lg bg-surface-secondary hover:bg-neutral-100 dark:hover:bg-surface-secondary/80 border border-border-default hover:border-black dark:hover:border-white transition-all text-left cursor-pointer"
+              title="Click to copy clone command"
+            >
+              <div className="flex items-center gap-2 overflow-hidden">
+                <Terminal size={14} className="text-accent-primary shrink-0" />
+                <span className="font-mono text-xs text-text-secondary truncate">
+                  <span className="text-accent-primary font-bold mr-1.5">$</span>
+                  git clone https://github.com/meccomputerclub/mec-cc-frontend.git
+                </span>
+              </div>
+
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-black text-white dark:bg-white dark:text-black font-mono text-[11px] font-bold shrink-0 transition-transform group-hover:scale-105">
+                {copied ? (
+                  <>
+                    <Check size={12} className="text-emerald-400" />
+                    <span>Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy size={12} />
+                    <span>Copy</span>
+                  </>
+                )}
+              </div>
+            </button>
+
+            {/* Direct Action Button */}
+            <a
+              href="https://github.com/meccomputerclub/mec-cc-frontend"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="h-10 px-5 rounded-md bg-black text-white dark:bg-white dark:text-black font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 border border-black dark:border-white transition-all hover:-translate-y-0.5 hover:shadow-[3.5px_3.5px_0px_var(--accent-primary)] shrink-0 whitespace-nowrap"
+            >
+              <span>Contribute on GitHub</span>
+              <ExternalLink size={14} />
+            </a>
+          </div>
         </div>
       </section>
 
