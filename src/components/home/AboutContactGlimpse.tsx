@@ -45,7 +45,7 @@ export function AboutContactGlimpse({ contactData }: AboutContactGlimpseProps = 
         {/* 2-Column Split: Info on Left, Map on Right */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch max-w-6xl mx-auto">
           {/* Left Column (5 cols) */}
-          <div className="lg:col-span-5 flex flex-col justify-between bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-2xl p-6 sm:p-7 shadow-[6px_6px_0px_var(--border-brutalist)]">
+          <div className="lg:col-span-5 flex flex-col justify-between bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl p-6 sm:p-7 shadow-[4px_4px_0px_var(--accent-primary)]">
             <div>
               {/* Club Photo */}
               <div className="relative w-full aspect-[16/9] rounded-xl overflow-hidden border border-border-default mb-5 shadow-sm">
@@ -141,7 +141,7 @@ export function AboutContactGlimpse({ contactData }: AboutContactGlimpseProps = 
           </div>
 
           {/* Right Column (7 cols) - Interactive Google Map */}
-          <div className="lg:col-span-7 flex flex-col bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-2xl overflow-hidden shadow-[8px_8px_0px_var(--accent-primary)]">
+          <div className="lg:col-span-7 flex flex-col bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl overflow-hidden shadow-[4px_4px_0px_var(--accent-primary)]">
             {/* Map Header bar */}
             <div className="flex items-center justify-between px-5 py-3 bg-surface-secondary border-b border-border-default">
               <div className="flex items-center gap-2">

@@ -167,7 +167,7 @@ export default function ClubRoomAdminCard() {
             type="button"
             disabled={isUpdating || loading}
             onClick={handleToggle}
-            className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-mono text-xs font-black uppercase tracking-wider transition-all cursor-pointer border ${
+            className={`inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-mono text-xs font-black tracking-wider transition-all cursor-pointer border ${
               isOpen
                 ? "bg-red-600 hover:bg-red-700 text-white border-red-800 shadow-[3px_3px_0px_#991b1b] hover:-translate-x-0.5 hover:-translate-y-0.5"
                 : "bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-800 shadow-[3px_3px_0px_#065f46] hover:-translate-x-0.5 hover:-translate-y-0.5"

@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { Button } from "@/components/ui/Button";
 import { useSearchParams } from "next/navigation";
 import {
   ArrowRight,
@@ -258,17 +259,18 @@ function DevelopersContent() {
               </div>
             </div>
 
-            <button
+            <Button
               onClick={() => {
                 setEditingDev(null);
                 setIsAddModalOpen(true);
               }}
-              className="w-full sm:w-auto h-10 px-4 rounded-md bg-black text-white dark:bg-white dark:text-black font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 border border-black dark:border-white transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_var(--accent-primary)] active:translate-y-0 cursor-pointer shrink-0"
+              size="sm"
+              icon={<Plus size={15} />}
               id="admin-add-contributor-btn"
+              className="w-full sm:w-auto shrink-0"
             >
-              <Plus size={15} />
-              <span>Add Contributor</span>
-            </button>
+              Add Contributor
+            </Button>
           </div>
         </div>
       )}
@@ -437,24 +439,27 @@ function DevelopersContent() {
 
                     {/* Bottom: Two Buttons Side by Side */}
                     <div className="mt-4 pt-3 border-t border-border-default/60 flex items-center gap-2">
-                      <Link
+                      <Button
                         href={dev.profileUrl}
-                        className="flex-1 h-9 px-3 rounded-md bg-black text-white dark:bg-white dark:text-black font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 border border-black dark:border-white transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_var(--accent-primary)] whitespace-nowrap"
+                        size="sm"
+                        className="flex-1"
+                        icon={<ArrowRight size={13} />}
                       >
-                        <span>View Profile</span>
-                        <ArrowRight size={13} />
-                      </Link>
+                        View Profile
+                      </Button>
                       {dev.github && (
-                        <a
+                        <Button
                           href={dev.github}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex-1 sm:flex-initial h-9 px-3 rounded-md bg-transparent text-text-primary border border-text-primary dark:border-border-default hover:bg-surface-secondary font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_var(--text-primary)] dark:hover:shadow-[3px_3px_0px_var(--accent-primary)] whitespace-nowrap"
+                          variant="secondary"
+                          size="sm"
+                          className="flex-1 sm:flex-initial"
+                          icon={<IconGitHub className="w-3.5 h-3.5" />}
                         >
-                          <IconGitHub className="w-3.5 h-3.5" />
                           <span>GitHub</span>
-                          <ExternalLink size={11} className="opacity-60" />
-                        </a>
+                          <ExternalLink size={11} className="opacity-60 ml-0.5" />
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -517,15 +522,16 @@ function DevelopersContent() {
             </div>
 
             {/* Direct Action Button */}
-            <a
+            <Button
               href="https://github.com/meccomputerclub/mec-cc-frontend"
               target="_blank"
               rel="noopener noreferrer"
-              className="h-10 px-5 rounded-md bg-black text-white dark:bg-white dark:text-black font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 border border-black dark:border-white transition-all hover:-translate-y-0.5 hover:shadow-[3.5px_3.5px_0px_var(--accent-primary)] shrink-0 whitespace-nowrap self-start md:self-auto"
+              size="md"
+              className="shrink-0 whitespace-nowrap self-start md:self-auto"
+              icon={<ExternalLink size={14} />}
             >
-              <span>Contribute on GitHub</span>
-              <ExternalLink size={14} />
-            </a>
+              Contribute on GitHub
+            </Button>
           </div>
         </div>
       </section>

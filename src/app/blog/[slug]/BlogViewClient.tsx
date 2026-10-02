@@ -365,7 +365,7 @@ export default function BlogViewClient({ post, isHtml }: BlogViewClientProps) {
               className={`group inline-flex items-center gap-3 px-6 py-2.5 rounded-xl font-bold text-sm sm:text-base border-2 transition-all duration-200 cursor-pointer select-none active:scale-95 shrink-0 ${
                 isLiked
                   ? "bg-red-500 text-white border-red-600 shadow-[4px_4px_0px_0px_#991b1b] hover:bg-red-600 dark:bg-red-600 dark:border-red-500 dark:shadow-[4px_4px_0px_0px_#450a0a]"
-                  : "bg-surface-elevated text-text-primary border-border-brutalist dark:border-border-default shadow-[4px_4px_0px_0px_var(--accent-primary)] hover:border-accent-primary hover:shadow-[5px_5px_0px_0px_var(--accent-primary)] hover:-translate-y-0.5"
+                  : "bg-surface-elevated text-text-primary border border-border-brutalist dark:border-border-default hover:border-accent-primary hover:shadow-[4px_4px_0px_0px_var(--accent-primary)] hover:-translate-x-1 hover:-translate-y-1 active:translate-x-0 active:translate-y-0 active:shadow-none"
               }`}
               title={
                 isAuthenticated

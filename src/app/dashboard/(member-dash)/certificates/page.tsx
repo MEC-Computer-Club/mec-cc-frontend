@@ -118,7 +118,7 @@ export default function MemberCertificatesPage() {
           {certificates.map((cert) => (
             <div
               key={cert._id}
-              className="bg-surface-elevated border-2 border-border-brutalist rounded-xl p-5 flex flex-col justify-between shadow-[4px_4px_0px_var(--border-brutalist)] transition-all hover:shadow-[6px_6px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5"
+              className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl p-5 flex flex-col justify-between transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)]"
             >
               <div>
                 <div className="flex items-center justify-between mb-3">

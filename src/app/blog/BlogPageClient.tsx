@@ -297,7 +297,7 @@ export default function BlogPageClient() {
                   {myBlogs.map((blog) => (
                     <div
                       key={blog._id}
-                      className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 sm:p-5 bg-surface-elevated border border-border-default rounded-xl transition-all hover:shadow-[4px_4px_0px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5"
+                      className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 sm:p-5 bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)]"
                     >
                       {/* Cover thumbnail */}
                       {blog.coverImageUrl && (

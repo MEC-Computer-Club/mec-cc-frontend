@@ -123,9 +123,9 @@ export function EventsTab({
                       <div className="mt-auto pt-2 border-t border-dashed border-border-default flex items-center justify-between">
                         <Link
                           href={`/events/${slug}`}
-                          className="font-mono text-xs font-bold uppercase text-text-secondary hover:text-accent-primary transition-colors"
+                          className="font-mono text-xs font-bold text-text-secondary hover:text-accent-primary transition-colors"
                         >
-                          DETAILS →
+                          Details →
                         </Link>
                         <div className="font-mono text-xs text-text-primary font-bold">
                           {ev.time || "15:00"}
@@ -257,9 +257,9 @@ export function EventsTab({
 
                           <Link
                             href={`/events/${slug}`}
-                            className="font-mono text-xs font-bold uppercase text-text-secondary hover:text-accent-primary inline-flex items-center gap-1 transition-colors"
+                            className="font-mono text-xs font-bold text-text-secondary hover:text-accent-primary inline-flex items-center gap-1 transition-colors"
                           >
-                            <span>DETAILS</span>
+                            <span>Details</span>
                             <ExternalLink size={11} />
                           </Link>
                         </div>

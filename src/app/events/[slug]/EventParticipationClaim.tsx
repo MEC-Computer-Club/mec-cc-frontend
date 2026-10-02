@@ -9,6 +9,7 @@ import axios from "axios";
 import { API_BASE_URL } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { Select } from "@/components/ui/Select";
+import { Button } from "@/components/ui/Button";
 import { Event, ParticipationClaim } from "@/types";
 import toast from "react-hot-toast";
 
@@ -206,15 +207,15 @@ export function EventParticipationClaim({ event }: EventParticipationClaimProps)
   return (
     <>
       <div className="flex flex-wrap items-center gap-3">
-        <button
+        <Button
           type="button"
+          variant="primary"
+          size="md"
           onClick={() => setModalOpen(true)}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm border-2 border-border-brutalist shadow-[4px_4px_0px_0px_var(--border-brutalist)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[3px_3px_0px_0px_var(--border-brutalist)] transition-all"
-          style={{ color: "#FFFFFF" }}
+          icon={<CheckCircle2 size={18} />}
         >
-          <CheckCircle2 size={18} />
           {claim?.status === "rejected" ? "Re-submit Participation Claim" : "I Participated in this Event"}
-        </button>
+        </Button>
 
         {claim?.status === "rejected" && (
           <span className="text-xs text-red-500 font-medium">
@@ -376,22 +377,23 @@ export function EventParticipationClaim({ event }: EventParticipationClaimProps)
 
               {/* Modal Actions */}
               <div className="flex items-center justify-end gap-3 pt-3 border-t border-border-default">
-                <button
+                <Button
                   type="button"
+                  variant="secondary"
+                  size="sm"
                   onClick={() => setModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-text-secondary hover:bg-surface-secondary transition"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
+                  variant="primary"
+                  size="sm"
                   disabled={submitting}
-                  className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-[3px_3px_0px_0px_var(--border-brutalist)] transition-all disabled:opacity-50"
-                  style={{ color: "#FFFFFF" }}
+                  icon={<Send size={13} />}
                 >
-                  <Send size={13} />
                   {submitting ? "Submitting Claim…" : "Submit Claim"}
-                </button>
+                </Button>
               </div>
             </form>
           </div>

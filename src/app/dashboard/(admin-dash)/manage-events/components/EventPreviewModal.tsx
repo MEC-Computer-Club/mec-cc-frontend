@@ -392,7 +392,7 @@ export function EventPreviewModal({
                     <button
                       type="button"
                       disabled
-                      className="px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider bg-accent-primary text-accent-primary-text border border-border-brutalist shadow-[2px_2px_0px_var(--border-brutalist)] opacity-85 cursor-default"
+                      className="px-5 py-2.5 rounded-xl font-bold text-xs tracking-wider bg-accent-primary text-accent-primary-text border border-border-brutalist shadow-[2px_2px_0px_var(--border-brutalist)] opacity-85 cursor-default"
                     >
                       {isPast ? "Event Completed" : "Register Now (Live Button)"}
                     </button>

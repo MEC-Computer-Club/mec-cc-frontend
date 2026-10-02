@@ -1074,7 +1074,7 @@ export function CgpaCalculatorClient() {
                 <button
                   type="button"
                   onClick={() => setQuickFillModalOpen(true)}
-                  className="px-3.5 py-1.5 rounded-xl bg-accent-primary hover:bg-accent-primary-hover text-white font-mono font-bold text-xs uppercase shadow-[2px_2px_0px_var(--border-brutalist)] active:translate-x-[1px] active:translate-y-[1px] transition-all flex items-center gap-1.5 shrink-0"
+                  className="px-3.5 py-1.5 rounded-xl bg-accent-primary hover:bg-accent-primary-hover text-white font-mono font-bold text-xs shadow-[2px_2px_0px_var(--border-brutalist)] active:translate-x-[1px] active:translate-y-[1px] transition-all flex items-center gap-1.5 shrink-0"
                 >
                   <Sparkles size={13} />
                   <span>Open Quick Fill</span>
@@ -1373,7 +1373,7 @@ export function CgpaCalculatorClient() {
             <button
               type="button"
               onClick={handleCalculateGpa}
-              className="w-full sm:w-auto px-8 py-3.5 bg-accent-primary hover:bg-accent-primary-hover text-white font-mono font-black text-sm uppercase rounded-xl border border-border-brutalist dark:border-border-default shadow-[4px_4px_0px_var(--border-brutalist)] active:translate-x-[2px] active:translate-y-[2px] transition-all flex items-center justify-center gap-2.5"
+              className="w-full sm:w-auto px-8 py-3.5 bg-accent-primary hover:bg-accent-primary-hover text-white font-mono font-black text-sm rounded-xl border border-border-brutalist dark:border-border-default shadow-[4px_4px_0px_var(--border-brutalist)] active:translate-x-[2px] active:translate-y-[2px] transition-all flex items-center justify-center gap-2.5"
             >
               <Calculator size={18} />
               <span>{calculatedGpaResult ? "Recalculate GPA" : "Calculate GPA"}</span>

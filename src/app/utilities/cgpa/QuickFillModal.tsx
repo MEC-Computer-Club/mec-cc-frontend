@@ -228,7 +228,7 @@ export function QuickFillModal({
             type="button"
             onClick={handleApply}
             disabled={submitting}
-            className="px-5 py-2.5 rounded-xl bg-accent-primary hover:bg-accent-primary-hover text-white font-mono font-bold text-xs uppercase shadow-[3px_3px_0px_var(--border-brutalist)] active:translate-x-[1px] active:translate-y-[1px] transition-all flex items-center gap-2 disabled:opacity-60"
+            className="px-5 py-2.5 rounded-xl bg-accent-primary hover:bg-accent-primary-hover text-white font-mono font-bold text-xs shadow-[3px_3px_0px_var(--border-brutalist)] active:translate-x-[1px] active:translate-y-[1px] transition-all flex items-center gap-2 disabled:opacity-60"
           >
             {submitting ? (
               <>

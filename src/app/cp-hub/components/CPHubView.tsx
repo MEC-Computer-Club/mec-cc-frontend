@@ -740,7 +740,7 @@ function CPHubViewContent({
                     <div
                       key={r.id}
                       onClick={() => handleDocClick(r)}
-                      className="group relative cursor-pointer flex flex-col justify-between p-5 bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl transition-all duration-200 hover:shadow-[6px_6px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5"
+                      className="group relative cursor-pointer flex flex-col justify-between p-5 bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)]"
                     >
                       <div>
                         <div className="flex items-center justify-between gap-2 mb-2">
@@ -923,7 +923,7 @@ function CPHubViewContent({
               achievements.map((ach) => (
                 <div
                   key={ach.id || ach._id || ach.title}
-                  className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl p-6 shadow-[4px_4px_0px_0px_var(--border-default)] flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all hover:shadow-[5px_5px_0px_var(--accent-primary)]"
+                  className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)]"
                 >
                   <div className="space-y-1.5 flex-1">
                     <div className="flex items-center gap-2">

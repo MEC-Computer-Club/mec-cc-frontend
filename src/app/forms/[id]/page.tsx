@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { FormField } from "@/lib/types/form";
 import { Select } from "@/components/ui/Select";
+import { Button } from "@/components/ui/Button";
 import toast from "react-hot-toast";
 
 interface FormData {
@@ -732,18 +733,21 @@ export default function PublicFormViewPage() {
                 />
               </Link>
 
-              <button
+              <Button
                 type="submit"
+                variant="primary"
+                size="md"
                 disabled={submitting}
-                className="bg-text-primary text-surface-primary py-2.5 px-6 rounded-xl font-semibold hover:bg-surface-inverse transition flex items-center gap-2 shadow-[3px_3px_0px_0px_var(--border-default)] text-sm disabled:opacity-50 cursor-pointer"
+                icon={
+                  submitting ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Send className="w-4 h-4" />
+                  )
+                }
               >
-                {submitting ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Send className="w-4 h-4" />
-                )}
                 Submit
-              </button>
+              </Button>
             </div>
           </form>
         )}
