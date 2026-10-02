@@ -20,11 +20,11 @@ interface ButtonProps {
 
 const BUTTON_VARIANTS: Record<string, string> = {
   primary:
-    "bg-black text-white border-0 hover:not-disabled:bg-neutral-800 hover:not-disabled:shadow-[4px_4px_0px_0px_var(--accent-primary)] dark:bg-white dark:text-black dark:hover:not-disabled:bg-neutral-200 dark:hover:not-disabled:shadow-[4px_4px_0px_0px_var(--accent-primary)] hover:not-disabled:-translate-x-0.5 hover:not-disabled:-translate-y-0.5 active:not-disabled:translate-x-0 active:not-disabled:translate-y-0 active:not-disabled:shadow-none",
+    "bg-black text-white border border-black hover:not-disabled:bg-neutral-900 hover:not-disabled:shadow-[4px_4px_0px_0px_var(--accent-primary)] dark:bg-white dark:text-black dark:border-white dark:hover:not-disabled:bg-neutral-100 dark:hover:not-disabled:shadow-[4px_4px_0px_0px_var(--accent-primary)] transition-all duration-150",
   secondary:
-    "bg-transparent text-black border border-black hover:not-disabled:bg-neutral-100 hover:not-disabled:shadow-[4px_4px_0px_0px_black] dark:bg-transparent dark:text-white dark:border-white dark:hover:not-disabled:bg-neutral-900 dark:hover:not-disabled:shadow-[4px_4px_0px_0px_white] hover:not-disabled:-translate-x-0.5 hover:not-disabled:-translate-y-0.5 active:not-disabled:translate-x-0 active:not-disabled:translate-y-0 active:not-disabled:shadow-none",
+    "bg-transparent text-black border border-black hover:not-disabled:bg-neutral-100 hover:not-disabled:shadow-[4px_4px_0px_0px_var(--accent-primary)] dark:bg-transparent dark:text-white dark:border-white dark:hover:not-disabled:bg-neutral-900 dark:hover:not-disabled:shadow-[4px_4px_0px_0px_var(--accent-primary)] transition-all duration-150",
   outline:
-    "bg-transparent text-black border border-black hover:not-disabled:bg-neutral-100 hover:not-disabled:shadow-[4px_4px_0px_0px_black] dark:bg-transparent dark:text-white dark:border-white dark:hover:not-disabled:bg-neutral-900 dark:hover:not-disabled:shadow-[4px_4px_0px_0px_white] hover:not-disabled:-translate-x-0.5 hover:not-disabled:-translate-y-0.5 active:not-disabled:translate-x-0 active:not-disabled:translate-y-0 active:not-disabled:shadow-none",
+    "bg-transparent text-black border border-black hover:not-disabled:bg-neutral-100 hover:not-disabled:shadow-[4px_4px_0px_0px_var(--accent-primary)] dark:bg-transparent dark:text-white dark:border-white dark:hover:not-disabled:bg-neutral-900 dark:hover:not-disabled:shadow-[4px_4px_0px_0px_var(--accent-primary)] transition-all duration-150",
   ghost:
     "bg-transparent text-text-secondary font-semibold hover:not-disabled:text-text-primary hover:not-disabled:bg-surface-secondary",
 };
