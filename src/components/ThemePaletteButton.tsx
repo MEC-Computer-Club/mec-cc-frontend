@@ -41,7 +41,7 @@ export function ThemePaletteButton() {
         <div
           role="dialog"
           aria-label="Theme color selector"
-          className="absolute right-0 top-full mt-2 w-72 p-3 bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-2xl shadow-[4px_4px_0px_var(--border-brutalist)] z-[100] animate-in fade-in zoom-in-95 duration-150"
+          className="absolute right-0 top-full mt-2 w-72 p-3 bg-surface-elevated border border-border-default rounded-xl shadow-[4px_4px_0px_var(--accent-primary)] z-[100] animate-in fade-in zoom-in-95 duration-150"
         >
           <ThemeColorPicker onSelect={() => setIsOpen(false)} />
         </div>

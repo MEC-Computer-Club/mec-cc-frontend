@@ -51,7 +51,7 @@ export function HomeSponsors({ sponsors }: HomeSponsorsProps) {
       sponsor.logoUrl?.includes("1777010120574");
 
     const cardBody = (
-      <div className={`group flex items-center gap-3 px-3.5 py-1.5 bg-surface-elevated hover:bg-surface-secondary border-2 border-border-brutalist dark:border-border-default rounded-xl hover:shadow-[4px_4px_0px_var(--accent-primary)] hover:border-accent-primary transition-shadow duration-200 flex-shrink-0 cursor-pointer ${
+      <div className={`group flex items-center gap-3 px-3.5 py-1.5 bg-surface-elevated hover:bg-surface-secondary border border-border-default rounded-xl shadow-[4px_4px_0px_var(--accent-primary)] hover:border-accent-primary transition-colors duration-200 flex-shrink-0 cursor-pointer ${
         isCompact ? "h-14 min-w-[190px] max-w-[240px]" : "h-16 min-w-[220px] max-w-[280px]"
       }`}>
         {/* Logo Showcase or Monogram */}
@@ -139,23 +139,23 @@ export function HomeSponsors({ sponsors }: HomeSponsorsProps) {
       </div>
 
       {/* Desktop Single-Line Marquee Track */}
-      <div className="hidden md:block relative w-full overflow-hidden marquee-mask py-2 select-none">
+      <div className="hidden md:block relative w-full overflow-hidden marquee-mask py-3 select-none">
         <div className="animate-marquee flex items-center gap-4">
           {marqueeItems.map((sponsor, idx) => renderCard(sponsor, idx, false))}
         </div>
       </div>
 
       {/* Mobile Dual Opposing Sliders (Different content across both rows, opposite directions) */}
-      <div className="block md:hidden space-y-3 py-1 select-none marquee-mask">
+      <div className="block md:hidden space-y-3 py-2 select-none marquee-mask">
         {/* Row 1: Right to Left */}
-        <div className="relative w-full overflow-hidden py-1.5">
+        <div className="relative w-full overflow-hidden py-2">
           <div className="animate-marquee flex items-center gap-3">
             {mobileRow1Items.map((sponsor, idx) => renderCard(sponsor, `m1-${idx}`, true))}
           </div>
         </div>
 
         {/* Row 2: Left to Right (Reverse direction with different content) */}
-        <div className="relative w-full overflow-hidden py-1.5">
+        <div className="relative w-full overflow-hidden py-2">
           <div className="animate-marquee-reverse flex items-center gap-3">
             {mobileRow2Items.map((sponsor, idx) => renderCard(sponsor, `m2-${idx}`, true))}
           </div>
