@@ -303,7 +303,7 @@ function DevelopersContent() {
                 className="w-full lg:w-[calc(50%-14px)] text-inherit no-underline transition-all duration-200 group relative flex"
                 id={`developer-${dev.id}`}
               >
-                <div className="flex flex-col sm:flex-row items-stretch w-full h-full bg-surface-elevated border-[1.5px] border-border-brutalist dark:border-border-default rounded-xl overflow-hidden hover:shadow-[5px_5px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5">
+                <div className="flex flex-col sm:flex-row items-stretch w-full h-full bg-surface-elevated border-[1.5px] border-border-brutalist dark:border-border-default rounded-xl overflow-hidden transition-shadow duration-200 hover:shadow-[6px_6px_0px_var(--accent-primary)]">
                   {/* Left: Square Photo matching Card Height */}
                   <div className="w-full sm:w-52 md:w-56 lg:w-60 aspect-square sm:aspect-square sm:self-stretch shrink-0 relative bg-surface-secondary border-b-[1.5px] sm:border-b-0 sm:border-r-[1.5px] border-border-brutalist dark:border-border-default overflow-hidden flex items-center justify-center">
                     {dev.photo ? (
