@@ -118,6 +118,8 @@ export interface Event {
   customHtmlSection?: string;
   attendeeCount?: number;
   registeredCount?: number;
+  approvedCount?: number;
+  pendingCount?: number;
   tags?: string[];
   linkedForm?: string;
   isFormClosed?: boolean;

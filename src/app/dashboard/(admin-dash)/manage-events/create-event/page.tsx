@@ -1298,6 +1298,8 @@ function CreateEventFormContent() {
             ? form.coverImagePosition
             : form.bannerImagePosition
         }
+        eventTitle={form.title || "Event Title Preview"}
+        category={form.category || "EVENT"}
         onSavePosition={(pos) => {
           if (positionModal.type === "cover") {
             set("coverImagePosition", pos);

@@ -143,17 +143,29 @@ export default async function EventDetailPage({
         {/* ── 1. Hero Header Banner ── */}
         <div className="relative rounded-2xl border-2 border-border-brutalist bg-surface-elevated overflow-hidden shadow-[6px_6px_0px_var(--border-brutalist)]">
           {event.image && (
-            <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] md:aspect-[2.3/1] min-h-[260px] max-h-[520px] bg-surface-secondary overflow-hidden border-b-2 border-border-brutalist">
+            <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] md:aspect-[2.3/1] min-h-[260px] max-h-[520px] bg-surface-secondary overflow-hidden border-b-2 border-border-brutalist flex items-center justify-center">
+              {(event.bannerImagePosition || event.coverImagePosition || "").includes("contain") && (
+                <img
+                  src={event.bannerImageUrl || event.image}
+                  alt=""
+                  aria-hidden="true"
+                  className="absolute inset-0 w-full h-full object-cover blur-lg opacity-35 scale-110 pointer-events-none"
+                />
+              )}
               <Image
                 src={event.bannerImageUrl || event.image}
                 alt={event.title}
                 fill
-                className="object-cover"
-                style={{ objectPosition: event.bannerImagePosition || event.coverImagePosition || "50% 50%" }}
+                className={(event.bannerImagePosition || event.coverImagePosition || "").includes("contain") ? "object-contain relative z-10" : "object-cover"}
+                style={{
+                  objectPosition: (event.bannerImagePosition || event.coverImagePosition || "").includes("contain")
+                    ? "center"
+                    : (event.bannerImagePosition || event.coverImagePosition || "50% 50%"),
+                }}
                 unoptimized
                 priority
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20 pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20 pointer-events-none z-15" />
               <div className="absolute top-4 left-4 flex flex-wrap gap-2">
                 <Badge
                   variant={

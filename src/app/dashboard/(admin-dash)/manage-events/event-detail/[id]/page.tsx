@@ -150,6 +150,8 @@ interface EventData {
   attendees: UserRef[];
   approvedParticipants?: ApprovedParticipant[];
   pendingParticipants: PendingParticipant[];
+  approvedCount?: number;
+  pendingCount?: number;
   allowParticipationClaims?: boolean;
   participationClaims?: Array<{
     _id: string;
@@ -404,12 +406,35 @@ function TabBtn({ active, onClick, children, badge }: {
 // Tab 1: Overview
 // ─────────────────────────────────────────────────────────────────────────────
 function OverviewTab({ event }: { event: EventData }) {
+  const isCompleted = event.status === "completed" || event.status === "past";
+  const attendanceLabel = isCompleted ? "Attended" : "Attending";
+
+  // Calculate full count of approved participants (both registered users & guest/form applicants)
+  const approvedIds = new Set<string>();
+  (event.approvedParticipants || []).forEach((p: any) => {
+    const key = p.userId?._id || p.userId || p.email || p._id;
+    if (key) approvedIds.add(String(key).toLowerCase());
+  });
+  (event.attendees || []).forEach((u: any) => {
+    const key = u._id || u.email;
+    if (key) approvedIds.add(String(key).toLowerCase());
+  });
+  const totalApproved =
+    typeof event.approvedCount === "number"
+      ? Math.max(event.approvedCount, approvedIds.size)
+      : Math.max(approvedIds.size, event.approvedParticipants?.length || 0, event.attendees.length);
+
+  const pendingTotal =
+    typeof event.pendingCount === "number"
+      ? event.pendingCount
+      : event.pendingParticipants.length;
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard icon={Users} label="Attendees" value={event.attendees.length}
+        <StatCard icon={Users} label={attendanceLabel} value={totalApproved}
           color="bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400" />
-        <StatCard icon={Clock} label="Pending" value={event.pendingParticipants.length}
+        <StatCard icon={Clock} label="Pending" value={pendingTotal}
           color="bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400" />
         <StatCard icon={Award} label="Certificates" value={event.certificates.length}
           color="bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-400" />
@@ -468,9 +493,10 @@ function OverviewTab({ event }: { event: EventData }) {
         </div>
 
         {event.description && (
-          <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-800 pt-4">
-            {event.description}
-          </p>
+          <div
+            className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-800 pt-4 prose prose-sm dark:prose-invert max-w-none"
+            dangerouslySetInnerHTML={{ __html: event.description }}
+          />
         )}
 
         {event.tags.length > 0 && (

@@ -101,6 +101,14 @@ function mapBackendEvent(e: any): Event {
     customHtmlSection: e.customHtmlSection,
     attendeeCount: e.participants?.length ?? (Array.isArray(e.attendees) ? e.attendees.length : (typeof e.attendeeCount === "number" ? e.attendeeCount : 0)),
     registeredCount: typeof e.registeredCount === "number" ? e.registeredCount : undefined,
+    approvedCount: typeof e.approvedCount === "number"
+      ? e.approvedCount
+      : (Array.isArray(e.approvedParticipants) && e.approvedParticipants.length > 0
+          ? e.approvedParticipants.length
+          : (Array.isArray(e.attendees) ? e.attendees.length : (typeof e.attendeeCount === "number" ? e.attendeeCount : 0))),
+    pendingCount: typeof e.pendingCount === "number"
+      ? e.pendingCount
+      : (Array.isArray(e.pendingParticipants) ? e.pendingParticipants.length : 0),
     tags: e.tags || [],
     linkedForm: e.linkedForm?.code || (e.linkedForm?._id ? String(e.linkedForm._id) : (e.linkedForm ? String(e.linkedForm) : (e.forms && e.forms[0]?.code ? String(e.forms[0].code) : (e.forms && e.forms[0]?._id ? String(e.forms[0]._id) : (e.forms && e.forms[0] ? String(e.forms[0]) : undefined))))),
     isFormClosed: Boolean(e.isFormClosed),

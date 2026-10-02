@@ -31,6 +31,7 @@ type EventItem = {
   date: string;
   eventTime: string;
   attendees: string[];
+  approvedParticipants?: any[];
   isUpcoming: boolean;
   registrationLink: string;
   location: string;
@@ -39,6 +40,10 @@ type EventItem = {
   category: string;
   createdAt?: string;
   registeredCount?: number;
+  approvedCount?: number;
+  pendingCount?: number;
+  registrationDeadline?: string;
+  isFormClosed?: boolean;
 };
 
 type FormItem = {
@@ -48,7 +53,40 @@ type FormItem = {
   startDate: string;
   endDate: string;
   createdAt?: string;
+  responsesCount?: number;
 };
+
+function getEventAttendanceStats(event: EventItem) {
+  const isCompleted = event.status === "completed" || event.status === "past";
+  const deadlinePassed = event.registrationDeadline
+    ? new Date(event.registrationDeadline) < new Date()
+    : false;
+  const isRegClosed = isCompleted || event.isFormClosed || deadlinePassed || event.status === "ongoing";
+
+  const approved =
+    typeof event.approvedCount === "number"
+      ? event.approvedCount
+      : Array.isArray(event.approvedParticipants) && event.approvedParticipants.length > 0
+      ? event.approvedParticipants.length
+      : Array.isArray(event.attendees)
+      ? event.attendees.length
+      : 0;
+
+  const registered =
+    typeof event.registeredCount === "number"
+      ? event.registeredCount
+      : Array.isArray(event.attendees)
+      ? event.attendees.length
+      : 0;
+
+  if (isCompleted) {
+    return { count: approved, label: "attended" };
+  } else if (isRegClosed) {
+    return { count: approved, label: "attending" };
+  } else {
+    return { count: registered, label: "registered" };
+  }
+}
 
 const PAGE_SIZE = 6;
 
@@ -351,12 +389,17 @@ export default function EventsManagementPage() {
                         {event.location || "TBA"}
                       </td>
                       <td className="py-3.5 px-4">
-                        <span className="font-bold text-text-primary">
-                          {typeof event.registeredCount === "number"
-                            ? event.registeredCount
-                            : event.attendees?.length || 0}
-                        </span>{" "}
-                        registered
+                        {(() => {
+                          const stats = getEventAttendanceStats(event);
+                          return (
+                            <>
+                              <span className="font-bold text-text-primary">
+                                {stats.count}
+                              </span>{" "}
+                              {stats.label}
+                            </>
+                          );
+                        })()}
                       </td>
                       <td className="py-3.5 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                         {canManage && (
@@ -480,12 +523,17 @@ export default function EventsManagementPage() {
                       </div>
                       <div className="flex items-center text-sm text-text-secondary gap-2">
                         <Users size={14} />
-                        <span className="font-semibold text-text-primary">
-                          {typeof event.registeredCount === "number"
-                            ? event.registeredCount
-                            : event.attendees?.length ?? 0}
-                        </span>{" "}
-                        registered
+                        {(() => {
+                          const stats = getEventAttendanceStats(event);
+                          return (
+                            <>
+                              <span className="font-semibold text-text-primary">
+                                {stats.count}
+                              </span>{" "}
+                              {stats.label}
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
                   </div>
@@ -639,7 +687,7 @@ export default function EventsManagementPage() {
                             onClick={() => router.push(`/dashboard/manage-events/forms/${form._id}`)}
                             className="px-2.5 py-1.5 rounded-lg border border-border-default bg-surface-elevated text-xs font-bold text-accent-primary hover:underline transition"
                           >
-                            Responses
+                            Responses ({form.responsesCount ?? 0})
                           </button>
                           {canManage && (
                           <button
@@ -740,6 +788,12 @@ export default function EventsManagementPage() {
                       <div className="flex items-center text-sm text-text-secondary gap-2">
                         <Calendar size={14} />
                         Ends: {form.endDate ? new Date(form.endDate).toDateString().split(" ").slice(1).join(" ") : "No deadline"}
+                      </div>
+                      <div className="flex items-center text-sm text-text-secondary gap-2">
+                        <Users size={14} />
+                        <span>
+                          Responses: <strong className="text-text-primary font-bold">{form.responsesCount ?? 0}</strong>
+                        </span>
                       </div>
                     </div>
                   </div>

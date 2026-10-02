@@ -25,6 +25,9 @@ interface EventCardProps {
   slug: string;
   attendeeCount?: number;
   registeredCount?: number;
+  approvedCount?: number;
+  isRegistrationClosed?: boolean;
+  registrationDeadline?: string;
   linkedForm?: string;
   registrationUrl?: string;
   registrationLink?: string;
@@ -46,6 +49,9 @@ export function EventCard({
   slug,
   attendeeCount,
   registeredCount,
+  approvedCount,
+  isRegistrationClosed,
+  registrationDeadline,
   linkedForm,
   registrationUrl,
   registrationLink,
@@ -58,9 +64,21 @@ export function EventCard({
   const isUpcoming = status === "upcoming" || status === "scheduled";
   const isCancelled = status === "cancelled";
   const isPostponed = status === "postponed";
+  const isCompleted = status === "past" || status === "completed";
+  const deadlinePassed = registrationDeadline ? new Date(registrationDeadline) < new Date() : false;
+  const isRegClosed = isCompleted || isRegistrationClosed || deadlinePassed || isOngoing;
 
   const displayImage = coverImageUrl || bannerImageUrl || image;
   const displayPosition = coverImagePosition || bannerImagePosition || "50% 50%";
+  const isContain = displayPosition.includes("contain");
+
+  const countApproved = approvedCount ?? attendeeCount ?? 0;
+  const countRegistered = registeredCount ?? attendeeCount ?? 0;
+  const attendanceText = isCompleted
+    ? `${countApproved} ATTENDED`
+    : isRegClosed
+    ? `${countApproved} ATTENDING`
+    : `${countRegistered} REGISTERED`;
 
   const statusLabel = isOngoing
     ? "LIVE NOW"
@@ -88,15 +106,25 @@ export function EventCard({
       className="flex flex-col w-full h-full min-h-[240px] bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl overflow-hidden transition-all duration-200 hover:shadow-[6px_6px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5 no-underline text-inherit group"
       id={`event-${slug}`}
     >
-      {/* Event Cover Image (with custom focal positioning) */}
+      {/* Event Cover Image (with custom focal positioning or contain fit) */}
       {displayImage && (
-        <div className="w-full h-44 relative overflow-hidden bg-surface-secondary border-b border-border-default">
+        <div className="w-full h-44 relative overflow-hidden bg-surface-secondary border-b border-border-default flex items-center justify-center">
+          {isContain && (
+            <img
+              src={displayImage}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 w-full h-full object-cover blur-md opacity-30 scale-110 pointer-events-none"
+            />
+          )}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={displayImage}
             alt={title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            style={{ objectPosition: displayPosition }}
+            className={`w-full h-full group-hover:scale-105 transition-transform duration-300 ${
+              isContain ? "object-contain relative z-10" : "object-cover"
+            }`}
+            style={{ objectPosition: isContain ? "center" : displayPosition }}
             onError={(e) => {
               (e.currentTarget.parentElement as HTMLElement)?.style.setProperty("display", "none");
             }}
@@ -154,9 +182,7 @@ export function EventCard({
           
           <div className="flex items-center justify-between mt-auto pt-3 border-t border-text-primary/15 dark:border-border-default bg-surface-primary dark:bg-transparent gap-2 flex-wrap">
             <div className="font-mono [font-feature-settings:'liga'_0,'calt'_0] text-xs text-text-primary font-bold">
-              {(status === "past" || status === "completed")
-                ? `${attendeeCount ?? 0} ATTENDED`
-                : `${registeredCount ?? attendeeCount ?? 0} REGISTERED`}
+              {attendanceText}
             </div>
 
             <span className="font-mono [font-feature-settings:'liga'_0,'calt'_0] text-xs font-bold uppercase text-text-secondary group-hover:text-accent-primary transition-colors">
