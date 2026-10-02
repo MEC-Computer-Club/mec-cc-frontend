@@ -218,12 +218,15 @@ function DevelopersContent() {
       {/* ── Page Hero Header ── */}
       <section className="pt-10 md:pt-14 pb-8 md:pb-12 border-b border-border-default bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-accent-primary-light/15 via-surface-primary to-surface-primary">
         <div className="container max-w-4xl mx-auto px-4 text-center">
-          <span className="kicker">Core Leadership & Maintainers</span>
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[4px] bg-black text-white dark:bg-white dark:text-black font-mono text-xs font-bold uppercase tracking-wider mb-4 border border-black dark:border-white shadow-[2.5px_2.5px_0px_var(--accent-primary)]">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>100% In-House Architecture • Powered by Club Nodes</span>
+          </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black font-heading tracking-tight text-black dark:text-text-primary mb-3">
             The Minds Behind the Platform
           </h1>
           <p className="text-base sm:text-lg text-text-secondary max-w-2xl mx-auto leading-relaxed">
-            Architected, designed, and actively engineered by student developers of the{" "}
+            Zero outsourcing. No off-the-shelf templates. Architected, designed, and actively engineered by student club nodes of the{" "}
             <strong className="text-black dark:text-text-primary font-bold">
               Department of Computer Science & Engineering
             </strong>{" "}
@@ -279,198 +282,223 @@ function DevelopersContent() {
         </div>
       )}
 
-      {/* ── Core Developers Section (Option 1 Layout) ── */}
+      {/* ── System Ethos // Built by Club Nodes Callout Box ── */}
+      <section className="container max-w-5xl mx-auto px-4 pt-8">
+        <div className="rounded-xl bg-surface-secondary/80 border-[1.5px] border-border-brutalist dark:border-border-default shadow-[4px_4px_0px_var(--border-brutalist)] p-5 sm:p-6 relative overflow-hidden">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-4 border-b border-border-default/60">
+            <div className="flex items-center gap-2.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span className="font-mono text-xs font-bold tracking-wider text-text-primary uppercase">
+                // SYSTEM ETHOS: BUILT BY OUR OWN NODES
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 font-mono text-[11px] font-bold">
+              <span className="px-2.5 py-0.5 rounded-[4px] bg-black text-white dark:bg-white dark:text-black border border-black dark:border-white">
+                ⚡ 100% Student-Crafted
+              </span>
+              <span className="px-2.5 py-0.5 rounded-[4px] bg-surface-elevated text-text-primary border border-border-default">
+                🛡️ Zero Third-Party
+              </span>
+              <span className="px-2.5 py-0.5 rounded-[4px] bg-accent-primary/15 text-accent-primary border border-accent-primary/40">
+                🌐 Living Ecosystem
+              </span>
+            </div>
+          </div>
+          <p className="pt-3.5 text-sm sm:text-base text-text-secondary leading-relaxed max-w-3xl">
+            We believe a computer club shouldn’t run on black-box tools or rented systems. Every pixel, route, database schema, and custom canvas engine on this platform was crafted from scratch by the very student members who use it every day.
+          </p>
+        </div>
+      </section>
+
+      {/* ── Developer Cards Section (Max 2 per row, centered if 1) ── */}
       <section className="container max-w-5xl mx-auto px-4 py-8 md:py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
-          {developers.map((dev, idx) => (
-            <article
-              key={`${dev.id}-${idx}`}
-              className="flex flex-col w-full h-full bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl overflow-hidden transition-all duration-200 hover:shadow-[6px_6px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5 no-underline text-inherit group relative"
-              id={`developer-${dev.id}`}
-            >
-              {/* 1. Header Meta Bar */}
-              <div className="flex items-center justify-between px-5 py-3 border-b border-border-default/60 bg-surface-secondary/40">
-                <div className="inline-flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-accent-primary animate-pulse" />
-                  <span className="font-mono text-[0.7rem] font-extrabold tracking-wider uppercase text-accent-text-on-surface dark:text-accent-primary">
-                    CORE ARCHITECT
-                  </span>
-                </div>
-                <div className="font-mono text-xs font-bold text-text-primary bg-surface-secondary py-0.5 px-2.5 border border-border-brutalist dark:border-border-default rounded-sm">
-                  ID: {dev.id}
-                </div>
-              </div>
+        <div className="flex flex-wrap justify-center gap-6 md:gap-7 w-full items-stretch">
+          {developers.map((dev, idx) => {
+            const deptClean = dev.department.replace(/^Department of\s+/i, "").trim();
+            let batchClean = dev.batch.replace(/\s*Batch$/i, "").trim();
+            if (batchClean.toUpperCase().startsWith(`${deptClean.toUpperCase()}-`)) {
+              batchClean = batchClean.slice(deptClean.length + 1).trim();
+            } else if (batchClean.toUpperCase().startsWith(deptClean.toUpperCase())) {
+              batchClean = batchClean.slice(deptClean.length).replace(/^[-\s]+/, "").trim();
+            }
+            const deptBatchDisplay = `${deptClean}-${batchClean}`;
+            const featuresText = dev.featuresWorkedOn?.map((f) => f.title).join(", ") || "";
 
-              {/* 2. Unified Profile & Credentials Block */}
-              <div className="p-6 pb-4">
-                <div className="flex items-start sm:items-center justify-between gap-3">
-                  <div className="flex items-start gap-4 flex-1 min-w-0">
-                    {/* Portrait Photo / Avatar */}
-                    <div className="w-20 h-20 sm:w-22 sm:h-22 rounded-xl bg-surface-secondary border border-border-brutalist dark:border-border-default shrink-0 overflow-hidden relative shadow-xs flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-                      {dev.photo ? (
-                        <Image
-                          src={dev.photo}
-                          alt={dev.name}
-                          fill
-                          className="object-cover"
-                          unoptimized={dev.photo.startsWith("http")}
-                        />
-                      ) : (
-                        <div
-                          className={`w-full h-full bg-gradient-to-br ${dev.avatarBg} text-white font-heading font-black text-2xl sm:text-3xl flex items-center justify-center select-none`}
-                        >
-                          {dev.initials}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Primary Identity Info */}
-                    <div className="flex-1 min-w-0">
-                      <h3
-                        className="font-bold text-xl sm:text-2xl text-black dark:text-text-primary group-hover:text-accent-primary-hover transition-colors leading-tight truncate"
-                        title={dev.name}
+            return (
+              <article
+                key={`${dev.id}-${idx}`}
+                className="w-full lg:w-[calc(50%-14px)] text-inherit no-underline transition-all duration-200 group relative flex"
+                id={`developer-${dev.id}`}
+              >
+                <div className="flex flex-col sm:flex-row items-stretch w-full h-full bg-surface-elevated border-[1.5px] border-border-brutalist dark:border-border-default rounded-xl overflow-hidden hover:shadow-[5px_5px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5">
+                  {/* Left: Square Photo matching Card Height */}
+                  <div className="w-full sm:w-52 md:w-56 lg:w-60 aspect-square sm:aspect-square sm:self-stretch shrink-0 relative bg-surface-secondary border-b-[1.5px] sm:border-b-0 sm:border-r-[1.5px] border-border-brutalist dark:border-border-default overflow-hidden flex items-center justify-center">
+                    {dev.photo ? (
+                      <Image
+                        src={dev.photo}
+                        alt={dev.name}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        unoptimized={dev.photo.startsWith("http")}
+                      />
+                    ) : (
+                      <div
+                        className={`w-full h-full bg-gradient-to-br ${dev.avatarBg} text-white font-heading font-black text-3xl sm:text-4xl flex items-center justify-center select-none group-hover:scale-105 transition-transform duration-300`}
                       >
-                        {dev.name}
-                      </h3>
-                      <p className="font-mono text-xs font-semibold text-accent-primary-hover uppercase tracking-wider mt-1 line-clamp-1">
+                        {dev.initials}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Right: Content Beside Photo */}
+                  <div className="flex-1 min-w-0 p-4 sm:p-5 flex flex-col justify-between">
+                    <div>
+                      {/* Top: Name & Maintainer Action */}
+                      <div className="flex items-start justify-between gap-2">
+                        <h3
+                          className="font-black text-2xl sm:text-3xl md:text-[1.85rem] text-black dark:text-text-primary group-hover:text-accent-primary transition-colors leading-tight truncate"
+                          title={dev.name}
+                        >
+                          {dev.name}
+                        </h3>
+
+                        {canManage && (
+                          <div className="relative shrink-0" data-dropdown-menu="true">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setOpenMenuId(openMenuId === dev.id ? null : dev.id);
+                              }}
+                              className="w-7 h-7 rounded-md flex items-center justify-center text-text-tertiary hover:text-text-primary hover:bg-surface-secondary cursor-pointer"
+                              aria-label="Options"
+                            >
+                              <MoreVertical size={16} />
+                            </button>
+                            {openMenuId === dev.id && (
+                              <div className="absolute right-0 top-full mt-1 z-50 w-32 bg-surface-elevated border-[1.5px] border-text-primary dark:border-border-default rounded-md shadow-[3px_3px_0px_var(--accent-primary)] overflow-hidden p-0 animate-in fade-in duration-100">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setOpenMenuId(null);
+                                    setEditingDev(dev);
+                                    setIsAddModalOpen(true);
+                                  }}
+                                  className="w-full flex items-center px-3 py-2 text-xs font-semibold text-text-secondary hover:bg-accent-primary-light hover:text-text-primary border-b border-border-default/60 cursor-pointer"
+                                >
+                                  <Pencil size={12} className="mr-2 opacity-70" />
+                                  <span>Edit</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveDeveloper(dev.id, dev.name)}
+                                  className="w-full flex items-center px-3 py-2 text-xs font-semibold text-text-secondary hover:bg-red-500/10 hover:text-accent-error cursor-pointer"
+                                >
+                                  <Trash2 size={12} className="mr-2 text-red-500 opacity-80" />
+                                  <span>Delete</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Below Name: Role */}
+                      <p className="font-mono text-xs font-bold text-accent-primary uppercase tracking-wider mt-1 line-clamp-1">
                         {dev.role}
                       </p>
 
-                      {/* Academic Credentials Badges */}
-                      <div className="mt-2.5 flex flex-wrap items-center gap-1.5 font-mono text-[11px]">
-                        <span className="px-2 py-0.5 rounded-sm bg-surface-secondary text-text-primary border border-border-default font-semibold">
-                          {dev.department}
+                      {/* Then: Distinct Batch & Session Placement */}
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-[4px] bg-text-primary text-surface-primary font-mono text-[11px] font-extrabold uppercase tracking-wide">
+                          {deptBatchDisplay}
                         </span>
-                        <span className="px-2 py-0.5 rounded-sm bg-surface-secondary text-text-secondary border border-border-default">
-                          {dev.batch}
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-[4px] bg-surface-secondary text-text-primary border border-black dark:border-white/50 font-mono text-[11px] font-semibold">
+                          {dev.session.replace(/20(\d{2})-20(\d{2})/, "20$1-$2")}
                         </span>
-                        <span className="px-2 py-0.5 rounded-sm bg-surface-secondary text-text-tertiary border border-border-default">
-                          {dev.session}
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-[4px] bg-accent-primary/15 text-accent-primary border border-accent-primary/40 font-mono text-[11px] font-bold tracking-wide">
+                          ⚡ Core Node
                         </span>
                       </div>
-                    </div>
-                  </div>
 
-                  {/* 3-Dot Options Action Menu (Right Mid of Profile Section) */}
-                  {canManage && (
-                    <div
-                      className="relative shrink-0 self-center"
-                      data-dropdown-menu="true"
-                    >
-                      {/* Borderless 3-Dot Button */}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setOpenMenuId(openMenuId === dev.id ? null : dev.id);
-                        }}
-                        className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors cursor-pointer ${
-                          openMenuId === dev.id
-                            ? "bg-surface-secondary text-text-primary"
-                            : "text-text-tertiary hover:text-text-primary hover:bg-surface-secondary/80"
-                        }`}
-                        aria-label="Contributor options"
-                        title="Options (Edit & Delete)"
-                      >
-                        <MoreVertical size={18} />
-                      </button>
-
-                      {/* Compact Dropdown Menu (rounded-md, zero-padding for full row hover coverage) */}
-                      {openMenuId === dev.id && (
-                        <div
-                          className="absolute right-0 top-full mt-1.5 z-50 w-36 bg-surface-elevated border-[1.5px] border-text-primary dark:border-border-default rounded-md shadow-[3px_3px_0px_0px_var(--accent-primary)] overflow-hidden animate-in fade-in zoom-in-95 duration-150 p-0"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setOpenMenuId(null);
-                              setEditingDev(dev);
-                              setIsAddModalOpen(true);
-                            }}
-                            className="w-full flex items-center px-3.5 py-2.5 text-xs font-semibold text-text-secondary border-b border-border-default/60 transition-colors text-left hover:bg-accent-primary-light hover:text-text-primary hover:font-bold dark:hover:bg-[color-mix(in_srgb,var(--accent-primary)_25%,var(--surface-primary))] dark:hover:text-white cursor-pointer group"
-                          >
-                            <Pencil
-                              size={13}
-                              className="mr-2.5 shrink-0 opacity-70 group-hover:opacity-100"
-                            />
-                            <span>Edit</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              handleRemoveDeveloper(dev.id, dev.name);
-                            }}
-                            className="w-full flex items-center px-3.5 py-2.5 text-xs font-semibold text-text-secondary transition-colors text-left hover:bg-red-500/10 hover:text-accent-error dark:hover:text-red-400 hover:font-bold cursor-pointer group"
-                          >
-                            <Trash2
-                              size={13}
-                              className="mr-2.5 shrink-0 text-red-500 opacity-80 group-hover:opacity-100"
-                            />
-                            <span>Delete</span>
-                          </button>
+                      {/* Then: Redesigned Contribution Segment */}
+                      <div className="mt-3 p-2.5 sm:p-3 rounded-md bg-surface-secondary/70 dark:bg-surface-secondary/40 border border-border-default border-l-[3.5px] border-l-accent-primary">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <Layers size={13} className="text-accent-primary shrink-0" />
+                          <span className="font-mono text-[10px] font-extrabold uppercase tracking-widest text-text-primary">
+                            Contributions
+                          </span>
                         </div>
+                        <p className="text-xs text-text-secondary leading-relaxed line-clamp-3">
+                          {dev.featuresWorkedOn.map((feat, i) => (
+                            <span key={i}>
+                              <span className="font-semibold text-text-primary hover:text-accent-primary transition-colors">
+                                {feat.title}
+                              </span>
+                              {i < dev.featuresWorkedOn.length - 1 && (
+                                <span className="text-text-tertiary mr-1.5 font-normal">,</span>
+                              )}
+                            </span>
+                          ))}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Bottom: Two Buttons Side by Side */}
+                    <div className="mt-4 pt-3 border-t border-border-default/60 flex items-center gap-2">
+                      <Link
+                        href={dev.profileUrl}
+                        className="flex-1 h-9 px-3 rounded-md bg-black text-white dark:bg-white dark:text-black font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 border border-black dark:border-white transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_var(--accent-primary)] whitespace-nowrap"
+                      >
+                        <span>View Profile</span>
+                        <ArrowRight size={13} />
+                      </Link>
+                      {dev.github && (
+                        <a
+                          href={dev.github}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex-1 sm:flex-initial h-9 px-3 rounded-md bg-transparent text-text-primary border border-text-primary dark:border-border-default hover:bg-surface-secondary font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_var(--text-primary)] dark:hover:shadow-[3px_3px_0px_var(--accent-primary)] whitespace-nowrap"
+                        >
+                          <IconGitHub className="w-3.5 h-3.5" />
+                          <span>GitHub</span>
+                          <ExternalLink size={11} className="opacity-60" />
+                        </a>
                       )}
                     </div>
-                  )}
+                  </div>
                 </div>
-              </div>
+              </article>
+            );
+          })}
+        </div>
+      </section>
 
-              {/* 3. Features Worked On (Unboxed, Scannable Typographic List) */}
-              <div className="px-6 py-4 flex-1 border-t border-border-default/60">
-                <div className="flex items-center gap-2 mb-3">
-                  <Layers size={14} className="text-accent-primary" />
-                  <h4 className="font-mono text-xs font-bold uppercase tracking-wider text-text-primary">
-                    Features Worked On
-                  </h4>
-                </div>
+      {/* ── Contributor Node Invitation CTA ── */}
+      <section className="container max-w-5xl mx-auto px-4 pb-12">
+        <div className="p-6 md:p-8 rounded-xl bg-surface-secondary/80 border-[1.5px] border-border-brutalist dark:border-border-default shadow-[5px_5px_0px_var(--border-brutalist)] flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-2 text-center md:text-left max-w-xl">
+            <div className="inline-flex items-center gap-2 font-mono text-xs font-bold text-accent-primary uppercase tracking-wider">
+              <span className="w-2 h-2 rounded-full bg-accent-primary" />
+              <span>// OPEN CALL FOR CLUB MEMBERS</span>
+            </div>
+            <h3 className="text-xl md:text-2xl font-black font-heading text-text-primary">
+              Every member is a node. Leave your mark on the codebase.
+            </h3>
+            <p className="text-sm text-text-secondary leading-relaxed">
+              Have an idea for a student utility or spotted an issue? Fork our open-source repositories, submit your pull request, and join the platform maintainer roster.
+            </p>
+          </div>
 
-                <ul className="space-y-3">
-                  {dev.featuresWorkedOn.map((feat, idx) => (
-                    <li key={idx} className="flex items-start gap-2.5 text-xs">
-                      <span className="w-1.5 h-1.5 rounded-full bg-accent-primary shrink-0 mt-1.5" />
-                      <div className="leading-snug">
-                        <strong className="text-text-primary font-bold">
-                          {feat.title}
-                        </strong>
-                        {feat.desc ? (
-                          <>
-                            <span>: </span>
-                            <span className="text-text-secondary">{feat.desc}</span>
-                          </>
-                        ) : null}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* 4. Action Buttons (View Profile + GitHub Link) */}
-              <div className="p-4 sm:p-6 pt-4 border-t border-border-default/60 flex flex-row items-center gap-2 sm:gap-2.5 bg-surface-secondary/20">
-                <Link
-                  href={dev.profileUrl}
-                  className="flex-1 h-10 px-3 sm:px-4 rounded-md bg-black text-white dark:bg-white dark:text-black font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 border border-black dark:border-white transition-all hover:bg-neutral-800 dark:hover:bg-neutral-200 hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_var(--accent-primary)] active:translate-x-0 active:translate-y-0 active:shadow-none whitespace-nowrap"
-                >
-                  <span>View Profile</span>
-                  <ArrowRight size={13} />
-                </Link>
-
-                {dev.github && (
-                  <a
-                    href={dev.github}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 sm:flex-initial h-10 px-3 sm:px-4 rounded-md bg-transparent text-black border border-black hover:bg-neutral-100 hover:shadow-[3px_3px_0px_black] dark:bg-transparent dark:text-white dark:border-white dark:hover:bg-neutral-900 dark:hover:shadow-[3px_3px_0px_white] font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0 active:translate-y-0 active:shadow-none whitespace-nowrap"
-                  >
-                    <IconGitHub className="w-4 h-4" />
-                    <span>GitHub</span>
-                    <ExternalLink size={12} className="opacity-60" />
-                  </a>
-                )}
-              </div>
-            </article>
-          ))}
+          <a
+            href="https://github.com/mec-computer-club"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="h-11 px-5 rounded-md bg-black text-white dark:bg-white dark:text-black font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 border border-black dark:border-white transition-all hover:-translate-y-0.5 hover:shadow-[3.5px_3.5px_0px_var(--accent-primary)] shrink-0 whitespace-nowrap"
+          >
+            <span>Contribute on GitHub</span>
+            <ExternalLink size={14} />
+          </a>
         </div>
       </section>
 
