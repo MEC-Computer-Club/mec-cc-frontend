@@ -12,6 +12,7 @@ import {
   Sparkles,
   ZoomIn,
   ZoomOut,
+  Maximize,
 } from "lucide-react";
 import { parseImagePosition, formatImagePosition } from "@/lib/imagePosition";
 
@@ -41,6 +42,7 @@ export function EventImagePositionModal({
   const [posX, setPosX] = useState(50);
   const [posY, setPosY] = useState(50);
   const [zoom, setZoom] = useState(0); // -50% to +100%
+  const [lockHeight, setLockHeight] = useState(true); // Keeps height 100% full while width shrinks
   const [fitMode, setFitMode] = useState<"cover" | "contain">("cover");
   const [isDragging, setIsDragging] = useState(false);
 
@@ -54,6 +56,7 @@ export function EventImagePositionModal({
       setPosX(parsed.x);
       setPosY(parsed.y);
       setZoom(parsed.zoom);
+      setLockHeight(parsed.lockHeight);
       setFitMode(parsed.isContain ? "contain" : "cover");
     }
   }, [isOpen, currentPosition]);
@@ -122,7 +125,7 @@ export function EventImagePositionModal({
   }, [isOpen, onClose]);
 
   const handleApply = () => {
-    const finalPos = formatImagePosition(posX, posY, zoom, fitMode === "contain");
+    const finalPos = formatImagePosition(posX, posY, zoom, fitMode === "contain", lockHeight);
     onSavePosition(finalPos);
     onClose();
   };
@@ -131,6 +134,8 @@ export function EventImagePositionModal({
 
   const isCover = aspectRatio === "16:9" || imageTitle.toLowerCase().includes("cover");
   const scale = Math.max(0.3, Math.min(3, 1 + zoom / 100));
+  const scaleX = scale;
+  const scaleY = lockHeight && zoom <= 0 ? 1 : scale;
 
   return (
     <div
@@ -153,7 +158,7 @@ export function EventImagePositionModal({
               </h2>
               <p className="text-xs text-text-secondary mt-0.5">
                 {isCover
-                  ? "Real Event Card preview. Drag to align focal point or use negative zoom to shrink width."
+                  ? "Real Event Card preview. Height stays 100% full while width shrinks inward."
                   : "Wide Banner Hero preview. Align focal point and scale for header."}
               </p>
             </div>
@@ -258,7 +263,7 @@ export function EventImagePositionModal({
               >
                 {imageUrl ? (
                   <>
-                    {/* Subtle blurred backdrop for uncropped contain mode or shrunk zoom */}
+                    {/* Subtle blurred backdrop for uncropped contain mode or shrunk width */}
                     {(fitMode === "contain" || zoom < 0) && (
                       <img
                         src={imageUrl}
@@ -279,7 +284,12 @@ export function EventImagePositionModal({
                       }`}
                       style={{
                         objectPosition: fitMode === "contain" ? "center" : `${posX}% ${posY}%`,
-                        transform: fitMode === "contain" ? undefined : (zoom !== 0 ? `scale(${scale})` : undefined),
+                        transform:
+                          fitMode === "contain"
+                            ? undefined
+                            : zoom !== 0
+                            ? `scale(${scaleX}, ${scaleY})`
+                            : undefined,
                       }}
                     />
 
@@ -303,7 +313,7 @@ export function EventImagePositionModal({
                       {fitMode === "contain"
                         ? "WHOLE IMAGE (FIT)"
                         : zoom !== 0
-                        ? `ZOOM ${zoom > 0 ? `+${zoom}%` : `${zoom}%`}`
+                        ? `WIDTH ${zoom > 0 ? `+${zoom}%` : `${zoom}%`}${lockHeight ? " (FULL HEIGHT)" : ""}`
                         : "CARD VIEW (h-44)"}
                     </div>
 
@@ -384,7 +394,12 @@ export function EventImagePositionModal({
                       }`}
                       style={{
                         objectPosition: fitMode === "contain" ? "center" : `${posX}% ${posY}%`,
-                        transform: fitMode === "contain" ? undefined : (zoom !== 0 ? `scale(${scale})` : undefined),
+                        transform:
+                          fitMode === "contain"
+                            ? undefined
+                            : zoom !== 0
+                            ? `scale(${scaleX}, ${scaleY})`
+                            : undefined,
                       }}
                     />
 
@@ -420,7 +435,7 @@ export function EventImagePositionModal({
                       {fitMode === "contain"
                         ? "WHOLE BANNER (FIT)"
                         : zoom !== 0
-                        ? `ZOOM ${zoom > 0 ? `+${zoom}%` : `${zoom}%`}`
+                        ? `WIDTH ${zoom > 0 ? `+${zoom}%` : `${zoom}%`}${lockHeight ? " (FULL HEIGHT)" : ""}`
                         : "21:9 HERO BANNER"}
                     </div>
 
@@ -457,12 +472,12 @@ export function EventImagePositionModal({
                 </span>
               ) : (
                 <span>
-                  Focal Point:{" "}
+                  Focal:{" "}
                   <strong className="text-indigo-600 dark:text-indigo-400">
                     {posX}% X, {posY}% Y
                   </strong>
                   {" • "}
-                  Scale:{" "}
+                  Width:{" "}
                   <strong
                     className={
                       zoom < 0
@@ -472,8 +487,13 @@ export function EventImagePositionModal({
                         : "text-text-primary"
                     }
                   >
-                    {zoom > 0 ? `+${zoom}%` : `${zoom}%`} ({Math.round(scale * 100)}%)
+                    {Math.round(scaleX * 100)}%
                   </strong>
+                  {lockHeight && (
+                    <span className="text-emerald-600 dark:text-emerald-400 font-bold ml-1">
+                      (Height: 100% Full)
+                    </span>
+                  )}
                 </span>
               )}
             </span>
@@ -484,6 +504,7 @@ export function EventImagePositionModal({
                 setPosX(50);
                 setPosY(50);
                 setZoom(0);
+                setLockHeight(true);
               }}
               className="text-[11px] text-text-tertiary hover:text-text-primary inline-flex items-center gap-1 cursor-pointer transition"
             >
@@ -527,12 +548,12 @@ export function EventImagePositionModal({
               </span>
             </div>
 
-            {/* Zoom / Scale Slider with Negative Values to shrink width */}
+            {/* Width Shrink & Zoom Slider */}
             <div className="grid grid-cols-[90px_1fr_50px] items-center gap-2 pt-1 border-t border-border-default/60">
               <div className="flex flex-col">
                 <label className="text-xs font-bold text-text-secondary flex items-center gap-1">
                   <ZoomIn size={12} className="text-indigo-600 dark:text-indigo-400" />
-                  <span>Zoom / Scale</span>
+                  <span>Width Scale</span>
                 </label>
                 <span className="text-[9px] text-text-tertiary">(-% shrinks width)</span>
               </div>
@@ -562,10 +583,34 @@ export function EventImagePositionModal({
               </span>
             </div>
 
+            {/* Lock Height Full Toggle Bar */}
+            <div className="flex items-center justify-between gap-2 py-1.5 px-2 bg-surface-elevated rounded-lg border border-border-default/80">
+              <div className="flex items-center gap-1.5">
+                <span className="text-xs font-bold text-text-primary">Height:</span>
+                <span className="text-[11px] text-text-secondary">
+                  {lockHeight
+                    ? "Locked 100% full (no top/bottom gaps)"
+                    : "Proportional zoom"}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setLockHeight(!lockHeight)}
+                className={`px-2.5 py-1 rounded-md text-xs font-bold flex items-center gap-1.5 transition cursor-pointer border ${
+                  lockHeight
+                    ? "bg-emerald-600 text-white border-emerald-600 shadow-2xs"
+                    : "bg-surface-secondary text-text-secondary hover:text-text-primary border-border-default"
+                }`}
+              >
+                <Check size={12} className={lockHeight ? "opacity-100" : "opacity-0"} />
+                <span>Keep Height Full (100%)</span>
+              </button>
+            </div>
+
             {/* Quick Zoom Presets */}
             <div className="pt-2 border-t border-border-default flex items-center justify-between flex-wrap gap-2">
               <span className="text-[11px] font-bold text-text-tertiary uppercase tracking-wider">
-                Zoom Presets:
+                Width Presets:
               </span>
               <div className="flex items-center gap-1.5 flex-wrap">
                 {[

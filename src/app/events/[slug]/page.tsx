@@ -149,7 +149,7 @@ export default async function EventDetailPage({
             const bannerSrc = event.bannerImageUrl || event.image;
             return (
               <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] md:aspect-[2.3/1] min-h-[260px] max-h-[520px] bg-surface-secondary overflow-hidden border-b-2 border-border-brutalist flex items-center justify-center">
-                {(parsedBanner.isContain || parsedBanner.scale < 1) && (
+                {(parsedBanner.isContain || parsedBanner.scaleX < 1) && (
                   <img
                     src={bannerSrc}
                     alt=""
@@ -164,7 +164,10 @@ export default async function EventDetailPage({
                   className={parsedBanner.isContain ? "object-contain relative z-10" : "object-cover"}
                   style={{
                     objectPosition: parsedBanner.objectPosition,
-                    transform: parsedBanner.scale !== 1 ? `scale(${parsedBanner.scale})` : undefined,
+                    transform:
+                      parsedBanner.scaleX !== 1 || parsedBanner.scaleY !== 1
+                        ? `scale(${parsedBanner.scaleX}, ${parsedBanner.scaleY})`
+                        : undefined,
                   }}
                   unoptimized
                   priority

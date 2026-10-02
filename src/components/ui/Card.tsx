@@ -73,7 +73,8 @@ export function EventCard({
   const rawPosition = coverImagePosition || bannerImagePosition || "50% 50%";
   const parsed = parseImagePosition(rawPosition);
   const isContain = parsed.isContain;
-  const scale = parsed.scale;
+  const scaleX = parsed.scaleX;
+  const scaleY = parsed.scaleY;
 
   const countApproved = approvedCount ?? attendeeCount ?? 0;
   const countRegistered = registeredCount ?? attendeeCount ?? 0;
@@ -112,7 +113,7 @@ export function EventCard({
       {/* Event Cover Image (with custom focal positioning, zoom/shrink, or contain fit) */}
       {displayImage && (
         <div className="w-full h-44 relative overflow-hidden bg-surface-secondary border-b border-border-default flex items-center justify-center">
-          {(isContain || scale < 1) && (
+          {(isContain || scaleX < 1) && (
             <img
               src={displayImage}
               alt=""
@@ -125,11 +126,12 @@ export function EventCard({
             src={displayImage}
             alt={title}
             className={`w-full h-full transition-transform duration-300 ${
-              scale === 1 ? "group-hover:scale-105" : ""
+              scaleX === 1 && scaleY === 1 ? "group-hover:scale-105" : ""
             } ${isContain ? "object-contain relative z-10" : "object-cover"}`}
             style={{
               objectPosition: parsed.objectPosition,
-              transform: scale !== 1 ? `scale(${scale})` : undefined,
+              transform:
+                scaleX !== 1 || scaleY !== 1 ? `scale(${scaleX}, ${scaleY})` : undefined,
             }}
             onError={(e) => {
               (e.currentTarget.parentElement as HTMLElement)?.style.setProperty("display", "none");

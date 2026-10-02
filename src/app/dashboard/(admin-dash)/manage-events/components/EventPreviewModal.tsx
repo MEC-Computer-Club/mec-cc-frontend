@@ -292,7 +292,7 @@ export function EventPreviewModal({
                       );
                       return (
                         <>
-                          {(parsedBanner.isContain || parsedBanner.scale < 1) && (
+                          {(parsedBanner.isContain || parsedBanner.scaleX < 1) && (
                             <img
                               src={effectiveBanner}
                               alt=""
@@ -309,7 +309,10 @@ export function EventPreviewModal({
                             }`}
                             style={{
                               objectPosition: parsedBanner.objectPosition,
-                              transform: parsedBanner.scale !== 1 ? `scale(${parsedBanner.scale})` : undefined,
+                              transform:
+                                parsedBanner.scaleX !== 1 || parsedBanner.scaleY !== 1
+                                  ? `scale(${parsedBanner.scaleX}, ${parsedBanner.scaleY})`
+                                  : undefined,
                             }}
                           />
                         </>
