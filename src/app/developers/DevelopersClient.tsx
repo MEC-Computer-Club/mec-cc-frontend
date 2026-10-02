@@ -218,7 +218,7 @@ function DevelopersContent() {
       {/* ── Page Hero Header ── */}
       <section className="pt-10 md:pt-14 pb-8 md:pb-12 border-b border-border-default bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-accent-primary-light/15 via-surface-primary to-surface-primary">
         <div className="container max-w-4xl mx-auto px-4 text-center">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[4px] bg-black text-white dark:bg-white dark:text-black font-mono text-xs font-bold uppercase tracking-wider mb-4 border border-black dark:border-white shadow-[2.5px_2.5px_0px_var(--accent-primary)]">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-[4px] bg-black text-white dark:bg-white dark:text-black font-mono text-xs font-bold uppercase tracking-wider mb-4 border border-black dark:border-white">
             <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
             <span>100% In-House Architecture • Powered by Club Nodes</span>
           </div>
@@ -226,7 +226,7 @@ function DevelopersContent() {
             The Minds Behind the Platform
           </h1>
           <p className="text-base sm:text-lg text-text-secondary max-w-2xl mx-auto leading-relaxed">
-            Zero outsourcing. No off-the-shelf templates. Architected, designed, and actively engineered by student club nodes of the{" "}
+            Architected, designed, and actively engineered by student developers of the{" "}
             <strong className="text-black dark:text-text-primary font-bold">
               Department of Computer Science & Engineering
             </strong>{" "}
@@ -281,34 +281,6 @@ function DevelopersContent() {
           </div>
         </div>
       )}
-
-      {/* ── System Ethos // Built by Club Nodes Callout Box ── */}
-      <section className="container max-w-5xl mx-auto px-4 pt-8">
-        <div className="rounded-xl bg-surface-secondary/80 border-[1.5px] border-border-brutalist dark:border-border-default shadow-[4px_4px_0px_var(--border-brutalist)] p-5 sm:p-6 relative overflow-hidden">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-4 border-b border-border-default/60">
-            <div className="flex items-center gap-2.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="font-mono text-xs font-bold tracking-wider text-text-primary uppercase">
-                // SYSTEM ETHOS: BUILT BY OUR OWN NODES
-              </span>
-            </div>
-            <div className="flex flex-wrap items-center gap-2 font-mono text-[11px] font-bold">
-              <span className="px-2.5 py-0.5 rounded-[4px] bg-black text-white dark:bg-white dark:text-black border border-black dark:border-white">
-                ⚡ 100% Student-Crafted
-              </span>
-              <span className="px-2.5 py-0.5 rounded-[4px] bg-surface-elevated text-text-primary border border-border-default">
-                🛡️ Zero Third-Party
-              </span>
-              <span className="px-2.5 py-0.5 rounded-[4px] bg-accent-primary/15 text-accent-primary border border-accent-primary/40">
-                🌐 Living Ecosystem
-              </span>
-            </div>
-          </div>
-          <p className="pt-3.5 text-sm sm:text-base text-text-secondary leading-relaxed max-w-3xl">
-            We believe a computer club shouldn’t run on black-box tools or rented systems. Every pixel, route, database schema, and custom canvas engine on this platform was crafted from scratch by the very student members who use it every day.
-          </p>
-        </div>
-      </section>
 
       {/* ── Developer Cards Section (Max 2 per row, centered if 1) ── */}
       <section className="container max-w-5xl mx-auto px-4 py-8 md:py-12">
@@ -416,9 +388,6 @@ function DevelopersContent() {
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-[4px] bg-surface-secondary text-text-primary border border-black dark:border-white/50 font-mono text-[11px] font-semibold">
                           {dev.session.replace(/20(\d{2})-20(\d{2})/, "20$1-$2")}
                         </span>
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-[4px] bg-accent-primary/15 text-accent-primary border border-accent-primary/40 font-mono text-[11px] font-bold tracking-wide">
-                          ⚡ Core Node
-                        </span>
                       </div>
 
                       {/* Then: Redesigned Contribution Segment */}
@@ -476,7 +445,7 @@ function DevelopersContent() {
 
       {/* ── Contributor Node Invitation CTA ── */}
       <section className="container max-w-5xl mx-auto px-4 pb-12">
-        <div className="p-6 md:p-8 rounded-xl bg-surface-secondary/80 border-[1.5px] border-border-brutalist dark:border-border-default shadow-[5px_5px_0px_var(--border-brutalist)] flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="p-6 md:p-8 rounded-xl bg-surface-secondary/80 border-[1.5px] border-border-brutalist dark:border-border-default flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="space-y-2 text-center md:text-left max-w-xl">
             <div className="inline-flex items-center gap-2 font-mono text-xs font-bold text-accent-primary uppercase tracking-wider">
               <span className="w-2 h-2 rounded-full bg-accent-primary" />

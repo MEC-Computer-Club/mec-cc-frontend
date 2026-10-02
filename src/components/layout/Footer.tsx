@@ -197,13 +197,14 @@ export function Footer() {
             © {new Date().getFullYear()} {clubName}. All rights reserved.
           </p>
           <p className="text-xs text-text-tertiary flex items-center justify-center gap-1">
-            Engineered 100% in-house by{" "}
+            Built with <Heart size={14} className="text-accent-primary-hover inline-block align-middle mx-0.5" /> by the{" "}
             <Link
               href="/developers"
-              className="text-text-primary font-semibold hover:text-accent-primary-hover underline underline-offset-2 transition-colors inline-flex items-center gap-1"
+              className="text-text-primary font-semibold hover:text-accent-primary-hover underline underline-offset-2 transition-colors"
             >
-              MEC CC Club Nodes ⚡
+              Core Developers
             </Link>
+            .
           </p>
         </div>
       </div>
