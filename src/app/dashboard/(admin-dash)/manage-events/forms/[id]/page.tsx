@@ -119,12 +119,47 @@ export default function FormResponsesPage() {
   const [deletingSub, setDeletingSub] = useState<Submission | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const getSubmitterInfo = (sub: any) => {
+    if (sub?.userId?.fullName) {
+      return {
+        name: sub.userId.fullName,
+        email: sub.userId.email || "",
+        isMember: true,
+      };
+    }
+    const r = sub?.responses || {};
+    const name =
+      r.full_name ||
+      r.fullName ||
+      r.name ||
+      r.applicant_name ||
+      r.participant_name ||
+      r.leader_name;
+    const email =
+      r.email_address ||
+      r.email ||
+      r.contact_email ||
+      r.user_email;
+    if (name || email) {
+      return {
+        name: name || "Applicant",
+        email: email || "",
+        isMember: false,
+      };
+    }
+    return {
+      name: "Anonymous",
+      email: "",
+      isMember: false,
+    };
+  };
+
   const copyColumnValues = (columnKey: string, columnLabel: string) => {
     let vals: string[] = [];
     if (columnKey === "#") {
       vals = filtered.map((_, i) => String(i + 1));
     } else if (columnKey === "submitted_by") {
-      vals = filtered.map((sub) => sub.userId?.fullName || "Anonymous");
+      vals = filtered.map((sub) => getSubmitterInfo(sub).name);
     } else if (columnKey === "submitted_at") {
       vals = filtered.map((sub) =>
         new Date(sub.createdAt).toLocaleDateString("en-GB", {
@@ -258,8 +293,9 @@ export default function FormResponsesPage() {
     if (!search.trim()) return submissions;
     const q = search.toLowerCase();
     return submissions.filter((s) => {
-      const name = s.userId?.fullName?.toLowerCase() ?? "";
-      const email = s.userId?.email?.toLowerCase() ?? "";
+      const info = getSubmitterInfo(s);
+      const name = info.name.toLowerCase();
+      const email = info.email.toLowerCase();
       const values = Object.values(s.responses).map((v) => cellValue(v).toLowerCase()).join(" ");
       return name.includes(q) || email.includes(q) || values.includes(q);
     });
@@ -696,12 +732,24 @@ export default function FormResponsesPage() {
                           boxShadow: "2px 0 4px -2px rgba(0,0,0,0.1)",
                         }}>
                           {stickyColumnKey === "submitted_by" ? (
-                            sub.userId ? (
-                              <div>
-                                <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-primary)" }}>{sub.userId.fullName}</p>
-                                <p style={{ fontSize: "11px", color: "var(--text-secondary)" }}>{sub.userId.email}</p>
-                              </div>
-                            ) : <span style={{ fontSize: "12px", color: "var(--text-secondary)", fontStyle: "italic" }}>Anonymous</span>
+                            (() => {
+                              const info = getSubmitterInfo(sub);
+                              return info.name !== "Anonymous" ? (
+                                <div>
+                                  <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap" }}>
+                                    <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-primary)" }}>{info.name}</p>
+                                    {info.isMember && (
+                                      <span style={{ fontSize: "9px", fontWeight: 800, padding: "1px 5px", borderRadius: 4, background: "var(--accent-primary-light)", color: "var(--accent-primary)", border: "1px solid var(--accent-primary)" }}>
+                                        Member
+                                      </span>
+                                    )}
+                                  </div>
+                                  {info.email && <p style={{ fontSize: "11px", color: "var(--text-secondary)" }}>{info.email}</p>}
+                                </div>
+                              ) : (
+                                <span style={{ fontSize: "12px", color: "var(--text-secondary)", fontStyle: "italic" }}>Anonymous</span>
+                              );
+                            })()
                           ) : (
                             (() => {
                               const val = sub.responses[stickyColumnKey];
@@ -746,12 +794,24 @@ export default function FormResponsesPage() {
                       {/* If stickyColumn is NOT "submitted_by", render Submitted By as regular column */}
                       {stickyColumnKey !== "submitted_by" && (
                         <td style={{ padding: "12px 16px", minWidth: 190, maxWidth: 230 }}>
-                          {sub.userId ? (
-                            <div>
-                              <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-primary)" }}>{sub.userId.fullName}</p>
-                              <p style={{ fontSize: "11px", color: "var(--text-secondary)" }}>{sub.userId.email}</p>
-                            </div>
-                          ) : <span style={{ fontSize: "12px", color: "var(--text-secondary)", fontStyle: "italic" }}>Anonymous</span>}
+                          {(() => {
+                            const info = getSubmitterInfo(sub);
+                            return info.name !== "Anonymous" ? (
+                              <div>
+                                <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap" }}>
+                                  <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-primary)" }}>{info.name}</p>
+                                  {info.isMember && (
+                                    <span style={{ fontSize: "9px", fontWeight: 800, padding: "1px 5px", borderRadius: 4, background: "var(--accent-primary-light)", color: "var(--accent-primary)", border: "1px solid var(--accent-primary)" }}>
+                                      Member
+                                    </span>
+                                  )}
+                                </div>
+                                {info.email && <p style={{ fontSize: "11px", color: "var(--text-secondary)" }}>{info.email}</p>}
+                              </div>
+                            ) : (
+                              <span style={{ fontSize: "12px", color: "var(--text-secondary)", fontStyle: "italic" }}>Anonymous</span>
+                            );
+                          })()}
                         </td>
                       )}
 
@@ -851,7 +911,7 @@ export default function FormResponsesPage() {
                   <Pencil size={16} className="text-accent-primary" /> Modify Response Entry
                 </h3>
                 <p className="text-xs text-text-secondary mt-0.5">
-                  {editingSub.userId?.fullName || "Anonymous Submission"} &bull;{" "}
+                  {getSubmitterInfo(editingSub).name || "Anonymous Submission"} &bull;{" "}
                   {new Date(editingSub.createdAt).toLocaleString("en-GB")}
                 </p>
               </div>
@@ -960,7 +1020,7 @@ export default function FormResponsesPage() {
               <p className="text-xs text-text-secondary mt-1.5 leading-relaxed">
                 Are you sure you want to permanently delete this response submitted by{" "}
                 <span className="font-semibold text-text-primary">
-                  {deletingSub.userId?.fullName || "Anonymous"}
+                  {getSubmitterInfo(deletingSub).name}
                 </span>
                 ? Any associated media files will also be permanently deleted. This action cannot be undone.
               </p>
