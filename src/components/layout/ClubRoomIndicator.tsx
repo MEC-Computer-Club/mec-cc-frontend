@@ -140,11 +140,11 @@ export function ClubRoomIndicator() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="club-room-modal-title"
-            className="w-full max-w-md bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl shadow-[4px_4px_0px_var(--accent-primary)] overflow-hidden transition-all transform animate-in zoom-in-95 duration-150"
+            className="w-full max-w-md bg-surface-elevated border border-black dark:border-border-default rounded-xl shadow-[4px_4px_0px_var(--accent-primary)] overflow-hidden transition-all transform animate-in zoom-in-95 duration-150"
           >
             {/* Modal Header */}
             <div
-              className={`p-5 border-b-2 border-border-brutalist dark:border-border-default flex items-center justify-between ${
+              className={`p-5 border-b border-black dark:border-border-default flex items-center justify-between ${
                 isOpen
                   ? "bg-emerald-500/10 dark:bg-emerald-950/40"
                   : "bg-red-500/10 dark:bg-red-950/40"

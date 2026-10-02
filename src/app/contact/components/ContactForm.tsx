@@ -145,7 +145,7 @@ export function ContactForm() {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-6 lg:gap-8">
           {/* Left Column: Info Cards */}
           <div className="flex flex-col gap-4 sm:gap-5">
-            <div className="bg-surface-secondary p-5 sm:p-6 rounded-xl border border-border-brutalist dark:border-border-default transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)]">
+            <div className="bg-surface-secondary p-5 sm:p-6 rounded-xl border border-black dark:border-border-default transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)]">
               <h3 className="text-base sm:text-lg font-heading font-bold text-text-primary mb-2 flex items-center gap-2">
                 <MessageSquare size={18} className="text-accent-primary" />
                 Hate filling out forms?
@@ -161,7 +161,7 @@ export function ContactForm() {
               </a>
             </div>
 
-            <div className="bg-surface-secondary p-5 sm:p-6 rounded-xl border border-border-brutalist dark:border-border-default transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)]">
+            <div className="bg-surface-secondary p-5 sm:p-6 rounded-xl border border-black dark:border-border-default transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)]">
               <h3 className="text-base sm:text-lg font-heading font-bold text-text-primary mb-2 flex items-center gap-2">
                 <Mail size={18} className="text-accent-primary" />
                 Membership &amp; Keys
@@ -177,7 +177,7 @@ export function ContactForm() {
               </a>
             </div>
 
-            <div className="bg-surface-secondary p-5 sm:p-6 rounded-xl border border-border-brutalist dark:border-border-default transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)]">
+            <div className="bg-surface-secondary p-5 sm:p-6 rounded-xl border border-black dark:border-border-default transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)]">
               <h3 className="text-base sm:text-lg font-heading font-bold text-text-primary mb-2 flex items-center gap-2">
                 <MapPin size={18} className="text-accent-primary" />
                 Find Us IRL
@@ -190,7 +190,7 @@ export function ContactForm() {
               </div>
             </div>
 
-            <div className="bg-surface-secondary p-5 sm:p-6 rounded-xl border border-border-brutalist dark:border-border-default transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)]">
+            <div className="bg-surface-secondary p-5 sm:p-6 rounded-xl border border-black dark:border-border-default transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)]">
               <h3 className="text-base sm:text-lg font-heading font-bold text-text-primary mb-2 flex items-center gap-2">
                 <Phone size={18} className="text-accent-primary" />
                 Direct Hotline &amp; WhatsApp
@@ -220,7 +220,7 @@ export function ContactForm() {
 
           {/* Right Column: The Form */}
           <form
-            className="bg-surface-elevated p-5 sm:p-7 rounded-xl border border-border-brutalist dark:border-border-default flex flex-col shadow-[4px_4px_0px_var(--accent-primary)]"
+            className="bg-surface-elevated p-5 sm:p-7 rounded-xl border border-black dark:border-border-default flex flex-col shadow-[4px_4px_0px_var(--accent-primary)]"
             onSubmit={handleSubmit}
           >
             <div className="mb-5 pb-3 border-b-2 border-border-default">

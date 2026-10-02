@@ -61,7 +61,7 @@ function GalleryCardItem({
   return (
     <div
       onClick={onClick}
-      className="group relative aspect-[4/3] bg-surface-secondary rounded-xl border border-border-brutalist dark:border-border-default overflow-hidden transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)] cursor-pointer z-0 hover:z-10"
+      className="group relative aspect-[4/3] bg-surface-secondary rounded-xl border border-black dark:border-border-default overflow-hidden transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)] cursor-pointer z-0 hover:z-10"
       id={`gallery-item-${item.id}`}
     >
       {/* Background Skeleton Shimmer while Image is Loading */}

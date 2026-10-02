@@ -212,7 +212,7 @@ export default async function AboutPage() {
 
             {/* Right Story Card Column (5 cols) */}
             <div className="lg:col-span-5">
-              <div className="rounded-xl bg-surface-elevated border border-border-brutalist dark:border-border-default p-6 sm:p-7 shadow-[4px_4px_0px_var(--accent-primary)]">
+              <div className="rounded-xl bg-surface-elevated border border-black dark:border-border-default p-6 sm:p-7 shadow-[4px_4px_0px_var(--accent-primary)]">
                 <div className="flex items-center justify-between pb-3 mb-4 border-b border-border-default">
                   <div className="flex items-center gap-2 font-mono text-xs font-bold text-text-primary">
                     <Terminal className="h-4 w-4 text-accent-primary" />
@@ -244,7 +244,7 @@ export default async function AboutPage() {
       <section className="py-6 border-y border-border-default bg-surface-elevated/60 backdrop-blur-xs">
         <div className="container mx-auto px-4 md:px-8 max-w-6xl">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-            <div className="p-4 sm:p-5 rounded-xl bg-surface-primary border border-border-default flex flex-col items-center text-center shadow-xs">
+            <div className="p-4 sm:p-5 rounded-xl bg-surface-primary border border-black dark:border-border-default flex flex-col items-center text-center shadow-xs">
               <span className="font-heading text-3xl sm:text-4xl font-extrabold text-accent-primary mb-1">
                 70+
               </span>
@@ -254,7 +254,7 @@ export default async function AboutPage() {
               <span className="text-xs text-text-tertiary">Across 5 departments</span>
             </div>
 
-            <div className="p-4 sm:p-5 rounded-xl bg-surface-primary border border-border-default flex flex-col items-center text-center shadow-xs">
+            <div className="p-4 sm:p-5 rounded-xl bg-surface-primary border border-black dark:border-border-default flex flex-col items-center text-center shadow-xs">
               <span className="font-heading text-3xl sm:text-4xl font-extrabold text-accent-primary mb-1">
                 3 Teams
               </span>
@@ -264,7 +264,7 @@ export default async function AboutPage() {
               <span className="text-xs text-text-tertiary">Competing nationally</span>
             </div>
 
-            <div className="p-4 sm:p-5 rounded-xl bg-surface-primary border border-border-default flex flex-col items-center text-center shadow-xs">
+            <div className="p-4 sm:p-5 rounded-xl bg-surface-primary border border-black dark:border-border-default flex flex-col items-center text-center shadow-xs">
               <span className="font-heading text-3xl sm:text-4xl font-extrabold text-accent-primary mb-1">
                 15+
               </span>
@@ -274,7 +274,7 @@ export default async function AboutPage() {
               <span className="text-xs text-text-tertiary">Organized per year</span>
             </div>
 
-            <div className="p-4 sm:p-5 rounded-xl bg-surface-primary border border-border-default flex flex-col items-center text-center shadow-xs">
+            <div className="p-4 sm:p-5 rounded-xl bg-surface-primary border border-black dark:border-border-default flex flex-col items-center text-center shadow-xs">
               <span className="font-heading text-3xl sm:text-4xl font-extrabold text-accent-primary mb-1">
                 100%
               </span>
@@ -306,7 +306,7 @@ export default async function AboutPage() {
               return (
                 <div
                   key={val.number}
-                  className="relative p-6 sm:p-7 rounded-xl bg-surface-elevated border border-border-brutalist dark:border-border-default hover:shadow-[4px_4px_0px_var(--accent-primary)] transition-shadow duration-200 flex flex-col"
+                  className="relative p-6 sm:p-7 rounded-xl bg-surface-elevated border border-black dark:border-border-default hover:shadow-[4px_4px_0px_var(--accent-primary)] transition-shadow duration-200 flex flex-col"
                 >
                   <div className="flex items-center justify-between mb-5">
                     <div className="w-12 h-12 rounded-xl bg-surface-secondary border border-border-default flex items-center justify-center text-accent-primary">
@@ -348,7 +348,7 @@ export default async function AboutPage() {
             {mergedDepartments.map((dept) => (
               <div
                 key={dept.id}
-                className="group flex-1 basis-[320px] max-w-[500px] flex flex-col bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl p-6 transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)]"
+                className="group flex-1 basis-[320px] max-w-[500px] flex flex-col bg-surface-elevated border border-black dark:border-border-default rounded-xl p-6 transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)]"
               >
                 <div className="w-14 h-14 flex items-center justify-center bg-surface-secondary rounded-xl mb-4 border border-border-brutalist dark:border-border-default font-mono [font-feature-settings:'liga'_0,'calt'_0] text-xs font-bold text-text-primary transition-all duration-200 group-hover:bg-accent-primary group-hover:text-text-inverse group-hover:border-accent-primary group-hover:scale-110 group-hover:-rotate-6">
                   {dept.icon}
@@ -441,7 +441,7 @@ export default async function AboutPage() {
       {/* ===== 6. Leadership & Advisors Preview ===== */}
       <section className="py-14 sm:py-20 bg-surface-secondary border-t border-border-default">
         <div className="container mx-auto px-4 md:px-8 max-w-4xl text-center">
-          <div className="p-8 sm:p-10 rounded-xl bg-surface-elevated border border-border-brutalist dark:border-border-default shadow-[4px_4px_0px_var(--accent-primary)]">
+          <div className="p-8 sm:p-10 rounded-xl bg-surface-elevated border border-black dark:border-border-default shadow-[4px_4px_0px_var(--accent-primary)]">
             <span className="kicker">People Behind The Club</span>
             <h2 className="font-heading text-2xl sm:text-3xl font-bold text-text-primary mb-3">
               Guided by Faculty, Run by Students

@@ -101,7 +101,7 @@ export default async function ClubPartnersPage() {
                     return (
                       <div
                         key={partner.id || partner.name}
-                        className="flex flex-col justify-between p-6 bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)] group"
+                        className="flex flex-col justify-between p-6 bg-surface-elevated border border-black dark:border-border-default rounded-xl transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)] group"
                       >
                         <div>
                           {/* Top bar with Role badge & Logo */}
@@ -196,7 +196,7 @@ export default async function ClubPartnersPage() {
                     return (
                       <div
                         key={partner.id || partner.name}
-                        className="flex flex-col justify-between p-6 bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl opacity-85 hover:opacity-100 transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)]"
+                        className="flex flex-col justify-between p-6 bg-surface-elevated border border-black dark:border-border-default rounded-xl opacity-85 hover:opacity-100 transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)]"
                       >
                         <div>
                           <div className="flex items-start justify-between gap-4 mb-4">
