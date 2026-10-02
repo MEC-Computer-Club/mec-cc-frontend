@@ -201,7 +201,7 @@ export default async function AboutPage() {
                   Explore CP Hub
                 </Button>
                 <Button
-                  href="/our-people"
+                  href="/executives"
                   variant="secondary"
                   icon={<Users className="h-4 w-4" />}
                 >
@@ -450,7 +450,7 @@ export default async function AboutPage() {
               Our club is mentored by faculty advisors from Mymensingh Engineering College and steered by an elected executive committee of passionate students across all years.
             </p>
             <Button
-              href="/our-people"
+              href="/executives"
               variant="secondary"
               icon={<Users className="h-4 w-4 text-accent-primary" />}
             >

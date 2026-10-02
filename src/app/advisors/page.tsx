@@ -54,7 +54,7 @@ export default async function AdvisorsPage() {
       <section className="pt-10 md:pt-14 pb-8 md:pb-10 text-center">
         <div className="container mx-auto px-4 md:px-8">
           <span className="kicker">Guidance &amp; Vision</span>
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-text-primary my-3">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-text-primary my-3">
             Our Honorable Advisors
           </h1>
           <p className="text-base sm:text-lg text-text-secondary max-w-[600px] mx-auto">
