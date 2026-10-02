@@ -43,6 +43,27 @@ function LoginForm() {
   const [loading, setLoading] = useState(false);
   const [statusAlert, setStatusAlert] = useState<ExtendedLoginState | null>(null);
   const [rateLimitSeconds, setRateLimitSeconds] = useState<number | null>(null);
+  const [rememberMe, setRememberMe] = useState(false);
+  const passwordInputRef = useRef<HTMLInputElement>(null);
+
+  // Restore remembered Student ID / Email on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const savedId = localStorage.getItem("mec_cc_remembered_identifier");
+        if (savedId) {
+          setIdentifier(savedId);
+          setRememberMe(true);
+          // Auto-focus password field so user can instantly type password or press enter
+          setTimeout(() => {
+            passwordInputRef.current?.focus();
+          }, 150);
+        }
+      } catch {
+        // ignore storage errors
+      }
+    }
+  }, []);
 
   // Live countdown timer for IP rate limit
   useEffect(() => {
@@ -149,12 +170,17 @@ function LoginForm() {
 
     setLoading(true);
     try {
-      const res = await login(identifier.trim(), password, securityCode.trim());
+      const res = await login(identifier.trim(), password, securityCode.trim(), rememberMe);
       if (res.success) {
         hasRedirectedRef.current = true;
         if (typeof window !== "undefined") {
           sessionStorage.removeItem("redirect_loop_count");
           sessionStorage.removeItem("last_auto_redirect");
+          if (rememberMe) {
+            localStorage.setItem("mec_cc_remembered_identifier", identifier.trim());
+          } else {
+            localStorage.removeItem("mec_cc_remembered_identifier");
+          }
         }
         toast.success("Welcome back to MEC Computer Club!");
         const isExecutive =
@@ -322,6 +348,7 @@ function LoginForm() {
               </label>
               <input
                 id="login-identifier"
+                name="username"
                 type="text"
                 required
                 placeholder="e.g. 210347 or name@mec.edu.bd"
@@ -339,7 +366,9 @@ function LoginForm() {
               </label>
               <div className="relative flex items-center w-full">
                 <input
+                  ref={passwordInputRef}
                   id="login-password"
+                  name="password"
                   type={showPassword ? "text" : "password"}
                   required
                   placeholder="••••••••"
@@ -373,6 +402,7 @@ function LoginForm() {
                 </label>
                 <input
                   id="login-security-code"
+                  name="securityCode"
                   type="text"
                   required
                   maxLength={6}
@@ -394,7 +424,10 @@ function LoginForm() {
               <label className="flex items-center gap-2 cursor-pointer text-sm text-text-secondary select-none">
                 <input
                   type="checkbox"
+                  id="login-remember-me"
                   name="remember"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
                   className="w-4 h-4 rounded border-border-brutalist dark:border-border-default text-accent-primary focus:ring-accent-primary cursor-pointer accent-[var(--accent-primary)]"
                 />
                 Remember me
