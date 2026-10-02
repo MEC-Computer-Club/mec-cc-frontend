@@ -226,11 +226,11 @@ function DevelopersContent() {
             The Minds Behind the Platform
           </h1>
           <p className="text-base sm:text-lg text-text-secondary max-w-2xl mx-auto leading-relaxed">
-            Architected, designed, and actively engineered by student developers of the{" "}
+            From terminal to production, every pixel and query is crafted with care. Built, maintained, and actively evolved by student developers of{" "}
             <strong className="text-black dark:text-text-primary font-bold">
-              Department of Computer Science & Engineering
-            </strong>{" "}
-            at{" "}
+              MEC Computer Club
+            </strong>
+            , Department of CSE at{" "}
             <strong className="text-black dark:text-text-primary font-bold">
               Mymensingh Engineering College
             </strong>
