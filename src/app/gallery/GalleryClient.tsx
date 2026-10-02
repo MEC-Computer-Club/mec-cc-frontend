@@ -222,37 +222,30 @@ export function GalleryClient({ initialItems }: GalleryClientProps) {
       {/* ── Filter Bar ── */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8 bg-surface-secondary/70 p-4 rounded-2xl border border-border-default backdrop-blur-sm shadow-sm">
         {/* Type Toggle Tabs */}
-        <div className="flex items-center gap-1.5 p-1 bg-surface-primary border border-border-default rounded-xl w-full md:w-auto">
-          <button
+        <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
+          <Button
+            size="sm"
+            variant={filter === "all" ? "primary" : "secondary"}
             onClick={() => setFilter("all")}
-            className={`flex-1 md:flex-initial px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
-              filter === "all"
-                ? "bg-accent-primary !text-accent-primary-text shadow-sm"
-                : "text-text-secondary hover:text-text-primary"
-            }`}
           >
             All Media ({items.length})
-          </button>
-          <button
+          </Button>
+          <Button
+            size="sm"
+            variant={filter === "image" ? "primary" : "secondary"}
             onClick={() => setFilter("image")}
-            className={`flex-1 md:flex-initial px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center justify-center gap-1.5 ${
-              filter === "image"
-                ? "bg-accent-primary !text-accent-primary-text shadow-sm"
-                : "text-text-secondary hover:text-text-primary"
-            }`}
+            icon={<ImageIcon size={14} />}
           >
-            <ImageIcon size={13} /> Photos ({items.filter((i) => i.type === "image").length})
-          </button>
-          <button
+            Photos ({items.filter((i) => i.type === "image").length})
+          </Button>
+          <Button
+            size="sm"
+            variant={filter === "video" ? "primary" : "secondary"}
             onClick={() => setFilter("video")}
-            className={`flex-1 md:flex-initial px-3.5 py-1.5 rounded-lg text-xs font-mono font-bold transition-all flex items-center justify-center gap-1.5 ${
-              filter === "video"
-                ? "bg-accent-primary !text-accent-primary-text shadow-sm"
-                : "text-text-secondary hover:text-text-primary"
-            }`}
+            icon={<Film size={14} />}
           >
-            <Film size={13} /> Videos ({items.filter((i) => i.type === "video").length})
-          </button>
+            Videos ({items.filter((i) => i.type === "video").length})
+          </Button>
         </div>
 
         {/* Event Dropdown Filter */}

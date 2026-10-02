@@ -16,6 +16,10 @@ interface ButtonProps {
   style?: React.CSSProperties;
   target?: string;
   rel?: string;
+  role?: string;
+  "aria-selected"?: boolean;
+  "aria-label"?: string;
+  "aria-expanded"?: boolean;
 }
 
 const BUTTON_VARIANTS: Record<string, string> = {
@@ -51,6 +55,10 @@ export function Button({
   style,
   target,
   rel,
+  role,
+  "aria-selected": ariaSelected,
+  "aria-label": ariaLabel,
+  "aria-expanded": ariaExpanded,
 }: ButtonProps) {
   const variantClass = BUTTON_VARIANTS[variant] || BUTTON_VARIANTS.primary;
   const sizeClass = BUTTON_SIZES[size] || BUTTON_SIZES.md;
@@ -68,7 +76,19 @@ export function Button({
 
   if (href) {
     return (
-      <Link href={href} className={classes} id={id} title={title} style={style} target={target} rel={rel}>
+      <Link
+        href={href}
+        className={classes}
+        id={id}
+        title={title}
+        style={style}
+        target={target}
+        rel={rel}
+        role={role}
+        aria-selected={ariaSelected}
+        aria-label={ariaLabel}
+        aria-expanded={ariaExpanded}
+      >
         {icon && <span className="inline-flex items-center text-[1.1em]">{icon}</span>}
         {children}
       </Link>
@@ -84,6 +104,10 @@ export function Button({
       id={id}
       title={title}
       style={style}
+      role={role}
+      aria-selected={ariaSelected}
+      aria-label={ariaLabel}
+      aria-expanded={ariaExpanded}
     >
       {icon && <span className="inline-flex items-center text-[1.1em]">{icon}</span>}
       {children}

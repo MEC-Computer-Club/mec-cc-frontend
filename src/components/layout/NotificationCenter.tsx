@@ -431,13 +431,14 @@ export function NotificationCenter() {
       <style dangerouslySetInnerHTML={{
         __html: `
           .notif-container { position: relative; display: inline-flex; align-items: center; }
-          .notif-trigger { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: var(--radius-md); border: 1.5px solid var(--text-primary); background: transparent; color: var(--text-primary); cursor: pointer; box-shadow: none; transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast); outline: none; padding: 0; flex-shrink: 0; box-sizing: border-box; }
-          .dark .notif-trigger { border-color: var(--border-default); background: transparent; box-shadow: none; color: var(--text-primary); }
-          .notif-trigger:hover { background-color: var(--surface-secondary); color: var(--text-primary); border-color: var(--text-primary); box-shadow: 3px 3px 0px 0px var(--text-primary); transform: translate(-1.5px, -1.5px); }
-          .dark .notif-trigger:hover { border-color: var(--accent-primary); box-shadow: 3px 3px 0px 0px var(--accent-primary); color: #FFFFFF; }
-          .notif-trigger--open { border-color: var(--accent-primary) !important; box-shadow: 3px 3px 0px 0px var(--accent-primary) !important; color: var(--text-primary) !important; background-color: var(--surface-secondary); transform: none; }
-          .dark .notif-trigger--open { color: #FFFFFF !important; }
-          .notif-trigger__icon { transition: transform var(--transition-fast); }
+          .notif-trigger { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: var(--radius-md); border: 1px solid #000000; background: transparent; color: #000000; cursor: pointer; box-shadow: none; transition: all 150ms ease; outline: none; padding: 0; flex-shrink: 0; box-sizing: border-box; }
+          .dark .notif-trigger { border-color: #FFFFFF; color: #FFFFFF; background: transparent; box-shadow: none; }
+          .notif-trigger:hover { background-color: #f5f5f5; color: #000000; border-color: #000000; box-shadow: 4px 4px 0px 0px #000000; transform: translate(-4px, -4px); }
+          .dark .notif-trigger:hover { background-color: #171717; color: #FFFFFF; border-color: #FFFFFF; box-shadow: 4px 4px 0px 0px #FFFFFF; transform: translate(-4px, -4px); }
+          .notif-trigger:active { transform: translate(0, 0); box-shadow: none; }
+          .notif-trigger--open { background-color: var(--surface-secondary); border-color: #000000 !important; box-shadow: none !important; transform: translate(0, 0) !important; color: #000000 !important; }
+          .dark .notif-trigger--open { border-color: #FFFFFF !important; color: #FFFFFF !important; }
+          .notif-trigger__icon { transition: transform 150ms ease; }
           .notif-trigger:hover .notif-trigger__icon { transform: rotate(12deg); }
           .notif-badge { position: absolute; top: -5px; right: -5px; min-width: 17px; height: 17px; padding: 0 4px; background-color: var(--accent-error, #ef4444); color: #FFFFFF; border: 1.5px solid var(--surface-primary); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 9px; font-weight: 800; line-height: 1; pointer-events: none; box-shadow: none; }
           .notif-badge__ping { position: absolute; inset: -1px; border-radius: var(--radius-full); background-color: var(--accent-error, #ef4444); opacity: 0.75; animation: notifPing 1.8s cubic-bezier(0, 0, 0.2, 1) infinite; pointer-events: none; z-index: -1; }

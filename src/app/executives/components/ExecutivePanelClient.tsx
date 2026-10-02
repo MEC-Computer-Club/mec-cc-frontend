@@ -7,6 +7,7 @@ import { CommitteeTermSummary, CommitteeDetail, Executive } from "@/lib/api/exec
 import { Sparkles, Users, History, Loader2, SlidersHorizontal, Check } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "@/lib/api";
+import { Button } from "@/components/ui/Button";
 
 interface ExecutivePanelClientProps {
   initialTerms: CommitteeTermSummary[];
@@ -170,35 +171,30 @@ export default function ExecutivePanelClient({
               const label = t.isCurrent ? `${short} (Current)` : short;
 
               return (
-                <button
+                <Button
                   key={t.term}
                   type="button"
                   onClick={() => handleTermChange(t.term)}
-                  className={`px-4 py-2 rounded-full text-xs sm:text-sm font-bold transition-all cursor-pointer select-none ${
-                    isSelected
-                      ? "bg-[#0b2b3a] dark:bg-accent-primary text-white shadow-xs border border-transparent"
-                      : "bg-surface-primary hover:bg-surface-secondary text-text-secondary hover:text-text-primary border border-border-default hover:border-slate-400 shadow-2xs"
-                  }`}
+                  variant={isSelected ? "primary" : "secondary"}
+                  size="sm"
                 >
                   {label}
-                </button>
+                </Button>
               );
             })}
 
             {/* Filter Icon Button with Dropdown for Rest of Terms */}
             <div className="relative" ref={dropdownRef}>
-              <button
+              <Button
                 type="button"
                 onClick={() => setIsFilterDropdownOpen((prev) => !prev)}
                 title="Browse all previous committee sessions"
-                className={`p-2.5 rounded-full transition-all cursor-pointer border ${
-                  isFilterDropdownOpen
-                    ? "bg-[#0b2b3a] dark:bg-accent-primary text-white border-transparent shadow-xs"
-                    : "bg-surface-primary hover:bg-surface-secondary text-text-secondary hover:text-text-primary border-border-default hover:border-slate-400 shadow-2xs"
-                }`}
+                variant={isFilterDropdownOpen ? "primary" : "secondary"}
+                size="sm"
+                className="!px-2.5"
               >
                 <SlidersHorizontal className="w-4 h-4" />
-              </button>
+              </Button>
 
               {/* Neo-Brutalist Dropdown for previous terms */}
               {isFilterDropdownOpen && (
