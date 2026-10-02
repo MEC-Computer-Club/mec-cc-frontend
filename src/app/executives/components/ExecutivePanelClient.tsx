@@ -8,7 +8,6 @@ import { Sparkles, Users, History, Loader2, SlidersHorizontal, Check } from "luc
 import axios from "axios";
 import { API_BASE_URL } from "@/lib/api";
 import { Button } from "@/components/ui/Button";
-import { OptionCard, OptionCardHeader } from "@/components/ui/OptionCard";
 
 interface ExecutivePanelClientProps {
   initialTerms: CommitteeTermSummary[];
@@ -199,37 +198,40 @@ export default function ExecutivePanelClient({
 
               {/* Neo-Brutalist Dropdown for previous terms */}
               {isFilterDropdownOpen && (
-                <div className="absolute right-0 mt-2 z-50">
-                  <OptionCard className="w-64">
-                    <OptionCardHeader title="All Committee Sessions" />
-                    <div className="max-h-60 overflow-y-auto divide-y divide-border-default/40">
-                      {initialTerms.map((t) => {
-                        const isSelected = selectedTerm === t.term;
-                        return (
-                          <div
-                            key={t.term}
-                            onClick={() => handleTermChange(t.term)}
-                            className={`p-3 text-xs flex items-center justify-between cursor-pointer transition-colors ${
-                              isSelected
-                                ? "bg-accent-primary-light text-text-primary font-bold dark:bg-accent-primary/20 dark:text-white"
-                                : "hover:bg-surface-secondary text-text-primary"
-                            }`}
-                          >
-                            <div>
-                              <span className="font-semibold">{t.title || `Tenure ${t.term}`}</span>
-                              <span className="text-[11px] text-text-secondary block">
-                                {t.term} {t.isCurrent ? "• (Current)" : "• (Archived)"}
-                              </span>
-                            </div>
+                <div
+                  className="absolute right-0 mt-2 w-64 rounded-xl border border-black dark:border-border-default bg-surface-primary shadow-[4px_4px_0px_var(--accent-primary)] z-50 overflow-hidden animate-scale-up"
+                >
+                  <div className="p-2.5 border-b border-border-default bg-surface-secondary text-[11px] font-bold text-text-secondary uppercase tracking-wider">
+                    All Committee Sessions
+                  </div>
 
-                            {isSelected && (
-                              <Check className="w-4 h-4 text-accent-primary flex-shrink-0" />
-                            )}
+                  <div className="max-h-60 overflow-y-auto divide-y divide-border-default">
+                    {initialTerms.map((t) => {
+                      const isSelected = selectedTerm === t.term;
+                      return (
+                        <div
+                          key={t.term}
+                          onClick={() => handleTermChange(t.term)}
+                          className={`p-3 text-xs flex items-center justify-between cursor-pointer transition ${
+                            isSelected
+                              ? "bg-accent-primary-light text-text-primary font-bold dark:bg-accent-primary/20 dark:text-white"
+                              : "hover:bg-surface-secondary text-text-primary"
+                          }`}
+                        >
+                          <div>
+                            <span className="font-semibold">{t.title || `Tenure ${t.term}`}</span>
+                            <span className="text-[11px] text-text-secondary block">
+                              {t.term} {t.isCurrent ? "• (Current)" : "• (Archived)"}
+                            </span>
                           </div>
-                        );
-                      })}
-                    </div>
-                  </OptionCard>
+
+                          {isSelected && (
+                            <Check className="w-4 h-4 text-accent-primary flex-shrink-0" />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
