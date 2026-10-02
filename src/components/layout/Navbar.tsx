@@ -364,7 +364,12 @@ export function Navbar() {
           {user ? (
             <>
               <NotificationCenter />
-              <div className="navbar__user-menu-wrap" ref={userMenuRef}>
+              <div
+                className="navbar__user-menu-wrap"
+                ref={userMenuRef}
+                onMouseEnter={() => setUserDropdownOpen(true)}
+                onMouseLeave={() => setUserDropdownOpen(false)}
+              >
                 <button
                   type="button"
                   className={`navbar__user-btn ${userDropdownOpen ? "navbar__user-btn--open" : ""}`}

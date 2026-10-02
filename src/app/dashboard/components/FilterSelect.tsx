@@ -107,7 +107,7 @@ export default function FilterSelect({
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setIsOpen((prev) => !prev)}
-        className={`flex items-center gap-2 px-3 h-[38px] rounded-md border border-border-default bg-surface-elevated text-xs font-semibold transition focus:outline-none ${
+        className={`flex items-center gap-2 px-3 h-[38px] rounded-md border border-black dark:border-border-default bg-surface-elevated text-xs font-semibold transition focus:outline-none ${
           noShadow
             ? "shadow-none"
             : `shadow-[2px_2px_0px_0px_var(--border-default)] hover:shadow-[3px_3px_0px_0px_var(--accent-primary)] ${
@@ -115,8 +115,8 @@ export default function FilterSelect({
               }`
         } ${
           isOpen
-            ? "border-accent-primary text-text-primary"
-            : "text-text-secondary hover:text-text-primary hover:border-accent-primary"
+            ? "border-black dark:border-border-default text-text-primary"
+            : "text-text-secondary hover:text-text-primary hover:border-black dark:hover:border-border-default"
         } ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"} ${buttonClassName}`}
       >
         <Filter size={13} className={isOpen || (value && value !== "all") ? "text-accent-primary" : "text-text-secondary"} />
@@ -134,9 +134,7 @@ export default function FilterSelect({
 
       {isOpen && !disabled && (
         <div
-          className={`absolute top-[calc(100%+4px)] left-0 min-w-[170px] bg-surface-primary border border-border-default rounded-md ${
-            noShadow ? "shadow-none" : "shadow-[4px_4px_0px_0px_var(--accent-primary)]"
-          } z-[500] max-h-[250px] overflow-y-auto overflow-x-hidden flex flex-col m-0 p-0 list-none animate-in fade-in slide-in-from-top-1 duration-150`}
+          className="absolute top-[calc(100%+4px)] left-0 min-w-[170px] bg-surface-elevated border border-black dark:border-border-default rounded-md shadow-[4px_4px_0px_0px_var(--accent-primary)] z-[500] max-h-[250px] overflow-y-auto overflow-x-hidden flex flex-col m-0 p-0 list-none animate-in fade-in slide-in-from-top-1 duration-150"
         >
           {options.map((opt) => {
             const isSelected = value === opt.value;

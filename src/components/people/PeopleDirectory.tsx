@@ -231,12 +231,15 @@ export default function PeopleDirectory<T extends DirectoryPerson>({
               font-size: 13px;
               background: var(--surface-primary);
               color: var(--text-primary);
-              border: 1px solid var(--border-default);
-              border-radius: var(--radius-sm);
+              border: 1px solid #000000;
+              border-radius: var(--radius-md);
               outline: none;
               box-shadow: none;
               box-sizing: border-box;
               transition: border-color var(--transition-fast);
+            }
+            .dark .directory-search-input {
+              border-color: var(--border-default);
             }
             .directory-search-input:focus {
               border-color: var(--accent-primary);
