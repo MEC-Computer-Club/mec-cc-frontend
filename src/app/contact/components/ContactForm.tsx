@@ -114,7 +114,7 @@ export function ContactForm() {
   };
 
   const inputClasses =
-    "w-full px-3.5 py-2.5 sm:px-4 sm:py-3 border border-border-brutalist rounded-[var(--radius-md)] bg-surface-primary font-inherit text-sm sm:text-base text-text-primary shadow-[2px_2px_0px_var(--border-brutalist)] transition-all duration-200 focus:outline-none focus:border-border-brutalist focus:shadow-[4px_4px_0px_var(--accent-primary)] focus:translate-x-[-2px] focus:translate-y-[-2px]";
+    "w-full px-3.5 py-2.5 sm:px-4 sm:py-3 border border-border-brutalist dark:border-border-default rounded-md bg-surface-primary font-inherit text-sm sm:text-base text-text-primary transition-all duration-200 focus:outline-none focus:border-border-brutalist dark:focus:border-border-default focus:shadow-[4px_4px_0px_var(--accent-primary)]";
 
   return (
     <section className="py-8 sm:py-12 md:py-16">
@@ -145,7 +145,7 @@ export function ContactForm() {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.4fr] gap-6 lg:gap-8">
           {/* Left Column: Info Cards */}
           <div className="flex flex-col gap-4 sm:gap-5">
-            <div className="bg-surface-secondary p-5 sm:p-6 rounded-[var(--radius-lg)] border border-border-brutalist transition-all duration-200 hover:shadow-[6px_6px_0px_var(--accent-primary)] hover:translate-x-[-2px] hover:translate-y-[-2px]">
+            <div className="bg-surface-secondary p-5 sm:p-6 rounded-xl border border-border-brutalist dark:border-border-default transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)]">
               <h3 className="text-base sm:text-lg font-heading font-bold text-text-primary mb-2 flex items-center gap-2">
                 <MessageSquare size={18} className="text-accent-primary" />
                 Hate filling out forms?
@@ -161,7 +161,7 @@ export function ContactForm() {
               </a>
             </div>
 
-            <div className="bg-surface-secondary p-5 sm:p-6 rounded-[var(--radius-lg)] border border-border-brutalist transition-all duration-200 hover:shadow-[6px_6px_0px_var(--accent-primary)] hover:translate-x-[-2px] hover:translate-y-[-2px]">
+            <div className="bg-surface-secondary p-5 sm:p-6 rounded-xl border border-border-brutalist dark:border-border-default transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)]">
               <h3 className="text-base sm:text-lg font-heading font-bold text-text-primary mb-2 flex items-center gap-2">
                 <Mail size={18} className="text-accent-primary" />
                 Membership &amp; Keys
@@ -177,7 +177,7 @@ export function ContactForm() {
               </a>
             </div>
 
-            <div className="bg-surface-secondary p-5 sm:p-6 rounded-[var(--radius-lg)] border border-border-brutalist transition-all duration-200 hover:shadow-[6px_6px_0px_var(--accent-primary)] hover:translate-x-[-2px] hover:translate-y-[-2px]">
+            <div className="bg-surface-secondary p-5 sm:p-6 rounded-xl border border-border-brutalist dark:border-border-default transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)]">
               <h3 className="text-base sm:text-lg font-heading font-bold text-text-primary mb-2 flex items-center gap-2">
                 <MapPin size={18} className="text-accent-primary" />
                 Find Us IRL
@@ -190,7 +190,7 @@ export function ContactForm() {
               </div>
             </div>
 
-            <div className="bg-surface-secondary p-5 sm:p-6 rounded-[var(--radius-lg)] border border-border-brutalist transition-all duration-200 hover:shadow-[6px_6px_0px_var(--accent-primary)] hover:translate-x-[-2px] hover:translate-y-[-2px]">
+            <div className="bg-surface-secondary p-5 sm:p-6 rounded-xl border border-border-brutalist dark:border-border-default transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)]">
               <h3 className="text-base sm:text-lg font-heading font-bold text-text-primary mb-2 flex items-center gap-2">
                 <Phone size={18} className="text-accent-primary" />
                 Direct Hotline &amp; WhatsApp
@@ -220,7 +220,7 @@ export function ContactForm() {
 
           {/* Right Column: The Form */}
           <form
-            className="bg-surface-elevated p-5 sm:p-7 rounded-[var(--radius-lg)] border border-border-brutalist flex flex-col transition-all duration-200 hover:shadow-[6px_6px_0px_var(--accent-primary)] hover:translate-x-[-2px] hover:translate-y-[-2px]"
+            className="bg-surface-elevated p-5 sm:p-7 rounded-xl border border-border-brutalist dark:border-border-default flex flex-col shadow-[4px_4px_0px_var(--accent-primary)]"
             onSubmit={handleSubmit}
           >
             <div className="mb-5 pb-3 border-b-2 border-border-default">

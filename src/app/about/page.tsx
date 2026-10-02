@@ -3,6 +3,7 @@ import Link from "next/link";
 import { departments } from "@/lib/api/departments";
 import { getPageContent } from "@/lib/pageContent";
 import { AboutEditButton } from "./components/AboutEditButton";
+import { Button } from "@/components/ui/Button";
 import {
   Users,
   Trophy,
@@ -189,33 +190,29 @@ export default async function AboutPage() {
 
               {/* Quick Action Navigation Buttons */}
               <div className="flex flex-wrap items-center gap-3">
-                <Link
-                  href="/register"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-accent-primary text-accent-primary-text font-heading text-sm font-bold border-2 border-text-primary dark:border-border-default shadow-[3px_3px_0px_var(--border-brutalist)] hover:shadow-[5px_5px_0px_var(--border-brutalist)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
-                >
-                  <span>Join Club</span>
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-                <Link
+                <Button href="/register" variant="primary" icon={<ArrowRight className="h-4 w-4" />}>
+                  Join Club
+                </Button>
+                <Button
                   href="/cp-hub"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-surface-elevated text-text-primary font-heading text-sm font-bold border-2 border-text-primary dark:border-border-default shadow-[3px_3px_0px_var(--border-brutalist)] hover:bg-surface-secondary hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all"
+                  variant="secondary"
+                  icon={<Code2 className="h-4 w-4 text-accent-primary" />}
                 >
-                  <Code2 className="h-4 w-4 text-accent-primary" />
-                  <span>Explore CP Hub</span>
-                </Link>
-                <Link
+                  Explore CP Hub
+                </Button>
+                <Button
                   href="/our-people"
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-surface-elevated text-text-secondary hover:text-text-primary font-heading text-sm font-bold border border-border-default hover:bg-surface-secondary transition-all"
+                  variant="secondary"
+                  icon={<Users className="h-4 w-4" />}
                 >
-                  <Users className="h-4 w-4" />
-                  <span>Meet Leadership</span>
-                </Link>
+                  Meet Leadership
+                </Button>
               </div>
             </div>
 
             {/* Right Story Card Column (5 cols) */}
             <div className="lg:col-span-5">
-              <div className="rounded-2xl bg-surface-elevated border-2 border-border-brutalist dark:border-border-default p-6 sm:p-7 shadow-[5px_5px_0px_0px_var(--border-default)]">
+              <div className="rounded-xl bg-surface-elevated border border-border-brutalist dark:border-border-default p-6 sm:p-7 shadow-[4px_4px_0px_var(--accent-primary)]">
                 <div className="flex items-center justify-between pb-3 mb-4 border-b border-border-default">
                   <div className="flex items-center gap-2 font-mono text-xs font-bold text-text-primary">
                     <Terminal className="h-4 w-4 text-accent-primary" />
@@ -247,7 +244,7 @@ export default async function AboutPage() {
       <section className="py-6 border-y border-border-default bg-surface-elevated/60 backdrop-blur-xs">
         <div className="container mx-auto px-4 md:px-8 max-w-6xl">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
-            <div className="p-4 sm:p-5 rounded-2xl bg-surface-primary border border-border-default flex flex-col items-center text-center shadow-xs">
+            <div className="p-4 sm:p-5 rounded-xl bg-surface-primary border border-border-default flex flex-col items-center text-center shadow-xs">
               <span className="font-heading text-3xl sm:text-4xl font-extrabold text-accent-primary mb-1">
                 70+
               </span>
@@ -257,7 +254,7 @@ export default async function AboutPage() {
               <span className="text-xs text-text-tertiary">Across 5 departments</span>
             </div>
 
-            <div className="p-4 sm:p-5 rounded-2xl bg-surface-primary border border-border-default flex flex-col items-center text-center shadow-xs">
+            <div className="p-4 sm:p-5 rounded-xl bg-surface-primary border border-border-default flex flex-col items-center text-center shadow-xs">
               <span className="font-heading text-3xl sm:text-4xl font-extrabold text-accent-primary mb-1">
                 3 Teams
               </span>
@@ -267,7 +264,7 @@ export default async function AboutPage() {
               <span className="text-xs text-text-tertiary">Competing nationally</span>
             </div>
 
-            <div className="p-4 sm:p-5 rounded-2xl bg-surface-primary border border-border-default flex flex-col items-center text-center shadow-xs">
+            <div className="p-4 sm:p-5 rounded-xl bg-surface-primary border border-border-default flex flex-col items-center text-center shadow-xs">
               <span className="font-heading text-3xl sm:text-4xl font-extrabold text-accent-primary mb-1">
                 15+
               </span>
@@ -277,7 +274,7 @@ export default async function AboutPage() {
               <span className="text-xs text-text-tertiary">Organized per year</span>
             </div>
 
-            <div className="p-4 sm:p-5 rounded-2xl bg-surface-primary border border-border-default flex flex-col items-center text-center shadow-xs">
+            <div className="p-4 sm:p-5 rounded-xl bg-surface-primary border border-border-default flex flex-col items-center text-center shadow-xs">
               <span className="font-heading text-3xl sm:text-4xl font-extrabold text-accent-primary mb-1">
                 100%
               </span>
@@ -309,7 +306,7 @@ export default async function AboutPage() {
               return (
                 <div
                   key={val.number}
-                  className="relative p-6 sm:p-7 rounded-2xl bg-surface-elevated border-2 border-border-brutalist dark:border-border-default shadow-[4px_4px_0px_0px_var(--border-default)] hover:shadow-[6px_6px_0px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5 transition-all flex flex-col"
+                  className="relative p-6 sm:p-7 rounded-xl bg-surface-elevated border border-border-brutalist dark:border-border-default hover:shadow-[4px_4px_0px_var(--accent-primary)] transition-shadow duration-200 flex flex-col"
                 >
                   <div className="flex items-center justify-between mb-5">
                     <div className="w-12 h-12 rounded-xl bg-surface-secondary border border-border-default flex items-center justify-center text-accent-primary">
@@ -351,7 +348,7 @@ export default async function AboutPage() {
             {mergedDepartments.map((dept) => (
               <div
                 key={dept.id}
-                className="group flex-1 basis-[320px] max-w-[500px] flex flex-col bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl p-6 transition-all duration-200 hover:border-border-brutalist hover:shadow-[6px_6px_0px_var(--accent-primary)] hover:-translate-x-[2px] hover:-translate-y-[2px]"
+                className="group flex-1 basis-[320px] max-w-[500px] flex flex-col bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl p-6 transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)]"
               >
                 <div className="w-14 h-14 flex items-center justify-center bg-surface-secondary rounded-xl mb-4 border border-border-brutalist dark:border-border-default font-mono [font-feature-settings:'liga'_0,'calt'_0] text-xs font-bold text-text-primary transition-all duration-200 group-hover:bg-accent-primary group-hover:text-text-inverse group-hover:border-accent-primary group-hover:scale-110 group-hover:-rotate-6">
                   {dept.icon}
@@ -444,7 +441,7 @@ export default async function AboutPage() {
       {/* ===== 6. Leadership & Advisors Preview ===== */}
       <section className="py-14 sm:py-20 bg-surface-secondary border-t border-border-default">
         <div className="container mx-auto px-4 md:px-8 max-w-4xl text-center">
-          <div className="p-8 sm:p-10 rounded-3xl bg-surface-elevated border-2 border-border-brutalist dark:border-border-default shadow-[4px_4px_0px_0px_var(--border-default)]">
+          <div className="p-8 sm:p-10 rounded-xl bg-surface-elevated border border-border-brutalist dark:border-border-default shadow-[4px_4px_0px_var(--accent-primary)]">
             <span className="kicker">People Behind The Club</span>
             <h2 className="font-heading text-2xl sm:text-3xl font-bold text-text-primary mb-3">
               Guided by Faculty, Run by Students
@@ -452,14 +449,13 @@ export default async function AboutPage() {
             <p className="text-sm sm:text-base text-text-secondary leading-relaxed max-w-xl mx-auto mb-6">
               Our club is mentored by faculty advisors from Mymensingh Engineering College and steered by an elected executive committee of passionate students across all years.
             </p>
-            <Link
+            <Button
               href="/our-people"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-surface-primary text-text-primary font-heading text-sm font-bold border border-border-default shadow-xs hover:border-accent-primary hover:bg-surface-secondary transition-all"
+              variant="secondary"
+              icon={<Users className="h-4 w-4 text-accent-primary" />}
             >
-              <Users className="h-4 w-4 text-accent-primary" />
-              <span>View Executive Committee &amp; Advisors</span>
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+              View Executive Committee &amp; Advisors
+            </Button>
           </div>
         </div>
       </section>

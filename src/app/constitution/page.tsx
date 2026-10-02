@@ -22,7 +22,7 @@ export default function ConstitutionPage() {
 
       <section className="py-8 md:py-12 bg-surface-secondary">
         <div className="container max-w-[var(--max-width-narrow)] mx-auto px-4 md:px-8">
-          <article className="bg-surface-primary border border-border-brutalist p-6 md:p-8 transition-all duration-200 hover:border-border-brutalist hover:shadow-[6px_6px_0px_var(--accent-primary)] hover:-translate-x-[2px] hover:-translate-y-[2px]">
+          <article className="bg-surface-primary border border-border-brutalist dark:border-border-default rounded-xl p-6 md:p-8 shadow-[4px_4px_0px_var(--accent-primary)]">
             <h2 className="text-2xl font-bold text-text-primary mt-0 mb-3 pb-2 border-b-2 border-border-default">
               Article I: Name &amp; Purpose
             </h2>
