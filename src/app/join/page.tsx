@@ -88,8 +88,8 @@ function JoinGateContent() {
 
         {/* Gate Card */}
         <div className="max-w-[580px] mx-auto mb-12 w-full">
-          <div className="bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-2xl p-6 sm:p-8 shadow-[6px_6px_0px_var(--border-brutalist)] dark:shadow-[6px_6px_0px_var(--accent-primary)] flex flex-col items-center text-center relative overflow-hidden transition-all duration-200">
-            <div className="w-[68px] h-[68px] rounded-xl bg-surface-secondary border-2 border-border-brutalist dark:border-border-default flex items-center justify-center text-accent-primary shadow-[3px_3px_0px_var(--border-brutalist)] dark:shadow-[3px_3px_0px_var(--accent-primary)] mb-4">
+          <div className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl p-6 sm:p-8 shadow-[4px_4px_0px_var(--accent-primary)] flex flex-col items-center text-center relative overflow-hidden">
+            <div className="w-[68px] h-[68px] rounded-xl bg-surface-secondary border border-border-brutalist dark:border-border-default flex items-center justify-center text-accent-primary shadow-[2px_2px_0px_var(--accent-primary)] mb-4">
               <KeyRound size={28} />
             </div>
 
@@ -126,7 +126,7 @@ function JoinGateContent() {
                   type="text"
                   id="invitation-code"
                   name="invitationCode"
-                  className="w-full py-4 px-4 border-2 border-border-brutalist dark:border-border-default rounded-md bg-surface-primary font-mono [font-feature-settings:'liga'_0,'calt'_0] text-xl font-extrabold tracking-[0.25em] text-center uppercase text-text-primary shadow-[4px_4px_0px_var(--border-brutalist)] dark:shadow-[4px_4px_0px_var(--accent-primary)] transition-all duration-200 focus:outline-none focus:border-accent-primary focus:shadow-[5px_5px_0px_var(--accent-primary)] focus:-translate-x-px focus:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="w-full py-4 px-4 border border-border-brutalist dark:border-border-default rounded-md bg-surface-primary font-mono [font-feature-settings:'liga'_0,'calt'_0] text-xl font-extrabold tracking-[0.25em] text-center uppercase text-text-primary shadow-[2px_2px_0px_var(--accent-primary)] transition-all duration-200 focus:outline-none focus:border-accent-primary focus:shadow-[4px_4px_0px_var(--accent-primary)] focus:-translate-x-px focus:-translate-y-px disabled:opacity-60 disabled:cursor-not-allowed"
                   placeholder="e.g. 358921"
                   value={code}
                   onChange={(e) => {
@@ -168,7 +168,7 @@ function JoinGateContent() {
 
         {/* Info Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-[1050px] mx-auto w-full">
-          <div className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl p-5 shadow-[4px_4px_0px_var(--border-brutalist)] dark:shadow-[4px_4px_0px_var(--border-default)] flex flex-col gap-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_var(--accent-primary)]">
+          <div className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl p-5 flex flex-col gap-2 hover:shadow-[4px_4px_0px_var(--accent-primary)] transition-shadow duration-200">
             <div className="w-11 h-11 rounded-lg bg-surface-secondary border border-border-default flex items-center justify-center text-accent-primary mb-1">
               <HelpCircle size={22} />
             </div>
@@ -178,7 +178,7 @@ function JoinGateContent() {
             </p>
           </div>
 
-          <div className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl p-5 shadow-[4px_4px_0px_var(--border-brutalist)] dark:shadow-[4px_4px_0px_var(--border-default)] flex flex-col gap-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_var(--accent-primary)]">
+          <div className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl p-5 flex flex-col gap-2 hover:shadow-[4px_4px_0px_var(--accent-primary)] transition-shadow duration-200">
             <div className="w-11 h-11 rounded-lg bg-surface-secondary border border-border-default flex items-center justify-center text-accent-primary mb-1">
               <Users size={22} />
             </div>
@@ -188,7 +188,7 @@ function JoinGateContent() {
             </p>
           </div>
 
-          <div className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl p-5 shadow-[4px_4px_0px_var(--border-brutalist)] dark:shadow-[4px_4px_0px_var(--border-default)] flex flex-col gap-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[5px_5px_0px_var(--accent-primary)]">
+          <div className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl p-5 flex flex-col gap-2 hover:shadow-[4px_4px_0px_var(--accent-primary)] transition-shadow duration-200">
             <div className="w-11 h-11 rounded-lg bg-surface-secondary border border-border-default flex items-center justify-center text-accent-primary mb-1">
               <Building2 size={22} />
             </div>

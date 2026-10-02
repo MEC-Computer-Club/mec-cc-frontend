@@ -35,7 +35,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="min-h-[calc(100vh-var(--nav-height))] flex items-center justify-center py-8 px-4 sm:px-6">
-      <div className="max-w-[480px] w-full bg-surface-elevated p-6 sm:p-8 rounded-xl border border-border-brutalist dark:border-border-default shadow-[4px_4px_0px_var(--border-brutalist)] dark:shadow-[4px_4px_0px_var(--accent-primary)] transition-all duration-200">
+      <div className="max-w-[480px] w-full bg-surface-elevated p-6 sm:p-8 rounded-xl border border-border-brutalist dark:border-border-default shadow-[4px_4px_0px_var(--accent-primary)]">
         <div className="text-center mb-6">
           <span className="kicker">Account Recovery</span>
           <h1 className="text-2xl sm:text-3xl font-bold text-text-primary mb-2">Reset Password</h1>
