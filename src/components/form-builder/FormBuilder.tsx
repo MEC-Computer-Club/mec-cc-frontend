@@ -24,6 +24,7 @@ import {
   ExternalLink,
   Check,
   CheckCircle2,
+  Clock,
 } from "lucide-react";
 import { FormField, FieldType } from "@/lib/types/form";
 import FieldEditor from "./FieldEditor";
@@ -43,6 +44,7 @@ const initialForm = {
   coverImageUrl: "",
   startDate: new Date().toISOString().split("T")[0],
   endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+  closingTime: "23:59",
 };
 
 type InitialData = {
@@ -54,6 +56,7 @@ type InitialData = {
   coverImageUrl?: string;
   startDate?: string;
   endDate?: string;
+  closingTime?: string;
   allowMultipleSubmissions?: boolean;
   fields: FormField[];
 };
@@ -87,8 +90,9 @@ export default function FormBuilder({ initialData }: { initialData?: InitialData
     description: initialData?.description ?? "",
     eventId: (initialData?.eventId as string) ?? queryEventId,
     coverImageUrl: initialData?.coverImageUrl ?? "",
-    startDate: initialData?.startDate ?? new Date().toISOString().split("T")[0],
-    endDate: initialData?.endDate ?? new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    startDate: initialData?.startDate ? initialData.startDate.split("T")[0] : new Date().toISOString().split("T")[0],
+    endDate: initialData?.endDate ? initialData.endDate.split("T")[0] : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+    closingTime: initialData?.closingTime ?? "23:59",
   });
   const [allowMultipleSubmissions, setAllowMultipleSubmissions] = useState(
     initialData?.allowMultipleSubmissions ?? true
@@ -412,7 +416,7 @@ export default function FormBuilder({ initialData }: { initialData?: InitialData
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className={`grid grid-cols-1 ${formInfo.endDate ? "md:grid-cols-3" : "md:grid-cols-2"} gap-5 transition-all`}>
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold text-text-primary">
                 <Calendar className="w-3.5 h-3.5 inline mr-1 text-accent-primary" /> Opening Date
@@ -432,10 +436,31 @@ export default function FormBuilder({ initialData }: { initialData?: InitialData
               <input
                 type="date"
                 value={formInfo.endDate}
-                onChange={(e) => setFormInfo({ ...formInfo, endDate: e.target.value })}
+                onChange={(e) => {
+                  const newEnd = e.target.value;
+                  setFormInfo((prev) => ({
+                    ...prev,
+                    endDate: newEnd,
+                    closingTime: prev.closingTime || (newEnd ? "23:59" : ""),
+                  }));
+                }}
                 className="w-full px-3.5 py-2 rounded-lg border border-border-default bg-surface-primary text-text-primary text-xs font-semibold focus:outline-none focus:border-accent-primary"
               />
             </div>
+
+            {formInfo.endDate && (
+              <div className="space-y-1.5 animate-fadeIn">
+                <label className="block text-xs font-semibold text-text-primary">
+                  <Clock className="w-3.5 h-3.5 inline mr-1 text-accent-primary" /> Closing Time (BST)
+                </label>
+                <input
+                  type="time"
+                  value={formInfo.closingTime || "23:59"}
+                  onChange={(e) => setFormInfo({ ...formInfo, closingTime: e.target.value })}
+                  className="w-full px-3.5 py-2 rounded-lg border border-border-default bg-surface-primary text-text-primary text-xs font-semibold focus:outline-none focus:border-accent-primary"
+                />
+              </div>
+            )}
           </div>
 
           <div className="space-y-1.5">

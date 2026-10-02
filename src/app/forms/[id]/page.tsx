@@ -33,9 +33,64 @@ interface FormData {
   coverImageUrl?: string;
   startDate?: string;
   endDate?: string;
+  closingTime?: string;
   isActive: boolean;
+  isClosed?: boolean;
+  status?: string;
   allowMultipleSubmissions?: boolean;
   fields: FormField[];
+}
+
+export function checkIsFormClosed(f: FormData | null): boolean {
+  if (!f) return true;
+  if (f.isActive === false || f.isClosed === true || f.status === "closed") {
+    return true;
+  }
+  if (!f.endDate) return false;
+
+  try {
+    if (f.endDate.includes("T")) {
+      const d = new Date(f.endDate);
+      return !isNaN(d.getTime()) && Date.now() >= d.getTime();
+    }
+
+    const parts = f.endDate.trim().split("-");
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10);
+      const day = parseInt(parts[2], 10);
+
+      let hours = 23;
+      let minutes = 59;
+      let seconds = 59;
+
+      if (f.closingTime && f.closingTime.trim()) {
+        const timeMatch = f.closingTime.trim().match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?$/i);
+        if (timeMatch) {
+          let h = parseInt(timeMatch[1], 10);
+          const m = parseInt(timeMatch[2], 10);
+          const s = timeMatch[3] ? parseInt(timeMatch[3], 10) : 0;
+          const meridiem = timeMatch[4]?.toUpperCase();
+
+          if (meridiem === "PM" && h < 12) h += 12;
+          if (meridiem === "AM" && h === 12) h = 0;
+
+          hours = h;
+          minutes = m;
+          seconds = s;
+        }
+      }
+
+      const pad = (n: number) => String(n).padStart(2, "0");
+      const isoBst = `${year}-${pad(month)}-${pad(day)}T${pad(hours)}:${pad(minutes)}:${pad(seconds)}+06:00`;
+      const deadline = new Date(isoBst);
+      if (!isNaN(deadline.getTime())) {
+        return Date.now() >= deadline.getTime();
+      }
+    }
+  } catch {}
+
+  return false;
 }
 
 export default function PublicFormViewPage() {
@@ -202,6 +257,11 @@ export default function PublicFormViewPage() {
     e.preventDefault();
     if (!form) return;
 
+    if (checkIsFormClosed(form)) {
+      toast.error("This form has reached its deadline and is no longer accepting responses.");
+      return;
+    }
+
     // Validate required fields
     for (const field of form.fields) {
       const key = field.name;
@@ -297,6 +357,7 @@ export default function PublicFormViewPage() {
 
   // Event title helper
   const eventTitle = typeof form.eventId === "object" ? form.eventId?.title : undefined;
+  const isClosed = checkIsFormClosed(form);
 
   return (
     <div className="min-h-screen bg-surface-secondary/40 py-8 px-4 sm:px-6 flex flex-col items-center">
@@ -354,6 +415,80 @@ export default function PublicFormViewPage() {
               </button>
             </div>
           </div>
+        ) : isClosed ? (
+          /* ── Form Closed / Deadline Passed Card ── */
+          <div className="bg-surface-elevated rounded-2xl border border-border-default shadow-[6px_6px_0px_0px_var(--border-default)] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            {form.coverImageUrl ? (
+              <div
+                className="w-full h-44 sm:h-60 bg-cover bg-center border-b border-border-default opacity-85 grayscale-[30%]"
+                style={{ backgroundImage: `url(${form.coverImageUrl})` }}
+              />
+            ) : (
+              <div className="w-full h-3.5 bg-accent-error border-b border-border-default" />
+            )}
+
+            <div className="p-6 sm:p-8 space-y-6">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 bg-rose-500/10 px-2.5 py-0.5 rounded border border-rose-500/30">
+                  Submissions Closed
+                </span>
+                {form.endDate && (
+                  <span className="text-[11px] font-medium text-text-tertiary flex items-center gap-1">
+                    <Clock className="w-3.5 h-3.5 text-accent-error" /> Deadline: {form.endDate} {form.closingTime ? `@ ${form.closingTime} (BST)` : ""}
+                  </span>
+                )}
+              </div>
+
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-black text-text-primary tracking-tight">
+                  {form.title}
+                </h1>
+                {eventTitle && (
+                  <div className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-text-primary bg-surface-secondary px-3 py-1.5 rounded-lg border border-border-default">
+                    <Calendar className="w-3.5 h-3.5 text-accent-primary" /> Associated Event: {eventTitle}
+                  </div>
+                )}
+              </div>
+
+              <div className="p-5 rounded-xl border border-rose-500/30 bg-rose-500/5 dark:bg-rose-950/20 space-y-2">
+                <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-bold text-sm">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>This form is no longer accepting responses</span>
+                </div>
+                <p className="text-xs text-text-secondary leading-relaxed">
+                  The deadline for this form has reached its end date and time ({form.endDate ? `${form.endDate} ${form.closingTime ? `at ${form.closingTime} (BST)` : ""}` : "closing time"}). If you believe this is an error or require assistance, please contact the MEC Computer Club executive committee.
+                </p>
+              </div>
+
+              {form.description && (
+                <div className="space-y-1.5 border-t border-border-default pt-4">
+                  <span className="text-xs font-bold text-text-tertiary uppercase tracking-wider">
+                    Form Information
+                  </span>
+                  <p className="text-text-secondary text-xs sm:text-sm leading-relaxed whitespace-pre-line">
+                    {form.description}
+                  </p>
+                </div>
+              )}
+
+              <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => router.push("/events")}
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-accent-primary text-text-inverse font-bold text-xs hover:opacity-90 transition shadow-sm"
+                >
+                  View Active Events
+                </button>
+                <button
+                  type="button"
+                  onClick={() => router.push("/")}
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-border-default bg-surface-primary text-text-primary hover:bg-surface-secondary text-xs font-semibold transition shadow-sm"
+                >
+                  Return to Homepage
+                </button>
+              </div>
+            </div>
+          </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* ── Form Google-Forms Header Card ── */}
@@ -382,7 +517,7 @@ export default function PublicFormViewPage() {
 
                   {form.endDate && (
                     <span className="text-[11px] font-medium text-text-tertiary flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5" /> Closes: {form.endDate}
+                      <Clock className="w-3.5 h-3.5" /> Closes: {form.endDate} {form.closingTime ? `@ ${form.closingTime} (BST)` : ""}
                     </span>
                   )}
                 </div>

@@ -27,6 +27,7 @@ interface Props {
     coverImageUrl?: string;
     startDate?: string;
     endDate?: string;
+    closingTime?: string;
   };
   fields: FormField[];
   eventName?: string;
@@ -140,7 +141,7 @@ export default function FormPreviewModal({
 
                   {formInfo.endDate && (
                     <span className="text-[11px] font-medium text-text-tertiary flex items-center gap-1">
-                      <Clock className="w-3 h-3" /> Closes: {formInfo.endDate}
+                      <Clock className="w-3 h-3 text-accent-primary" /> Closes: {formInfo.endDate} {formInfo.closingTime ? `@ ${formInfo.closingTime} (BST)` : ""}
                     </span>
                   )}
                 </div>
