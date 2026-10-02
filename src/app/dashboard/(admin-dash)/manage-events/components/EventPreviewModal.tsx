@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { EventCard } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { parseImagePosition } from "@/lib/imagePosition";
 
 interface EventPreviewModalProps {
   isOpen: boolean;
@@ -284,16 +285,36 @@ export function EventPreviewModal({
               {/* ── 1. Hero Header Banner ── */}
               <div className="relative rounded-2xl border-2 border-border-brutalist bg-surface-elevated overflow-hidden shadow-[6px_6px_0px_var(--border-brutalist)]">
                 {effectiveBanner ? (
-                  <div className="relative w-full h-48 sm:h-72 md:h-80 bg-surface-secondary overflow-hidden border-b-2 border-border-brutalist">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={effectiveBanner}
-                      alt={event.title || "Banner Preview"}
-                      className="w-full h-full object-cover"
-                      style={{
-                        objectPosition: event.bannerImagePosition || event.coverImagePosition || "50% 50%",
-                      }}
-                    />
+                  <div className="relative w-full h-48 sm:h-72 md:h-80 bg-surface-secondary overflow-hidden border-b-2 border-border-brutalist flex items-center justify-center">
+                    {(() => {
+                      const parsedBanner = parseImagePosition(
+                        event.bannerImagePosition || event.coverImagePosition || "50% 50%"
+                      );
+                      return (
+                        <>
+                          {(parsedBanner.isContain || parsedBanner.scale < 1) && (
+                            <img
+                              src={effectiveBanner}
+                              alt=""
+                              aria-hidden="true"
+                              className="absolute inset-0 w-full h-full object-cover blur-lg opacity-35 scale-110 pointer-events-none"
+                            />
+                          )}
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={effectiveBanner}
+                            alt={event.title || "Banner Preview"}
+                            className={`w-full h-full ${
+                              parsedBanner.isContain ? "object-contain relative z-10" : "object-cover"
+                            }`}
+                            style={{
+                              objectPosition: parsedBanner.objectPosition,
+                              transform: parsedBanner.scale !== 1 ? `scale(${parsedBanner.scale})` : undefined,
+                            }}
+                          />
+                        </>
+                      );
+                    })()}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/35 to-transparent pointer-events-none" />
 
                     {/* Top Badges */}

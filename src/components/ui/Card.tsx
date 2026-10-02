@@ -6,6 +6,7 @@ import { Badge } from "./Badge";
 import { Eye, Heart } from "lucide-react";
 import { getOptimizedImageUrl } from "@/lib/api/gallery";
 import { formatCompactNumber } from "@/lib/formatters";
+import { parseImagePosition } from "@/lib/imagePosition";
 
 /* ===== Event Card ===== */
 interface EventCardProps {
@@ -69,8 +70,10 @@ export function EventCard({
   const isRegClosed = isCompleted || isRegistrationClosed || deadlinePassed || isOngoing;
 
   const displayImage = coverImageUrl || bannerImageUrl || image;
-  const displayPosition = coverImagePosition || bannerImagePosition || "50% 50%";
-  const isContain = displayPosition.includes("contain");
+  const rawPosition = coverImagePosition || bannerImagePosition || "50% 50%";
+  const parsed = parseImagePosition(rawPosition);
+  const isContain = parsed.isContain;
+  const scale = parsed.scale;
 
   const countApproved = approvedCount ?? attendeeCount ?? 0;
   const countRegistered = registeredCount ?? attendeeCount ?? 0;
@@ -106,25 +109,28 @@ export function EventCard({
       className="flex flex-col w-full h-full min-h-[240px] bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl overflow-hidden transition-all duration-200 hover:shadow-[6px_6px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5 no-underline text-inherit group"
       id={`event-${slug}`}
     >
-      {/* Event Cover Image (with custom focal positioning or contain fit) */}
+      {/* Event Cover Image (with custom focal positioning, zoom/shrink, or contain fit) */}
       {displayImage && (
         <div className="w-full h-44 relative overflow-hidden bg-surface-secondary border-b border-border-default flex items-center justify-center">
-          {isContain && (
+          {(isContain || scale < 1) && (
             <img
               src={displayImage}
               alt=""
               aria-hidden="true"
-              className="absolute inset-0 w-full h-full object-cover blur-md opacity-30 scale-110 pointer-events-none"
+              className="absolute inset-0 w-full h-full object-cover blur-md opacity-35 scale-110 pointer-events-none"
             />
           )}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={displayImage}
             alt={title}
-            className={`w-full h-full group-hover:scale-105 transition-transform duration-300 ${
-              isContain ? "object-contain relative z-10" : "object-cover"
-            }`}
-            style={{ objectPosition: isContain ? "center" : displayPosition }}
+            className={`w-full h-full transition-transform duration-300 ${
+              scale === 1 ? "group-hover:scale-105" : ""
+            } ${isContain ? "object-contain relative z-10" : "object-cover"}`}
+            style={{
+              objectPosition: parsed.objectPosition,
+              transform: scale !== 1 ? `scale(${scale})` : undefined,
+            }}
             onError={(e) => {
               (e.currentTarget.parentElement as HTMLElement)?.style.setProperty("display", "none");
             }}

@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { getEventBySlug } from "@/lib/api/events";
+import { parseImagePosition } from "@/lib/imagePosition";
 import { EventRegisterButton } from "./EventRegisterButton";
 import { EventParticipationClaim } from "./EventParticipationClaim";
 import { EventMediaGallery } from "./EventMediaGallery";
@@ -142,30 +143,33 @@ export default async function EventDetailPage({
 
         {/* ── 1. Hero Header Banner ── */}
         <div className="relative rounded-2xl border-2 border-border-brutalist bg-surface-elevated overflow-hidden shadow-[6px_6px_0px_var(--border-brutalist)]">
-          {event.image && (
-            <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] md:aspect-[2.3/1] min-h-[260px] max-h-[520px] bg-surface-secondary overflow-hidden border-b-2 border-border-brutalist flex items-center justify-center">
-              {(event.bannerImagePosition || event.coverImagePosition || "").includes("contain") && (
-                <img
-                  src={event.bannerImageUrl || event.image}
-                  alt=""
-                  aria-hidden="true"
-                  className="absolute inset-0 w-full h-full object-cover blur-lg opacity-35 scale-110 pointer-events-none"
+          {event.image && (() => {
+            const rawBannerPos = event.bannerImagePosition || event.coverImagePosition || "50% 50%";
+            const parsedBanner = parseImagePosition(rawBannerPos);
+            const bannerSrc = event.bannerImageUrl || event.image;
+            return (
+              <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] md:aspect-[2.3/1] min-h-[260px] max-h-[520px] bg-surface-secondary overflow-hidden border-b-2 border-border-brutalist flex items-center justify-center">
+                {(parsedBanner.isContain || parsedBanner.scale < 1) && (
+                  <img
+                    src={bannerSrc}
+                    alt=""
+                    aria-hidden="true"
+                    className="absolute inset-0 w-full h-full object-cover blur-lg opacity-35 scale-110 pointer-events-none"
+                  />
+                )}
+                <Image
+                  src={bannerSrc}
+                  alt={event.title}
+                  fill
+                  className={parsedBanner.isContain ? "object-contain relative z-10" : "object-cover"}
+                  style={{
+                    objectPosition: parsedBanner.objectPosition,
+                    transform: parsedBanner.scale !== 1 ? `scale(${parsedBanner.scale})` : undefined,
+                  }}
+                  unoptimized
+                  priority
                 />
-              )}
-              <Image
-                src={event.bannerImageUrl || event.image}
-                alt={event.title}
-                fill
-                className={(event.bannerImagePosition || event.coverImagePosition || "").includes("contain") ? "object-contain relative z-10" : "object-cover"}
-                style={{
-                  objectPosition: (event.bannerImagePosition || event.coverImagePosition || "").includes("contain")
-                    ? "center"
-                    : (event.bannerImagePosition || event.coverImagePosition || "50% 50%"),
-                }}
-                unoptimized
-                priority
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20 pointer-events-none z-15" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20 pointer-events-none z-15" />
               <div className="absolute top-4 left-4 flex flex-wrap gap-2">
                 <Badge
                   variant={
@@ -200,7 +204,8 @@ export default async function EventDetailPage({
                 </div>
               )}
             </div>
-          )}
+            );
+          })()}
 
           <div className="p-6 sm:p-8">
             <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-text-primary mb-4 leading-tight">

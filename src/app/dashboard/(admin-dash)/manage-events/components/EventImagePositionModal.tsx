@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   X,
   Move,
@@ -10,7 +10,10 @@ import {
   Calendar,
   MapPin,
   Sparkles,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react";
+import { parseImagePosition, formatImagePosition } from "@/lib/imagePosition";
 
 interface EventImagePositionModalProps {
   isOpen: boolean;
@@ -18,7 +21,7 @@ interface EventImagePositionModalProps {
   imageUrl: string | null;
   imageTitle: string; // e.g. "Cover Image" or "Banner / Hero Image"
   aspectRatio: "16:9" | "21:9";
-  currentPosition?: string; // e.g. "50% 50%" or "contain 50% 50%"
+  currentPosition?: string; // e.g. "50% 50%" or "50% 50% zoom:-25" or "contain"
   onSavePosition: (position: string) => void;
   eventTitle?: string;
   category?: string;
@@ -35,23 +38,9 @@ export function EventImagePositionModal({
   eventTitle = "Event Title Preview",
   category = "EVENT",
 }: EventImagePositionModalProps) {
-  // Parse initial position and fit mode
-  const parsePos = useCallback((posStr?: string) => {
-    if (!posStr) return { x: 50, y: 50, isContain: false };
-    const isContain = posStr.includes("contain");
-    const cleanStr = posStr.replace(/contain/gi, "").trim();
-    const parts = cleanStr.split(/\s+/).filter(Boolean);
-    const x = parseFloat(parts[0]) || 50;
-    const y = parseFloat(parts[1] || parts[0]) || 50;
-    return {
-      x: Math.min(100, Math.max(0, x)),
-      y: Math.min(100, Math.max(0, y)),
-      isContain,
-    };
-  }, []);
-
   const [posX, setPosX] = useState(50);
   const [posY, setPosY] = useState(50);
+  const [zoom, setZoom] = useState(0); // -50% to +100%
   const [fitMode, setFitMode] = useState<"cover" | "contain">("cover");
   const [isDragging, setIsDragging] = useState(false);
 
@@ -61,12 +50,13 @@ export function EventImagePositionModal({
 
   useEffect(() => {
     if (isOpen) {
-      const { x, y, isContain } = parsePos(currentPosition);
-      setPosX(x);
-      setPosY(y);
-      setFitMode(isContain ? "contain" : "cover");
+      const parsed = parseImagePosition(currentPosition);
+      setPosX(parsed.x);
+      setPosY(parsed.y);
+      setZoom(parsed.zoom);
+      setFitMode(parsed.isContain ? "contain" : "cover");
     }
-  }, [isOpen, currentPosition, parsePos]);
+  }, [isOpen, currentPosition]);
 
   // Handle pointer down on the preview canvas
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -113,6 +103,14 @@ export function EventImagePositionModal({
     } catch {}
   };
 
+  // Handle mouse wheel zoom on preview canvas
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (fitMode === "contain") return;
+    e.preventDefault();
+    const delta = e.deltaY < 0 ? 5 : -5;
+    setZoom((prev) => Math.min(100, Math.max(-50, prev + delta)));
+  };
+
   // Close on Escape
   useEffect(() => {
     if (!isOpen) return;
@@ -124,7 +122,7 @@ export function EventImagePositionModal({
   }, [isOpen, onClose]);
 
   const handleApply = () => {
-    const finalPos = fitMode === "contain" ? `contain ${posX}% ${posY}%` : `${posX}% ${posY}%`;
+    const finalPos = formatImagePosition(posX, posY, zoom, fitMode === "contain");
     onSavePosition(finalPos);
     onClose();
   };
@@ -132,6 +130,7 @@ export function EventImagePositionModal({
   if (!isOpen) return null;
 
   const isCover = aspectRatio === "16:9" || imageTitle.toLowerCase().includes("cover");
+  const scale = Math.max(0.3, Math.min(3, 1 + zoom / 100));
 
   return (
     <div
@@ -150,12 +149,12 @@ export function EventImagePositionModal({
             </span>
             <div>
               <h2 className="text-base sm:text-lg font-bold text-text-primary">
-                Adjust {imageTitle} Display
+                Adjust {imageTitle} Display & Zoom
               </h2>
               <p className="text-xs text-text-secondary mt-0.5">
                 {isCover
-                  ? "Real Event Card preview. Drag to align focal point or fit the whole image."
-                  : "Wide Banner Hero preview. Align focal point for desktop & mobile."}
+                  ? "Real Event Card preview. Drag to align focal point or use negative zoom to shrink width."
+                  : "Wide Banner Hero preview. Align focal point and scale for header."}
               </p>
             </div>
           </div>
@@ -209,6 +208,15 @@ export function EventImagePositionModal({
                 <strong className="text-indigo-600 dark:text-indigo-400">
                   {posX}% X, {posY}% Y
                 </strong>
+                {zoom !== 0 && (
+                  <span
+                    className={`ml-1.5 font-bold ${
+                      zoom < 0 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"
+                    }`}
+                  >
+                    ({zoom > 0 ? `+${zoom}%` : `${zoom}%`})
+                  </span>
+                )}
               </span>
             )}
           </div>
@@ -241,6 +249,7 @@ export function EventImagePositionModal({
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
                 onPointerCancel={handlePointerUp}
+                onWheel={handleWheel}
                 style={{
                   cursor: fitMode === "cover" ? (isDragging ? "grabbing" : "grab") : "default",
                   touchAction: "none",
@@ -249,8 +258,8 @@ export function EventImagePositionModal({
               >
                 {imageUrl ? (
                   <>
-                    {/* Subtle blurred backdrop for uncropped contain mode */}
-                    {fitMode === "contain" && (
+                    {/* Subtle blurred backdrop for uncropped contain mode or shrunk zoom */}
+                    {(fitMode === "contain" || zoom < 0) && (
                       <img
                         src={imageUrl}
                         alt=""
@@ -263,13 +272,14 @@ export function EventImagePositionModal({
                       src={imageUrl}
                       alt={imageTitle}
                       draggable={false}
-                      className={`pointer-events-none select-none max-w-full max-h-full transition-[object-position] duration-75 ${
+                      className={`pointer-events-none select-none max-w-full max-h-full transition-[object-position,transform] duration-75 ${
                         fitMode === "contain"
                           ? "object-contain relative z-10"
                           : "w-full h-full object-cover"
                       }`}
                       style={{
                         objectPosition: fitMode === "contain" ? "center" : `${posX}% ${posY}%`,
+                        transform: fitMode === "contain" ? undefined : (zoom !== 0 ? `scale(${scale})` : undefined),
                       }}
                     />
 
@@ -290,14 +300,18 @@ export function EventImagePositionModal({
 
                     {/* Mode Tag Badge */}
                     <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/75 backdrop-blur-sm text-white font-mono text-[9px] font-bold pointer-events-none z-20">
-                      {fitMode === "contain" ? "WHOLE IMAGE (FIT)" : "CARD VIEW (h-44)"}
+                      {fitMode === "contain"
+                        ? "WHOLE IMAGE (FIT)"
+                        : zoom !== 0
+                        ? `ZOOM ${zoom > 0 ? `+${zoom}%` : `${zoom}%`}`
+                        : "CARD VIEW (h-44)"}
                     </div>
 
                     {/* Drag prompt tooltip */}
                     {fitMode === "cover" && (
                       <div className="absolute bottom-2 px-2.5 py-1 bg-black/75 backdrop-blur-sm text-white text-[10px] font-mono font-bold rounded-full pointer-events-none flex items-center gap-1.5 shadow-sm z-20">
                         <Move size={10} />
-                        <span>Drag to reposition card cover</span>
+                        <span>Drag to reposition • Scroll to zoom</span>
                       </div>
                     )}
                   </>
@@ -340,6 +354,7 @@ export function EventImagePositionModal({
                 onPointerMove={handlePointerMove}
                 onPointerUp={handlePointerUp}
                 onPointerCancel={handlePointerUp}
+                onWheel={handleWheel}
                 style={{
                   cursor: fitMode === "cover" ? (isDragging ? "grabbing" : "grab") : "default",
                   touchAction: "none",
@@ -348,8 +363,8 @@ export function EventImagePositionModal({
               >
                 {imageUrl ? (
                   <>
-                    {/* Blurred backdrop for contain mode */}
-                    {fitMode === "contain" && (
+                    {/* Blurred backdrop for contain mode or shrunk zoom */}
+                    {(fitMode === "contain" || zoom < 0) && (
                       <img
                         src={imageUrl}
                         alt=""
@@ -362,13 +377,14 @@ export function EventImagePositionModal({
                       src={imageUrl}
                       alt={imageTitle}
                       draggable={false}
-                      className={`pointer-events-none select-none max-w-full max-h-full transition-[object-position] duration-75 ${
+                      className={`pointer-events-none select-none max-w-full max-h-full transition-[object-position,transform] duration-75 ${
                         fitMode === "contain"
                           ? "object-contain relative z-10"
                           : "w-full h-full object-cover"
                       }`}
                       style={{
                         objectPosition: fitMode === "contain" ? "center" : `${posX}% ${posY}%`,
+                        transform: fitMode === "contain" ? undefined : (zoom !== 0 ? `scale(${scale})` : undefined),
                       }}
                     />
 
@@ -401,7 +417,11 @@ export function EventImagePositionModal({
                     </div>
 
                     <div className="absolute top-3 right-3 px-2 py-0.5 rounded bg-black/75 backdrop-blur-sm text-white font-mono text-[9px] font-bold pointer-events-none z-20">
-                      {fitMode === "contain" ? "WHOLE BANNER (FIT)" : "21:9 HERO BANNER"}
+                      {fitMode === "contain"
+                        ? "WHOLE BANNER (FIT)"
+                        : zoom !== 0
+                        ? `ZOOM ${zoom > 0 ? `+${zoom}%` : `${zoom}%`}`
+                        : "21:9 HERO BANNER"}
                     </div>
 
                     <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between pointer-events-none z-20">
@@ -441,6 +461,19 @@ export function EventImagePositionModal({
                   <strong className="text-indigo-600 dark:text-indigo-400">
                     {posX}% X, {posY}% Y
                   </strong>
+                  {" • "}
+                  Scale:{" "}
+                  <strong
+                    className={
+                      zoom < 0
+                        ? "text-amber-600 dark:text-amber-400"
+                        : zoom > 0
+                        ? "text-indigo-600 dark:text-indigo-400"
+                        : "text-text-primary"
+                    }
+                  >
+                    {zoom > 0 ? `+${zoom}%` : `${zoom}%`} ({Math.round(scale * 100)}%)
+                  </strong>
                 </span>
               )}
             </span>
@@ -450,10 +483,11 @@ export function EventImagePositionModal({
                 setFitMode("cover");
                 setPosX(50);
                 setPosY(50);
+                setZoom(0);
               }}
               className="text-[11px] text-text-tertiary hover:text-text-primary inline-flex items-center gap-1 cursor-pointer transition"
             >
-              <RotateCcw size={11} /> Reset Center
+              <RotateCcw size={11} /> Reset Center & Zoom
             </button>
           </div>
         </div>
@@ -462,7 +496,7 @@ export function EventImagePositionModal({
         {fitMode === "cover" ? (
           <div className="space-y-3 bg-surface-secondary/70 p-3.5 rounded-xl border border-border-default">
             {/* Horizontal Slider */}
-            <div className="grid grid-cols-[85px_1fr_45px] items-center gap-2">
+            <div className="grid grid-cols-[90px_1fr_50px] items-center gap-2">
               <label className="text-xs font-bold text-text-secondary">Horizontal (X)</label>
               <input
                 type="range"
@@ -478,7 +512,7 @@ export function EventImagePositionModal({
             </div>
 
             {/* Vertical Slider */}
-            <div className="grid grid-cols-[85px_1fr_45px] items-center gap-2">
+            <div className="grid grid-cols-[90px_1fr_50px] items-center gap-2">
               <label className="text-xs font-bold text-text-secondary">Vertical (Y)</label>
               <input
                 type="range"
@@ -493,7 +527,71 @@ export function EventImagePositionModal({
               </span>
             </div>
 
-            {/* Quick Presets */}
+            {/* Zoom / Scale Slider with Negative Values to shrink width */}
+            <div className="grid grid-cols-[90px_1fr_50px] items-center gap-2 pt-1 border-t border-border-default/60">
+              <div className="flex flex-col">
+                <label className="text-xs font-bold text-text-secondary flex items-center gap-1">
+                  <ZoomIn size={12} className="text-indigo-600 dark:text-indigo-400" />
+                  <span>Zoom / Scale</span>
+                </label>
+                <span className="text-[9px] text-text-tertiary">(-% shrinks width)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ZoomOut size={13} className="text-text-tertiary flex-shrink-0" />
+                <input
+                  type="range"
+                  min={-50}
+                  max={100}
+                  step={1}
+                  value={zoom}
+                  onChange={(e) => setZoom(Number(e.target.value))}
+                  className="w-full h-1.5 bg-border-default rounded appearance-none cursor-pointer accent-indigo-600"
+                />
+                <ZoomIn size={13} className="text-text-tertiary flex-shrink-0" />
+              </div>
+              <span
+                className={`text-xs font-mono font-bold text-right ${
+                  zoom < 0
+                    ? "text-amber-600 dark:text-amber-400"
+                    : zoom > 0
+                    ? "text-indigo-600 dark:text-indigo-400"
+                    : "text-text-primary"
+                }`}
+              >
+                {zoom > 0 ? `+${zoom}%` : `${zoom}%`}
+              </span>
+            </div>
+
+            {/* Quick Zoom Presets */}
+            <div className="pt-2 border-t border-border-default flex items-center justify-between flex-wrap gap-2">
+              <span className="text-[11px] font-bold text-text-tertiary uppercase tracking-wider">
+                Zoom Presets:
+              </span>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {[
+                  { label: "Shrink -40%", val: -40 },
+                  { label: "Shrink -20%", val: -20 },
+                  { label: "Fit 0%", val: 0 },
+                  { label: "Zoom +20%", val: 20 },
+                  { label: "Zoom +40%", val: 40 },
+                ].map((z) => (
+                  <button
+                    key={z.label}
+                    type="button"
+                    onClick={() => setZoom(z.val)}
+                    className={`px-2 py-0.5 text-[11px] font-mono font-semibold rounded-md border transition cursor-pointer ${
+                      zoom === z.val
+                        ? "bg-indigo-600 text-white border-indigo-600 shadow-2xs"
+                        : "bg-surface-elevated text-text-secondary border-border-default hover:text-text-primary hover:border-indigo-400"
+                    }`}
+                  >
+                    {z.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Quick Align Presets */}
             <div className="pt-2 border-t border-border-default flex items-center justify-between flex-wrap gap-2">
               <span className="text-[11px] font-bold text-text-tertiary uppercase tracking-wider">
                 Quick Align:
@@ -550,7 +648,7 @@ export function EventImagePositionModal({
             className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition shadow-[2px_2px_0px_var(--border-brutalist)] cursor-pointer"
           >
             <Check size={14} />
-            <span>Apply Positioning</span>
+            <span>Apply Positioning & Scale</span>
           </button>
         </div>
       </div>
