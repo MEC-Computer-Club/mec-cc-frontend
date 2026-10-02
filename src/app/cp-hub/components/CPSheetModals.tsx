@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { CPProblem, getRatingColor } from "@/lib/api/cpSheetProblems";
 import MonokaiCodeViewer from "./MonokaiCodeViewer";
+import { Button } from "@/components/ui/Button";
 
 interface HintModalProps {
   problem: CPProblem | null;
@@ -26,7 +27,7 @@ export function HintModal({ problem, onClose }: HintModalProps) {
       aria-labelledby="hint-modal-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-fade-in"
     >
-      <div className="relative w-full max-w-lg bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-2xl shadow-[6px_6px_0px_var(--accent-primary)] overflow-hidden">
+      <div className="relative w-full max-w-lg bg-surface-elevated border border-black dark:border-border-default rounded-2xl shadow-[4px_4px_0px_var(--accent-primary)] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between p-4 md:p-5 border-b border-border-default bg-surface">
           <div className="flex items-center gap-3">
@@ -73,12 +74,13 @@ export function HintModal({ problem, onClose }: HintModalProps) {
 
         {/* Clean Footer */}
         <div className="flex items-center justify-end p-4 border-t border-border-default bg-surface">
-          <button
+          <Button
+            variant="primary"
+            size="sm"
             onClick={onClose}
-            className="px-6 py-2 text-xs sm:text-sm font-bold rounded-lg bg-accent-primary !text-accent-primary-text hover:bg-accent-primary-hover transition-colors cursor-pointer shadow-xs"
           >
             Got it
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -115,7 +117,7 @@ export function CodeModal({ problem, onClose }: CodeModalProps) {
       }}
       className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-sm animate-fade-in"
     >
-      <div className="relative w-full max-w-4xl h-[85vh] max-h-[90vh] bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-2xl shadow-[6px_6px_0px_var(--accent-primary)] overflow-hidden flex flex-col min-h-0">
+      <div className="relative w-full max-w-4xl h-[85vh] max-h-[90vh] bg-surface-elevated border border-black dark:border-border-default rounded-2xl shadow-[4px_4px_0px_var(--accent-primary)] overflow-hidden flex flex-col min-h-0">
         {/* Header */}
         <div className="flex items-center justify-between p-4 md:p-5 border-b border-border-default bg-surface shrink-0">
           <div className="flex items-center gap-3">

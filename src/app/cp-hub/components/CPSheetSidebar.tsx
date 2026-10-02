@@ -53,8 +53,8 @@ export default function CPSheetSidebar({
                 onClick={() => onSelectRating(stat.rating)}
                 className={`flex items-center gap-2 px-3 py-2 sm:px-3.5 sm:py-2.5 rounded-xl font-mono text-xs sm:text-sm font-bold transition-all border cursor-pointer ${
                   isSelected
-                    ? "bg-accent-primary !text-accent-primary-text border-2 border-text-primary dark:border-border-default shadow-[2px_2px_0px_var(--border-brutalist)] -translate-y-0.5"
-                    : "bg-surface border-border-default text-text-secondary hover:text-text-primary"
+                    ? "bg-accent-primary !text-accent-primary-text border-black dark:border-border-default shadow-[2px_2px_0px_var(--accent-primary)] -translate-y-0.5"
+                    : "bg-surface border-black/20 hover:border-black dark:border-border-default text-text-secondary hover:text-text-primary"
                 }`}
               >
                 <span className={isSelected ? "!text-accent-primary-text" : stat.colorStyle.text}>{stat.rating}</span>
@@ -77,7 +77,7 @@ export default function CPSheetSidebar({
 
       {/* Desktop Vertical Sidebar */}
       <aside className="hidden lg:flex flex-col w-64 shrink-0 space-y-3">
-        <div className="p-4 bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-2xl shadow-[4px_4px_0px_var(--accent-primary)]">
+        <div className="p-4 bg-surface-elevated border border-black dark:border-border-default rounded-2xl shadow-[4px_4px_0px_var(--accent-primary)]">
           <div className="flex items-center gap-2 mb-1.5">
             <Flame size={20} className="text-accent-primary" />
             <h3 className="font-heading text-base font-bold text-text-primary uppercase tracking-wider">
@@ -98,10 +98,10 @@ export default function CPSheetSidebar({
               <button
                 key={stat.rating}
                 onClick={() => onSelectRating(stat.rating)}
-                className={`w-full group flex flex-col p-3.5 rounded-xl border-2 text-left transition-all cursor-pointer ${
+                className={`w-full group flex flex-col p-3.5 rounded-xl border text-left transition-all cursor-pointer ${
                   isSelected
-                    ? "bg-accent-primary !text-accent-primary-text border-2 border-text-primary dark:border-border-default shadow-[4px_4px_0px_0px_var(--text-primary)] dark:shadow-[4px_4px_0px_0px_var(--accent-primary)] -translate-x-0.5 -translate-y-0.5"
-                    : "bg-surface border-border-default hover:bg-surface-elevated hover:border-border-brutalist/50 text-text-secondary"
+                    ? "bg-accent-primary !text-accent-primary-text border-black dark:border-border-default shadow-[4px_4px_0px_0px_var(--accent-primary)] -translate-x-0.5 -translate-y-0.5"
+                    : "bg-surface border-black/20 hover:border-black dark:border-border-default hover:bg-surface-elevated text-text-secondary"
                 }`}
               >
                 <div className="flex items-center justify-between w-full mb-2">

@@ -46,7 +46,7 @@ export default function CPSheetProblemTable({
 
   if (problems.length === 0) {
     return (
-      <div className="p-12 text-center bg-surface border-2 border-dashed border-border-default rounded-2xl space-y-3">
+      <div className="p-12 text-center bg-surface border border-dashed border-border-default rounded-2xl space-y-3">
         <Code2 className="w-12 h-12 mx-auto text-text-tertiary opacity-60" />
         <h4 className="text-lg font-bold text-text-primary">
           No problems found
@@ -59,12 +59,12 @@ export default function CPSheetProblemTable({
   }
 
   return (
-    <div className="border-2 border-border-brutalist dark:border-border-default rounded-xl sm:rounded-2xl bg-surface-elevated overflow-hidden shadow-[3px_3px_0px_var(--accent-primary)] sm:shadow-[5px_5px_0px_var(--accent-primary)]">
+    <div className="border border-black dark:border-border-default rounded-xl sm:rounded-2xl bg-surface-elevated overflow-hidden shadow-[4px_4px_0px_var(--accent-primary)]">
       {/* Table Header */}
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
-            <tr className="border-b-2 border-border-default bg-surface/90 text-text-secondary font-mono uppercase tracking-wider text-xs sm:text-sm font-bold">
+            <tr className="border-b border-border-default bg-surface/90 text-text-secondary font-mono uppercase tracking-wider text-xs sm:text-sm font-bold">
               <th className="py-3 px-1.5 sm:px-3 w-8 sm:w-12 text-center">#</th>
               <th className="py-3 px-1.5 sm:px-3 w-20 sm:w-28 text-center">Status</th>
               <th className="py-3 px-2 sm:px-4 min-w-[160px] sm:min-w-[240px]">Problem</th>

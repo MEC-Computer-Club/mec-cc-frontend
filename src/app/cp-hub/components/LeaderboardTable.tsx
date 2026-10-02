@@ -19,6 +19,7 @@ import FilterSelect from "@/app/dashboard/components/FilterSelect";
 import { CP_SHEET_PROBLEMS } from "@/lib/api/cpSheetProblems";
 import { useAuth } from "@/context/AuthContext";
 import { cleanCfHandle } from "../services/cfSyncService";
+import { Button } from "@/components/ui/Button";
 
 interface LeaderboardTableProps {
   initialEntries: LeaderboardEntry[];
@@ -254,7 +255,7 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
   return (
     <div className="space-y-6">
       {/* Mode Switcher Banner */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 sm:p-5 bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-2xl shadow-[5px_5px_0px_var(--accent-primary)]">
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 p-4 sm:p-5 bg-surface-elevated border border-black dark:border-border-default rounded-2xl shadow-[4px_4px_0px_var(--accent-primary)]">
         <div>
           <h3 className="font-heading text-lg sm:text-xl font-bold text-text-primary flex items-center gap-2">
             <span>Competitive Programming Leaderboard</span>
@@ -265,33 +266,29 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center p-1.5 rounded-xl bg-surface border-2 border-border-default shrink-0">
-          <button
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
             onClick={() => {
               setLeaderboardMode("cpsheet");
               setSortBy("sheetSolved");
             }}
-            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${leaderboardMode === "cpsheet"
-                ? "bg-accent-primary !text-accent-primary-text shadow-[2px_2px_0px_var(--border-brutalist)] font-black"
-                : "text-text-secondary hover:text-text-primary font-bold"
-              }`}
+            variant={leaderboardMode === "cpsheet" ? "primary" : "secondary"}
+            size="sm"
+            icon={<Zap size={15} />}
           >
-            <Zap size={16} className={leaderboardMode === "cpsheet" ? "!text-accent-primary-text" : "text-accent-primary"} />
             <span>CP Sheet Ladder</span>
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={() => {
               setLeaderboardMode("cf");
               setSortBy("rating");
             }}
-            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-extrabold transition-all cursor-pointer ${leaderboardMode === "cf"
-                ? "bg-accent-primary !text-accent-primary-text shadow-[2px_2px_0px_var(--border-brutalist)] font-black"
-                : "text-text-secondary hover:text-text-primary font-bold"
-              }`}
+            variant={leaderboardMode === "cf" ? "primary" : "secondary"}
+            size="sm"
+            icon={<Trophy size={15} />}
           >
-            <Trophy size={16} className={leaderboardMode === "cf" ? "!text-accent-primary-text" : "text-amber-500"} />
             <span>Global Codeforces</span>
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -299,7 +296,7 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {leaderboardMode === "cpsheet" ? (
           <>
-            <div className="bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-xl p-4 shadow-[4px_4px_0px_var(--accent-primary)] flex items-center gap-3.5">
+            <div className="bg-surface-elevated border border-black dark:border-border-default rounded-xl p-4 shadow-[4px_4px_0px_var(--accent-primary)] flex items-center gap-3.5">
               <div className="w-12 h-12 rounded-xl bg-accent-primary/20 text-accent-primary flex items-center justify-center shrink-0 border border-accent-primary/40 shadow-xs">
                 <Zap className="w-6 h-6" />
               </div>
@@ -313,7 +310,7 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
               </div>
             </div>
 
-            <div className="bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-xl p-4 shadow-[4px_4px_0px_var(--accent-primary)] flex items-center gap-3.5">
+            <div className="bg-surface-elevated border border-black dark:border-border-default rounded-xl p-4 shadow-[4px_4px_0px_var(--accent-primary)] flex items-center gap-3.5">
               <div className="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/40 shadow-xs">
                 <CheckCircle2 className="w-6 h-6" />
               </div>
@@ -327,7 +324,7 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
               </div>
             </div>
 
-            <div className="bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-xl p-4 shadow-[4px_4px_0px_var(--accent-primary)] flex items-center gap-3.5">
+            <div className="bg-surface-elevated border border-black dark:border-border-default rounded-xl p-4 shadow-[4px_4px_0px_var(--accent-primary)] flex items-center gap-3.5">
               <div className="w-12 h-12 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0 border border-cyan-500/40 shadow-xs">
                 <Target className="w-6 h-6" />
               </div>
@@ -343,7 +340,7 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
           </>
         ) : (
           <>
-            <div className="bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-xl p-4 shadow-[4px_4px_0px_var(--accent-primary)] flex items-center gap-3.5">
+            <div className="bg-surface-elevated border border-black dark:border-border-default rounded-xl p-4 shadow-[4px_4px_0px_var(--accent-primary)] flex items-center gap-3.5">
               <div className="w-12 h-12 rounded-xl bg-amber-400/20 text-amber-400 flex items-center justify-center shrink-0 border border-amber-400/40 shadow-xs">
                 <Trophy className="w-6 h-6" />
               </div>
@@ -357,7 +354,7 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
               </div>
             </div>
 
-            <div className="bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-xl p-4 shadow-[4px_4px_0px_var(--accent-primary)] flex items-center gap-3.5">
+            <div className="bg-surface-elevated border border-black dark:border-border-default rounded-xl p-4 shadow-[4px_4px_0px_var(--accent-primary)] flex items-center gap-3.5">
               <div className="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/40 shadow-xs">
                 <Flame className="w-6 h-6" />
               </div>
@@ -371,7 +368,7 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
               </div>
             </div>
 
-            <div className="bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-xl p-4 shadow-[4px_4px_0px_var(--accent-primary)] flex items-center gap-3.5">
+            <div className="bg-surface-elevated border border-black dark:border-border-default rounded-xl p-4 shadow-[4px_4px_0px_var(--accent-primary)] flex items-center gap-3.5">
               <div className="w-12 h-12 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0 border border-cyan-500/40 shadow-xs">
                 <Award className="w-6 h-6" />
               </div>
@@ -389,7 +386,7 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
       </div>
 
       {/* Visitor Sheet Solved Synchronized Banner */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-emerald-500/10 border-2 border-emerald-500/40 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs sm:text-sm shadow-xs">
+      <div className="p-4 sm:p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/40 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs sm:text-sm shadow-xs">
         <div className="flex items-center gap-3">
           <span className="p-2 rounded-xl bg-emerald-500 text-black font-extrabold shadow-xs shrink-0">
             <Zap size={16} />
@@ -412,13 +409,14 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
             )}
           </div>
         </div>
-        <Link
+        <Button
           href="/cp-hub?tab=problem-sets"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface border border-emerald-500/40 font-bold text-emerald-400 hover:bg-emerald-500/20 transition-all shrink-0 text-xs sm:text-sm"
+          variant="secondary"
+          size="sm"
+          icon={<ExternalLink size={13} />}
         >
           <span>Open Practice Sheet</span>
-          <ExternalLink size={13} />
-        </Link>
+        </Button>
       </div>
 
       {/* Search & Filters Bar */}
@@ -431,7 +429,7 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search member, handle, designation..."
-            className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-primary font-sans text-text-primary placeholder:text-text-tertiary"
+            className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm bg-surface-elevated border border-black dark:border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-primary font-sans text-text-primary placeholder:text-text-tertiary"
           />
         </div>
 
@@ -454,10 +452,10 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
       </div>
 
       {/* Leaderboard Table */}
-      <div className="w-full bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-2xl overflow-hidden shadow-[5px_5px_0px_var(--border-brutalist)] dark:shadow-[5px_5px_0px_var(--border-default)] transition-all duration-200">
+      <div className="w-full bg-surface-elevated border border-black dark:border-border-default rounded-2xl overflow-hidden shadow-[4px_4px_0px_var(--accent-primary)] transition-all duration-200">
         {/* Table Header */}
         {leaderboardMode === "cpsheet" ? (
-          <div className="grid grid-cols-[36px_1fr_75px_58px] sm:grid-cols-[55px_1.7fr_1.1fr_120px_120px_80px_50px] p-2.5 sm:p-3.5 sm:px-5 bg-surface-secondary font-mono text-xs sm:text-sm font-bold uppercase tracking-wider text-text-secondary border-b-2 border-border-default">
+          <div className="grid grid-cols-[36px_1fr_75px_58px] sm:grid-cols-[55px_1.7fr_1.1fr_120px_120px_80px_50px] p-2.5 sm:p-3.5 sm:px-5 bg-surface-secondary font-mono text-xs sm:text-sm font-bold uppercase tracking-wider text-text-secondary border-b border-border-default">
             <span>#</span>
             <span>Member</span>
             <span className="hidden sm:inline">Handle</span>
@@ -467,7 +465,7 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
             <span className="hidden sm:inline text-right">Profile</span>
           </div>
         ) : (
-          <div className="grid grid-cols-[36px_1fr_70px_58px] sm:grid-cols-[55px_1.8fr_1.2fr_95px_85px_55px] p-2.5 sm:p-3.5 sm:px-5 bg-surface-secondary font-mono text-xs sm:text-sm font-bold uppercase tracking-wider text-text-secondary border-b-2 border-border-default">
+          <div className="grid grid-cols-[36px_1fr_70px_58px] sm:grid-cols-[55px_1.8fr_1.2fr_95px_85px_55px] p-2.5 sm:p-3.5 sm:px-5 bg-surface-secondary font-mono text-xs sm:text-sm font-bold uppercase tracking-wider text-text-secondary border-b border-border-default">
             <span>#</span>
             <span>Member</span>
             <span className="hidden sm:inline">Handle</span>
