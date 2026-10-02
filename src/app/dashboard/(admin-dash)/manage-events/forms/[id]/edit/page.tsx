@@ -6,10 +6,12 @@ import axios from "axios";
 import FormBuilder from "@/components/form-builder/FormBuilder";
 import { Loader2, XCircle } from "lucide-react";
 import { API_BASE_URL } from "@/lib/api";
+import { useRoleGuard } from "@/hooks/useRoleGuard";
 
 const API_URL = API_BASE_URL;
 
 export default function EditFormPage() {
+  const { isAllowed, isLoading: guardLoading } = useRoleGuard(["admin", "moderator", "executive"]);
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const [formData, setFormData] = useState<any>(null);
@@ -17,6 +19,7 @@ export default function EditFormPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!isAllowed || guardLoading) return;
     axios
       .get(`${API_URL}/api/forms/${id}`, { withCredentials: true })
       .then((res) => {
@@ -26,7 +29,9 @@ export default function EditFormPage() {
         setError(err?.response?.data?.message || "Failed to load form.");
       })
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, isAllowed, guardLoading]);
+
+  if (guardLoading || !isAllowed) return null;
 
   if (loading) {
     return (

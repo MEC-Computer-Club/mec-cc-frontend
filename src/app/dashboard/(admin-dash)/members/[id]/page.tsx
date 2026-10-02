@@ -88,6 +88,7 @@ const SYSTEM_ROLE_OPTIONS = [
   { value: "moderator", label: "Moderator (Staff Access)" },
   { value: "admin", label: "Administrator (Full Access)" },
   { value: "executive", label: "Executive (Panel Member)" },
+  { value: "advisor", label: "Advisor (Advisory Access)" },
   { value: "alumni", label: "Alumni (Graduate Member)" },
   { value: "guest", label: "Guest (Unverified)" },
 ];
@@ -377,7 +378,6 @@ export default function DashboardMemberDetailsPage() {
   /* Compute Details */
   const name = member.fullName || "Unnamed Member";
   const initial = name.trim().charAt(0).toUpperCase();
-  const sessionDisplay = formatDeptSession(member.department, member.session, member.batch);
   const designation =
     member.designation ||
     member.customRole ||
@@ -389,11 +389,15 @@ export default function DashboardMemberDetailsPage() {
       ? "Alumni"
       : "Club Member");
 
-  const isAdv = member.clubRole === "advisor" || designation.toLowerCase().includes("advisor");
+  const isAdv = member.clubRole === "advisor" || member.role === "advisor" || designation.toLowerCase().includes("advisor");
   const isExec = member.clubRole === "executive";
   const isAlumni = member.clubRole === "alumni" || member.isGraduated || member.role === "alumni";
   const isAdmin = member.role === "admin";
   const isMod = member.role === "moderator";
+
+  const sessionDisplay = isAdv
+    ? `${member.session || "Faculty Member"}${member.department ? ` • Dept. of ${member.department}` : ""}`
+    : formatDeptSession(member.department, member.session, member.batch);
 
   const socials = member.socialLinks || {};
 
@@ -615,7 +619,10 @@ export default function DashboardMemberDetailsPage() {
                 {/* Subtitle & Designation */}
                 <div className="text-xs sm:text-sm text-text-secondary flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1">
                   <span>{sessionDisplay}</span>
-                  {member.studentId && <span>• ID: {member.studentId}</span>}
+                  {member.studentId && !isAdv && <span>• ID: {member.studentId}</span>}
+                  {member.studentId && isAdv && !member.studentId.startsWith("FAC-") && (
+                    <span>• Faculty ID: {member.studentId}</span>
+                  )}
                 </div>
                 <div className="text-sm sm:text-base font-bold text-accent-text-on-surface dark:text-accent-primary-hover">
                   {designation}
@@ -1112,16 +1119,19 @@ export default function DashboardMemberDetailsPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* ── 1. Academic & University Record ── */}
+            {/* ── 1. Academic & University Record / Institutional Post ── */}
             <div className="bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-xl shadow-[4px_4px_0px_var(--border-brutalist)] dark:shadow-[4px_4px_0px_var(--border-default)] p-5 sm:p-6 space-y-4">
               <h3 className="text-sm font-extrabold uppercase tracking-wider text-text-primary pb-2 border-b border-border-default flex items-center gap-2">
-                <Building2 size={16} className="text-accent-primary" /> Academic &amp; University Records
+                <Building2 size={16} className="text-accent-primary" />
+                {editData.clubRole === "advisor" || editData.role === "advisor"
+                  ? "Faculty & Institutional Profile"
+                  : "Academic & University Records"}
               </h3>
 
               {/* Department */}
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
-                  Department
+                  Department / Wing
                 </label>
                 <Select
                   value={editData.department || "CSE"}
@@ -1130,100 +1140,115 @@ export default function DashboardMemberDetailsPage() {
                     setEditData((prev) => ({
                       ...prev,
                       department: val,
-                      // auto-reset batch when department changes if batch prefix doesn't match
                       batch: "",
                     }));
                   }}
                 />
               </div>
 
-              {/* Batch (Dynamic based on department) */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
-                  Batch ({currentDept})
-                </label>
-                <Select
-                  value={editData.batch || ""}
-                  options={dynamicBatchOptions}
-                  placeholder={`Select ${currentDept} Batch...`}
-                  onChange={(val) => setEditData((prev) => ({ ...prev, batch: val }))}
-                />
-                <p className="text-[11px] text-text-tertiary mt-1">
-                  Dynamic batch options based on global site settings.
-                </p>
-              </div>
+              {/* For Students / Alumni: Dynamic Batch */}
+              {editData.clubRole !== "advisor" && editData.role !== "advisor" ? (
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
+                    Batch ({currentDept})
+                  </label>
+                  <Select
+                    value={editData.batch || ""}
+                    options={dynamicBatchOptions}
+                    placeholder={`Select ${currentDept} Batch...`}
+                    onChange={(val) => setEditData((prev) => ({ ...prev, batch: val }))}
+                  />
+                  <p className="text-[11px] text-text-tertiary mt-1">
+                    Dynamic batch options based on global site settings.
+                  </p>
+                </div>
+              ) : null}
 
-              {/* Academic Session & Student ID */}
+              {/* Institutional Post vs Academic Session & Faculty ID vs Student ID */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
-                    Academic Session
+                    {editData.clubRole === "advisor" || editData.role === "advisor"
+                      ? "Institutional Post / Rank"
+                      : "Academic Session"}
                   </label>
                   <input
                     type="text"
                     value={editData.session || ""}
                     onChange={(e) => setEditData((prev) => ({ ...prev, session: e.target.value }))}
-                    placeholder="e.g. 2021-22 or 2021-2022"
+                    placeholder={
+                      editData.clubRole === "advisor" || editData.role === "advisor"
+                        ? "e.g. Assistant Professor, Head of Dept"
+                        : "e.g. 2021-22 or 2021-2022"
+                    }
                     className="w-full py-2 px-3 bg-surface-primary border border-border-brutalist dark:border-border-default rounded-md text-sm text-text-primary focus:border-accent-primary outline-none"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
-                    Student ID
+                    {editData.clubRole === "advisor" || editData.role === "advisor"
+                      ? "Faculty / Employee ID (Optional)"
+                      : "Student ID"}
                   </label>
                   <input
                     type="text"
                     value={editData.studentId || ""}
                     onChange={(e) => setEditData((prev) => ({ ...prev, studentId: e.target.value }))}
-                    placeholder="e.g. 19101001"
+                    placeholder={
+                      editData.clubRole === "advisor" || editData.role === "advisor"
+                        ? "e.g. FAC-CSE-101"
+                        : "e.g. 19101001"
+                    }
                     className="w-full py-2 px-3 bg-surface-primary border border-border-brutalist dark:border-border-default rounded-md text-sm text-text-primary font-mono focus:border-accent-primary outline-none"
                   />
                 </div>
               </div>
 
-              {/* Graduation Status & Passing Year */}
-              <div className="p-3 bg-surface-secondary border border-border-default rounded-lg space-y-3">
-                <label className="flex items-center gap-2.5 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={Boolean(editData.isGraduated)}
-                    onChange={(e) => {
-                      const checked = e.target.checked;
-                      setEditData((prev) => ({
-                        ...prev,
-                        isGraduated: checked,
-                        clubRole: checked ? "alumni" : (prev.clubRole === "alumni" ? "member" : prev.clubRole),
-                        role: checked && prev.role === "member" ? "alumni" : (!checked && prev.role === "alumni" ? "member" : prev.role),
-                        passingYear: checked ? (prev.passingYear || new Date().getFullYear()) : undefined,
-                      }));
-                    }}
-                    className="w-4 h-4 accent-accent-primary rounded cursor-pointer"
-                  />
-                  <span className="text-xs sm:text-sm font-bold text-text-primary">
-                    Mark as Graduated Alumni
-                  </span>
-                </label>
-
-                {editData.isGraduated && (
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
-                      Passing / Graduation Year
-                    </label>
+              {/* Graduation Status & Passing Year (Only for student/alumni profiles) */}
+              {editData.clubRole !== "advisor" && editData.role !== "advisor" && (
+                <div className="p-3 bg-surface-secondary border border-border-default rounded-lg space-y-3">
+                  <label className="flex items-center gap-2.5 cursor-pointer select-none">
                     <input
-                      type="number"
-                      value={editData.passingYear || ""}
-                      onChange={(e) =>
+                      type="checkbox"
+                      checked={Boolean(editData.isGraduated)}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
                         setEditData((prev) => ({
                           ...prev,
-                          passingYear: e.target.value ? parseInt(e.target.value, 10) : undefined,
-                        }))
-                      }
-                      placeholder="e.g. 2025"
-                      className="w-full py-2 px-3 bg-surface-primary border border-border-brutalist dark:border-border-default rounded-md text-sm text-text-primary focus:border-accent-primary outline-none"
+                          isGraduated: checked,
+                          clubRole: checked ? "alumni" : (prev.clubRole === "alumni" ? "member" : prev.clubRole),
+                          role: checked && prev.role === "member" ? "alumni" : (!checked && prev.role === "alumni" ? "member" : prev.role),
+                          passingYear: checked ? (prev.passingYear || new Date().getFullYear()) : undefined,
+                        }));
+                      }}
+                      className="w-4 h-4 accent-accent-primary rounded cursor-pointer"
                     />
-                  </div>
-                )}
-              </div>
+                    <span className="text-xs sm:text-sm font-bold text-text-primary">
+                      Mark as Graduated Alumni
+                    </span>
+                  </label>
+
+                  {editData.isGraduated && (
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1">
+                        Passing / Graduation Year
+                      </label>
+                      <input
+                        type="number"
+                        value={editData.passingYear || ""}
+                        onChange={(e) =>
+                          setEditData((prev) => ({
+                            ...prev,
+                            passingYear: e.target.value ? parseInt(e.target.value, 10) : undefined,
+                          }))
+                        }
+                        placeholder="e.g. 2025"
+                        className="w-full py-2 px-3 bg-surface-primary border border-border-brutalist dark:border-border-default rounded-md text-sm text-text-primary focus:border-accent-primary outline-none"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* ── 2. Role, Club Standing & Admin Controls ── */}

@@ -22,6 +22,7 @@ import { TemplateItem } from "@/components/certificates/CertificateTemplateCard"
 import { interpolateCertificateHtml } from "@/lib/utils/templateInterpolation";
 import { getOptimizedImageUrl, getYoutubeEmbedUrl, getYoutubeThumbnail } from "@/lib/api/gallery";
 import { API_BASE_URL } from "@/lib/api";
+import { useRoleGuard } from "@/hooks/useRoleGuard";
 import EventFormSubmissionsSection from "../../components/EventFormSubmissionsSection";
 import EventMailingTab from "../../components/EventMailingTab";
 
@@ -4097,6 +4098,7 @@ function CertificatesTab({
 type TabId = "overview" | "participants" | "volunteers" | "winners" | "sponsors" | "media" | "certificates" | "mailing";
 
 export default function EventDetailPage() {
+  const { isAllowed, isLoading: guardLoading } = useRoleGuard(["admin", "moderator", "executive"]);
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
 
@@ -4366,6 +4368,8 @@ export default function EventDetailPage() {
     { id: "certificates", label: "Certificates", icon: Award },
     { id: "mailing", label: "Email", icon: Mail },
   ], [isWinnerNeeded]);
+
+  if (guardLoading || !isAllowed) return null;
 
   // ── Loading skeleton ──────────────────────────────────────────────────────
   if (loading) {

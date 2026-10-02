@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Link from "next/link";
 import axios from "axios";
 import { API_BASE_URL } from "@/lib/api";
-import { DoorOpen, Loader2, Clock, CheckCircle2 } from "lucide-react";
+import { DoorOpen, Loader2, Clock, CheckCircle2, BookOpen } from "lucide-react";
 import toast from "react-hot-toast";
 
 interface ClubRoomState {
@@ -161,8 +162,17 @@ export default function ClubRoomAdminCard() {
           </div>
         </div>
 
-        {/* Right Toggle Button */}
-        <div className="flex items-center gap-2 self-end sm:self-center">
+        {/* Right Toggle Button & Log Book Link */}
+        <div className="flex items-center gap-2.5 self-end sm:self-center">
+          <Link
+            href="/dashboard/activity-log"
+            className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl font-mono text-xs font-bold bg-surface-secondary hover:bg-surface-primary border border-border-default text-text-primary hover:border-accent-primary transition-all shadow-[2px_2px_0px_var(--border-default)] hover:shadow-[3px_3px_0px_var(--accent-primary)] cursor-pointer"
+            title="View Historical Room Log Book"
+          >
+            <BookOpen size={14} className="text-accent-primary" />
+            <span>Log Book</span>
+          </Link>
+
           <button
             type="button"
             disabled={isUpdating || loading}

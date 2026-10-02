@@ -38,9 +38,47 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: "Document Not Found | MEC Computer Club" };
   }
 
+  const title = `${doc.title} | MEC Computer Club CP Hub`;
+  const description = `Official tutorial and learning resource published by MEC Computer Club: ${doc.title} by ${doc.author || "Club Member"}.`;
+
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "https://meccomputerclub.org");
+
+  const pageUrl = `${baseUrl.replace(/\/+$/, "")}/cp-hub/docs/${id}`;
+  const ogImageUrl = `${baseUrl.replace(/\/+$/, "")}/mec-club-photo.jpg`;
+
   return {
-    title: `${doc.title} | MEC Computer Club CP Hub`,
-    description: `Official tutorial and learning resource published by MEC Computer Club: ${doc.title} by ${doc.author || "Club Member"}.`,
+    title,
+    description,
+    alternates: {
+      canonical: pageUrl,
+    },
+    openGraph: {
+      title,
+      description,
+      url: pageUrl,
+      siteName: "MEC Computer Club",
+      type: "article",
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [ogImageUrl],
+    },
   };
 }
 

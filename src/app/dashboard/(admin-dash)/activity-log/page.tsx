@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import {
   ShieldAlert,
@@ -17,10 +17,16 @@ import {
   Layers,
   Users,
   Award,
+  Calendar,
+  DoorOpen,
+  KeyRound,
+  RefreshCw,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import FilterSelect, { FilterOption } from "@/app/dashboard/components/FilterSelect";
 import { getAdminLogs, AdminLogEntry } from "@/lib/auditLogger";
+import { API_BASE_URL } from "@/lib/api";
+import axios from "axios";
 
 export default function DashboardActivityLogPage() {
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -29,17 +35,80 @@ export default function DashboardActivityLogPage() {
   const [moduleFilter, setModuleFilter] = useState("all");
   const [actionFilter, setActionFilter] = useState("all");
   const [actorFilter, setActorFilter] = useState("all");
+  const [rangeFilter, setRangeFilter] = useState("all");
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
+  const [isFetchingRemote, setIsFetchingRemote] = useState(false);
 
   // Strictly enforce Admin only access for staff activity log
   const isStrictAdmin = user?.role === "admin";
 
+  const fetchRemoteLogs = useCallback(async () => {
+    try {
+      setIsFetchingRemote(true);
+      const res = await axios.get(`${API_BASE_URL}/api/audit-logs`, {
+        params: {
+          range: rangeFilter !== "all" ? rangeFilter : undefined,
+          targetType: moduleFilter !== "all" ? moduleFilter : undefined,
+          action: actionFilter !== "all" ? actionFilter : undefined,
+          actorName: actorFilter !== "all" ? actorFilter : undefined,
+          limit: 100,
+        },
+        withCredentials: true,
+      });
+
+      if (res.data?.success && Array.isArray(res.data.logs) && res.data.logs.length > 0) {
+        // Map backend Mongo logs to frontend AdminLogEntry structure
+        const mappedLogs: AdminLogEntry[] = res.data.logs.map((item: any) => {
+          const dateObj = new Date(item.timestamp || item.createdAt);
+          const formattedDate = !isNaN(dateObj.getTime())
+            ? dateObj.toLocaleString("en-GB", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+              })
+            : "Recent";
+
+          return {
+            id: item._id || item.id,
+            timestamp: item.timestamp || item.createdAt,
+            formattedDate,
+            actorName: item.actorName || "Admin",
+            actorEmail: item.actorEmail,
+            actorRole: item.actorRole || "admin",
+            action: item.action,
+            targetType: item.targetType,
+            targetTitle: item.targetTitle,
+            description: item.description,
+            diff: item.diff || [],
+            metadata: item.metadata || {},
+          };
+        });
+
+        // Merge with local logs to prevent missing any in-browser uncommitted mock actions
+        const localLogs = getAdminLogs();
+        const existingIds = new Set(mappedLogs.map((l) => l.id));
+        const nonDuplicateLocal = localLogs.filter((l) => !existingIds.has(l.id));
+        setLogs([...mappedLogs, ...nonDuplicateLocal]);
+      } else {
+        setLogs(getAdminLogs());
+      }
+    } catch {
+      // Fallback cleanly to local storage logs
+      setLogs(getAdminLogs());
+    } finally {
+      setIsFetchingRemote(false);
+    }
+  }, [rangeFilter, moduleFilter, actionFilter, actorFilter]);
+
   // Subscribe to live audit log updates
   useEffect(() => {
-    setLogs(getAdminLogs());
+    fetchRemoteLogs();
 
     const handleUpdate = () => {
-      setLogs(getAdminLogs());
+      fetchRemoteLogs();
     };
 
     window.addEventListener("mec-admin-log-updated", handleUpdate);
@@ -49,22 +118,33 @@ export default function DashboardActivityLogPage() {
       window.removeEventListener("mec-admin-log-updated", handleUpdate);
       window.removeEventListener("storage", handleUpdate);
     };
-  }, []);
+  }, [fetchRemoteLogs]);
 
-  // Filter options
+  // Date Range filter options
+  const rangeOptions: FilterOption[] = [
+    { value: "all", label: "All Time Range" },
+    { value: "this_month", label: "This Month" },
+    { value: "last_month", label: "Last Month" },
+  ];
+
+  // Module filter options
   const moduleOptions: FilterOption[] = [
     { value: "all", label: "All Modules" },
+    { value: "CLUB_ROOM", label: "Club Room & Log Book" },
+    { value: "INVITATION", label: "Invitation Codes" },
+    { value: "EVENT", label: "Events & Contests" },
     { value: "ASSET", label: "Assets & Equipment" },
     { value: "MEMBER", label: "Members & Approvals" },
-    { value: "EVENT", label: "Events & Contests" },
     { value: "PAGE", label: "Pages & Content" },
     { value: "SYSTEM", label: "System & Settings" },
   ];
 
   const actionOptions: FilterOption[] = [
     { value: "all", label: "All Actions" },
-    { value: "STATUS_CHANGE", label: "Status Changes" },
+    { value: "ROOM_OPEN", label: "Room Opened" },
+    { value: "ROOM_CLOSE", label: "Room Closed" },
     { value: "CREATE", label: "Creations" },
+    { value: "STATUS_CHANGE", label: "Status Changes" },
     { value: "UPDATE", label: "Updates" },
     { value: "APPROVE", label: "Approvals" },
     { value: "PUBLISH", label: "Publications" },
@@ -253,6 +333,13 @@ export default function DashboardActivityLogPage() {
         {/* Dropdown Filters */}
         <div className="flex flex-wrap items-center gap-2.5">
           <FilterSelect
+            value={rangeFilter}
+            onChange={setRangeFilter}
+            options={rangeOptions}
+            placeholder="Time Period"
+          />
+
+          <FilterSelect
             value={moduleFilter}
             onChange={setModuleFilter}
             options={moduleOptions}
@@ -273,10 +360,11 @@ export default function DashboardActivityLogPage() {
             placeholder="Staff Member"
           />
 
-          {(searchQuery || moduleFilter !== "all" || actionFilter !== "all" || actorFilter !== "all") && (
+          {(searchQuery || rangeFilter !== "all" || moduleFilter !== "all" || actionFilter !== "all" || actorFilter !== "all") && (
             <button
               onClick={() => {
                 setSearchQuery("");
+                setRangeFilter("all");
                 setModuleFilter("all");
                 setActionFilter("all");
                 setActorFilter("all");

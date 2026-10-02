@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
 import { api } from "@/lib/api";
+import { useRoleGuard } from "@/hooks/useRoleGuard";
 import {
   ArrowLeft,
   FileSpreadsheet,
@@ -98,6 +99,7 @@ function isLink(value: unknown): string | false {
 }
 
 export default function FormResponsesPage() {
+  const { isAllowed, isLoading: guardLoading } = useRoleGuard(["admin", "moderator", "executive"]);
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
 
@@ -119,47 +121,10 @@ export default function FormResponsesPage() {
   const [deletingSub, setDeletingSub] = useState<Submission | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const getSubmitterInfo = (sub: any) => {
-    if (sub?.userId?.fullName) {
-      return {
-        name: sub.userId.fullName,
-        email: sub.userId.email || "",
-        isMember: true,
-      };
-    }
-    const r = sub?.responses || {};
-    const name =
-      r.full_name ||
-      r.fullName ||
-      r.name ||
-      r.applicant_name ||
-      r.participant_name ||
-      r.leader_name;
-    const email =
-      r.email_address ||
-      r.email ||
-      r.contact_email ||
-      r.user_email;
-    if (name || email) {
-      return {
-        name: name || "Applicant",
-        email: email || "",
-        isMember: false,
-      };
-    }
-    return {
-      name: "Anonymous",
-      email: "",
-      isMember: false,
-    };
-  };
-
   const copyColumnValues = (columnKey: string, columnLabel: string) => {
     let vals: string[] = [];
     if (columnKey === "#") {
       vals = filtered.map((_, i) => String(i + 1));
-    } else if (columnKey === "submitted_by") {
-      vals = filtered.map((sub) => getSubmitterInfo(sub).name);
     } else if (columnKey === "submitted_at") {
       vals = filtered.map((sub) =>
         new Date(sub.createdAt).toLocaleDateString("en-GB", {
@@ -263,7 +228,6 @@ export default function FormResponsesPage() {
   const stickyOptions = useMemo(() => {
     return [
       { value: "#", label: "Pin: # (SL No)" },
-      { value: "submitted_by", label: "Pin: Submitted By (Account)" },
       ...fields.map((f) => ({ value: f.name, label: `Pin: ${f.label}` })),
       { value: "actions", label: "Pin: Actions" },
     ];
@@ -279,7 +243,7 @@ export default function FormResponsesPage() {
   const hasStickySecondCol =
     stickyColumnKey !== "#" &&
     stickyColumnKey !== "actions";
-  const isStickyField = hasStickySecondCol && stickyColumnKey !== "submitted_by";
+  const isStickyField = hasStickySecondCol;
   const stickyFieldObj = isStickyField ? fields.find((f) => f.name === stickyColumnKey) : null;
   const stickyColLeft = 0;
 
@@ -293,11 +257,8 @@ export default function FormResponsesPage() {
     if (!search.trim()) return submissions;
     const q = search.toLowerCase();
     return submissions.filter((s) => {
-      const info = getSubmitterInfo(s);
-      const name = info.name.toLowerCase();
-      const email = info.email.toLowerCase();
-      const values = Object.values(s.responses).map((v) => cellValue(v).toLowerCase()).join(" ");
-      return name.includes(q) || email.includes(q) || values.includes(q);
+      const values = Object.values(s.responses || {}).map((v) => cellValue(v).toLowerCase()).join(" ");
+      return values.includes(q);
     });
   }, [submissions, search]);
 
@@ -355,6 +316,8 @@ export default function FormResponsesPage() {
     toast.success("Excel export started!");
     setTimeout(() => setExportStatus("idle"), 1500);
   };
+
+  if (guardLoading || !isAllowed) return null;
 
   if (loading) {
     return (
@@ -591,13 +554,13 @@ export default function FormResponsesPage() {
                         <div className="flex items-center gap-1.5 min-w-0">
                           <Pin size={11} className="text-accent-primary shrink-0" />
                           <span className="truncate">
-                            {stickyColumnKey === "submitted_by" ? "Submitted By" : (stickyFieldObj?.label ?? stickyColumnKey)}
+                            {stickyFieldObj?.label ?? stickyColumnKey}
                           </span>
                           {stickyFieldObj?.required && <span style={{ color: "var(--accent-error)" }}>*</span>}
                         </div>
                         <button
                           type="button"
-                          onClick={() => copyColumnValues(stickyColumnKey, stickyColumnKey === "submitted_by" ? "Submitted By" : (stickyFieldObj?.label ?? stickyColumnKey))}
+                          onClick={() => copyColumnValues(stickyColumnKey, stickyFieldObj?.label ?? stickyColumnKey)}
                           className="p-1 hover:bg-surface-elevated rounded transition text-text-secondary hover:text-accent-primary shrink-0"
                           title="Copy all values in this column (comma-separated)"
                         >
@@ -651,27 +614,6 @@ export default function FormResponsesPage() {
                       </button>
                     </div>
                   </th>
-
-                  {/* If stickyColumn is NOT "submitted_by", show Submitted By as a normal scrollable column */}
-                  {stickyColumnKey !== "submitted_by" && (
-                    <th style={{
-                      padding: "12px 16px", textAlign: "left", fontSize: "10px", fontWeight: 900,
-                      color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.06em",
-                      whiteSpace: "nowrap", minWidth: 190, maxWidth: 230,
-                    }}>
-                      <div className="flex items-center justify-between gap-1.5">
-                        <span>Submitted By</span>
-                        <button
-                          type="button"
-                          onClick={() => copyColumnValues("submitted_by", "Submitted By")}
-                          className="p-1 hover:bg-surface-elevated rounded transition text-text-secondary hover:text-accent-primary shrink-0"
-                          title="Copy all submitter names"
-                        >
-                          {copiedCol === "submitted_by" ? <Check size={11} className="text-accent-success" /> : <Copy size={11} />}
-                        </button>
-                      </div>
-                    </th>
-                  )}
 
                   {/* All other scrollable form fields */}
                   {scrollableFields.map((f) => (
@@ -731,43 +673,22 @@ export default function FormResponsesPage() {
                           borderRight: "2px solid var(--border-default)",
                           boxShadow: "2px 0 4px -2px rgba(0,0,0,0.1)",
                         }}>
-                          {stickyColumnKey === "submitted_by" ? (
-                            (() => {
-                              const info = getSubmitterInfo(sub);
-                              return info.name !== "Anonymous" ? (
-                                <div>
-                                  <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap" }}>
-                                    <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-primary)" }}>{info.name}</p>
-                                    {info.isMember && (
-                                      <span style={{ fontSize: "9px", fontWeight: 800, padding: "1px 5px", borderRadius: 4, background: "var(--accent-primary-light)", color: "var(--accent-primary)", border: "1px solid var(--accent-primary)" }}>
-                                        Member
-                                      </span>
-                                    )}
-                                  </div>
-                                  {info.email && <p style={{ fontSize: "11px", color: "var(--text-secondary)" }}>{info.email}</p>}
-                                </div>
-                              ) : (
-                                <span style={{ fontSize: "12px", color: "var(--text-secondary)", fontStyle: "italic" }}>Anonymous</span>
-                              );
-                            })()
-                          ) : (
-                            (() => {
-                              const val = sub.responses[stickyColumnKey];
-                              const display = cellValue(val);
-                              const link = isLink(val);
-                              return link ? (
-                                <a href={link} target="_blank" rel="noopener noreferrer"
-                                  style={{ color: "var(--accent-primary)", fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
-                                  <ExternalLink size={11} /> View
-                                </a>
-                              ) : (
-                                <span style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 190, fontWeight: 700 }}
-                                  title={display !== "\u2014" ? display : undefined}>
-                                  {display}
-                                </span>
-                              );
-                            })()
-                          )}
+                          {(() => {
+                            const val = sub.responses[stickyColumnKey];
+                            const display = cellValue(val);
+                            const link = isLink(val);
+                            return link ? (
+                              <a href={link} target="_blank" rel="noopener noreferrer"
+                                style={{ color: "var(--accent-primary)", fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
+                                <ExternalLink size={11} /> View
+                              </a>
+                            ) : (
+                              <span style={{ display: "block", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 190, fontWeight: 700 }}
+                                title={display !== "\u2014" ? display : undefined}>
+                                {display}
+                              </span>
+                            );
+                          })()}
                         </td>
                       )}
 
@@ -790,30 +711,6 @@ export default function FormResponsesPage() {
                         {" "}
                         <span style={{ opacity: 0.7 }}>{new Date(sub.createdAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</span>
                       </td>
-
-                      {/* If stickyColumn is NOT "submitted_by", render Submitted By as regular column */}
-                      {stickyColumnKey !== "submitted_by" && (
-                        <td style={{ padding: "12px 16px", minWidth: 190, maxWidth: 230 }}>
-                          {(() => {
-                            const info = getSubmitterInfo(sub);
-                            return info.name !== "Anonymous" ? (
-                              <div>
-                                <div style={{ display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap" }}>
-                                  <p style={{ fontSize: "12px", fontWeight: 700, color: "var(--text-primary)" }}>{info.name}</p>
-                                  {info.isMember && (
-                                    <span style={{ fontSize: "9px", fontWeight: 800, padding: "1px 5px", borderRadius: 4, background: "var(--accent-primary-light)", color: "var(--accent-primary)", border: "1px solid var(--accent-primary)" }}>
-                                      Member
-                                    </span>
-                                  )}
-                                </div>
-                                {info.email && <p style={{ fontSize: "11px", color: "var(--text-secondary)" }}>{info.email}</p>}
-                              </div>
-                            ) : (
-                              <span style={{ fontSize: "12px", color: "var(--text-secondary)", fontStyle: "italic" }}>Anonymous</span>
-                            );
-                          })()}
-                        </td>
-                      )}
 
                       {/* All other scrollable field cells */}
                       {scrollableFields.map((f) => {
@@ -911,7 +808,7 @@ export default function FormResponsesPage() {
                   <Pencil size={16} className="text-accent-primary" /> Modify Response Entry
                 </h3>
                 <p className="text-xs text-text-secondary mt-0.5">
-                  {getSubmitterInfo(editingSub).name || "Anonymous Submission"} &bull;{" "}
+                  Response Entry #{editingSub._id?.slice(-6)} &bull;{" "}
                   {new Date(editingSub.createdAt).toLocaleString("en-GB")}
                 </p>
               </div>
@@ -1018,11 +915,7 @@ export default function FormResponsesPage() {
               </div>
               <h3 className="text-lg font-bold text-text-primary">Delete Response Entry?</h3>
               <p className="text-xs text-text-secondary mt-1.5 leading-relaxed">
-                Are you sure you want to permanently delete this response submitted by{" "}
-                <span className="font-semibold text-text-primary">
-                  {getSubmitterInfo(deletingSub).name}
-                </span>
-                ? Any associated media files will also be permanently deleted. This action cannot be undone.
+                Are you sure you want to permanently delete this response entry? Any associated media files will also be permanently deleted. This action cannot be undone.
               </p>
             </div>
             <div className="p-4 border-t border-border-default bg-surface-secondary flex items-center justify-end gap-2">

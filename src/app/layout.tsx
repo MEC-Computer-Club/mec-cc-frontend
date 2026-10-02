@@ -55,8 +55,16 @@ const generalSans = localFont({
 });
 
 
+const siteOrigin =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : "https://meccomputerclub.org");
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://meccomputerclub.org"),
+  metadataBase: new URL(siteOrigin),
   title: {
     template: "%s | MEC Computer Club",
     default: "MEC Computer Club",
@@ -91,12 +99,12 @@ export const metadata: Metadata = {
     telephone: false,
   },
   alternates: {
-    canonical: "https://meccomputerclub.org",
+    canonical: siteOrigin,
   },
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://meccomputerclub.org",
+    url: siteOrigin,
     siteName: "MEC Computer Club",
     title: "MEC Computer Club",
     description:

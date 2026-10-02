@@ -2,7 +2,9 @@
 
 import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
+import axios from "axios";
 import { getAdminLogs, AdminLogEntry } from "@/lib/auditLogger";
+import { API_BASE_URL } from "@/lib/api";
 
 export interface DashboardActivityItem {
   id: string;
@@ -39,12 +41,40 @@ export function DashboardActivityCard({ recentMessages = [] }: DashboardActivity
   const [auditLogs, setAuditLogs] = useState<AdminLogEntry[]>([]);
 
   useEffect(() => {
+    // 1. Initial local load
     try {
       const logs = getAdminLogs();
       setAuditLogs(logs || []);
     } catch {
       setAuditLogs([]);
     }
+
+    // 2. Fetch remote MongoDB audit logs
+    axios
+      .get(`${API_BASE_URL}/api/audit-logs?limit=20`, { withCredentials: true })
+      .then((res) => {
+        if (res.data?.success && Array.isArray(res.data.logs)) {
+          const mappedLogs: AdminLogEntry[] = res.data.logs.map((item: any) => ({
+            id: item._id || item.id,
+            timestamp: item.timestamp || item.createdAt,
+            formattedDate: new Date(item.timestamp || item.createdAt).toLocaleDateString(),
+            actorName: item.actorName || "Admin",
+            actorEmail: item.actorEmail,
+            actorRole: item.actorRole || "admin",
+            action: item.action,
+            targetType: item.targetType,
+            targetTitle: item.targetTitle,
+            description: item.description,
+            diff: item.diff || [],
+          }));
+          const localLogs = getAdminLogs();
+          const existing = new Set(mappedLogs.map((l) => l.id));
+          setAuditLogs([...mappedLogs, ...localLogs.filter((l) => !existing.has(l.id))]);
+        }
+      })
+      .catch(() => {
+        // Fallback to local
+      });
   }, []);
 
   const formatDate = (isoString?: string | number): string => {
@@ -85,6 +115,14 @@ export function DashboardActivityCard({ recentMessages = [] }: DashboardActivity
         category = "approvals";
         dotColor = "bg-indigo-500";
         href = "/dashboard/members?tab=pending";
+      } else if (log.targetType === "INVITATION") {
+        category = "roles";
+        dotColor = "bg-amber-500";
+        href = "/dashboard/roles-and-invitation";
+      } else if (log.targetType === "CLUB_ROOM") {
+        category = "other";
+        dotColor = log.action === "ROOM_OPEN" ? "bg-emerald-500" : "bg-rose-500";
+        href = "/dashboard/activity-log";
       } else if (log.description?.toLowerCase().includes("promoted") || log.description?.toLowerCase().includes("role") || log.targetType === "SYSTEM") {
         category = "roles";
         dotColor = "bg-emerald-500";

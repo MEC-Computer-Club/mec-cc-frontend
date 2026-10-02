@@ -14,7 +14,49 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const project = await getProjectBySlug(slug);
   if (!project) return { title: "Project Not Found" };
-  return { title: project.title, description: project.description };
+
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "https://meccomputerclub.org");
+
+  const pageUrl = `${baseUrl.replace(/\/+$/, "")}/projects/${project.slug || slug}`;
+  const rawImage = project.image || "/mec-club-photo.jpg";
+  const ogImageUrl = rawImage.startsWith("http://") || rawImage.startsWith("https://")
+    ? rawImage
+    : `${baseUrl.replace(/\/+$/, "")}${rawImage.startsWith("/") ? rawImage : `/${rawImage}`}`;
+
+  return {
+    title: `${project.title} | Projects | MEC Computer Club`,
+    description: project.description || `Explore ${project.title} built by MEC Computer Club members.`,
+    alternates: {
+      canonical: pageUrl,
+    },
+    openGraph: {
+      title: project.title,
+      description: project.description || `Explore ${project.title} built by MEC Computer Club members.`,
+      url: pageUrl,
+      siteName: "MEC Computer Club",
+      type: "website",
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: project.title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: project.title,
+      description: project.description,
+      images: [ogImageUrl],
+    },
+  };
 }
 
 export default async function ProjectDetailPage({ params }: { params: Promise<{ slug: string }> }) {

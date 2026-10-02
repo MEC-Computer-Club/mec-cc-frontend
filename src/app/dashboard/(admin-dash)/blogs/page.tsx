@@ -89,7 +89,7 @@ const SORT_OPTIONS: FilterOption[] = [
 ];
 
 export default function BlogManagementPage() {
-  const { isAllowed, isLoading: guardLoading } = useRoleGuard(["admin", "moderator", "executive", "advisor"]);
+  const { isAllowed, isLoading: guardLoading } = useRoleGuard(["admin", "moderator", "executive"]);
   const { user } = useAuth();
   const isAdvisor = user?.role === "advisor";
   const canManage = ["admin", "moderator", "executive"].includes(user?.role || "");

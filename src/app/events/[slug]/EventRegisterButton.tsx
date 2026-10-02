@@ -14,10 +14,33 @@ interface EventRegisterButtonProps {
 export function EventRegisterButton({ event }: EventRegisterButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Check if deadline has passed
-  const isDeadlinePassed = event.registrationDeadline
-    ? new Date() > new Date(event.registrationDeadline)
-    : false;
+  // Check if deadline has passed or linked form is closed
+  let isDeadlinePassed = Boolean(event.isFormClosed);
+  let deadlineLabel = "";
+
+  if (event.registrationDeadline) {
+    const raw = event.registrationDeadline;
+    const deadlineDate = raw.includes("T")
+      ? new Date(raw)
+      : new Date(`${raw}T23:59:59+06:00`);
+
+    if (!isNaN(deadlineDate.getTime())) {
+      if (new Date() > deadlineDate) {
+        isDeadlinePassed = true;
+      }
+      const hasSpecificTime = raw.includes("T") && !raw.endsWith("T00:00:00.000Z");
+      deadlineLabel =
+        deadlineDate.toLocaleString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+          ...(hasSpecificTime ? { hour: "numeric", minute: "2-digit" } : {}),
+          timeZone: "Asia/Dhaka",
+        }) + (hasSpecificTime ? " (BST)" : "");
+    } else {
+      deadlineLabel = raw;
+    }
+  }
 
   if (isDeadlinePassed) {
     return (
@@ -25,9 +48,11 @@ export function EventRegisterButton({ event }: EventRegisterButtonProps) {
         <Button size="lg" disabled className="opacity-60 cursor-not-allowed">
           Registration Closed
         </Button>
-        <span className="text-xs text-text-tertiary font-mono">
-          Deadline passed on {event.registrationDeadline}
-        </span>
+        {deadlineLabel && (
+          <span className="text-xs text-text-tertiary font-mono">
+            {event.isFormClosed ? "Form closed by organizers" : `Deadline passed: ${deadlineLabel}`}
+          </span>
+        )}
       </div>
     );
   }

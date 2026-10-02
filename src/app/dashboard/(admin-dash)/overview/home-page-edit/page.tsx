@@ -5,8 +5,10 @@ import { defaultState } from "@/lib/types/homePage";
 import axios from "axios";
 import { API_BASE_URL } from "@/lib/api";
 import { useEffect, useState } from "react";
+import { useRoleGuard } from "@/hooks/useRoleGuard";
 
 const Page = () => {
+  const { isAllowed, isLoading: guardLoading } = useRoleGuard(["admin", "moderator", "executive"]);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState(defaultState);
 
@@ -30,6 +32,8 @@ const Page = () => {
     };
     fetchData();
   }, []);
+
+  if (guardLoading || !isAllowed) return null;
 
   if (loading) {
     return <LoadingScreen></LoadingScreen>;

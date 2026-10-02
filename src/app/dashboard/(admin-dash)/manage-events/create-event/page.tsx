@@ -6,7 +6,7 @@ import {
   Save, ArrowLeft, Users, DollarSign, Mail, Phone,
   Globe, Code, Eye, EyeOff, Info, Image as ImageIcon, Trophy,
   ListChecks, Plus, Trash2, HelpCircle, CheckCircle2, UserCheck,
-  Upload, Sparkles, AlertCircle, Loader2, ClipboardPaste
+  Upload, Sparkles, AlertCircle, Loader2, ClipboardPaste, Award, ShieldCheck
 } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "@/lib/api";
@@ -14,6 +14,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import TagInput from "@/components/ui/shared/TagInput";
 import { Select } from "@/components/ui/Select";
+import { RichTextEditor } from "@/components/ui/RichTextEditor";
 import { useSiteSettings } from "@/context/SiteSettingsContext";
 import { compressImage } from "@/lib/imageCompressor";
 import UniversalImageDropzone from "@/components/ui/shared/UniversalImageDropzone";
@@ -21,6 +22,7 @@ import toast from "react-hot-toast";
 import { useRoleGuard } from "@/hooks/useRoleGuard";
 import { EventImagePositionModal } from "../components/EventImagePositionModal";
 import { EventPreviewModal } from "../components/EventPreviewModal";
+import { api } from "@/lib/api";
 
 // ── Reusable field wrapper ──────────────────────────────────────────────────
 function Field({ label, required, hint, children }: {
@@ -121,6 +123,8 @@ function CreateEventFormContent() {
     onlineLink: "",
     registrationLink: "",
     registrationDeadline: "",
+    registrationDeadlineDate: "",
+    registrationDeadlineTime: "23:59",
     maxParticipants: "",
     registrationFee: "0",
     coverImageUrl: "",
@@ -133,6 +137,7 @@ function CreateEventFormContent() {
     isPublished: true,
     prizePool: "",
     linkedForm: "",
+    providesCertificate: false,
     customHtmlSection: "",
     allowParticipationClaims: false,
   });
@@ -151,12 +156,28 @@ function CreateEventFormContent() {
     setPositionModal({ isOpen: true, type });
   };
 
+  const DEFAULT_RULES = useMemo(
+    () => [
+      "Participants must maintain respect and professional conduct throughout the session.",
+      "Ensure a stable internet connection and active attendance during the scheduled time.",
+      "Check your registered email address for official announcements and joining instructions.",
+    ],
+    []
+  );
+
   const [availableForms, setAvailableForms] = useState<{ _id: string; title: string; eventId?: any }[]>([]);
   const [tags, setTags] = useState<string[]>([]);
   const [rewards, setRewards] = useState<{ position: string; prize: string }[]>([]);
   const [schedule, setSchedule] = useState<{ time: string; title: string; description: string }[]>([]);
-  const [rules, setRules] = useState<string[]>([]);
+  const [rules, setRules] = useState<string[]>(editId ? [] : DEFAULT_RULES);
   const [contributors, setContributors] = useState<{ name: string; role: string; department: string }[]>([]);
+
+  // Registration source: custom form vs external URL
+  const [registrationSource, setRegistrationSource] = useState<"custom_form" | "external_url">("custom_form");
+
+  // Keep references to initial Cloudinary URLs to delete old ones when replaced
+  const initialCoverUrlRef = useRef<string>("");
+  const initialBannerUrlRef = useRef<string>("");
 
   // Default contact information from global site settings
   useEffect(() => {
@@ -186,13 +207,18 @@ function CreateEventFormContent() {
   // Independent forms or forms currently linked to this event
   const selectableForms = useMemo(() => {
     return availableForms.filter((f) => {
-      if (form.linkedForm && f._id === form.linkedForm) return true;
+      if (form.linkedForm && String(f._id) === String(form.linkedForm)) return true;
       const evId = f.eventId?._id ? String(f.eventId._id) : (f.eventId ? String(f.eventId) : undefined);
       if (editId && evId === editId) return true;
       const isIndependent = !evId || evId === "" || evId === "111111111111111111111111";
       return isIndependent;
     });
   }, [availableForms, form.linkedForm, editId]);
+
+  const selectedLinkedFormObj = useMemo(() => {
+    if (!form.linkedForm) return null;
+    return availableForms.find((f: any) => String(f._id) === String(form.linkedForm)) as any;
+  }, [availableForms, form.linkedForm]);
 
   // Pre-load available forms from Form Builder
   useEffect(() => {
@@ -204,6 +230,20 @@ function CreateEventFormContent() {
       .catch(() => {});
   }, []);
 
+  // If editing an event and linkedForm is not yet resolved, auto-detect from availableForms matching eventId
+  useEffect(() => {
+    if (editId && !form.linkedForm && availableForms.length > 0) {
+      const matched = availableForms.find((f: any) => {
+        const evId = f.eventId?._id ? String(f.eventId._id) : (f.eventId ? String(f.eventId) : undefined);
+        return evId === editId;
+      });
+      if (matched) {
+        setForm((prev) => ({ ...prev, linkedForm: String(matched._id) }));
+        setRegistrationSource("custom_form");
+      }
+    }
+  }, [editId, form.linkedForm, availableForms]);
+
   // Pre-load if editing
   useEffect(() => {
     if (!editId) return;
@@ -212,6 +252,38 @@ function CreateEventFormContent() {
         const res = await axios.get(`${API_BASE_URL}/api/events/${editId}`, { withCredentials: true });
         const ev = res.data.data;
         if (ev) {
+          let rDate = "";
+          let rTime = "23:59";
+          if (ev.registrationDeadline) {
+            const raw = String(ev.registrationDeadline);
+            if (raw.includes("T")) {
+              const [d, t] = raw.split("T");
+              rDate = d;
+              rTime = t.slice(0, 5);
+            } else {
+              rDate = raw;
+            }
+          }
+
+          initialCoverUrlRef.current = ev.coverImageUrl || "";
+          initialBannerUrlRef.current = ev.bannerImageUrl || "";
+
+          const rawLinked =
+            ev.linkedForm?._id ? String(ev.linkedForm._id)
+            : typeof ev.linkedForm === "string" ? ev.linkedForm
+            : (ev.forms && ev.forms[0]?._id) ? String(ev.forms[0]._id)
+            : (ev.forms && ev.forms[0] && typeof ev.forms[0] === "string") ? ev.forms[0]
+            : "";
+
+          const hasLinkedForm = Boolean(rawLinked);
+          if (hasLinkedForm) {
+            setRegistrationSource("custom_form");
+          } else if (ev.registrationLink) {
+            setRegistrationSource("external_url");
+          } else {
+            setRegistrationSource("custom_form");
+          }
+
           setForm({
             title: ev.title || "",
             category: ev.category || "workshop",
@@ -227,6 +299,8 @@ function CreateEventFormContent() {
             onlineLink: ev.onlineLink || "",
             registrationLink: ev.registrationLink || "",
             registrationDeadline: ev.registrationDeadline ? ev.registrationDeadline.split("T")[0] : "",
+            registrationDeadlineDate: rDate,
+            registrationDeadlineTime: rTime || "23:59",
             maxParticipants: ev.maxParticipants ? String(ev.maxParticipants) : "",
             registrationFee: ev.registrationFee !== undefined ? String(ev.registrationFee) : "0",
             coverImageUrl: ev.coverImageUrl || "",
@@ -239,13 +313,18 @@ function CreateEventFormContent() {
             isPublished: ev.isPublished ?? true,
             customHtmlSection: ev.customHtmlSection || "",
             prizePool: ev.prizePool || "",
-            linkedForm: ev.linkedForm?._id || ev.linkedForm || (ev.forms && ev.forms[0]?._id) || (ev.forms && ev.forms[0]) || "",
+            linkedForm: rawLinked,
+            providesCertificate: Boolean(ev.providesCertificate),
             allowParticipationClaims: ev.allowParticipationClaims ?? false,
           });
           if (ev.tags) setTags(ev.tags);
           if (ev.rewards) setRewards(ev.rewards);
           if (ev.schedule) setSchedule(ev.schedule);
-          if (ev.rules) setRules(ev.rules);
+          if (ev.rules && ev.rules.length > 0) {
+            setRules(ev.rules);
+          } else {
+            setRules(DEFAULT_RULES);
+          }
           if (ev.contributors) setContributors(ev.contributors);
         }
       } catch (err) {
@@ -253,7 +332,7 @@ function CreateEventFormContent() {
       }
     }
     loadEvent();
-  }, [editId]);
+  }, [editId, DEFAULT_RULES]);
 
   // Helper to compress and upload a file to Cloudinary only when saving
   const uploadAndCompressImage = async (file: File, folder: string = "events"): Promise<string> => {
@@ -303,12 +382,25 @@ function CreateEventFormContent() {
 
       setSavingProgress("Saving event details…");
 
+      let calculatedDeadline: string | undefined = undefined;
+      if (registrationSource === "custom_form" && form.linkedForm && selectedLinkedFormObj?.endDate) {
+        const parts = selectedLinkedFormObj.endDate.split("-");
+        if (parts.length === 3) {
+          const t = selectedLinkedFormObj.closingTime || "23:59";
+          calculatedDeadline = `${parts[0]}-${parts[1].padStart(2, "0")}-${parts[2].padStart(2, "0")}T${t.length === 5 ? t + ":00" : t}+06:00`;
+        }
+      } else if (form.registrationDeadlineDate) {
+        const t = form.registrationDeadlineTime || "23:59";
+        calculatedDeadline = `${form.registrationDeadlineDate}T${t.length === 5 ? t + ":00" : t}+06:00`;
+      }
+
       const payload = {
         ...form,
         coverImageUrl: finalCoverUrl,
         bannerImageUrl: finalBannerUrl,
-        linkedForm: form.linkedForm ? form.linkedForm : "",
-        registrationLink: form.registrationLink ? form.registrationLink.trim() : "",
+        linkedForm: registrationSource === "custom_form" ? (form.linkedForm || "") : "",
+        registrationLink: registrationSource === "external_url" ? (form.registrationLink ? form.registrationLink.trim() : "") : "",
+        providesCertificate: Boolean(form.providesCertificate),
         allowParticipationClaims: Boolean(form.allowParticipationClaims),
         contributors: contributors.filter((c) => c.name.trim() && c.role.trim()),
         tags,
@@ -317,7 +409,7 @@ function CreateEventFormContent() {
         teamSize: form.registrationType === "team" ? { min: Number(form.teamSizeMin), max: Number(form.teamSizeMax) } : undefined,
         date: form.date || undefined,
         endDate: form.endDate || undefined,
-        registrationDeadline: form.registrationDeadline || undefined,
+        registrationDeadline: calculatedDeadline,
         rewards: rewards.filter((r) => r.position.trim() && r.prize.trim()),
         schedule: schedule.filter((s) => s.time.trim() && s.title.trim()),
         rules: rules.filter((r) => r.trim()),
@@ -329,6 +421,37 @@ function CreateEventFormContent() {
       } else {
         await axios.post(`${API_BASE_URL}/api/events`, payload, { withCredentials: true });
         toast.success("Event created successfully!");
+      }
+
+      // Cleanup orphaned Cloudinary images if replaced
+      if (
+        initialCoverUrlRef.current &&
+        initialCoverUrlRef.current !== finalCoverUrl &&
+        initialCoverUrlRef.current.includes("cloudinary.com")
+      ) {
+        try {
+          await axios.delete(`${API_BASE_URL}/api/upload/image`, {
+            data: { url: initialCoverUrlRef.current },
+            withCredentials: true,
+          });
+        } catch (e) {
+          console.warn("Failed to delete replaced cover image from Cloudinary", e);
+        }
+      }
+
+      if (
+        initialBannerUrlRef.current &&
+        initialBannerUrlRef.current !== finalBannerUrl &&
+        initialBannerUrlRef.current.includes("cloudinary.com")
+      ) {
+        try {
+          await axios.delete(`${API_BASE_URL}/api/upload/image`, {
+            data: { url: initialBannerUrlRef.current },
+            withCredentials: true,
+          });
+        } catch (e) {
+          console.warn("Failed to delete replaced banner image from Cloudinary", e);
+        }
       }
       router.push("/dashboard/manage-events");
     } catch (err) {
@@ -412,12 +535,12 @@ function CreateEventFormContent() {
           </div>
 
           <Field label="Description" required>
-            <div className="relative">
-              <AlignLeft className="absolute left-3 top-3 w-4 h-4 text-slate-400 pointer-events-none" />
-              <textarea name="description" required rows={4} placeholder="Describe the purpose, highlights, syllabus, eligibility, and what attendees will experience…"
-                value={form.description} onChange={(e) => set("description", e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-indigo-500 outline-none text-sm resize-y" />
-            </div>
+            <RichTextEditor
+              value={form.description}
+              onChange={(val) => set("description", val)}
+              placeholder="Describe the purpose, highlights, syllabus, eligibility, and what attendees will experience…"
+              minHeight="180px"
+            />
           </Field>
 
           <Field label="Tags" hint="Press Enter or comma to add tags (e.g. Workshop, Python, WebDev, AI)">
@@ -495,12 +618,11 @@ function CreateEventFormContent() {
               <Input icon={Clock} placeholder="e.g. 10:00 AM – 04:00 PM" value={form.eventTime}
                 onChange={(e) => set("eventTime", e.target.value)} />
             </Field>
+            <Field label="Venue / Location" required>
+              <Input icon={MapPin} required placeholder="e.g. MEC Campus Auditorium / CSE Lab 2" value={form.location}
+                onChange={(e) => set("location", e.target.value)} />
+            </Field>
           </div>
-
-          <Field label="Venue / Location" required>
-            <Input icon={MapPin} required placeholder="e.g. MEC Campus Auditorium / CSE Lab 2" value={form.location}
-              onChange={(e) => set("location", e.target.value)} />
-          </Field>
 
           <Field label="Online / Meeting Link" hint="Google Meet, Zoom, Discord, or YouTube live stream link">
             <Input icon={Globe} type="url" placeholder="https://meet.google.com/... or https://zoom.us/..." value={form.onlineLink}
@@ -584,20 +706,222 @@ function CreateEventFormContent() {
 
         {/* ── 6. Registration Settings ── */}
         <Section icon={Users} title="Registration Settings" color="text-green-500">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <Field label="Registration Mode" hint="Individual participant or multi-member team">
-              <Select
-                value={form.registrationType}
-                onChange={(val) => set("registrationType", val)}
-                options={REGISTRATION_TYPE_OPTIONS}
-              />
-            </Field>
-            <Field label="Registration Deadline" hint="Optional deadline for upcoming events">
-              <Input icon={Calendar} type="date" value={form.registrationDeadline}
-                onChange={(e) => set("registrationDeadline", e.target.value)} />
-            </Field>
+          <Field label="Registration Mode" hint="Individual participant or multi-member team">
+            <Select
+              value={form.registrationType}
+              onChange={(val) => set("registrationType", val)}
+              options={REGISTRATION_TYPE_OPTIONS}
+            />
+          </Field>
+
+          {/* Registration Method Selection Radio */}
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+              Registration Channel / Source
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label
+                className={`p-3.5 rounded-xl border-2 cursor-pointer flex items-start gap-3 transition-all ${
+                  registrationSource === "custom_form"
+                    ? "border-indigo-600 bg-indigo-50/40 dark:bg-indigo-950/30 shadow-[2px_2px_0px_var(--accent-primary)]"
+                    : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="registrationSource"
+                  checked={registrationSource === "custom_form"}
+                  onChange={() => {
+                    setRegistrationSource("custom_form");
+                    set("registrationLink", "");
+                  }}
+                  className="mt-0.5 text-indigo-600 focus:ring-indigo-500"
+                />
+                <div>
+                  <div className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                    <ListChecks size={15} className="text-indigo-500" /> Custom Form (Form Builder)
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Built-in registration form hosted directly on the club portal.
+                  </p>
+                </div>
+              </label>
+
+              <label
+                className={`p-3.5 rounded-xl border-2 cursor-pointer flex items-start gap-3 transition-all ${
+                  registrationSource === "external_url"
+                    ? "border-indigo-600 bg-indigo-50/40 dark:bg-indigo-950/30 shadow-[2px_2px_0px_var(--accent-primary)]"
+                    : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="registrationSource"
+                  checked={registrationSource === "external_url"}
+                  onChange={() => {
+                    setRegistrationSource("external_url");
+                    set("linkedForm", "");
+                  }}
+                  className="mt-0.5 text-indigo-600 focus:ring-indigo-500"
+                />
+                <div>
+                  <div className="text-sm font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                    <LinkIcon size={15} className="text-indigo-500" /> External Registration URL
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Google Form, Microsoft Form, Eventbrite, or external portal.
+                  </p>
+                </div>
+              </label>
+            </div>
           </div>
 
+          {/* Conditional based on registrationSource */}
+          {registrationSource === "custom_form" ? (
+            <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 space-y-4">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <span className="text-sm font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                  <ListChecks size={16} className="text-indigo-500" />
+                  Select Custom Form
+                </span>
+                <Link
+                  href={
+                    editId
+                      ? `/dashboard/manage-events/create-form?eventId=${editId}&eventTitle=${encodeURIComponent(form.title || "Event")}`
+                      : `/dashboard/manage-events/create-form`
+                  }
+                  target="_blank"
+                  className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+                >
+                  <Plus size={13} /> Open Form Builder →
+                </Link>
+              </div>
+
+              {form.linkedForm && (
+                <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between flex-wrap gap-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />
+                    <div>
+                      <span className="font-bold text-slate-800 dark:text-slate-100">
+                        {selectedLinkedFormObj?.title || "Custom Registration Form"}
+                      </span>
+                      <span className="ml-2 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-600 dark:text-emerald-400">
+                        Active Form
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Link
+                      href={`/forms/${form.linkedForm}`}
+                      target="_blank"
+                      className="font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1"
+                    >
+                      <Globe size={13} /> View Live Form ↗
+                    </Link>
+                    <Link
+                      href={`/dashboard/manage-events/create-form?edit=${form.linkedForm}`}
+                      target="_blank"
+                      className="font-bold text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:underline flex items-center gap-1"
+                    >
+                      Edit in Builder ↗
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+                <Field label="Registration Form">
+                  <Select
+                    value={form.linkedForm || ""}
+                    onChange={(val) => set("linkedForm", val)}
+                    options={[
+                      { value: "", label: "Select a custom form…" },
+                      ...selectableForms.map((f) => ({
+                        value: String(f._id),
+                        label: `${f.title}${String(f._id) === String(form.linkedForm) ? " (Linked to this Event)" : " (Independent Form)"}`,
+                      })),
+                      ...(form.linkedForm && !selectableForms.some((f) => String(f._id) === String(form.linkedForm))
+                        ? [{ value: String(form.linkedForm), label: selectedLinkedFormObj?.title ? `${selectedLinkedFormObj.title} (Linked)` : "Linked Custom Form" }]
+                        : []),
+                    ]}
+                  />
+                </Field>
+                {form.linkedForm && (
+                  <div className="pb-0.5 flex items-center gap-2">
+                    <Link
+                      href={`/forms/${form.linkedForm}`}
+                      target="_blank"
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-xs font-bold hover:border-indigo-500 transition shadow-sm"
+                    >
+                      <Globe size={14} className="text-indigo-500" />
+                      Preview Live Form →
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => set("linkedForm", "")}
+                      className="px-3 py-2.5 rounded-xl border border-rose-300 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 text-xs font-bold hover:bg-rose-100 transition"
+                      title="Disconnect form from this event"
+                    >
+                      Unlink
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Compact Registration Deadline indicator */}
+              {form.linkedForm && selectedLinkedFormObj && (
+                <div className="p-3 rounded-lg border border-indigo-200 dark:border-indigo-900/50 bg-indigo-50/40 dark:bg-indigo-950/20 flex items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2">
+                    <Calendar size={14} className="text-indigo-500" />
+                    <span className="font-semibold text-slate-700 dark:text-slate-300">
+                      Registration Deadline:
+                    </span>
+                    <span className="font-bold text-slate-900 dark:text-slate-100">
+                      {selectedLinkedFormObj.endDate
+                        ? `${selectedLinkedFormObj.endDate} at ${selectedLinkedFormObj.closingTime || "23:59"} (BST)`
+                        : "No deadline specified in Form Builder"}
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 border border-indigo-300 dark:border-indigo-800">
+                    Synced with Form
+                  </span>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <Field label="External Registration URL" hint="Paste a Google Form, Microsoft Form, or external ticketing link">
+                <Input
+                  icon={LinkIcon}
+                  type="url"
+                  placeholder="https://forms.gle/... or https://eventbrite.com/..."
+                  value={form.registrationLink}
+                  onChange={(e) => set("registrationLink", e.target.value)}
+                />
+              </Field>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <Field label="Registration Deadline Date" hint="Date when registrations close">
+                  <Input
+                    icon={Calendar}
+                    type="date"
+                    value={form.registrationDeadlineDate}
+                    onChange={(e) => set("registrationDeadlineDate", e.target.value)}
+                  />
+                </Field>
+                <Field label="Registration Closing Time (BST)" hint="Exact cutoff time in Bangladesh Time">
+                  <Input
+                    icon={Clock}
+                    type="time"
+                    value={form.registrationDeadlineTime || "23:59"}
+                    onChange={(e) => set("registrationDeadlineTime", e.target.value)}
+                  />
+                </Field>
+              </div>
+            </div>
+          )}
+
+          {/* Team / Squad constraints */}
           {form.registrationType === "team" && (
             <div className="p-4 rounded-xl border border-indigo-200 dark:border-indigo-900/50 bg-indigo-50/50 dark:bg-indigo-950/20 space-y-3">
               <div className="flex items-center gap-2 text-indigo-700 dark:text-indigo-300 font-semibold text-sm">
@@ -627,60 +951,27 @@ function CreateEventFormContent() {
             </Field>
           </div>
 
-          {/* Direct External Registration URL */}
-          <Field label="External Registration URL (Optional)" hint="Paste a Google Form, Microsoft Form, or external ticketing link if registration is hosted outside">
-            <Input icon={LinkIcon} type="url" placeholder="https://forms.gle/... or https://eventbrite.com/..."
-              value={form.registrationLink} onChange={(e) => set("registrationLink", e.target.value)} />
-          </Field>
-
-          {/* Form Builder Linkage */}
-          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30 space-y-3">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <span className="text-sm font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                <ListChecks size={16} className="text-indigo-500" />
-                Custom Form Linkage (Form Builder)
-              </span>
-              <Link
-                href={
-                  editId
-                    ? `/dashboard/manage-events/create-form?eventId=${editId}&eventTitle=${encodeURIComponent(form.title || "Event")}`
-                    : `/dashboard/manage-events/create-form`
-                }
-                target="_blank"
-                className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
-              >
-                <Plus size={13} /> Open Form Builder →
-              </Link>
-            </div>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Link a custom registration form created in our Form Builder. Once linked, the public registration button will open this interactive form.
-            </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
-              <Field label="Select Registration Form">
-                <Select
-                  value={form.linkedForm || ""}
-                  onChange={(val) => set("linkedForm", val)}
-                  options={[
-                    { value: "", label: "No Form Linked (Optional / Build Later)" },
-                    ...selectableForms.map((f) => ({
-                      value: f._id,
-                      label: `${f.title}${f._id === form.linkedForm ? " (Linked to this Event)" : " (Independent Form)"}`,
-                    })),
-                  ]}
+          {/* ── Verified Credentials / Certificates Toggle ── */}
+          <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30">
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-1">
+                <span className="text-sm font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                  <Award size={16} className="text-amber-500" />
+                  Issue Verified Digital Credentials &amp; Certificates
+                </span>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Decide whether official, verifiable certificates will be granted for this event. When enabled, a verified credential badge will be displayed on the public event details page.
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                <input
+                  type="checkbox"
+                  checked={form.providesCertificate}
+                  onChange={(e) => set("providesCertificate", e.target.checked)}
+                  className="sr-only peer"
                 />
-              </Field>
-              {form.linkedForm && (
-                <div className="pb-0.5">
-                  <Link
-                    href={`/forms/${form.linkedForm}`}
-                    target="_blank"
-                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 text-xs font-bold hover:border-indigo-500 transition shadow-sm"
-                  >
-                    <Globe size={14} className="text-indigo-500" />
-                    Preview Live Public Form →
-                  </Link>
-                </div>
-              )}
+                <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-amber-500"></div>
+              </label>
             </div>
           </div>
 
@@ -706,6 +997,46 @@ function CreateEventFormContent() {
                 <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-600"></div>
               </label>
             </div>
+          </div>
+        </Section>
+
+        {/* ── 7. Rules & Guidelines (Optional) ── */}
+        <Section icon={ShieldCheck} title="Event Guidelines & Rules (Optional)" color="text-indigo-500">
+          <p className="text-xs text-slate-500 -mt-2">
+            Add specific guidelines, participation rules, or prerequisites for this event. If left empty, no guidelines section will be shown on the public event page.
+          </p>
+          <div className="space-y-3">
+            {rules.map((rule, idx) => (
+              <div key={idx} className="flex items-center gap-2">
+                <span className="text-xs font-mono font-bold text-slate-400 w-5">{idx + 1}.</span>
+                <input
+                  type="text"
+                  value={rule}
+                  onChange={(e) => {
+                    const next = [...rules];
+                    next[idx] = e.target.value;
+                    setRules(next);
+                  }}
+                  placeholder={`Guideline rule #${idx + 1}`}
+                  className="flex-1 px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => setRules(rules.filter((_, i) => i !== idx))}
+                  className="p-2 text-slate-400 hover:text-red-500 transition"
+                  title="Remove rule"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setRules([...rules, ""])}
+              className="px-3.5 py-1.5 text-xs font-semibold rounded-lg border border-dashed border-indigo-400 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition flex items-center gap-1.5"
+            >
+              <Plus size={14} /> Add Guideline Rule
+            </button>
           </div>
         </Section>
 
@@ -843,56 +1174,6 @@ function CreateEventFormContent() {
           </div>
         </Section>
 
-        {/* ── 8. Rules & Guidelines (Optional) ── */}
-        <Section icon={ListChecks} title="Rules & Guidelines (Optional)" color="text-violet-500">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                Official Rules &amp; Conduct
-              </label>
-              <button
-                type="button"
-                onClick={() => setRules([...rules, ""])}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
-              >
-                <Plus size={14} /> Add Rule
-              </button>
-            </div>
-
-            {rules.length === 0 ? (
-              <p className="text-xs text-slate-400 italic py-2">
-                No specific rules added. Click &quot;Add Rule&quot; to specify eligibility criteria or code of conduct.
-              </p>
-            ) : (
-              rules.map((rule, idx) => (
-                <div key={idx} className="flex items-center gap-3">
-                  <span className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-600 dark:text-slate-300 flex-shrink-0">
-                    {idx + 1}
-                  </span>
-                  <input
-                    type="text"
-                    placeholder="e.g. Participants must bring their own laptop with Python 3.10+ installed."
-                    value={rule}
-                    onChange={(e) => {
-                      const next = [...rules];
-                      next[idx] = e.target.value;
-                      setRules(next);
-                    }}
-                    className="flex-1 px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 outline-none focus:ring-2 focus:ring-indigo-500"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setRules(rules.filter((_, i) => i !== idx))}
-                    className="p-2 text-slate-400 hover:text-red-500 transition"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              ))
-            )}
-          </div>
-        </Section>
-
         {/* ── 9. Organiser & Contact ── */}
         <Section icon={Info} title="Organiser & Contact" color="text-orange-500">
           <p className="text-xs text-slate-500 leading-relaxed">
@@ -978,7 +1259,26 @@ function CreateEventFormContent() {
         </div>
       </form>
 
-      {/* Event Image Positioner Modal */}
+      {/* Event Live Preview Modal */}
+      <EventPreviewModal
+        isOpen={previewModalOpen}
+        onClose={() => setPreviewModalOpen(false)}
+        event={{
+          ...form,
+          tags,
+          rewards,
+          schedule,
+          rules,
+          contributors,
+        }}
+        coverFile={coverFile}
+        bannerFile={bannerFile}
+        onOpenPositioner={(type) => {
+          openPositionModal(type);
+        }}
+      />
+
+      {/* Event Image Positioner Modal (rendered after preview modal with z-[100010] to ensure it always appears on top) */}
       <EventImagePositionModal
         isOpen={positionModal.isOpen}
         onClose={() => setPositionModal((prev) => ({ ...prev, isOpen: false }))}
@@ -1007,25 +1307,6 @@ function CreateEventFormContent() {
           toast.success(
             `${positionModal.type === "cover" ? "Cover" : "Banner"} image position saved!`
           );
-        }}
-      />
-
-      {/* Event Live Preview Modal */}
-      <EventPreviewModal
-        isOpen={previewModalOpen}
-        onClose={() => setPreviewModalOpen(false)}
-        event={{
-          ...form,
-          tags,
-          rewards,
-          schedule,
-          rules,
-          contributors,
-        }}
-        coverFile={coverFile}
-        bannerFile={bannerFile}
-        onOpenPositioner={(type) => {
-          openPositionModal(type);
         }}
       />
     </div>

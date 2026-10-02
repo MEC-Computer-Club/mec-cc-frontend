@@ -79,7 +79,7 @@ const SORT_OPTIONS: FilterOption[] = [
 ];
 
 export default function InstituteAnalyticsPage() {
-  const { isAllowed, isLoading: guardLoading } = useRoleGuard(["admin", "moderator", "executive"]);
+  const { isAllowed, isLoading: guardLoading } = useRoleGuard(["admin", "moderator", "executive", "advisor"]);
 
   const [overview, setOverview] = useState<AnalyticsOverviewResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -210,13 +210,13 @@ export default function InstituteAnalyticsPage() {
         <div>
           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded bg-accent-primary-light text-text-primary font-mono font-bold text-[11px] mb-2 border border-border-default">
             <Building2 size={13} className="text-accent-primary" />
-            <span>INSIGHTS & ACADEMIC TOOLS</span>
+            <span>INSIGHTS & UTILITY TOOLS</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-text-primary tracking-tight">
-            Institute Analytics
+            Utilities Analytics
           </h1>
           <p className="text-xs sm:text-sm text-text-secondary font-mono mt-1">
-            Real-time usage breakdown of academic tools (Cover Page Generator & CGPA Calculator) across universities & colleges
+            Real-time usage breakdown of academic utility tools (Cover Page Generator & CGPA Calculator) across universities & colleges
           </p>
         </div>
 

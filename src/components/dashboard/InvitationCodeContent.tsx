@@ -513,6 +513,7 @@ const InvitationCodeContent = () => {
                 <th className="p-3">Type</th>
                 <th className="p-3">Role</th>
                 <th className="p-3">Label / Recipient</th>
+                <th className="p-3">Created By</th>
                 <th className="p-3 text-center">Approval</th>
                 <th className="p-3 text-center">Registrations</th>
                 <th className="p-3 text-center whitespace-nowrap">Status</th>
@@ -570,6 +571,17 @@ const InvitationCodeContent = () => {
                           {inv.label || (isPermanent ? "Permanent Code" : "Individual Member Invite")}
                         </div>
                         {inv.email && <div className="text-text-secondary text-[11px]">{inv.email}</div>}
+                      </td>
+
+                      <td className="p-3 text-xs">
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-5 h-5 rounded-full bg-accent-primary-light border border-border-default flex items-center justify-center text-[10px] font-bold text-accent-primary">
+                            {(inv.creatorName || "A")[0].toUpperCase()}
+                          </span>
+                          <span className="font-medium text-text-primary">
+                            {inv.creatorName || "Staff Admin"}
+                          </span>
+                        </div>
                       </td>
 
                       <td className="p-3 text-center">

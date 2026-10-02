@@ -404,7 +404,12 @@ export function Navbar() {
                           Security
                         </Link>
                       </li>
-                      {(isAdmin || user.role === "moderator" || user.role === "executive" || user.clubRole === "executive") && (
+                      {(isAdmin ||
+                        user.role === "moderator" ||
+                        user.role === "executive" ||
+                        user.role === "advisor" ||
+                        user.clubRole === "executive" ||
+                        user.clubRole === "advisor") && (
                         <li role="none">
                           <Link
                             href="/dashboard"
@@ -566,13 +571,18 @@ export function Navbar() {
                       >
                         <User size={15} /> Profile
                       </Link>
-                      {(isAdmin || user.role === "moderator" || user.role === "executive" || user.clubRole === "executive") && (
+                      {(isAdmin ||
+                        user.role === "moderator" ||
+                        user.role === "executive" ||
+                        user.role === "advisor" ||
+                        user.clubRole === "executive" ||
+                        user.clubRole === "advisor") && (
                         <Link
                           href="/dashboard"
                           className="navbar__mobile-action-btn"
                           onClick={() => setMobileMenuOpen(false)}
                         >
-                          <LayoutDashboard size={15} /> Executive Command
+                          <LayoutDashboard size={15} /> Dashboard
                         </Link>
                       )}
                       <button

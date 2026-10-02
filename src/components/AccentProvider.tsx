@@ -32,8 +32,8 @@ const AccentContext = createContext<AccentContextValue>({
   setManualVibe: () => {},
   cycleManualVibe: () => {},
   enableAutoMode: () => {},
-  isAuto: true,
-  isManual: false,
+  isAuto: false,
+  isManual: true,
 });
 
 export function useAccent() {
@@ -51,7 +51,7 @@ export function AccentProvider({
   const [vibeIndex, setVibeIndex] = useState(initialIndex);
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
-  const [isAuto, setIsAuto] = useState(true);
+  const [isAuto, setIsAuto] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Load saved preference from localStorage on mount
@@ -59,7 +59,13 @@ export function AccentProvider({
     setMounted(true);
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved && saved !== "auto" && VIBE_ORDER.includes(saved as VibeName)) {
+      if (saved === "auto") {
+        setIsAuto(true);
+        const randomIndex = Math.floor(Math.random() * VIBE_ORDER.length);
+        setVibeIndex(randomIndex);
+        return;
+      }
+      if (saved && VIBE_ORDER.includes(saved as VibeName)) {
         setIsAuto(false);
         setVibeIndex(VIBE_ORDER.indexOf(saved as VibeName));
         return;
@@ -68,11 +74,10 @@ export function AccentProvider({
       // LocalStorage access restricted or unavailable
     }
 
-    // Default to auto with random start
-    setIsAuto(true);
-    const randomIndex = Math.floor(Math.random() * VIBE_ORDER.length);
-    setVibeIndex(randomIndex);
-  }, []);
+    // Default to steady fixed theme without rotation
+    setIsAuto(false);
+    setVibeIndex(initialIndex);
+  }, [initialIndex]);
 
   const setManualVibe = useCallback((vibe: VibeName) => {
     setIsAuto(false);
@@ -94,7 +99,7 @@ export function AccentProvider({
   const enableAutoMode = useCallback(() => {
     setIsAuto(true);
     try {
-      localStorage.removeItem(STORAGE_KEY);
+      localStorage.setItem(STORAGE_KEY, "auto");
     } catch {}
 
     // Switch to auto and immediately shuffle
@@ -109,8 +114,20 @@ export function AccentProvider({
   }, []);
 
   const cycleManualVibe = useCallback(() => {
-    enableAutoMode();
-  }, [enableAutoMode]);
+    setIsAuto(false);
+    setVibeIndex((prev) => {
+      const nextIndex = (prev + 1) % VIBE_ORDER.length;
+      const nextVibe = VIBE_ORDER[nextIndex];
+      try {
+        localStorage.setItem(STORAGE_KEY, nextVibe);
+      } catch {}
+      return nextIndex;
+    });
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
 
   const currentVibe = VIBE_ORDER[vibeIndex];
   const mode = (resolvedTheme === "light" ? "light" : "dark") as

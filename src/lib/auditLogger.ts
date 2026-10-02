@@ -5,9 +5,21 @@ export type AdminActionType =
   | "DELETE"
   | "APPROVE"
   | "REJECT"
-  | "PUBLISH";
+  | "PUBLISH"
+  | "ROOM_OPEN"
+  | "ROOM_CLOSE"
+  | "ROLE_CHANGE"
+  | "EXPORT";
 
-export type AdminTargetType = "ASSET" | "MEMBER" | "EVENT" | "PAGE" | "SYSTEM";
+export type AdminTargetType =
+  | "ASSET"
+  | "MEMBER"
+  | "EVENT"
+  | "PAGE"
+  | "INVITATION"
+  | "CLUB_ROOM"
+  | "CERTIFICATE"
+  | "SYSTEM";
 
 export interface LogDiffItem {
   field: string;

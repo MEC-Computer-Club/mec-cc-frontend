@@ -1,8 +1,19 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Constitution | README.md",
-  description: "The official constitution and guidelines of MEC Computer Club.",
+  title: "Constitution (README.md) | MEC Computer Club",
+  description: "The official constitution, guidelines, and code of conduct of MEC Computer Club.",
+  openGraph: {
+    title: "Constitution (README.md) | MEC Computer Club",
+    description: "The official constitution, guidelines, and code of conduct of MEC Computer Club.",
+    images: ["/mec-club-photo.jpg"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Constitution (README.md) | MEC Computer Club",
+    description: "The official constitution, guidelines, and code of conduct of MEC Computer Club.",
+    images: ["/mec-club-photo.jpg"],
+  },
 };
 
 export default function ConstitutionPage() {

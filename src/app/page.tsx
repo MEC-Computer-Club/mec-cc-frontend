@@ -35,6 +35,19 @@ export const metadata: Metadata = {
   title: "MEC Computer Club — Weekly CP Practice, Real Projects, One Club",
   description:
     "The official computer club of MEC. Competitive programming, web development, ML/AI, cybersecurity — join 70+ members building real things.",
+  openGraph: {
+    title: "MEC Computer Club — Weekly CP Practice, Real Projects, One Club",
+    description:
+      "The official computer club of MEC. Competitive programming, web development, ML/AI, cybersecurity — join 70+ members building real things.",
+    images: ["/mec-club-photo.jpg"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "MEC Computer Club — Weekly CP Practice, Real Projects, One Club",
+    description:
+      "The official computer club of MEC. Competitive programming, web development, ML/AI, cybersecurity — join 70+ members building real things.",
+    images: ["/mec-club-photo.jpg"],
+  },
 };
 
 export default async function HomePage() {

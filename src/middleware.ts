@@ -59,9 +59,11 @@ export async function middleware(req: NextRequest) {
       userRole === "admin" ||
       userRole === "moderator" ||
       userRole === "executive" ||
+      userRole === "advisor" ||
       roleCookie === "admin" ||
       roleCookie === "moderator" ||
-      roleCookie === "executive";
+      roleCookie === "executive" ||
+      roleCookie === "advisor";
 
     if (!isExecutive) {
       return NextResponse.redirect(new URL("/profile", req.url));

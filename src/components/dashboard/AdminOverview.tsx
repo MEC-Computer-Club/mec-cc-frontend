@@ -5,6 +5,7 @@ import {
   Zap, MessageSquare, GalleryHorizontal, HardHat,
   LayoutDashboard, PenLine, FolderOpen, DollarSign, Wrench,
   HardDrive, ExternalLink, Image as ImageIcon,
+  BarChart3, Building2, Activity, GraduationCap,
 } from "lucide-react";
 import axios from "axios";
 import { API_BASE_URL } from "@/lib/api";
@@ -168,7 +169,51 @@ export default function AdminOverview() {
         })}
       </div>
 
-      {/* Cloudinary Storage Usage Health Banner */}
+      {/* Action Center & Recent Messages */}
+      <div className={`grid grid-cols-1 ${user?.role === "advisor" || user?.clubRole === "advisor" ? "lg:grid-cols-1" : "lg:grid-cols-3"} gap-5`}>
+        {/* Quick Actions */}
+        <div className={`${user?.role === "advisor" || user?.clubRole === "advisor" ? "lg:col-span-1" : "lg:col-span-2"} bg-surface-elevated rounded-xl border border-border-default shadow-[4px_4px_0px_0px_var(--border-default)] p-5`}>
+          <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2 mb-4">
+            <Zap size={15} className="text-accent-primary" />
+            Quick Actions
+          </h3>
+          <div className={`grid ${user?.role === "advisor" || user?.clubRole === "advisor" ? "grid-cols-2 sm:grid-cols-4" : "grid-cols-3"} gap-3`}>
+            {(user?.role === "advisor" || user?.clubRole === "advisor"
+              ? [
+                  { href: "/dashboard/visual-overview", icon: BarChart3, label: "Visual Overview" },
+                  { href: "/dashboard/institute-analytics", icon: Building2, label: "Utilities Analytics" },
+                  { href: "/dashboard/analytics", icon: Activity, label: "Site Analytics" },
+                  { href: "/advisors", icon: Users, label: "Advisor Directory" },
+                  { href: "/dashboard/members", icon: Users, label: "Member Directory" },
+                  { href: "/dashboard/alumni", icon: GraduationCap, label: "Alumni Directory" },
+                  { href: "/dashboard/assets", icon: HardHat, label: "Club Inventory" },
+                ]
+              : quickActions
+            ).map((action) => (
+              <Link
+                key={action.label}
+                href={action.href}
+                className="flex flex-col items-center justify-center gap-2 py-4 px-2 bg-surface-secondary rounded-xl border border-border-default hover:border-accent-primary hover:shadow-[3px_3px_0px_0px_var(--accent-primary)] transition-all group"
+              >
+                <action.icon
+                  size={20}
+                  className="text-accent-primary group-hover:scale-110 transition-transform"
+                />
+                <span className="text-xs font-semibold text-text-secondary text-center leading-tight group-hover:text-text-primary transition-colors">
+                  {action.label}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Activity Section with Tabs — Hidden for Advisors */}
+        {user?.role !== "advisor" && user?.clubRole !== "advisor" && (
+          <DashboardActivityCard recentMessages={recentMessages} />
+        )}
+      </div>
+
+      {/* Cloudinary Storage Usage Health Banner (Placed after Quick Actions & Activity) */}
       <div className="bg-surface-elevated rounded-xl border-2 border-text-primary dark:border-border-default p-4 shadow-[4px_4px_0px_0px_var(--accent-primary)] flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
           <div className="p-3 bg-accent-primary/10 border border-accent-primary/30 rounded-xl text-accent-primary shrink-0">
@@ -214,37 +259,6 @@ export default function AdminOverview() {
             </Link>
           )}
         </div>
-      </div>
-
-      {/* Action Center & Recent Messages */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Quick Actions */}
-        <div className="lg:col-span-2 bg-surface-elevated rounded-xl border border-border-default shadow-[4px_4px_0px_0px_var(--border-default)] p-5">
-          <h3 className="text-sm font-semibold text-text-primary flex items-center gap-2 mb-4">
-            <Zap size={15} className="text-accent-primary" />
-            Quick Actions
-          </h3>
-          <div className="grid grid-cols-3 gap-3">
-            {quickActions.map((action) => (
-              <Link
-                key={action.label}
-                href={action.href}
-                className="flex flex-col items-center justify-center gap-2 py-4 px-2 bg-surface-secondary rounded-xl border border-border-default hover:border-accent-primary hover:shadow-[3px_3px_0px_0px_var(--accent-primary)] transition-all group"
-              >
-                <action.icon
-                  size={20}
-                  className="text-accent-primary group-hover:scale-110 transition-transform"
-                />
-                <span className="text-xs font-semibold text-text-secondary text-center leading-tight group-hover:text-text-primary transition-colors">
-                  {action.label}
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
-
-        {/* Activity Section with Tabs */}
-        <DashboardActivityCard recentMessages={recentMessages} />
       </div>
     </div>
   );

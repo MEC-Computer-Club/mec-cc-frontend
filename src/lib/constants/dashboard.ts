@@ -23,6 +23,7 @@ import {
   Activity,
   Building2,
   Image as ImageIcon,
+  UserCheck,
 } from "lucide-react";
 
 export interface MenuItem {
@@ -76,6 +77,13 @@ export const ADMIN_MENU_SECTIONS: MenuSection[] = [
         icon: GraduationCap,
         iconColor: "text-amber-400",
         href: "/dashboard/alumni",
+      },
+      {
+        key: "advisors",
+        label: "Advisor Directory",
+        icon: UserCheck,
+        iconColor: "text-indigo-400",
+        href: "/advisors",
       },
       {
         key: "roles-and-permissions",
@@ -150,7 +158,7 @@ export const ADMIN_MENU_SECTIONS: MenuSection[] = [
       },
       {
         key: "institute-analytics",
-        label: "Institute Analytics",
+        label: "Utilities Analytics",
         icon: Building2,
         iconColor: "text-pink-400",
         href: "/dashboard/institute-analytics",
@@ -243,6 +251,13 @@ export const MODERATOR_MENU_SECTIONS: MenuSection[] = [
         iconColor: "text-amber-400",
         href: "/dashboard/alumni",
       },
+      {
+        key: "advisors",
+        label: "Advisor Directory",
+        icon: UserCheck,
+        iconColor: "text-indigo-400",
+        href: "/advisors",
+      },
     ],
   },
   {
@@ -308,7 +323,7 @@ export const MODERATOR_MENU_SECTIONS: MenuSection[] = [
       },
       {
         key: "institute-analytics",
-        label: "Institute Analytics",
+        label: "Utilities Analytics",
         icon: Building2,
         iconColor: "text-pink-400",
         href: "/dashboard/institute-analytics",
@@ -389,7 +404,7 @@ export const ADVISOR_MENU_SECTIONS: MenuSection[] = [
       },
       {
         key: "institute-analytics",
-        label: "Institute Analytics",
+        label: "Utilities Analytics",
         icon: Building2,
         iconColor: "text-pink-400",
         href: "/dashboard/institute-analytics",
@@ -413,38 +428,12 @@ export const ADVISOR_MENU_SECTIONS: MenuSection[] = [
         iconColor: "text-amber-400",
         href: "/dashboard/alumni",
       },
-    ],
-  },
-  {
-    title: "Activities",
-    items: [
       {
-        key: "manage-events",
-        label: "Events",
-        icon: Calendar,
-        iconColor: "text-rose-400",
-        href: "/dashboard/manage-events",
-      },
-      {
-        key: "manage-projects",
-        label: "Projects",
-        icon: FolderGit2,
-        iconColor: "text-amber-300",
-        href: "/dashboard/manage-projects",
-      },
-      {
-        key: "manage-certificates",
-        label: "Certificates",
-        icon: Award,
-        iconColor: "text-teal-400",
-        href: "/dashboard/manage-certificates",
-      },
-      {
-        key: "blogs",
-        label: "Blog & Articles",
-        icon: BookOpen,
-        iconColor: "text-orange-400",
-        href: "/dashboard/blogs",
+        key: "advisors",
+        label: "Advisor Directory",
+        icon: UserCheck,
+        iconColor: "text-indigo-400",
+        href: "/advisors",
       },
     ],
   },

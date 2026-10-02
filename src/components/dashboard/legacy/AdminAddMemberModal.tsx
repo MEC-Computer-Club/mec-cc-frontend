@@ -116,7 +116,7 @@ export function AdminAddMemberModal({ isOpen, onClose, onSuccess }: AdminAddMemb
   const [batchConfig, setBatchConfig] = useState<Record<string, number>>({ CSE: 6, EEE: 14, CE: 8 });
   const [password, setPassword] = useState("mec12345");
   const [bio, setBio] = useState("");
-  const [systemRole, setSystemRole] = useState<"member" | "moderator" | "admin">("member");
+  const [systemRole, setSystemRole] = useState<"member" | "moderator" | "admin" | "advisor">("member");
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/site-settings/public`)
@@ -425,7 +425,10 @@ export function AdminAddMemberModal({ isOpen, onClose, onSuccess }: AdminAddMemb
         <div className="adm-tab-grid">
           <button
             type="button"
-            onClick={() => setTargetType("member")}
+            onClick={() => {
+              setTargetType("member");
+              if (systemRole === "advisor") setSystemRole("member");
+            }}
             className={`adm-tab-btn ${targetType === "member" ? "adm-tab-btn--active" : ""}`}
           >
             <Users size={16} />
@@ -435,7 +438,10 @@ export function AdminAddMemberModal({ isOpen, onClose, onSuccess }: AdminAddMemb
 
           <button
             type="button"
-            onClick={() => setTargetType("alumni")}
+            onClick={() => {
+              setTargetType("alumni");
+              if (systemRole === "advisor") setSystemRole("member");
+            }}
             className={`adm-tab-btn ${targetType === "alumni" ? "adm-tab-btn--active" : ""}`}
           >
             <Building2 size={16} />
@@ -445,7 +451,10 @@ export function AdminAddMemberModal({ isOpen, onClose, onSuccess }: AdminAddMemb
 
           <button
             type="button"
-            onClick={() => setTargetType("advisor")}
+            onClick={() => {
+              setTargetType("advisor");
+              setSystemRole("advisor");
+            }}
             className={`adm-tab-btn ${targetType === "advisor" ? "adm-tab-btn--active" : ""}`}
           >
             <GraduationCap size={16} />
@@ -1159,6 +1168,7 @@ export function AdminAddMemberModal({ isOpen, onClose, onSuccess }: AdminAddMemb
                   onChange={(v) => setSystemRole(v as any)}
                   options={[
                     { value: "member", label: "Standard Member" },
+                    { value: "advisor", label: "Advisor (Advisory Access)" },
                     { value: "moderator", label: "Platform Moderator" },
                     { value: "admin", label: "Administrator" },
                   ]}

@@ -106,7 +106,7 @@ interface EventOption {
 }
 
 export default function CertificatesManagementPage() {
-  const { isAllowed, isLoading: guardLoading } = useRoleGuard(["admin", "moderator", "executive", "advisor"]);
+  const { isAllowed, isLoading: guardLoading } = useRoleGuard(["admin", "moderator", "executive"]);
   const { user } = useAuth();
   const canManage = ["admin", "moderator", "executive"].includes(user?.role || "");
 

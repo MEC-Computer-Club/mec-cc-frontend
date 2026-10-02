@@ -120,6 +120,8 @@ export interface Event {
   registeredCount?: number;
   tags?: string[];
   linkedForm?: string;
+  isFormClosed?: boolean;
+  providesCertificate?: boolean;
   media?: EventMediaItem[];
   allowParticipationClaims?: boolean;
   participationClaims?: ParticipationClaim[];

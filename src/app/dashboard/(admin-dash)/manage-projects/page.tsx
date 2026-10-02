@@ -29,7 +29,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useRoleGuard } from "@/hooks/useRoleGuard";
 
 export default function AdminProjectsPage() {
-  const { isAllowed, isLoading: guardLoading } = useRoleGuard(["admin", "moderator", "executive", "advisor"]);
+  const { isAllowed, isLoading: guardLoading } = useRoleGuard(["admin", "moderator", "executive"]);
   const { user } = useAuth();
   const canManage = ["admin", "moderator", "executive"].includes(user?.role || "");
 

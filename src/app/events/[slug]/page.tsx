@@ -9,6 +9,7 @@ import { getEventBySlug } from "@/lib/api/events";
 import { EventRegisterButton } from "./EventRegisterButton";
 import { EventParticipationClaim } from "./EventParticipationClaim";
 import { EventMediaGallery } from "./EventMediaGallery";
+import { EventShareSidebar } from "./EventShareSidebar";
 import {
   Calendar,
   Clock,
@@ -25,13 +26,84 @@ import {
   Award,
 } from "lucide-react";
 
+function formatEventDeadline(dStr: string) {
+  const d = new Date(dStr);
+  if (isNaN(d.getTime())) return dStr;
+  const hasTime = dStr.includes("T") && !dStr.endsWith("T00:00:00.000Z");
+  if (hasTime) {
+    return (
+      d.toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+        timeZone: "Asia/Dhaka",
+      }) + " (BST)"
+    );
+  }
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "Asia/Dhaka",
+  });
+}
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const event = await getEventBySlug(slug);
   if (!event) return { title: "Event Not Found" };
+
+  const eventTitle = `${event.title} | MEC Computer Club`;
+  const eventDescription =
+    event.description ||
+    `Join ${event.title} organized by MEC Computer Club, Mymensingh Engineering College.`;
+
+  // Determine site base URL (support custom domain, Vercel deployments, and production)
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "https://meccomputerclub.org");
+
+  const pageUrl = `${baseUrl.replace(/\/+$/, "")}/events/${event.slug || slug}`;
+
+  // Resolve absolute image URL for WhatsApp / Facebook / Twitter rich previews
+  const rawImage = event.coverImageUrl || event.bannerImageUrl || event.image || "/mec-club-photo.jpg";
+  const ogImageUrl = rawImage.startsWith("http://") || rawImage.startsWith("https://")
+    ? rawImage
+    : `${baseUrl.replace(/\/+$/, "")}${rawImage.startsWith("/") ? rawImage : `/${rawImage}`}`;
+
   return {
-    title: `${event.title} | MEC Computer Club`,
-    description: event.description,
+    title: eventTitle,
+    description: eventDescription,
+    alternates: {
+      canonical: pageUrl,
+    },
+    openGraph: {
+      title: event.title,
+      description: eventDescription,
+      url: pageUrl,
+      siteName: "MEC Computer Club",
+      type: "website",
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: event.title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: event.title,
+      description: eventDescription,
+      images: [ogImageUrl],
+    },
   };
 }
 
@@ -71,7 +143,7 @@ export default async function EventDetailPage({
         {/* ── 1. Hero Header Banner ── */}
         <div className="relative rounded-2xl border-2 border-border-brutalist bg-surface-elevated overflow-hidden shadow-[6px_6px_0px_var(--border-brutalist)]">
           {event.image && (
-            <div className="relative w-full h-48 sm:h-72 md:h-80 bg-surface-secondary overflow-hidden border-b-2 border-border-brutalist">
+            <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] md:aspect-[2.3/1] min-h-[260px] max-h-[520px] bg-surface-secondary overflow-hidden border-b-2 border-border-brutalist">
               <Image
                 src={event.bannerImageUrl || event.image}
                 alt={event.title}
@@ -81,7 +153,7 @@ export default async function EventDetailPage({
                 unoptimized
                 priority
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20 pointer-events-none" />
               <div className="absolute top-4 left-4 flex flex-wrap gap-2">
                 <Badge
                   variant={
@@ -166,7 +238,7 @@ export default async function EventDetailPage({
                   <>
                     <span className="text-text-tertiary">&bull;</span>
                     <span className="font-mono text-xs text-text-secondary">
-                      Deadline: <strong>{event.registrationDeadline}</strong>
+                      Deadline: <strong>{formatEventDeadline(event.registrationDeadline)}</strong>
                     </span>
                   </>
                 )}
@@ -190,9 +262,23 @@ export default async function EventDetailPage({
               <h2 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
                 <FileText size={20} className="text-accent-primary" /> About this Event
               </h2>
-              <div className="text-base leading-relaxed text-text-secondary whitespace-pre-line space-y-4">
-                {event.longDescription || event.description}
-              </div>
+              {(() => {
+                const content = event.longDescription || event.description || "";
+                const isHtml = /<[a-z][\s\S]*>/i.test(content);
+                if (isHtml) {
+                  return (
+                    <div
+                      className="prose prose-slate dark:prose-invert max-w-none text-text-secondary leading-relaxed"
+                      dangerouslySetInnerHTML={{ __html: content }}
+                    />
+                  );
+                }
+                return (
+                  <div className="text-base leading-relaxed text-text-secondary whitespace-pre-line space-y-4">
+                    {content}
+                  </div>
+                );
+              })()}
 
               {event.tags && event.tags.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-6 pt-4 border-t border-border-default">
@@ -207,6 +293,23 @@ export default async function EventDetailPage({
                 </div>
               )}
             </div>
+
+            {/* Rules & Guidelines Card - under About this Event section */}
+            {event.rules && event.rules.length > 0 && (
+              <div className="p-6 sm:p-8 bg-surface-elevated rounded-2xl border-2 border-border-brutalist shadow-[4px_4px_0px_var(--border-brutalist)]">
+                <h2 className="text-xl font-bold text-text-primary mb-4 flex items-center gap-2">
+                  <ShieldCheck size={20} className="text-accent-primary" /> Rules &amp; Guidelines
+                </h2>
+                <ul className="space-y-3 text-sm text-text-secondary">
+                  {event.rules.map((rule, idx) => (
+                    <li key={idx} className="flex items-start gap-3">
+                      <CheckCircle2 size={16} className="text-emerald-500 flex-shrink-0 mt-0.5" />
+                      <span className="leading-relaxed">{rule}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             {/* Rewards & Prizes Section */}
             {((event.rewards && event.rewards.length > 0) || event.prizePool) && (
@@ -297,6 +400,9 @@ export default async function EventDetailPage({
 
           {/* Sidebar Column */}
           <div className="space-y-6">
+            {/* Quick Actions & Calendar / Share Card */}
+            <EventShareSidebar event={event} />
+
             {/* Event Contributors & Organizing Team */}
             {event.contributors && event.contributors.length > 0 && (
               <div className="p-6 bg-surface-elevated rounded-2xl border-2 border-border-brutalist shadow-[4px_4px_0px_var(--border-brutalist)]">
@@ -334,43 +440,6 @@ export default async function EventDetailPage({
               </div>
             )}
 
-            {/* Rules Card */}
-            {event.rules && event.rules.length > 0 ? (
-              <div className="p-6 bg-surface-elevated rounded-2xl border-2 border-border-brutalist shadow-[4px_4px_0px_var(--border-brutalist)]">
-                <h2 className="text-lg font-bold text-text-primary mb-4 flex items-center gap-2">
-                  <ShieldCheck size={18} className="text-accent-primary" /> Rules &amp; Guidelines
-                </h2>
-                <ul className="space-y-2.5 text-xs sm:text-sm text-text-secondary">
-                  {event.rules.map((rule, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <CheckCircle2 size={15} className="text-emerald-500 flex-shrink-0 mt-0.5" />
-                      <span>{rule}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : (
-              <div className="p-6 bg-surface-elevated rounded-2xl border-2 border-border-brutalist shadow-[4px_4px_0px_var(--border-brutalist)]">
-                <h2 className="text-lg font-bold text-text-primary mb-3 flex items-center gap-2">
-                  <ShieldCheck size={18} className="text-accent-primary" /> Guidelines
-                </h2>
-                <ul className="space-y-2 text-xs text-text-secondary">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 size={14} className="text-emerald-500 flex-shrink-0 mt-0.5" />
-                    <span>Open to all registered MEC students.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 size={14} className="text-emerald-500 flex-shrink-0 mt-0.5" />
-                    <span>Fair play and sportsmanship are strictly enforced.</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 size={14} className="text-emerald-500 flex-shrink-0 mt-0.5" />
-                    <span>Bring institutional student ID on event day.</span>
-                  </li>
-                </ul>
-              </div>
-            )}
-
             {/* Event Sponsors & Partners */}
             {event.sponsors && event.sponsors.length > 0 && (
               <div className="p-6 bg-surface-elevated rounded-2xl border-2 border-border-brutalist shadow-[4px_4px_0px_var(--border-brutalist)]">
@@ -404,15 +473,17 @@ export default async function EventDetailPage({
               </div>
             )}
 
-            {/* Certificate Notice */}
-            <div className="p-5 bg-surface-secondary rounded-2xl border border-border-default text-xs text-text-secondary space-y-2">
-              <div className="flex items-center gap-2 text-text-primary font-bold">
-                <Award size={16} className="text-accent-primary" /> Verified Credentials
+            {/* Certificate Notice - only if event issues verified certificates */}
+            {event.providesCertificate && (
+              <div className="p-5 bg-surface-secondary rounded-2xl border border-border-default text-xs text-text-secondary space-y-2">
+                <div className="flex items-center gap-2 text-text-primary font-bold">
+                  <Award size={16} className="text-accent-primary" /> Verified Credentials
+                </div>
+                <p>
+                  All approved attendees and podium finishers receive official, verifiable digital certificates from MEC Computer Club.
+                </p>
               </div>
-              <p>
-                All approved attendees and podium finishers receive official, verifiable digital certificates from MEC Computer Club.
-              </p>
-            </div>
+            )}
           </div>
         </div>
 

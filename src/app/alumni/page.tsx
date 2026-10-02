@@ -5,8 +5,19 @@ import PeopleDirectory from "@/components/people/PeopleDirectory";
 export const revalidate = 120;
 
 export const metadata: Metadata = {
-  title: "Alumni | Legacy Code",
-  description: "Meet the legends who built MEC Computer Club.",
+  title: "Alumni & Graduates (Legacy Code) | MEC Computer Club",
+  description: "Meet the legends who built MEC Computer Club and shaped its competitive programming and engineering culture.",
+  openGraph: {
+    title: "Alumni & Graduates (Legacy Code) | MEC Computer Club",
+    description: "Meet the legends who built MEC Computer Club and shaped its competitive programming and engineering culture.",
+    images: ["/mec-club-photo.jpg"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Alumni & Graduates (Legacy Code) | MEC Computer Club",
+    description: "Meet the legends who built MEC Computer Club and shaped its competitive programming and engineering culture.",
+    images: ["/mec-club-photo.jpg"],
+  },
 };
 
 export default async function AlumniPage() {

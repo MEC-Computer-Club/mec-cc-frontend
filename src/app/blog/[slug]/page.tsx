@@ -10,7 +10,49 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const post = await getBlogBySlugFromApi(slug);
   if (!post) return { title: "Post Not Found" };
-  return { title: `${post.title} | MEC Blog`, description: post.excerpt };
+
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "https://meccomputerclub.org");
+
+  const pageUrl = `${baseUrl.replace(/\/+$/, "")}/blog/${post.slug || slug}`;
+  const rawImage = (post as any).coverImage || post.image || "/mec-club-photo.jpg";
+  const ogImageUrl = rawImage.startsWith("http://") || rawImage.startsWith("https://")
+    ? rawImage
+    : `${baseUrl.replace(/\/+$/, "")}${rawImage.startsWith("/") ? rawImage : `/${rawImage}`}`;
+
+  return {
+    title: `${post.title} | MEC Blog`,
+    description: post.excerpt,
+    alternates: {
+      canonical: pageUrl,
+    },
+    openGraph: {
+      title: post.title,
+      description: post.excerpt,
+      url: pageUrl,
+      siteName: "MEC Computer Club",
+      type: "article",
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.excerpt,
+      images: [ogImageUrl],
+    },
+  };
 }
 
 export default async function BlogPostPage({ params }: { params: Promise<{ slug: string }> }) {
