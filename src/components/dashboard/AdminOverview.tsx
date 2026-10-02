@@ -144,7 +144,7 @@ export default function AdminOverview() {
         {statCards.map((card) => {
           const Inner = (
             <div
-              className={`bg-surface-elevated rounded-xl border border-border-default p-4 shadow-[4px_4px_0px_0px_var(--border-default)] flex flex-col gap-3 transition hover:shadow-[6px_6px_0px_0px_var(--border-default)] ${card.link ? "cursor-pointer" : ""}`}
+              className={`bg-surface-elevated rounded-xl border border-border-default p-4 flex flex-col gap-3 transition-shadow duration-200 hover:shadow-[4px_4px_0px_var(--accent-primary)] ${card.link ? "cursor-pointer" : ""}`}
             >
               <div className="flex items-center justify-between">
                 <p className="text-xs font-semibold text-text-secondary uppercase tracking-wide">

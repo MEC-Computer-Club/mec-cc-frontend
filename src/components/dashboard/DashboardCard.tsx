@@ -40,7 +40,7 @@ export const DashboardCard: React.FC<DashboardCardProps> = ({
 
   return (
     <div
-      className="bg-surface-elevated rounded-2xl p-6 shadow-sm border border-border-default hover:shadow-md transition-shadow cursor-pointer flex flex-col"
+      className="bg-surface-elevated rounded-2xl p-6 hover:shadow-[4px_4px_0px_var(--accent-primary)] transition-shadow duration-200 border border-border-default cursor-pointer flex flex-col"
       onClick={handleClick}
     >
       <div className="flex items-center justify-between">

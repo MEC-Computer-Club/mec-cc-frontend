@@ -891,7 +891,7 @@ export function QuestionsArchiveClient() {
                 <div
                   key={item._id}
                   onClick={() => handleOpenPreview(item)}
-                  className="group relative flex flex-col justify-between rounded-2xl bg-surface-elevated hover:bg-surface-secondary/40 border border-border-default hover:border-accent-primary/50 transition-all duration-200 p-5 shadow-sm hover:shadow-md cursor-pointer"
+                  className="group relative flex flex-col justify-between rounded-2xl bg-surface-elevated hover:bg-surface-secondary/40 border border-border-default hover:border-accent-primary/50 hover:shadow-[4px_4px_0px_var(--accent-primary)] transition-shadow duration-200 p-5 cursor-pointer"
                 >
                   <div>
                     {/* Top badges: Course Code, File Format & Exam Type */}

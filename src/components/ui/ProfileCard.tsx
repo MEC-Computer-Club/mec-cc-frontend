@@ -295,7 +295,7 @@ export function ProfileCard({
 
   return (
     <div
-      className={`flex flex-col bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl no-underline text-inherit cursor-pointer relative transition-all duration-200 hover:shadow-[6px_6px_0px_var(--accent-primary)] hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0 active:translate-y-0 active:shadow-none group ${
+      className={`flex flex-col bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-xl no-underline text-inherit cursor-pointer relative hover:shadow-[4px_4px_0px_var(--accent-primary)] transition-shadow duration-200 group ${
         isMenuOpen ? "overflow-visible z-[200]" : "overflow-hidden"
       }`}
       id={`profile-${slug}`}

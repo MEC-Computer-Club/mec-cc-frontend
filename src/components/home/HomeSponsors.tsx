@@ -51,7 +51,7 @@ export function HomeSponsors({ sponsors }: HomeSponsorsProps) {
       sponsor.logoUrl?.includes("1777010120574");
 
     const cardBody = (
-      <div className={`group flex items-center gap-3 px-3.5 py-1.5 bg-surface-elevated hover:bg-surface-secondary border-2 border-border-brutalist dark:border-border-default rounded-xl shadow-[3px_3px_0px_0px_var(--border-brutalist)] hover:shadow-[4px_4px_0px_0px_var(--accent-primary)] hover:border-accent-primary hover:-translate-y-0.5 transition-all flex-shrink-0 cursor-pointer ${
+      <div className={`group flex items-center gap-3 px-3.5 py-1.5 bg-surface-elevated hover:bg-surface-secondary border-2 border-border-brutalist dark:border-border-default rounded-xl hover:shadow-[4px_4px_0px_var(--accent-primary)] hover:border-accent-primary transition-shadow duration-200 flex-shrink-0 cursor-pointer ${
         isCompact ? "h-14 min-w-[190px] max-w-[240px]" : "h-16 min-w-[220px] max-w-[280px]"
       }`}>
         {/* Logo Showcase or Monogram */}

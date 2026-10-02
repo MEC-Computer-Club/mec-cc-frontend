@@ -303,7 +303,7 @@ function DevelopersContent() {
                 className="w-full lg:w-[calc(50%-14px)] text-inherit no-underline transition-all duration-200 group relative flex"
                 id={`developer-${dev.id}`}
               >
-                <div className="flex flex-col sm:flex-row items-stretch w-full h-full bg-surface-elevated border-[1.5px] border-border-brutalist dark:border-border-default rounded-xl overflow-hidden transition-shadow duration-200 hover:shadow-[6px_6px_0px_var(--accent-primary)]">
+                <div className="flex flex-col sm:flex-row items-stretch w-full h-full bg-surface-elevated border-[1.5px] border-border-brutalist dark:border-border-default rounded-xl overflow-hidden hover:shadow-[4px_4px_0px_var(--accent-primary)] transition-shadow duration-200">
                   {/* Left: Square Photo matching Card Height */}
                   <div className="w-full sm:w-52 md:w-56 lg:w-60 aspect-square sm:aspect-square sm:self-stretch shrink-0 relative bg-surface-secondary border-b-[1.5px] sm:border-b-0 sm:border-r-[1.5px] border-border-brutalist dark:border-border-default overflow-hidden flex items-center justify-center">
                     {dev.photo ? (
@@ -472,7 +472,7 @@ function DevelopersContent() {
 
       {/* ── Contributor Node Invitation CTA Card ── */}
       <section className="container max-w-5xl mx-auto px-4 pt-12 md:pt-16 pb-12 md:pb-16">
-        <div className="p-6 sm:p-8 md:p-9 rounded-2xl bg-white dark:bg-surface-elevated border-[1.5px] border-black dark:border-white/30 flex flex-col gap-6 relative overflow-hidden">
+        <div className="p-6 sm:p-8 md:p-9 rounded-2xl bg-white dark:bg-surface-elevated border-[1.5px] border-black dark:border-white/30 flex flex-col gap-6 relative overflow-hidden shadow-[4px_4px_0px_var(--accent-primary)]">
           {/* Top meta strip */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2">
