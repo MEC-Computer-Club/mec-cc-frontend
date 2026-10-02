@@ -22,6 +22,7 @@ import {
   Edit3,
   Copy,
   RotateCcw,
+  ShieldCheck,
 } from "lucide-react";
 import { Select } from "@/components/ui/Select";
 
@@ -244,6 +245,24 @@ export default function EventMailingTab({ event, showToast }: EventMailingTabPro
     };
   }, [event]);
 
+  // Dynamic preview greeting matching BCC broadcast format
+  const previewGreeting = useMemo(() => {
+    switch (audience) {
+      case "approved_participants":
+        return "Hello Participants & Attendees!";
+      case "pending_registrants":
+        return "Hello Applicants & Registrants!";
+      case "volunteers":
+        return "Hello Organizing Team & Volunteers!";
+      case "sponsors":
+        return "Hello Valued Sponsors & Partners!";
+      case "all":
+      case "custom":
+      default:
+        return "Hello Everyone!";
+    }
+  }, [audience]);
+
   // Handle direct inline modification from the visual preview card
   const handlePreviewInput = (e: React.FormEvent<HTMLDivElement>) => {
     const newText = e.currentTarget.innerText;
@@ -311,14 +330,20 @@ export default function EventMailingTab({ event, showToast }: EventMailingTabPro
     <div className="space-y-6">
       {/* ── Audience Selector Cards ── */}
       <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-sm p-5 space-y-4">
-        <div>
-          <h3 className="font-bold text-slate-900 dark:text-white text-base flex items-center gap-2">
-            <Users className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-            1. Target Audience
-          </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Select who will receive this official email broadcast.
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h3 className="font-bold text-slate-900 dark:text-white text-base flex items-center gap-2">
+              <Users className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+              1. Target Audience
+            </h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Select who will receive this official email broadcast.
+            </p>
+          </div>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 w-fit">
+            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+            Sent via BCC (Emails kept private)
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -603,8 +628,8 @@ export default function EventMailingTab({ event, showToast }: EventMailingTabPro
                 className="bg-white text-slate-900 rounded-xl p-4 sm:p-6 shadow-sm border border-slate-200 text-sm overflow-x-auto min-h-[350px]"
                 dangerouslySetInnerHTML={{
                   __html: (customHtml || "")
-                    .replace(/{{\s*userName\s*}}/g, "Md. Nasir Ahmed")
-                    .replace(/{{\s*email\s*}}/g, "nasir2242001@gmail.com"),
+                    .replace(/{{\s*userName\s*}}/g, "Participant")
+                    .replace(/{{\s*email\s*}}/g, ""),
                 }}
               />
             ) : (
@@ -621,7 +646,7 @@ export default function EventMailingTab({ event, showToast }: EventMailingTabPro
 
                 {/* Greeting */}
                 <h5 className="font-bold text-base text-slate-900">
-                  Hello, Md. Nasir Ahmed!
+                  {previewGreeting}
                 </h5>
 
                 {/* Direct Editable Text Body */}
@@ -705,6 +730,12 @@ export default function EventMailingTab({ event, showToast }: EventMailingTabPro
               <p>
                 <strong className="text-slate-700 dark:text-slate-300">Target Audience: </strong>
                 <span className="capitalize">{audience.replace(/_/g, " ")}</span>
+              </p>
+              <p>
+                <strong className="text-slate-700 dark:text-slate-300">Delivery Method: </strong>
+                <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400">
+                  <ShieldCheck className="w-3.5 h-3.5" /> Blind Carbon Copy (BCC)
+                </span>
               </p>
               <p>
                 <strong className="text-slate-700 dark:text-slate-300">Format Mode: </strong>
