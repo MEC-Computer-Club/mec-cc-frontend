@@ -4,9 +4,7 @@ import { Button } from "@/components/ui/Button";
 import { getBlogBySlugFromApi } from "@/lib/api/blog";
 import BlogViewClient from "./BlogViewClient";
 
-export async function generateStaticParams() {
-  return [];
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
@@ -22,7 +20,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   const post = await getBlogBySlugFromApi(slug);
   if (!post) notFound();
 
-  const isHtml = post.content.includes("<") && post.content.includes(">");
+  const isHtml = post.content ? post.content.includes("<") && post.content.includes(">") : false;
 
   return <BlogViewClient post={post} isHtml={isHtml} />;
 }

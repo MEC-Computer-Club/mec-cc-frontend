@@ -1,4 +1,4 @@
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -25,10 +25,6 @@ import {
   Award,
 } from "lucide-react";
 
-export async function generateStaticParams() {
-  return [];
-}
-
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const event = await getEventBySlug(slug);
@@ -44,10 +40,11 @@ export default async function EventDetailPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }> | { [key: string]: string | string[] | undefined };
 }) {
   const { slug } = await params;
-  const { success } = await searchParams;
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const success = resolvedSearchParams.success;
   const event = await getEventBySlug(slug);
   if (!event) notFound();
 
