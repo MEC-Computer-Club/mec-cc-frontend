@@ -17,9 +17,24 @@ export interface SelectProps {
   placeholder?: string;
   required?: boolean;
   disabled?: boolean;
+  className?: string;
+  buttonClassName?: string;
+  size?: "sm" | "md";
 }
 
-export function Select({ id, name, value, onChange, options, placeholder = "Select...", required, disabled }: SelectProps) {
+export function Select({
+  id,
+  name,
+  value,
+  onChange,
+  options,
+  placeholder = "Select...",
+  required,
+  disabled,
+  className = "",
+  buttonClassName = "",
+  size = "md",
+}: SelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -110,9 +125,11 @@ export function Select({ id, name, value, onChange, options, placeholder = "Sele
     setIsOpen(!isOpen);
   };
 
+  const sizeClass = size === "sm" ? "h-9 text-xs px-3 py-1.5" : "h-10 text-sm px-3.5 py-2";
+
   return (
     <div
-      className={`relative w-full ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
+      className={`relative w-full ${disabled ? "opacity-60 cursor-not-allowed" : ""} ${className}`}
       ref={containerRef}
       id={id}
       data-open={isOpen}
@@ -163,22 +180,22 @@ export function Select({ id, name, value, onChange, options, placeholder = "Sele
 
       <button
         type="button"
-        className={`w-full py-2 px-3.5 border rounded-md bg-surface-primary font-sans text-sm font-medium text-text-primary shadow-[2px_2px_0px_var(--border-brutalist)] dark:shadow-[2px_2px_0px_var(--border-default)] transition-all duration-150 flex justify-between items-center cursor-pointer text-left outline-none ${
+        className={`w-full border border-black dark:border-border-default rounded-md bg-surface-elevated font-sans font-medium text-text-primary transition-all duration-150 flex justify-between items-center cursor-pointer text-left outline-none ${sizeClass} ${
           isOpen
-            ? "border-accent-primary shadow-[3px_3px_0px_var(--accent-primary)] font-bold text-text-primary dark:text-white"
-            : "border-border-brutalist dark:border-border-default focus:border-accent-primary focus:shadow-[3px_3px_0px_var(--accent-primary)]"
-        }`}
+            ? "shadow-[3px_3px_0px_0px_var(--accent-primary)] font-bold text-text-primary dark:text-white"
+            : "shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_var(--border-default)] hover:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:shadow-[3px_3px_0px_0px_var(--accent-primary)]"
+        } ${buttonClassName}`}
         onClick={handleToggle}
         disabled={disabled}
       >
-        <span>{selectedOption ? selectedOption.label : placeholder}</span>
+        <span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>
         <svg
           width="12"
           height="12"
           viewBox="0 0 12 12"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          className={`transition-transform duration-150 shrink-0 ${isOpen ? "rotate-180 text-accent-primary" : "text-text-tertiary"}`}
+          className={`transition-transform duration-150 shrink-0 ml-2 ${isOpen ? "rotate-180 text-accent-primary" : "text-text-tertiary"}`}
         >
           <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
@@ -195,7 +212,7 @@ export function Select({ id, name, value, onChange, options, placeholder = "Sele
             width: `${menuCoords.width}px`,
             zIndex: 99999,
           }}
-          className="bg-surface-primary border border-text-primary dark:border-border-default rounded-md shadow-[4px_4px_0px_0px_var(--accent-primary)] max-h-[250px] overflow-y-auto overflow-x-hidden flex flex-col m-0 p-0 list-none animate-in fade-in duration-100"
+          className="bg-surface-elevated border border-black dark:border-border-default rounded-md shadow-[4px_4px_0px_0px_var(--accent-primary)] max-h-[250px] overflow-y-auto overflow-x-hidden flex flex-col m-0 p-0 list-none animate-in fade-in duration-100"
         >
           {options.map((opt) => (
             <div

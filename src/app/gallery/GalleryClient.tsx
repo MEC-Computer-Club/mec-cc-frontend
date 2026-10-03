@@ -222,8 +222,10 @@ export function GalleryClient({ initialItems }: GalleryClientProps) {
       {/* ── Filter Bar ── */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8 bg-surface-secondary/70 p-4 rounded-2xl border border-border-default backdrop-blur-sm shadow-sm">
         {/* Type Toggle Tabs */}
-        <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
+        <div className="flex items-center gap-2 flex-wrap w-full md:w-auto" role="tablist">
           <Button
+            isFlip
+            role="tab"
             size="sm"
             variant={filter === "all" ? "primary" : "secondary"}
             onClick={() => setFilter("all")}
@@ -231,6 +233,8 @@ export function GalleryClient({ initialItems }: GalleryClientProps) {
             All Media ({items.length})
           </Button>
           <Button
+            isFlip
+            role="tab"
             size="sm"
             variant={filter === "image" ? "primary" : "secondary"}
             onClick={() => setFilter("image")}
@@ -239,6 +243,8 @@ export function GalleryClient({ initialItems }: GalleryClientProps) {
             Photos ({items.filter((i) => i.type === "image").length})
           </Button>
           <Button
+            isFlip
+            role="tab"
             size="sm"
             variant={filter === "video" ? "primary" : "secondary"}
             onClick={() => setFilter("video")}

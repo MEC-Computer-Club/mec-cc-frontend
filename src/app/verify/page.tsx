@@ -145,41 +145,43 @@ function VerifyContent() {
         </div>
 
         {/* Tab Selector */}
-        <div className="flex gap-2 max-w-md mx-auto mb-8 p-1.5 bg-surface-secondary rounded-xl border border-border-default shadow-sm print:hidden">
-          <button
+        <div className="flex items-center justify-center gap-3 mb-8 print:hidden" role="tablist">
+          <Button
             type="button"
+            isFlip
+            role="tab"
+            aria-selected={activeTab === "certificate"}
             onClick={() => setActiveTab("certificate")}
-            className={`flex-1 py-2.5 px-3 rounded-lg border-none flex items-center justify-center gap-2 text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-              activeTab === "certificate"
-                ? "bg-surface-elevated text-text-primary shadow-[2px_2px_0px_var(--border-brutalist)] border border-border-default"
-                : "bg-transparent text-text-secondary hover:text-text-primary"
-            }`}
+            variant={activeTab === "certificate" ? "primary" : "secondary"}
+            size="md"
+            icon={<Award size={16} />}
           >
-            <Award size={16} className="text-accent-primary" /> Certificate Check
-          </button>
-          <button
+            Certificate Check
+          </Button>
+          <Button
             type="button"
+            isFlip
+            role="tab"
+            aria-selected={activeTab === "member"}
             onClick={() => setActiveTab("member")}
-            className={`flex-1 py-2.5 px-3 rounded-lg border-none flex items-center justify-center gap-2 text-xs sm:text-sm font-bold transition-all cursor-pointer ${
-              activeTab === "member"
-                ? "bg-surface-elevated text-text-primary shadow-[2px_2px_0px_var(--border-brutalist)] border border-border-default"
-                : "bg-transparent text-text-secondary hover:text-text-primary"
-            }`}
+            variant={activeTab === "member" ? "primary" : "secondary"}
+            size="md"
+            icon={<UserCheck size={16} />}
           >
-            <UserCheck size={16} className="text-accent-primary" /> Member Activity
-          </button>
+            Member Activity
+          </Button>
         </div>
 
         {/* ── TAB 1: CERTIFICATE VERIFICATION ── */}
         {activeTab === "certificate" && (
           <div className="space-y-6">
             {/* Search Card */}
-            <div className="max-w-2xl mx-auto bg-surface-elevated p-6 sm:p-7 rounded-2xl border-2 border-border-brutalist shadow-[6px_6px_0px_var(--accent-primary)] print:hidden">
-              <h2 className="text-lg font-bold text-text-primary mb-2 flex items-center gap-2">
+            <div className="max-w-2xl mx-auto bg-surface-elevated p-6 sm:p-7 rounded-xl border border-black dark:border-border-default shadow-[4px_4px_0px_var(--accent-primary)] print:hidden">
+              <h2 className="text-lg font-bold text-text-primary mb-1.5 flex items-center gap-2">
                 <Award size={20} className="text-accent-primary" />
                 Validate Official Credential
               </h2>
-              <p className="text-xs sm:text-sm text-text-secondary mb-4">
+              <p className="text-xs sm:text-sm text-text-secondary mb-5">
                 Enter the unique Certificate ID printed on the credential (e.g., <code className="font-mono bg-surface-secondary px-1.5 py-0.5 rounded text-accent-primary font-bold">MCC-2026-A8F29C</code>).
               </p>
 
@@ -197,20 +199,20 @@ function VerifyContent() {
                     value={certificateId}
                     onChange={(e) => setCertificateId(e.target.value.toUpperCase())}
                     placeholder="Enter Certificate ID…"
-                    className="w-full px-4 py-3 border-2 border-border-brutalist rounded-xl bg-surface-primary text-base font-mono uppercase tracking-wider text-text-primary focus:outline-none focus:border-accent-primary transition-all"
+                    className="w-full h-11 px-4 border border-black dark:border-border-default rounded-md bg-surface-primary text-sm sm:text-base font-mono uppercase tracking-wider text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-primary focus:shadow-[3px_3px_0px_var(--accent-primary)] transition-all"
                   />
                 </div>
-                <Button type="submit" size="lg" disabled={certVerifying} className="flex-shrink-0">
+                <Button type="submit" size="md" disabled={certVerifying} className="flex-shrink-0">
                   {certVerifying ? "Verifying…" : "Verify Credential →"}
                 </Button>
               </form>
 
               {certError && (
-                <div className="mt-4 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-sm flex items-start gap-2.5">
+                <div className="mt-4 p-3.5 rounded-md bg-red-500/10 border border-red-500/40 text-red-600 dark:text-red-400 text-sm flex items-start gap-2.5 shadow-[2px_2px_0px_0px_rgba(239,68,68,0.25)]">
                   <XCircle size={18} className="flex-shrink-0 mt-0.5" />
                   <div>
                     <strong className="block font-bold">Verification Failed</strong>
-                    <span>{certError}</span>
+                    <span className="text-xs sm:text-sm opacity-90">{certError}</span>
                   </div>
                 </div>
               )}
@@ -224,11 +226,11 @@ function VerifyContent() {
               return (
                 <div
                   id="certificate-print-area"
-                  className="max-w-3xl mx-auto bg-surface-elevated border-2 border-border-brutalist rounded-2xl overflow-hidden shadow-[8px_8px_0px_var(--border-brutalist)] animate-fade-in"
+                  className="max-w-3xl mx-auto bg-surface-elevated border border-black dark:border-border-default rounded-xl overflow-hidden shadow-[4px_4px_0px_var(--accent-primary)] animate-fade-in"
                 >
                   {/* Header Strip - Official Status */}
                   <div
-                    className={`px-6 py-4 flex items-center justify-between border-b-2 border-border-brutalist print:hidden ${
+                    className={`px-6 py-4 flex items-center justify-between border-b border-black dark:border-border-default print:hidden ${
                       certIsRevoked
                         ? "bg-red-500/15 text-red-600 dark:text-red-400"
                         : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
@@ -395,46 +397,49 @@ function VerifyContent() {
                   )}
 
                   {/* Action Bar */}
-                  <div className="px-6 py-4 bg-surface-secondary border-t-2 border-border-brutalist flex flex-wrap items-center justify-between gap-3 print:hidden">
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handlePrint}
-                      className="print:hidden"
-                    >
-                      <Printer size={14} className="mr-1.5" /> Print / Save PDF
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => {
-                        const url = `${window.location.origin}/verify?cert=${certificateData.certificateId}`;
-                        copyToClipboard(url, "Public Verification Link");
-                      }}
-                      className="print:hidden"
-                    >
-                      <Share2 size={14} className="mr-1.5" /> Share Link
-                    </Button>
-                  </div>
+                  <div className="px-6 py-4 bg-surface-secondary border-t border-black dark:border-border-default flex flex-wrap items-center justify-between gap-3 print:hidden">
+                    <div className="flex items-center gap-2.5">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={handlePrint}
+                        className="print:hidden"
+                        icon={<Printer size={14} />}
+                      >
+                        Print / Save PDF
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          const url = `${window.location.origin}/verify?cert=${certificateData.certificateId}`;
+                          copyToClipboard(url, "Public Verification Link");
+                        }}
+                        className="print:hidden"
+                        icon={<Share2 size={14} />}
+                      >
+                        Share Link
+                      </Button>
+                    </div>
 
-                  {certificateData.recipient?.studentId && (
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setActiveTab("member");
-                        setMemberQuery(certificateData.recipient.studentId);
-                        lookupMember(certificateData.recipient.studentId);
-                      }}
-                      className="print:hidden"
-                    >
-                      <UserCheck size={14} className="mr-1.5" /> View Member Activity →
-                    </Button>
-                  )}
+                    {certificateData.recipient?.studentId && (
+                      <Button
+                        size="sm"
+                        onClick={() => {
+                          setActiveTab("member");
+                          setMemberQuery(certificateData.recipient.studentId);
+                          lookupMember(certificateData.recipient.studentId);
+                        }}
+                        className="print:hidden"
+                        icon={<UserCheck size={14} />}
+                      >
+                        View Member Activity →
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })()}
+              );
+            })()}
           </div>
         )}
 
@@ -442,12 +447,12 @@ function VerifyContent() {
         {activeTab === "member" && (
           <div className="space-y-6">
             {/* Search Card */}
-            <div className="max-w-2xl mx-auto bg-surface-elevated p-6 sm:p-7 rounded-2xl border-2 border-border-brutalist shadow-[6px_6px_0px_var(--accent-primary)]">
-              <h2 className="text-lg font-bold text-text-primary mb-2 flex items-center gap-2">
+            <div className="max-w-2xl mx-auto bg-surface-elevated p-6 sm:p-7 rounded-xl border border-black dark:border-border-default shadow-[4px_4px_0px_var(--accent-primary)] print:hidden">
+              <h2 className="text-lg font-bold text-text-primary mb-1.5 flex items-center gap-2">
                 <UserCheck size={20} className="text-accent-primary" />
                 Inspect Club Member Activity
               </h2>
-              <p className="text-xs sm:text-sm text-text-secondary mb-4">
+              <p className="text-xs sm:text-sm text-text-secondary mb-5">
                 Enter a student ID (e.g. <code className="font-mono bg-surface-secondary px-1.5 py-0.5 rounded text-accent-primary font-bold">2021331501</code>) or email to look up official club records, attended events, certificates, and achievements.
               </p>
 
@@ -465,20 +470,20 @@ function VerifyContent() {
                     value={memberQuery}
                     onChange={(e) => setMemberQuery(e.target.value)}
                     placeholder="Enter Student ID or Email…"
-                    className="w-full px-4 py-3 border-2 border-border-brutalist rounded-xl bg-surface-primary text-base text-text-primary focus:outline-none focus:border-accent-primary transition-all"
+                    className="w-full h-11 px-4 border border-black dark:border-border-default rounded-md bg-surface-primary text-sm sm:text-base text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-accent-primary focus:shadow-[3px_3px_0px_var(--accent-primary)] transition-all"
                   />
                 </div>
-                <Button type="submit" size="lg" disabled={memberSearching} className="flex-shrink-0">
+                <Button type="submit" size="md" disabled={memberSearching} className="flex-shrink-0">
                   {memberSearching ? "Looking up…" : "Check Activity →"}
                 </Button>
               </form>
 
               {memberError && (
-                <div className="mt-4 p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-sm flex items-start gap-2.5">
+                <div className="mt-4 p-3.5 rounded-md bg-red-500/10 border border-red-500/40 text-red-600 dark:text-red-400 text-sm flex items-start gap-2.5 shadow-[2px_2px_0px_0px_rgba(239,68,68,0.25)]">
                   <XCircle size={18} className="flex-shrink-0 mt-0.5" />
                   <div>
                     <strong className="block font-bold">Member Not Found</strong>
-                    <span>{memberError}</span>
+                    <span className="text-xs sm:text-sm opacity-90">{memberError}</span>
                   </div>
                 </div>
               )}
@@ -488,10 +493,10 @@ function VerifyContent() {
             {memberData && (
               <div className="max-w-3xl mx-auto space-y-6 animate-fade-in">
                 {/* Profile Identity Card */}
-                <div className="bg-surface-elevated border-2 border-border-brutalist rounded-2xl p-6 sm:p-8 shadow-[6px_6px_0px_var(--border-brutalist)]">
+                <div className="bg-surface-elevated border border-black dark:border-border-default rounded-xl p-6 sm:p-7 shadow-[4px_4px_0px_var(--accent-primary)]">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-6 border-b border-border-default">
                     <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-surface-secondary border-2 border-border-brutalist relative overflow-hidden flex items-center justify-center font-bold text-xl text-text-primary flex-shrink-0 shadow-sm">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl bg-surface-secondary border border-black dark:border-border-default relative overflow-hidden flex items-center justify-center font-bold text-xl text-text-primary flex-shrink-0 shadow-sm">
                         {memberData.member.imageUrl ? (
                           <Image
                             src={memberData.member.imageUrl}
@@ -534,7 +539,7 @@ function VerifyContent() {
 
                   {/* Summary Metric Badges */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6">
-                    <div className="bg-surface-secondary p-3.5 rounded-xl border border-border-default text-center">
+                    <div className="bg-surface-secondary p-3.5 rounded-lg border border-border-default text-center">
                       <span className="block text-2xl font-black text-text-primary">
                         {memberData.metrics.eventsCount}
                       </span>
@@ -542,7 +547,7 @@ function VerifyContent() {
                         Events Attended
                       </span>
                     </div>
-                    <div className="bg-surface-secondary p-3.5 rounded-xl border border-border-default text-center">
+                    <div className="bg-surface-secondary p-3.5 rounded-lg border border-border-default text-center">
                       <span className="block text-2xl font-black text-accent-primary">
                         {memberData.metrics.certificatesCount}
                       </span>
@@ -550,7 +555,7 @@ function VerifyContent() {
                         Certificates
                       </span>
                     </div>
-                    <div className="bg-surface-secondary p-3.5 rounded-xl border border-border-default text-center">
+                    <div className="bg-surface-secondary p-3.5 rounded-lg border border-border-default text-center">
                       <span className="block text-2xl font-black text-amber-500">
                         {memberData.metrics.achievementsCount}
                       </span>
@@ -558,7 +563,7 @@ function VerifyContent() {
                         Podium Wins
                       </span>
                     </div>
-                    <div className="bg-surface-secondary p-3.5 rounded-xl border border-border-default text-center">
+                    <div className="bg-surface-secondary p-3.5 rounded-lg border border-border-default text-center">
                       <span className="block text-2xl font-black text-text-primary">
                         {memberData.metrics.projectsCount}
                       </span>
@@ -570,7 +575,7 @@ function VerifyContent() {
                 </div>
 
                 {/* Earned Certificates List */}
-                <div className="bg-surface-elevated border-2 border-border-brutalist rounded-2xl p-6 shadow-[6px_6px_0px_var(--border-brutalist)]">
+                <div className="bg-surface-elevated border border-black dark:border-border-default rounded-xl p-6 shadow-[4px_4px_0px_var(--accent-primary)]">
                   <h4 className="text-lg font-bold text-text-primary mb-4 flex items-center gap-2">
                     <Award size={18} className="text-accent-primary" />
                     Official Certificates &amp; Credentials ({memberData.certificates?.length || 0})
@@ -581,7 +586,7 @@ function VerifyContent() {
                       {memberData.certificates.map((c: any) => (
                         <div
                           key={c._id || c.certificateId}
-                          className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-surface-secondary rounded-xl border border-border-default gap-3 hover:border-accent-primary transition-colors"
+                          className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-surface-secondary rounded-lg border border-border-default gap-3 hover:border-accent-primary transition-colors"
                         >
                           <div>
                             <div className="flex items-center gap-2 mb-1">
@@ -609,7 +614,7 @@ function VerifyContent() {
                           <div className="flex items-center gap-2">
                             <Button
                               size="sm"
-                              variant="outline"
+                              variant="secondary"
                               onClick={() => {
                                 setActiveTab("certificate");
                                 setCertificateId(c.certificateId);
@@ -630,7 +635,7 @@ function VerifyContent() {
                 </div>
 
                 {/* Attended Events & Contest Wins */}
-                <div className="bg-surface-elevated border-2 border-border-brutalist rounded-2xl p-6 shadow-[6px_6px_0px_var(--border-brutalist)]">
+                <div className="bg-surface-elevated border border-black dark:border-border-default rounded-xl p-6 shadow-[4px_4px_0px_var(--accent-primary)]">
                   <h4 className="text-lg font-bold text-text-primary mb-4 flex items-center gap-2">
                     <Trophy size={18} className="text-amber-500" />
                     Events Attended &amp; Achievements ({memberData.eventsAttended?.length || 0})
@@ -641,7 +646,7 @@ function VerifyContent() {
                       {memberData.eventsAttended.map((ev: any) => (
                         <div
                           key={ev._id}
-                          className="p-4 bg-surface-secondary rounded-xl border border-border-default flex flex-col justify-between"
+                          className="p-4 bg-surface-secondary rounded-lg border border-border-default flex flex-col justify-between"
                         >
                           <div>
                             <span className="font-mono text-[10px] font-bold text-accent-primary uppercase block mb-1">
@@ -669,7 +674,7 @@ function VerifyContent() {
                 {(memberData.projects?.length > 0 || memberData.blogs?.length > 0) && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     {/* Projects */}
-                    <div className="bg-surface-elevated border-2 border-border-brutalist rounded-2xl p-6 shadow-[4px_4px_0px_var(--border-brutalist)]">
+                    <div className="bg-surface-elevated border border-black dark:border-border-default rounded-xl p-6 shadow-[4px_4px_0px_var(--accent-primary)]">
                       <h4 className="text-base font-bold text-text-primary mb-3 flex items-center gap-2">
                         <FolderGit2 size={16} className="text-accent-primary" />
                         Projects ({memberData.projects.length})
@@ -685,7 +690,7 @@ function VerifyContent() {
                     </div>
 
                     {/* Blogs */}
-                    <div className="bg-surface-elevated border-2 border-border-brutalist rounded-2xl p-6 shadow-[4px_4px_0px_var(--border-brutalist)]">
+                    <div className="bg-surface-elevated border border-black dark:border-border-default rounded-xl p-6 shadow-[4px_4px_0px_var(--accent-primary)]">
                       <h4 className="text-base font-bold text-text-primary mb-3 flex items-center gap-2">
                         <FileText size={16} className="text-accent-primary" />
                         Articles ({memberData.blogs.length})

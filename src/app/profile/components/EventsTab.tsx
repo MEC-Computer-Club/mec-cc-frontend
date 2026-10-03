@@ -55,6 +55,7 @@ export function EventsTab({
             <p className="font-body text-xs text-text-secondary mt-0.5">Club workshops, hackathons, and contests you have registered for.</p>
           </div>
           <Button
+            isFlip
             size="sm"
             variant={showBrowseAll ? "outline" : "secondary"}
             onClick={() => setShowBrowseAll(!showBrowseAll)}

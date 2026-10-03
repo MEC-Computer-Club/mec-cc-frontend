@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Sparkles, X, BookOpen, GraduationCap, Calendar, Layers, Loader2 } from "lucide-react";
 import { Select } from "@/components/ui/Select";
+import { Button } from "@/components/ui/Button";
 import { InstituteSelector } from "./InstituteSelector";
 import { getAvailableDepartmentsForCollege } from "@/lib/api/syllabusCourses";
 
@@ -113,13 +114,13 @@ export function QuickFillModal({
   return (
     <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 pt-16 sm:pt-20 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 overflow-y-auto">
       <div
-        className="w-full max-w-lg bg-surface-primary border border-border-brutalist dark:border-border-default rounded-2xl shadow-[6px_6px_0px_var(--border-brutalist)] overflow-hidden"
+        className="w-full max-w-lg bg-surface-primary border border-black dark:border-border-default rounded-md shadow-[6px_6px_0px_0px_black] dark:shadow-[6px_6px_0px_0px_var(--border-default)] overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-4 sm:p-5 bg-surface-secondary border-b border-border-default flex items-start justify-between">
+        <div className="p-4 sm:p-5 bg-surface-secondary border-b border-black dark:border-border-default flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-accent-primary-light border border-accent-primary/30 flex items-center justify-center text-accent-primary shadow-[2px_2px_0px_var(--border-brutalist)]">
+            <div className="w-10 h-10 rounded-md bg-accent-primary-light border border-black dark:border-border-default flex items-center justify-center text-accent-primary shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_var(--border-default)]">
               <Sparkles size={20} />
             </div>
             <div>
@@ -127,14 +128,15 @@ export function QuickFillModal({
                 Quick Fill Academic Info
               </h2>
               <p className="text-xs text-text-secondary font-mono">
-                Engineering syllabus & semester courses
+                Engineering syllabus &amp; semester courses
               </p>
             </div>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="p-1.5 rounded-lg border border-border-default hover:bg-surface-elevated text-text-secondary hover:text-text-primary transition-colors"
+            className="p-1.5 rounded-md border border-black dark:border-border-default bg-surface-elevated hover:bg-surface-elevated text-text-secondary hover:text-text-primary shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_var(--border-default)] hover:shadow-[2px_2px_0px_0px_var(--accent-primary)] transition-all cursor-pointer"
+            aria-label="Close"
           >
             <X size={18} />
           </button>
@@ -206,7 +208,7 @@ export function QuickFillModal({
             </div>
           </div>
 
-          <div className="p-3 bg-surface-secondary/60 rounded-xl border border-border-default text-xs font-mono text-text-muted flex items-start gap-2">
+          <div className="p-3 bg-surface-secondary/60 rounded-md border border-black dark:border-border-default text-xs font-mono text-text-muted flex items-start gap-2 shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_var(--border-default)]">
             <BookOpen size={16} className="text-accent-primary shrink-0 mt-0.5" />
             <span>
               Official engineering syllabus courses and credits will be loaded automatically.
@@ -215,33 +217,24 @@ export function QuickFillModal({
         </div>
 
         {/* Footer Actions */}
-        <div className="p-4 sm:p-5 bg-surface-secondary border-t border-border-default flex items-center justify-end gap-3">
-          <button
-            type="button"
+        <div className="p-4 sm:p-5 bg-surface-secondary border-t border-black dark:border-border-default flex items-center justify-end gap-3">
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={onClose}
             disabled={submitting}
-            className="px-4 py-2 rounded-xl border border-border-default bg-surface-primary hover:bg-surface-elevated font-mono font-bold text-xs text-text-secondary hover:text-text-primary transition-all disabled:opacity-50"
           >
             Cancel
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="primary"
+            size="sm"
             onClick={handleApply}
             disabled={submitting}
-            className="px-5 py-2.5 rounded-xl bg-accent-primary hover:bg-accent-primary-hover text-white font-mono font-bold text-xs shadow-[3px_3px_0px_var(--border-brutalist)] active:translate-x-[1px] active:translate-y-[1px] transition-all flex items-center gap-2 disabled:opacity-60"
+            icon={submitting ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
           >
-            {submitting ? (
-              <>
-                <Loader2 size={14} className="animate-spin" />
-                <span>Fetching...</span>
-              </>
-            ) : (
-              <>
-                <Sparkles size={14} />
-                <span>Apply & Load Courses</span>
-              </>
-            )}
-          </button>
+            {submitting ? "Fetching..." : "Apply & Load Courses"}
+          </Button>
         </div>
       </div>
     </div>
