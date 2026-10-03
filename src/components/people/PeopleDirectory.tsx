@@ -229,21 +229,28 @@ export default function PeopleDirectory<T extends DirectoryPerson>({
               padding: 0 32px 0 34px;
               font-family: var(--font-body);
               font-size: 13px;
-              background: var(--surface-primary);
+              background: var(--surface-elevated);
               color: var(--text-primary);
               border: 1px solid #000000;
               border-radius: var(--radius-md);
               outline: none;
-              box-shadow: none;
+              box-shadow: 2px 2px 0px #000000;
               box-sizing: border-box;
-              transition: border-color var(--transition-fast);
+              transition: all 150ms ease;
             }
             .dark .directory-search-input {
               border-color: var(--border-default);
+              box-shadow: 2px 2px 0px var(--border-default);
             }
+            .directory-search-input:hover,
             .directory-search-input:focus {
-              border-color: var(--accent-primary);
-              box-shadow: none;
+              border-color: #000000;
+              box-shadow: 3px 3px 0px var(--accent-primary);
+            }
+            .dark .directory-search-input:hover,
+            .dark .directory-search-input:focus {
+              border-color: var(--border-default);
+              box-shadow: 3px 3px 0px var(--accent-primary);
             }
           `,
         }}
@@ -260,6 +267,7 @@ export default function PeopleDirectory<T extends DirectoryPerson>({
               <Button
                 key={key}
                 type="button"
+                isFlip
                 role="tab"
                 aria-selected={isActive}
                 onClick={() => setSelectedDept(key)}
@@ -268,7 +276,7 @@ export default function PeopleDirectory<T extends DirectoryPerson>({
               >
                 <span>{label}</span>
                 <span
-                  className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 text-[11px] font-mono font-bold rounded-full transition-colors ${
+                  className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 text-[11px] font-mono font-bold rounded-full transition-colors duration-150 ${
                     isActive
                       ? "bg-white/25 text-white dark:bg-black/25 dark:text-black"
                       : "bg-black/10 text-black dark:bg-white/15 dark:text-white"

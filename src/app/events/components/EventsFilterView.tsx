@@ -172,6 +172,9 @@ function EventsFilterContent({ initialOngoing = [], initialUpcoming, initialPast
               return (
                 <Button
                   key={cat.id}
+                  isFlip
+                  role="tab"
+                  aria-selected={isSelected}
                   onClick={() => handleCategorySelect(cat.id)}
                   variant={isSelected ? "primary" : "secondary"}
                   size="sm"
@@ -179,7 +182,7 @@ function EventsFilterContent({ initialOngoing = [], initialUpcoming, initialPast
                 >
                   <span>{cat.label}</span>
                   <span
-                    className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 text-[11px] font-mono font-bold rounded-full transition-colors ${
+                    className={`inline-flex items-center justify-center min-w-[18px] h-[18px] px-1.5 text-[11px] font-mono font-bold rounded-full transition-colors duration-150 ${
                       isSelected
                         ? "bg-white/25 text-white dark:bg-black/25 dark:text-black"
                         : "bg-black/10 text-black dark:bg-white/15 dark:text-white"

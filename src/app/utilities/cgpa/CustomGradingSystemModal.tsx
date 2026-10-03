@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { X, Plus, Trash2, Check, RotateCcw, SlidersHorizontal } from "lucide-react";
 import { GradeScale, DEFAULT_GRADING_SCALES } from "@/lib/api/syllabusCourses";
+import { Button } from "@/components/ui/Button";
 import { toast } from "react-hot-toast";
 
 interface CustomGradingSystemModalProps {
@@ -85,13 +86,13 @@ export function CustomGradingSystemModal({
   return (
     <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 pt-16 sm:pt-20 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
       <div
-        className="w-full max-w-xl bg-surface-primary border border-border-brutalist dark:border-border-default rounded-2xl shadow-[6px_6px_0px_var(--border-brutalist)] dark:shadow-[6px_6px_0px_var(--border-default)] overflow-hidden flex flex-col max-h-[85vh] my-auto"
+        className="w-full max-w-xl bg-surface-primary border border-black dark:border-border-default rounded-md shadow-[6px_6px_0px_0px_black] dark:shadow-[6px_6px_0px_0px_var(--border-default)] overflow-hidden flex flex-col max-h-[85vh] my-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-border-brutalist dark:border-border-default bg-surface-secondary/40 flex items-center justify-between shrink-0">
+        <div className="p-4 sm:p-5 border-b border-black dark:border-border-default bg-surface-secondary flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-accent-primary/10 border border-border-brutalist dark:border-border-default flex items-center justify-center text-accent-primary shadow-[2px_2px_0px_var(--border-brutalist)]">
+            <div className="w-9 h-9 rounded-md bg-accent-primary-light border border-black dark:border-border-default flex items-center justify-center text-accent-primary shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_var(--border-default)]">
               <SlidersHorizontal size={18} />
             </div>
             <div>
@@ -105,7 +106,7 @@ export function CustomGradingSystemModal({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg border border-border-default hover:bg-surface-elevated text-text-tertiary hover:text-text-primary transition-colors"
+            className="p-1.5 rounded-md border border-black dark:border-border-default bg-surface-elevated hover:bg-surface-elevated text-text-secondary hover:text-text-primary shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_var(--border-default)] hover:shadow-[2px_2px_0px_0px_var(--accent-primary)] transition-all cursor-pointer"
             aria-label="Close modal"
           >
             <X size={18} />
@@ -119,52 +120,54 @@ export function CustomGradingSystemModal({
               Grade Point Brackets ({scales.length})
             </span>
             <div className="flex items-center gap-2">
-              <button
-                type="button"
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={handleResetToDefault}
-                className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-text-secondary hover:text-accent-primary transition-colors"
+                icon={<RotateCcw size={12} />}
+                className="!h-8 !px-2.5 !text-xs font-mono"
                 title="Reset back to official DU Technology Unit values"
               >
-                <RotateCcw size={12} />
-                <span>Reset to Default</span>
-              </button>
-              <button
-                type="button"
+                Reset Default
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
                 onClick={handleAddBracket}
-                className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-accent-primary hover:underline transition-colors"
+                icon={<Plus size={12} />}
+                className="!h-8 !px-2.5 !text-xs font-mono"
               >
-                <Plus size={13} />
-                <span>Add Bracket</span>
-              </button>
+                Add Bracket
+              </Button>
             </div>
           </div>
 
-          <div className="border border-border-default rounded-xl overflow-hidden shadow-sm">
+          <div className="border border-black dark:border-border-default rounded-md overflow-hidden shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_var(--border-default)]">
             <table className="w-full text-left text-xs">
-              <thead className="bg-surface-secondary/70 text-text-secondary font-mono font-bold uppercase text-[10px] border-b border-border-default">
+              <thead className="bg-surface-secondary text-text-secondary font-mono font-bold uppercase text-[10px] border-b border-black dark:border-border-default">
                 <tr>
-                  <th className="py-2 px-2.5">Letter</th>
-                  <th className="py-2 px-2.5">Min %</th>
-                  <th className="py-2 px-2.5">Max %</th>
-                  <th className="py-2 px-2.5">Grade Pt</th>
-                  <th className="py-2 px-2 text-center w-8"></th>
+                  <th className="py-2.5 px-3">Letter</th>
+                  <th className="py-2.5 px-3">Min %</th>
+                  <th className="py-2.5 px-3">Max %</th>
+                  <th className="py-2.5 px-3">Grade Pt</th>
+                  <th className="py-2.5 px-2 text-center w-8"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-default font-mono">
                 {scales.map((s, idx) => (
-                  <tr key={idx} className="hover:bg-surface-secondary/30 transition-colors">
-                    <td className="py-1.5 px-2">
+                  <tr key={idx} className="hover:bg-surface-secondary/40 transition-colors">
+                    <td className="py-2 px-2.5">
                       <input
                         type="text"
                         value={s.letterGrade}
                         onChange={(e) =>
                           handleBracketChange(idx, "letterGrade", e.target.value.toUpperCase())
                         }
-                        className="w-14 px-2 py-1 text-xs font-bold rounded border border-border-default bg-surface-primary text-text-primary text-center focus:border-accent-primary focus:outline-none"
+                        className="w-14 px-2 py-1 text-xs font-bold rounded-md border border-black dark:border-border-default bg-surface-elevated text-text-primary text-center shadow-[1px_1px_0px_0px_black] dark:shadow-[1px_1px_0px_0px_var(--border-default)] hover:shadow-[2px_2px_0px_0px_var(--accent-primary)] focus:shadow-[2px_2px_0px_0px_var(--accent-primary)] focus:outline-none transition-all"
                         maxLength={3}
                       />
                     </td>
-                    <td className="py-1.5 px-2">
+                    <td className="py-2 px-2.5">
                       <input
                         type="number"
                         step="0.01"
@@ -172,10 +175,10 @@ export function CustomGradingSystemModal({
                         onChange={(e) =>
                           handleBracketChange(idx, "minMarks", parseFloat(e.target.value) || 0)
                         }
-                        className="w-16 px-2 py-1 text-xs rounded border border-border-default bg-surface-primary text-text-primary text-center focus:border-accent-primary focus:outline-none"
+                        className="w-16 px-2 py-1 text-xs rounded-md border border-black dark:border-border-default bg-surface-elevated text-text-primary text-center shadow-[1px_1px_0px_0px_black] dark:shadow-[1px_1px_0px_0px_var(--border-default)] hover:shadow-[2px_2px_0px_0px_var(--accent-primary)] focus:shadow-[2px_2px_0px_0px_var(--accent-primary)] focus:outline-none transition-all"
                       />
                     </td>
-                    <td className="py-1.5 px-2">
+                    <td className="py-2 px-2.5">
                       <input
                         type="number"
                         step="0.01"
@@ -183,10 +186,10 @@ export function CustomGradingSystemModal({
                         onChange={(e) =>
                           handleBracketChange(idx, "maxMarks", parseFloat(e.target.value) || 0)
                         }
-                        className="w-16 px-2 py-1 text-xs rounded border border-border-default bg-surface-primary text-text-primary text-center focus:border-accent-primary focus:outline-none"
+                        className="w-16 px-2 py-1 text-xs rounded-md border border-black dark:border-border-default bg-surface-elevated text-text-primary text-center shadow-[1px_1px_0px_0px_black] dark:shadow-[1px_1px_0px_0px_var(--border-default)] hover:shadow-[2px_2px_0px_0px_var(--accent-primary)] focus:shadow-[2px_2px_0px_0px_var(--accent-primary)] focus:outline-none transition-all"
                       />
                     </td>
-                    <td className="py-1.5 px-2">
+                    <td className="py-2 px-2.5">
                       <input
                         type="number"
                         step="0.01"
@@ -196,15 +199,15 @@ export function CustomGradingSystemModal({
                         onChange={(e) =>
                           handleBracketChange(idx, "gradePoint", parseFloat(e.target.value) || 0)
                         }
-                        className="w-16 px-2 py-1 text-xs font-bold rounded border border-border-default bg-surface-primary text-accent-primary text-center focus:border-accent-primary focus:outline-none"
+                        className="w-16 px-2 py-1 text-xs font-bold rounded-md border border-black dark:border-border-default bg-surface-elevated text-accent-primary text-center shadow-[1px_1px_0px_0px_black] dark:shadow-[1px_1px_0px_0px_var(--border-default)] hover:shadow-[2px_2px_0px_0px_var(--accent-primary)] focus:shadow-[2px_2px_0px_0px_var(--accent-primary)] focus:outline-none transition-all"
                       />
                     </td>
-                    <td className="py-1.5 px-2 text-center">
+                    <td className="py-2 px-2 text-center">
                       <button
                         type="button"
                         onClick={() => handleRemoveBracket(idx)}
                         disabled={scales.length <= 2}
-                        className="p-1 text-text-tertiary hover:text-red-500 disabled:opacity-30 transition-colors"
+                        className="p-1 text-text-tertiary hover:text-red-500 disabled:opacity-30 transition-colors cursor-pointer"
                         title="Delete bracket"
                       >
                         <Trash2 size={13} />
@@ -222,31 +225,31 @@ export function CustomGradingSystemModal({
         </div>
 
         {/* Footer */}
-        <div className="p-4 sm:p-5 border-t border-border-default bg-surface-secondary/40 flex items-center justify-between gap-3 shrink-0">
-          <button
-            type="button"
+        <div className="p-4 sm:p-5 border-t border-black dark:border-border-default bg-surface-secondary flex items-center justify-between gap-3 shrink-0">
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={handleResetToDefault}
-            className="px-3.5 py-2 rounded-xl border border-border-default bg-surface-primary hover:bg-surface-elevated text-xs font-mono font-bold text-text-secondary hover:text-text-primary transition-all"
           >
             Reset
-          </button>
+          </Button>
 
           <div className="flex items-center gap-2">
-            <button
-              type="button"
+            <Button
+              variant="secondary"
+              size="sm"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl border border-border-default bg-surface-primary hover:bg-surface-elevated text-xs font-mono font-bold text-text-secondary hover:text-text-primary transition-all"
             >
               Cancel
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
               onClick={handleApplyLocally}
-              className="px-4 py-2 rounded-xl bg-accent-primary hover:bg-accent-primary-hover text-white text-xs font-mono font-bold shadow-[2px_2px_0px_var(--border-brutalist)] active:translate-x-[1px] active:translate-y-[1px] transition-all flex items-center gap-1.5"
+              icon={<Check size={14} />}
             >
-              <Check size={14} />
-              <span>Apply Locally</span>
-            </button>
+              Apply Locally
+            </Button>
           </div>
         </div>
       </div>

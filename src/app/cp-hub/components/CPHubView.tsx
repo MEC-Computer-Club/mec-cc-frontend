@@ -653,16 +653,19 @@ function CPHubViewContent({
   return (
     <div className="space-y-8 pb-16">
       {/* Header & Tabs */}
-      <section className="border-b border-border-default sticky top-[var(--nav-height)] z-20 bg-surface-primary/95 backdrop-blur-sm pt-4 pb-2">
+      <section className="border-b border-border-default sticky top-[var(--nav-height)] z-20 bg-surface-primary/95 backdrop-blur-sm pt-4 pb-1">
         <div className="container mx-auto px-4 md:px-8">
-          <span className="kicker mb-2 block">{kicker}</span>
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+          <span className="kicker mb-1 block">{kicker}</span>
+          <div className="flex items-center gap-2.5 overflow-x-auto pt-2 pb-3 px-1.5 -mx-1.5 scrollbar-none">
             {TABS.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
               return (
                 <Button
                   key={tab.id}
+                  isFlip
+                  role="tab"
+                  aria-selected={isActive}
                   onClick={() => handleTabChange(tab.id)}
                   variant={isActive ? "primary" : "secondary"}
                   size="sm"

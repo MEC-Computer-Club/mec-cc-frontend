@@ -22,6 +22,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { Select } from "@/components/ui/Select";
+import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/context/AuthContext";
 import {
   SYLLABUS_COURSES,
@@ -878,112 +879,102 @@ export function CgpaCalculatorClient() {
   ]);
 
   return (
-    <div className="container pt-4 sm:pt-6 pb-12 max-w-5xl mx-auto px-4">
-      {/* Main Tabs */}
-      <div className="flex justify-center mb-6 sm:mb-8">
-        <div className="inline-flex p-1.5 rounded-xl bg-surface-secondary/60 border border-border-brutalist dark:border-border-default shadow-[3px_3px_0px_var(--border-brutalist)] flex-wrap justify-center gap-1">
-          <button
-            type="button"
-            onClick={() => setActiveTab("calculator")}
-            className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-lg font-mono text-xs sm:text-sm font-bold transition-all ${
-              activeTab === "calculator"
-                ? "bg-accent-primary text-white shadow-[2px_2px_0px_var(--border-brutalist)] translate-x-[0.5px] translate-y-[0.5px]"
-                : "text-text-secondary hover:text-text-primary"
-            }`}
-          >
-            <BookOpen size={16} />
-            <span>GPA Calculator</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("semester_cgpa")}
-            className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-lg font-mono text-xs sm:text-sm font-bold transition-all ${
-              activeTab === "semester_cgpa"
-                ? "bg-accent-primary text-white shadow-[2px_2px_0px_var(--border-brutalist)] translate-x-[0.5px] translate-y-[0.5px]"
-                : "text-text-secondary hover:text-text-primary"
-            }`}
-          >
-            <GraduationCap size={16} />
-            <span>CGPA Calculator</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("target")}
-            className={`flex items-center gap-2 px-4 sm:px-5 py-2.5 rounded-lg font-mono text-xs sm:text-sm font-bold transition-all ${
-              activeTab === "target"
-                ? "bg-accent-primary text-white shadow-[2px_2px_0px_var(--border-brutalist)] translate-x-[0.5px] translate-y-[0.5px]"
-                : "text-text-secondary hover:text-text-primary"
-            }`}
-          >
-            <Target size={16} />
-            <span>Target CGPA</span>
-          </button>
-        </div>
-      </div>
+    <div className="min-h-screen bg-surface-primary text-text-primary pb-20">
+      {/* Header Section */}
+      <section className="pt-8 pb-4">
+        <div className="container mx-auto px-4 md:px-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-border-default pb-6">
+            <div className="max-w-3xl">
+              <span className="kicker">Academic Utility</span>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-text-primary my-3">
+                Academic Simulator (CGPA &amp; GPA Calculator)
+              </h1>
+              <p className="text-base sm:text-lg text-text-secondary max-w-[640px] leading-relaxed">
+                Official semester GPA calculator, cumulative CGPA tracker, and target simulator.
+                Pre-loaded with authentic University of Dhaka (Technology Unit) engineering syllabus courses and credit weightings.
+              </p>
+            </div>
 
-      {/* Compact Academic Profile & Quick Fill Bar (ONLY shown on GPA Calculator tab) */}
-      {activeTab === "calculator" && (
-        <div className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl p-4 sm:p-5 mb-8 shadow-[4px_4px_0px_var(--border-brutalist)] flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
-            {/* Academic Info Chips - Only shown after user selects info via Quick Fill */}
-            {hasSelectedInfo && (
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-secondary/70 border border-border-default text-xs font-mono animate-in fade-in duration-200">
-                <GraduationCap size={15} className="text-accent-primary shrink-0" />
-                <span className="font-bold text-text-primary">
-                  {institute === "Mymensingh Engineering College"
-                    ? "MEC"
-                    : institute === "Sylhet Engineering College"
-                    ? "SEC"
-                    : institute}
-                </span>
-                <span className="text-text-muted">•</span>
-                <span className="font-semibold text-text-secondary">{department}</span>
-                <span className="text-text-muted">•</span>
-                <span className="font-semibold text-text-secondary">Sem {semester}</span>
-                <span className="text-text-muted hidden sm:inline">•</span>
-                <span className="text-text-muted hidden sm:inline">{session}</span>
+            {/* Quick Summary Pill */}
+            <div className="flex flex-wrap items-center gap-3 shrink-0">
+              <div className="inline-flex items-center gap-3.5 sm:gap-4 px-4 py-2 sm:px-5 sm:py-2.5 rounded-md bg-surface-elevated border border-black dark:border-border-default shadow-[4px_4px_0px_var(--accent-primary)] text-xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-sm bg-accent-primary/10 border border-accent-primary/25 flex items-center justify-center text-accent-primary shrink-0">
+                    <GraduationCap size={15} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] sm:text-[11px] font-semibold text-text-secondary uppercase tracking-wider block">
+                      Scale Max
+                    </span>
+                    <span className="text-sm sm:text-base font-black text-text-primary leading-tight">
+                      4.00 (A+)
+                    </span>
+                  </div>
+                </div>
+
+                <div className="h-7 w-px bg-border-default" />
+
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-sm bg-cyan-500/10 border border-cyan-500/25 flex items-center justify-center text-cyan-600 dark:text-cyan-400 shrink-0">
+                    <BookOpen size={15} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] sm:text-[11px] font-semibold text-text-secondary uppercase tracking-wider block">
+                      Curriculum
+                    </span>
+                    <span className="text-sm sm:text-base font-black text-text-primary leading-tight">
+                      DU Tech Unit
+                    </span>
+                  </div>
+                </div>
               </div>
-            )}
-
-            {/* Quick Fill Button */}
-            <button
-              type="button"
-              onClick={() => setQuickFillModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-accent-primary-light hover:bg-accent-primary text-text-primary hover:text-white border border-border-brutalist dark:border-border-default font-mono text-xs font-bold shadow-[2px_2px_0px_var(--border-brutalist)] active:translate-x-[1px] active:translate-y-[1px] transition-all"
-              title="Open Quick Fill to select institute, department, session and semester"
-            >
-              <Sparkles size={14} className="text-accent-primary group-hover:text-white" />
-              <span>Quick Fill</span>
-            </button>
-          </div>
-
-          {/* Grading Scale Actions */}
-          <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
-            <button
-              type="button"
-              onClick={() => setInfoModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border-default bg-surface-primary hover:bg-surface-elevated font-mono font-bold text-text-primary transition-colors text-xs shadow-xs"
-              title="View DU Technology Unit grading scale breakdown"
-            >
-              <Info size={14} className="text-accent-primary" />
-              <span>View Scale</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setCustomModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border-default bg-surface-primary hover:bg-surface-elevated font-mono font-bold text-text-primary transition-colors text-xs shadow-xs"
-              title="Customize or apply different grading scale locally"
-            >
-              <SlidersHorizontal size={14} className="text-text-tertiary" />
-              <span>Apply Different Scale</span>
-            </button>
+            </div>
           </div>
         </div>
-      )}
+      </section>
+
+      <div className="container mx-auto px-4 md:px-8 max-w-6xl pt-6">
+        {/* Main Tabs */}
+        <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto pt-2 pb-6 scrollbar-none justify-center">
+          <Button
+            isFlip
+            role="tab"
+            aria-selected={activeTab === "calculator"}
+            onClick={() => setActiveTab("calculator")}
+            variant={activeTab === "calculator" ? "primary" : "secondary"}
+            size="sm"
+            icon={<BookOpen size={15} />}
+          >
+            <span>Semester GPA</span>
+          </Button>
+          <Button
+            isFlip
+            role="tab"
+            aria-selected={activeTab === "semester_cgpa"}
+            onClick={() => setActiveTab("semester_cgpa")}
+            variant={activeTab === "semester_cgpa" ? "primary" : "secondary"}
+            size="sm"
+            icon={<GraduationCap size={15} />}
+          >
+            <span>Cumulative CGPA</span>
+          </Button>
+          <Button
+            isFlip
+            role="tab"
+            aria-selected={activeTab === "target"}
+            onClick={() => setActiveTab("target")}
+            variant={activeTab === "target" ? "primary" : "secondary"}
+            size="sm"
+            icon={<Target size={15} />}
+          >
+            <span>Target Simulator</span>
+          </Button>
+        </div>
+
 
       {/* Informational Callout when No Courses Found Yet */}
       {activeTab === "calculator" && noCoursesNotice && (
-        <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs font-mono text-text-primary flex items-start justify-between gap-3 animate-in fade-in duration-200">
+        <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-black dark:border-border-default text-xs font-mono text-text-primary flex items-start justify-between gap-3 shadow-[4px_4px_0px_var(--accent-primary)] animate-in fade-in duration-200">
           <div className="flex items-start gap-2.5">
             <AlertCircle size={18} className="text-amber-500 shrink-0 mt-0.5" />
             <div>
@@ -998,98 +989,129 @@ export function CgpaCalculatorClient() {
           <button
             type="button"
             onClick={() => setNoCoursesNotice(null)}
-            className="p-1 rounded text-text-tertiary hover:text-text-primary transition-colors"
+            className="p-1 rounded text-text-tertiary hover:text-text-primary transition-colors cursor-pointer"
           >
             <X size={15} />
           </button>
         </div>
       )}
 
-      {/* TAB 1: CGPA CALCULATOR */}
+      {/* TAB 1: CGPA CALCULATOR - SINGLE UNIFIED WORKBENCH CARD */}
       {activeTab === "calculator" && (
         <div className="space-y-6 animate-in fade-in duration-150">
-          {/* Action Bar Above Course Table */}
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-surface-secondary/40 p-3 sm:p-4 rounded-xl border border-border-default">
-            {/* Grade Entry Mode (Letter vs Point) */}
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] sm:text-xs font-mono font-bold text-text-secondary uppercase">
-                Grade Entry Mode:
-              </span>
-              <div className="inline-flex p-0.5 rounded-lg bg-surface-primary border border-border-default">
-                <button
-                  type="button"
-                  onClick={() => setGradeInputMode("letter")}
-                  className={`px-3 py-1 rounded-md text-xs font-mono font-bold transition-all ${
-                    gradeInputMode === "letter"
-                      ? "bg-accent-primary text-white shadow-xs"
-                      : "text-text-tertiary hover:text-text-primary"
-                  }`}
+          {/* Main Unified Course Workbench Card */}
+          <div className="bg-surface-elevated border border-black dark:border-border-default rounded-xl shadow-[4px_4px_0px_var(--accent-primary)] overflow-hidden">
+            {/* 1. Card Top Header: Academic Profile & Scale Actions */}
+            <div className="p-4 sm:p-5 bg-surface-secondary/70 border-b border-black dark:border-border-default flex flex-wrap items-center justify-between gap-4">
+              <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
+                <Button
+                  variant="primary"
+                  size="sm"
+                  icon={<Sparkles size={14} />}
+                  onClick={() => setQuickFillModalOpen(true)}
+                  title="Open Quick Fill to select college, department, session and semester"
                 >
-                  Letter
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setGradeInputMode("point")}
-                  className={`px-3 py-1 rounded-md text-xs font-mono font-bold transition-all ${
-                    gradeInputMode === "point"
-                      ? "bg-accent-primary text-white shadow-xs"
-                      : "text-text-tertiary hover:text-text-primary"
-                  }`}
+                  Quick Fill
+                </Button>
+
+                {hasSelectedInfo && (
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-surface-elevated border border-black dark:border-border-default text-xs font-mono shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_var(--border-default)] animate-in fade-in duration-200">
+                    <GraduationCap size={15} className="text-accent-primary shrink-0" />
+                    <span className="font-bold text-text-primary">
+                      {institute === "Mymensingh Engineering College"
+                        ? "MEC"
+                        : institute === "Sylhet Engineering College"
+                        ? "SEC"
+                        : institute}
+                    </span>
+                    <span className="text-text-muted">•</span>
+                    <span className="font-semibold text-text-secondary">{department}</span>
+                    <span className="text-text-muted">•</span>
+                    <span className="font-semibold text-text-secondary">Sem {semester}</span>
+                    <span className="text-text-muted hidden sm:inline">•</span>
+                    <span className="text-text-muted hidden sm:inline">{session}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Grading Scale Actions */}
+              <div className="flex flex-wrap items-center gap-2 text-xs font-mono">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon={<Info size={14} />}
+                  onClick={() => setInfoModalOpen(true)}
+                  title="View DU Technology Unit grading scale breakdown"
                 >
-                  Point (0-4)
-                </button>
+                  View Scale
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon={<SlidersHorizontal size={14} />}
+                  onClick={() => setCustomModalOpen(true)}
+                  title="Customize or apply different grading scale locally"
+                >
+                  Apply Different Scale
+                </Button>
               </div>
             </div>
 
-            {/* Reset All Button */}
-            <button
-              type="button"
-              onClick={handleResetAll}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-500/30 text-red-500 bg-red-500/5 hover:bg-red-500/10 text-xs font-mono font-bold transition-colors"
-              title="Clear all loaded courses and enter custom subjects"
-            >
-              <RotateCcw size={13} />
-              <span>Reset All</span>
-            </button>
-          </div>
-
-          {/* Courses Table Card */}
-          <div className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl shadow-[5px_5px_0px_var(--border-brutalist)] overflow-hidden">
-            {/* Reset State Banner encouraging Quick Fill */}
-            {courses.every((c) => !c.courseCode.trim() && !c.courseName.trim()) && (
-              <div className="p-4 bg-accent-primary/10 border-b border-border-default flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
-                <div className="flex items-center gap-2.5 text-text-primary">
-                  <div className="w-8 h-8 rounded-lg bg-accent-primary text-white flex items-center justify-center shrink-0 shadow-xs">
-                    <Sparkles size={16} />
-                  </div>
-                  <div>
-                    <span className="font-bold text-text-primary block text-sm sm:text-xs">
-                      Calculator in Initial / Reset State
-                    </span>
-                    <span className="text-text-secondary text-[11px] sm:text-xs">
-                      Click <strong>Quick Fill</strong> to choose your college, department, session, and semester to load official courses from backend, or enter custom courses below.
-                    </span>
-                  </div>
+            {/* 2. Card Sub-Header: Grade Entry Mode Toggle & Reset Actions */}
+            <div className="px-4 py-3 bg-surface-elevated border-b border-border-default flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <span className="text-xs font-mono font-bold text-text-secondary uppercase">
+                  Grade Entry Mode:
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <Button
+                    isFlip
+                    variant={gradeInputMode === "letter" ? "primary" : "secondary"}
+                    size="sm"
+                    onClick={() => setGradeInputMode("letter")}
+                    className="!h-8 !px-3 !py-0 text-xs"
+                  >
+                    Letter
+                  </Button>
+                  <Button
+                    isFlip
+                    variant={gradeInputMode === "point" ? "primary" : "secondary"}
+                    size="sm"
+                    onClick={() => setGradeInputMode("point")}
+                    className="!h-8 !px-3 !py-0 text-xs"
+                  >
+                    Point (0-4)
+                  </Button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setQuickFillModalOpen(true)}
-                  className="px-3.5 py-1.5 rounded-xl bg-accent-primary hover:bg-accent-primary-hover text-white font-mono font-bold text-xs shadow-[2px_2px_0px_var(--border-brutalist)] active:translate-x-[1px] active:translate-y-[1px] transition-all flex items-center gap-1.5 shrink-0"
-                >
-                  <Sparkles size={13} />
-                  <span>Open Quick Fill</span>
-                </button>
               </div>
-            )}
 
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-mono text-text-secondary hidden sm:inline font-bold">
+                  {courses.length} Courses Listed
+                </span>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon={<RotateCcw size={13} />}
+                  onClick={handleResetAll}
+                  className="!h-8 !px-2.5 text-xs text-red-500 hover:text-red-600 border-red-500/30"
+                  title="Clear all loaded courses and enter custom subjects"
+                >
+                  Reset All
+                </Button>
+              </div>
+            </div>
+
+            {/* Loading State Banner */}
             {loadingCourses && (
-              <div className="p-6 text-center bg-surface-primary/70 backdrop-blur-xs font-mono text-xs text-text-secondary flex items-center justify-center gap-2 border-b border-border-default">
+              <div className="p-5 text-center bg-surface-primary/70 backdrop-blur-xs font-mono text-xs text-text-secondary flex items-center justify-center gap-2 border-b border-border-default">
                 <Loader2 size={16} className="animate-spin text-accent-primary" />
                 <span>Loading official syllabus courses from backend...</span>
               </div>
             )}
 
-            <div className="overflow-x-auto rounded-t-2xl">
+            {/* 3. Card Body: Courses Table */}
+            <div className="overflow-x-auto">
               <table className="w-full text-left text-xs font-sans">
                 <thead className="bg-surface-secondary/70 text-text-secondary font-mono font-bold uppercase text-[11px] border-b border-border-default">
                   <tr>
@@ -1110,7 +1132,7 @@ export function CgpaCalculatorClient() {
                         {idx + 1}
                       </td>
 
-                      {/* Course Code (Clean & Constrained Width) */}
+                      {/* Course Code */}
                       <td className="py-2 px-3">
                         <input
                           type="text"
@@ -1123,7 +1145,7 @@ export function CgpaCalculatorClient() {
                               ? "Optional"
                               : "e.g. CSE-1101"
                           }
-                          className="w-full max-w-[140px] py-1.5 px-2.5 text-xs font-mono font-bold rounded border border-border-default bg-surface-primary text-text-primary uppercase tracking-wide focus:border-accent-primary focus:outline-none transition-colors"
+                          className="w-full max-w-[140px] py-1.5 px-2.5 text-xs font-mono font-bold rounded-md border border-black dark:border-border-default bg-surface-elevated text-text-primary uppercase tracking-wide shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_var(--border-default)] hover:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:outline-none transition-shadow"
                         />
 
                         {/* Mobile Course Name Input & Suggestions Trigger */}
@@ -1149,10 +1171,10 @@ export function CgpaCalculatorClient() {
                                 ? "✨ Tap to pick optional..."
                                 : "Course name..."
                             }
-                            className={`w-full py-1 px-2 text-[11px] font-sans rounded border ${
+                            className={`w-full py-1 px-2 text-[11px] font-sans rounded-md border border-black dark:border-border-default bg-surface-elevated text-text-primary shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_var(--border-default)] hover:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:outline-none transition-shadow ${
                               (semester === "7" || semester === "8") && !course.courseName
                                 ? "border-accent-primary bg-accent-primary/5 text-text-primary placeholder:text-accent-primary"
-                                : "border-border-default bg-surface-primary text-text-primary"
+                                : ""
                             }`}
                           />
                         </div>
@@ -1181,11 +1203,11 @@ export function CgpaCalculatorClient() {
                               ? "✨ Type or select optional subject..."
                               : "e.g. Calculus"
                           }
-                          className={`w-full max-w-[240px] lg:max-w-[270px] py-1.5 px-2.5 text-xs font-sans font-medium rounded border ${
+                          className={`w-full max-w-[240px] lg:max-w-[270px] py-1.5 px-2.5 text-xs font-sans font-medium rounded-md border border-black dark:border-border-default bg-surface-elevated text-text-primary placeholder:text-text-muted shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_var(--border-default)] hover:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:outline-none transition-shadow truncate ${
                             (semester === "7" || semester === "8") && !course.courseName
                               ? "border-accent-primary bg-accent-primary/5 text-text-primary placeholder:text-accent-primary"
-                              : "border-border-default bg-surface-primary text-text-primary placeholder:text-text-muted"
-                          } focus:border-accent-primary focus:outline-none transition-colors truncate`}
+                              : ""
+                          }`}
                           title={course.courseName}
                         />
 
@@ -1195,9 +1217,9 @@ export function CgpaCalculatorClient() {
                           optionalSubjects.length > 0 && (
                             <div
                               ref={suggestionContainerRef}
-                              className="absolute left-3 top-full mt-1 w-80 bg-surface-primary border border-border-brutalist dark:border-border-default rounded-xl shadow-[4px_4px_0px_var(--border-brutalist)] z-50 overflow-hidden animate-fade-in"
+                              className="absolute left-3 top-full mt-1 w-80 bg-surface-elevated border border-black dark:border-border-default rounded-md shadow-[4px_4px_0px_var(--accent-primary)] z-50 overflow-hidden animate-fade-in"
                             >
-                              <div className="p-2.5 bg-surface-secondary/90 border-b border-border-default flex items-center justify-between text-[11px] font-mono font-bold text-text-secondary">
+                              <div className="p-2.5 bg-surface-secondary border-b border-border-default flex items-center justify-between text-[11px] font-mono font-bold text-text-secondary">
                                 <span className="flex items-center gap-1.5 text-accent-primary">
                                   <Sparkles size={13} />
                                   Optional Subjects (Sem {semester})
@@ -1256,7 +1278,7 @@ export function CgpaCalculatorClient() {
                           onChange={(e) =>
                             handleCourseChange(course.id, "courseCredit", e.target.value)
                           }
-                          className="w-full max-w-[80px] mx-auto py-1.5 px-2 text-xs font-mono font-bold text-center rounded border border-border-default bg-surface-primary text-text-primary focus:border-accent-primary focus:outline-none transition-colors"
+                          className="w-full max-w-[80px] mx-auto py-1.5 px-2 text-xs font-mono font-bold text-center rounded-md border border-black dark:border-border-default bg-surface-elevated text-text-primary shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_var(--border-default)] hover:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:outline-none transition-shadow"
                         />
                       </td>
 
@@ -1284,7 +1306,7 @@ export function CgpaCalculatorClient() {
                               handleCourseChange(course.id, "gradePoint", e.target.value)
                             }
                             placeholder="0.00 - 4.00"
-                            className="w-full p-2 text-xs font-mono font-bold text-center rounded border border-border-default bg-surface-primary text-accent-primary"
+                            className="w-full p-2 text-xs font-mono font-bold text-center rounded-md border border-black dark:border-border-default bg-surface-elevated text-text-primary shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_var(--border-default)] hover:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:outline-none transition-shadow"
                           />
                         )}
                       </td>
@@ -1294,7 +1316,7 @@ export function CgpaCalculatorClient() {
                         <button
                           type="button"
                           onClick={() => handleRemoveCourse(course.id)}
-                          className="p-1 rounded text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                          className="p-1 rounded-md text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
                           title="Remove this course"
                         >
                           <Trash2 size={15} />
@@ -1306,63 +1328,60 @@ export function CgpaCalculatorClient() {
               </table>
             </div>
 
-            {/* Bottom Add Row Bar */}
-            <div className="p-3 border-t border-border-default bg-surface-secondary/40 flex items-center justify-between">
-              <button
-                type="button"
+            {/* 4. Card Bottom Bar: Add Course & Include Previous Semesters Toggle */}
+            <div className="p-3.5 sm:p-4 border-t border-border-default bg-surface-secondary/40 flex flex-wrap items-center justify-between gap-3">
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<Plus size={14} />}
                 onClick={handleAddCourse}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-border-brutalist dark:border-border-default bg-surface-primary text-xs font-mono font-bold text-text-primary shadow-[2px_2px_0px_var(--border-brutalist)] hover:translate-x-[0.5px] hover:translate-y-[0.5px] transition-all"
               >
-                <Plus size={14} /> Add Another Course
-              </button>
+                Add Another Course
+              </Button>
 
-              <span className="text-xs font-mono text-text-secondary font-bold">
-                {courses.length} Courses Listed
-              </span>
+              <label className="flex items-center gap-2 cursor-pointer text-xs font-mono font-bold text-text-primary select-none">
+                <input
+                  type="checkbox"
+                  checked={includePrevious}
+                  onChange={(e) => handleIncludePreviousChange(e.target.checked)}
+                  className="w-4 h-4 rounded border-border-default text-accent-primary focus:ring-accent-primary"
+                />
+                <span>Include Previous Semesters for Cumulative CGPA</span>
+              </label>
             </div>
-          </div>
 
-          {/* Previous Semesters CGPA Collapsible */}
-          <div className="bg-surface-elevated border border-border-default rounded-xl p-4">
-            <label className="flex items-center gap-2 cursor-pointer text-xs font-mono font-bold text-text-primary">
-              <input
-                type="checkbox"
-                checked={includePrevious}
-                onChange={(e) => handleIncludePreviousChange(e.target.checked)}
-                className="w-4 h-4 rounded border-border-default text-accent-primary focus:ring-accent-primary"
-              />
-              <span>Include Previous Semesters to Calculate Cumulative CGPA</span>
-            </label>
-
+            {/* 5. Previous Semesters Inputs (Cleanly integrated inside the same card!) */}
             {includePrevious && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3 pt-3 border-t border-border-default animate-in fade-in">
-                <div>
-                  <label className="block text-[11px] font-mono font-bold text-text-secondary uppercase mb-1">
-                    Completed Credits Before This Semester
-                  </label>
-                  <input
-                    type="number"
-                    step="0.5"
-                    value={prevCompletedCredits}
-                    onChange={(e) => handlePrevCompletedCreditsChange(e.target.value)}
-                    placeholder="e.g. 102.5"
-                    className="w-full py-2 px-3 text-sm rounded-md border border-border-default bg-surface-primary font-mono font-bold text-text-primary"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[11px] font-mono font-bold text-text-secondary uppercase mb-1">
-                    Previous Cumulative CGPA
-                  </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    max="4"
-                    value={prevCgpa}
-                    onChange={(e) => handlePrevCgpaChange(e.target.value)}
-                    placeholder="e.g. 3.45"
-                    className="w-full py-2 px-3 text-sm rounded-md border border-border-default bg-surface-primary font-mono font-bold text-text-primary"
-                  />
+              <div className="p-4 sm:p-5 bg-surface-secondary/70 border-t border-border-default animate-in fade-in duration-150">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[11px] font-mono font-bold text-text-secondary uppercase mb-1">
+                      Completed Credits Before This Semester
+                    </label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      value={prevCompletedCredits}
+                      onChange={(e) => handlePrevCompletedCreditsChange(e.target.value)}
+                      placeholder="e.g. 102.5"
+                      className="w-full py-2 px-3 text-sm rounded-md border border-black dark:border-border-default bg-surface-elevated font-mono font-bold text-text-primary shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_var(--border-default)] hover:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:outline-none transition-shadow"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-mono font-bold text-text-secondary uppercase mb-1">
+                      Previous Cumulative CGPA
+                    </label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      max="4"
+                      value={prevCgpa}
+                      onChange={(e) => handlePrevCgpaChange(e.target.value)}
+                      placeholder="e.g. 3.45"
+                      className="w-full py-2 px-3 text-sm rounded-md border border-black dark:border-border-default bg-surface-elevated font-mono font-bold text-text-primary shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_var(--border-default)] hover:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:outline-none transition-shadow"
+                    />
+                  </div>
                 </div>
               </div>
             )}
@@ -1370,14 +1389,14 @@ export function CgpaCalculatorClient() {
 
           {/* Action Button: Calculate GPA */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-            <button
-              type="button"
+            <Button
+              variant="primary"
+              size="lg"
+              icon={<Calculator size={18} />}
               onClick={handleCalculateGpa}
-              className="w-full sm:w-auto px-8 py-3.5 bg-accent-primary hover:bg-accent-primary-hover text-white font-mono font-black text-sm rounded-xl border border-border-brutalist dark:border-border-default shadow-[4px_4px_0px_var(--border-brutalist)] active:translate-x-[2px] active:translate-y-[2px] transition-all flex items-center justify-center gap-2.5"
             >
-              <Calculator size={18} />
-              <span>{calculatedGpaResult ? "Recalculate GPA" : "Calculate GPA"}</span>
-            </button>
+              {calculatedGpaResult ? "Recalculate GPA" : "Calculate GPA"}
+            </Button>
             <span className="text-xs font-mono text-text-muted">
               {calculatedGpaResult ? "✓ GPA Calculated" : "Click to compute GPA & log calculation"}
             </span>
@@ -1385,8 +1404,8 @@ export function CgpaCalculatorClient() {
 
           {!calculatedGpaResult ? (
             /* Pre-Calculation Prompt Card */
-            <div className="bg-surface-elevated border border-dashed border-border-default rounded-2xl p-6 sm:p-8 text-center space-y-2">
-              <div className="w-12 h-12 rounded-2xl bg-accent-primary-light border border-accent-primary/20 flex items-center justify-center text-accent-primary mx-auto mb-2">
+            <div className="bg-surface-elevated border border-black dark:border-border-default rounded-xl p-6 sm:p-8 text-center space-y-2 shadow-[4px_4px_0px_var(--accent-primary)]">
+              <div className="w-12 h-12 rounded-md bg-accent-primary/10 border border-accent-primary/25 flex items-center justify-center text-accent-primary mx-auto mb-2">
                 <Calculator size={24} />
               </div>
               <h3 className="font-heading font-black text-base text-text-primary uppercase tracking-tight">
@@ -1400,7 +1419,7 @@ export function CgpaCalculatorClient() {
             /* Results Display Deck */
             <div
               id="gpa-results-deck"
-              className="bg-surface-elevated border border-accent-primary rounded-2xl p-6 sm:p-8 shadow-[6px_6px_0px_var(--accent-primary)] ring-2 ring-accent-primary/20 animate-in fade-in zoom-in-95 duration-200"
+              className="bg-surface-elevated border border-black dark:border-border-default rounded-xl p-6 sm:p-8 shadow-[4px_4px_0px_var(--accent-primary)] animate-in fade-in zoom-in-95 duration-200"
             >
               <div className="flex items-center justify-between pb-4 mb-6 border-b border-border-default">
                 <div className="flex items-center gap-2">
@@ -1431,7 +1450,7 @@ export function CgpaCalculatorClient() {
                   <div className="text-5xl sm:text-6xl font-black font-heading tracking-tight text-accent-primary mb-2">
                     {calculatedGpaResult.gpa.toFixed(2)}
                   </div>
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-accent-primary-light text-text-primary font-mono font-bold text-xs border border-accent-primary/20">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-accent-primary/10 text-text-primary font-mono font-bold text-xs border border-accent-primary/25">
                     <Award size={13} className="text-accent-primary" />
                     <span>Standing: {pointToLetter(calculatedGpaResult.gpa)}</span>
                   </div>
@@ -1440,7 +1459,7 @@ export function CgpaCalculatorClient() {
                 {/* Breakdown Details */}
                 <div className="md:col-span-7 space-y-4">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 rounded-xl bg-surface-secondary/40 border border-border-default">
+                    <div className="p-3.5 rounded-md bg-surface-secondary/70 border border-border-default">
                       <span className="text-[11px] font-mono font-bold text-text-tertiary uppercase block">
                         Registered Credits
                       </span>
@@ -1449,7 +1468,7 @@ export function CgpaCalculatorClient() {
                       </span>
                     </div>
 
-                    <div className="p-3 rounded-xl bg-surface-secondary/40 border border-border-default">
+                    <div className="p-3.5 rounded-md bg-surface-secondary/70 border border-border-default">
                       <span className="text-[11px] font-mono font-bold text-text-tertiary uppercase block">
                         Earned Credits
                       </span>
@@ -1460,7 +1479,7 @@ export function CgpaCalculatorClient() {
                   </div>
 
                   {includePrevious && calculatedGpaResult.cumulativeCredits > 0 && (
-                    <div className="p-3.5 rounded-xl bg-accent-primary/10 border border-accent-primary/30 flex items-center justify-between">
+                    <div className="p-3.5 rounded-md bg-accent-primary/10 border border-accent-primary/30 flex items-center justify-between">
                       <div>
                         <span className="text-[11px] font-mono font-bold text-accent-primary uppercase block">
                           New Cumulative CGPA
@@ -1483,73 +1502,74 @@ export function CgpaCalculatorClient() {
 
       {/* TAB 2: SEMESTER-WISE CGPA CALCULATOR */}
       {activeTab === "semester_cgpa" && (
-        <div className="space-y-8 animate-in fade-in duration-150">
-          {/* Quick preset selector & Reset */}
-          <div className="flex flex-wrap items-center justify-between gap-4 bg-surface-secondary/40 p-4 rounded-xl border border-border-default">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-mono font-bold text-text-secondary uppercase">
-                Completed Semesters:
-              </span>
-              <div className="inline-flex gap-1 bg-surface-primary p-1 rounded-lg border border-border-default">
-                {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
-                  <button
-                    key={num}
-                    type="button"
-                    onClick={() => handleSetSemestersCount(num)}
-                    className={`w-7 h-7 rounded text-xs font-mono font-bold transition-all ${
-                      semesterRows.length === num
-                        ? "bg-accent-primary text-white shadow-sm"
-                        : "text-text-secondary hover:bg-surface-secondary hover:text-text-primary"
-                    }`}
-                  >
-                    {num}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleResetSemesterRows}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-500/30 text-red-500 bg-red-500/5 hover:bg-red-500/10 text-xs font-mono font-bold transition-colors"
-                title="Reset all entered semester GPAs"
-              >
-                <RotateCcw size={13} /> Reset GPAs
-              </button>
-              <button
-                type="button"
-                onClick={handleAddSemesterRow}
-                disabled={semesterRows.length >= 8}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border-default bg-surface-primary hover:bg-surface-elevated text-xs font-mono font-bold text-text-primary transition-colors disabled:opacity-50"
-              >
-                <Plus size={13} /> Add Semester
-              </button>
-            </div>
-          </div>
-
-          {/* Grid Layout: Table on Left, Live CGPA Display on Right */}
+        <div className="space-y-6 animate-in fade-in duration-150">
+          {/* Grid Layout: Unified Table on Left, Live CGPA Display on Right */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Left 7 cols: Table of Semesters */}
-            <div className="lg:col-span-7 bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl shadow-[5px_5px_0px_var(--border-brutalist)] overflow-hidden">
-              <div className="p-4 bg-surface-secondary/70 border-b border-border-default flex items-center justify-between">
-                <div>
-                  <h3 className="font-mono font-bold text-sm text-text-primary uppercase flex items-center gap-2">
-                    <GraduationCap size={16} className="text-accent-primary" />
-                    Semester Breakdown
-                  </h3>
-                  <p className="text-[11px] text-text-secondary font-mono">
-                    Enter your GPA for each completed semester. Credits auto-match {department} syllabus.
-                  </p>
+            {/* Left 7 cols: Table of Semesters Card */}
+            <div className="lg:col-span-7 bg-surface-elevated border border-black dark:border-border-default rounded-xl shadow-[4px_4px_0px_var(--accent-primary)] overflow-hidden">
+              {/* Card Header: Completed Semesters Preset & Actions */}
+              <div className="p-4 sm:p-5 bg-surface-secondary/70 border-b border-black dark:border-border-default flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-2" role="tablist" aria-label="Completed semesters count">
+                  <span className="text-xs font-mono font-bold text-text-secondary uppercase mr-0.5">
+                    Completed:
+                  </span>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
+                      <Button
+                        key={num}
+                        type="button"
+                        isFlip
+                        role="tab"
+                        aria-selected={semesterRows.length === num}
+                        size="sm"
+                        variant={semesterRows.length === num ? "primary" : "secondary"}
+                        onClick={() => handleSetSemestersCount(num)}
+                        className="!w-7 !h-7 sm:!w-8 sm:!h-8 !p-0 font-mono text-xs font-bold"
+                        title={`Set ${num} completed semester${num > 1 ? "s" : ""}`}
+                      >
+                        {num}
+                      </Button>
+                    ))}
+                  </div>
                 </div>
-                <span className="text-xs font-mono font-bold bg-accent-primary/10 text-accent-primary px-2.5 py-1 rounded-md border border-accent-primary/20">
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    icon={<RotateCcw size={13} />}
+                    onClick={handleResetSemesterRows}
+                    className="!h-8 !px-2.5 text-xs text-red-500 hover:text-red-600 border-red-500/30"
+                    title="Reset all entered semester GPAs"
+                  >
+                    Reset
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    icon={<Plus size={13} />}
+                    onClick={handleAddSemesterRow}
+                    disabled={semesterRows.length >= 8}
+                    className="!h-8 !px-2.5 text-xs"
+                  >
+                    Add Sem
+                  </Button>
+                </div>
+              </div>
+
+              {/* Sub-header text */}
+              <div className="px-4 py-2.5 bg-surface-elevated border-b border-border-default flex items-center justify-between">
+                <span className="text-[11px] text-text-secondary font-mono">
+                  Enter your GPA for each semester. Credits auto-match {department} syllabus.
+                </span>
+                <span className="text-[11px] font-mono font-bold bg-accent-primary/10 text-accent-primary px-2 py-0.5 rounded-md border border-accent-primary/25 shrink-0 ml-2">
                   {semesterRows.length} Semesters
                 </span>
               </div>
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs font-sans">
-                  <thead className="bg-surface-secondary/50 text-text-secondary font-mono font-bold uppercase text-[11px] border-b border-border-default">
+                  <thead className="bg-surface-secondary/70 text-text-secondary font-mono font-bold uppercase text-[11px] border-b border-border-default">
                     <tr>
                       <th className="py-3 px-3 w-10 text-center">#</th>
                       <th className="py-3 px-3">Semester</th>
@@ -1593,7 +1613,7 @@ export function CgpaCalculatorClient() {
                                 handleSemesterRowChange(row.id, "gpa", e.target.value)
                               }
                               placeholder="e.g. 3.47"
-                              className="w-full p-2 text-xs font-mono font-bold text-center rounded border border-border-default bg-surface-primary text-text-primary focus:border-accent-primary focus:outline-none"
+                              className="w-full p-2 text-xs font-mono font-bold text-center rounded-md border border-black dark:border-border-default bg-surface-elevated text-text-primary shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_var(--border-default)] hover:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:outline-none transition-shadow"
                             />
                           </td>
                           <td className="py-2.5 px-3">
@@ -1606,7 +1626,7 @@ export function CgpaCalculatorClient() {
                               onChange={(e) =>
                                 handleSemesterRowChange(row.id, "credits", e.target.value)
                               }
-                              className="w-full p-2 text-xs font-mono font-bold text-center rounded border border-border-default bg-surface-primary text-text-primary focus:border-accent-primary focus:outline-none"
+                              className="w-full p-2 text-xs font-mono font-bold text-center rounded-md border border-black dark:border-border-default bg-surface-elevated text-text-primary shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_var(--border-default)] hover:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:outline-none transition-shadow"
                             />
                           </td>
                           <td className="py-2.5 px-3 text-center font-mono font-bold text-accent-primary">
@@ -1617,7 +1637,7 @@ export function CgpaCalculatorClient() {
                               <button
                                 type="button"
                                 onClick={() => handleRemoveSemesterRow(row.id)}
-                                className="p-1 rounded text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                                className="p-1 rounded-md text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
                                 title="Remove semester"
                               >
                                 <Trash2 size={14} />
@@ -1632,26 +1652,27 @@ export function CgpaCalculatorClient() {
               </div>
             </div>
 
-            {/* Right 5 cols: Cumulative CGPA Card */}
-            <div className="lg:col-span-5 space-y-5">
+            {/* Right 5 cols: Unified Cumulative CGPA & Formula Card */}
+            <div className="lg:col-span-5 bg-surface-elevated border border-black dark:border-border-default rounded-xl shadow-[4px_4px_0px_var(--accent-primary)] overflow-hidden">
+              {/* Top Section: Prompt or Live Results */}
               {!liveSemesterCgpaResult ? (
-                /* Pre-Calculation Prompt Card */
-                <div className="bg-surface-elevated border border-dashed border-border-default rounded-2xl p-6 text-center space-y-4 shadow-[4px_4px_0px_var(--border-brutalist)]">
-                  <div className="w-12 h-12 rounded-2xl bg-accent-primary-light border border-accent-primary/20 flex items-center justify-center text-accent-primary mx-auto">
+                /* Pre-Calculation Prompt */
+                <div className="p-6 sm:p-8 text-center space-y-4">
+                  <div className="w-12 h-12 rounded-md bg-accent-primary/10 border border-accent-primary/25 flex items-center justify-center text-accent-primary mx-auto">
                     <GraduationCap size={24} />
                   </div>
                   <div>
                     <h3 className="font-heading font-black text-base text-text-primary uppercase tracking-tight">
                       Live Cumulative CGPA
                     </h3>
-                    <p className="text-xs font-mono text-text-secondary mt-1 leading-relaxed">
+                    <p className="text-xs font-mono text-text-secondary mt-1.5 leading-relaxed max-w-sm mx-auto">
                       Enter your GPA for each semester in the table. Your cumulative CGPA and academic standing will calculate live automatically as you type.
                     </p>
                   </div>
                 </div>
               ) : (
-                /* Results Card */
-                <div className="bg-surface-elevated border border-accent-primary rounded-2xl p-6 shadow-[5px_5px_0px_var(--accent-primary)] ring-2 ring-accent-primary/20 space-y-5 animate-in fade-in duration-200">
+                /* Results Section */
+                <div className="p-6 space-y-5 animate-in fade-in duration-200">
                   <div className="flex items-center justify-between border-b border-border-default pb-3">
                     <span className="text-xs font-mono font-bold uppercase text-text-secondary flex items-center gap-1.5">
                       <Award size={15} className="text-accent-primary" />
@@ -1663,7 +1684,7 @@ export function CgpaCalculatorClient() {
                   </div>
 
                   {/* Big CGPA Display */}
-                  <div className="text-center py-4 bg-surface-secondary/40 rounded-xl border border-border-default">
+                  <div className="text-center py-4 bg-surface-secondary/70 rounded-md border border-border-default">
                     <span className="text-[11px] font-mono font-bold text-text-secondary uppercase block mb-1">
                       Cumulative CGPA
                     </span>
@@ -1676,7 +1697,7 @@ export function CgpaCalculatorClient() {
 
                     {/* Academic Standing Pill */}
                     <div className="mt-3">
-                      <span className="inline-block px-3 py-1 rounded-full text-xs font-mono font-bold border bg-accent-primary/10 border-accent-primary/30 text-accent-primary">
+                      <span className="inline-block px-3 py-1 rounded-md text-xs font-mono font-bold border border-accent-primary/25 bg-accent-primary/10 text-accent-primary">
                         {liveSemesterCgpaResult.standing}
                       </span>
                     </div>
@@ -1684,19 +1705,19 @@ export function CgpaCalculatorClient() {
 
                   {/* Stat Grid */}
                   <div className="grid grid-cols-2 gap-3 text-xs font-mono">
-                    <div className="p-3 rounded-xl bg-surface-secondary/30 border border-border-default">
+                    <div className="p-3.5 rounded-md bg-surface-secondary/70 border border-border-default">
                       <span className="text-text-secondary text-[11px] block">Total Credits</span>
                       <span className="text-base font-bold text-text-primary">
                         {liveSemesterCgpaResult.totalCredits.toFixed(2)}
                       </span>
                     </div>
-                    <div className="p-3 rounded-xl bg-surface-secondary/30 border border-border-default">
+                    <div className="p-3.5 rounded-md bg-surface-secondary/70 border border-border-default">
                       <span className="text-text-secondary text-[11px] block">Quality Points</span>
                       <span className="text-base font-bold text-text-primary">
                         {liveSemesterCgpaResult.totalPoints.toFixed(2)}
                       </span>
                     </div>
-                    <div className="p-3 rounded-xl bg-surface-secondary/30 border border-border-default col-span-2 flex items-center justify-between">
+                    <div className="p-3.5 rounded-md bg-surface-secondary/70 border border-border-default col-span-2 flex items-center justify-between">
                       <div>
                         <span className="text-text-secondary text-[11px] block">Unweighted Average</span>
                         <span className="text-xs text-text-muted font-sans">
@@ -1710,20 +1731,20 @@ export function CgpaCalculatorClient() {
                   </div>
 
                   {/* Bridge Button to Target Simulator */}
-                  <button
-                    type="button"
+                  <Button
+                    variant="primary"
+                    size="md"
+                    icon={<Target size={15} />}
                     onClick={handleTransferToTargetSimulator}
-                    className="w-full py-3 px-4 rounded-xl bg-surface-primary hover:bg-surface-elevated border border-border-brutalist dark:border-border-default text-text-primary text-xs font-mono font-bold shadow-[2px_2px_0px_var(--border-brutalist)] flex items-center justify-center gap-2 hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
+                    className="w-full justify-center"
                   >
-                    <Target size={15} className="text-accent-primary" />
                     Simulate Target with this CGPA
-                    <ChevronRight size={15} />
-                  </button>
+                  </Button>
                 </div>
               )}
 
-              {/* DU/MEC Formula Explainer */}
-              <div className="p-4 rounded-xl bg-surface-secondary/30 border border-border-default text-xs space-y-1.5 font-sans">
+              {/* Bottom Section: Integrated DU/MEC Formula Explainer */}
+              <div className="p-4 sm:p-5 bg-surface-secondary/70 border-t border-black dark:border-border-default text-xs space-y-1.5 font-sans">
                 <span className="font-mono font-bold text-text-primary text-[11px] uppercase block">
                   How CGPA is Calculated:
                 </span>
@@ -1742,150 +1763,151 @@ export function CgpaCalculatorClient() {
       {/* TAB 3: TARGET CGPA SIMULATOR */}
       {activeTab === "target" && (
         <div className="space-y-8 animate-in fade-in duration-150">
-          <div className="bg-surface-elevated border border-border-brutalist dark:border-border-default rounded-2xl p-6 sm:p-8 shadow-[6px_6px_0px_var(--border-brutalist)] space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-default pb-4">
+          <div className="bg-surface-elevated border border-black dark:border-border-default rounded-xl shadow-[4px_4px_0px_var(--accent-primary)] overflow-hidden">
+            {/* Header */}
+            <div className="p-4 sm:p-5 bg-surface-secondary/70 border-b border-black dark:border-border-default flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h3 className="text-lg font-bold font-heading text-text-primary flex items-center gap-2">
-                  <Target size={20} className="text-accent-primary" /> Target CGPA Strategy Deck
+                <h3 className="text-base sm:text-lg font-bold font-heading text-text-primary flex items-center gap-2">
+                  <Target size={18} className="text-accent-primary" /> Target CGPA Strategy Deck
                 </h3>
-                <p className="text-xs text-text-secondary">
+                <p className="text-xs text-text-secondary mt-0.5">
                   Calculate the exact GPA and letter grades required across future semesters
                 </p>
               </div>
 
               {/* Mode Toggle */}
-              <div className="inline-flex p-1 rounded-lg bg-surface-primary border border-border-default text-xs font-mono font-bold">
-                <button
-                  type="button"
+              <div className="flex items-center gap-1.5" role="tablist">
+                <Button
+                  isFlip
+                  role="tab"
+                  variant={targetModeType === "syllabus" ? "primary" : "secondary"}
+                  size="sm"
                   onClick={() => handleTargetModeTypeChange("syllabus")}
-                  className={`px-3 py-1.5 rounded-md transition-colors ${
-                    targetModeType === "syllabus"
-                      ? "bg-accent-primary text-white"
-                      : "text-text-tertiary hover:text-text-primary"
-                  }`}
+                  className="!px-3 !py-1 text-xs"
                 >
                   Syllabus Guided
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
+                  isFlip
+                  role="tab"
+                  variant={targetModeType === "manual" ? "primary" : "secondary"}
+                  size="sm"
                   onClick={() => handleTargetModeTypeChange("manual")}
-                  className={`px-3 py-1.5 rounded-md transition-colors ${
-                    targetModeType === "manual"
-                      ? "bg-accent-primary text-white"
-                      : "text-text-tertiary hover:text-text-primary"
-                  }`}
+                  className="!px-3 !py-1 text-xs"
                 >
                   Custom Credits
-                </button>
+                </Button>
               </div>
             </div>
 
-            {/* Inputs Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {targetModeType === "syllabus" ? (
-                <>
-                  <div>
-                    <label className="block text-xs font-mono font-bold text-text-secondary uppercase mb-1.5">
-                      Completed Semesters
-                    </label>
-                    <Select
-                      value={completedSemesters}
-                      onChange={handleCompletedSemestersChange}
-                      options={[
-                        { value: "1", label: "Completed 1st Sem" },
-                        { value: "2", label: "Completed 2nd Sem" },
-                        { value: "3", label: "Completed 3rd Sem" },
-                        { value: "4", label: "Completed 4th Sem" },
-                        { value: "5", label: "Completed 5th Sem" },
-                        { value: "6", label: "Completed 6th Sem" },
-                        { value: "7", label: "Completed 7th Sem" },
-                      ]}
-                    />
-                  </div>
+            {/* Inputs Section */}
+            <div className="p-5 sm:p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {targetModeType === "syllabus" ? (
+                  <>
+                    <div>
+                      <label className="block text-xs font-mono font-bold text-text-secondary uppercase mb-1.5">
+                        Completed Semesters
+                      </label>
+                      <Select
+                        value={completedSemesters}
+                        onChange={handleCompletedSemestersChange}
+                        options={[
+                          { value: "1", label: "Completed 1st Sem" },
+                          { value: "2", label: "Completed 2nd Sem" },
+                          { value: "3", label: "Completed 3rd Sem" },
+                          { value: "4", label: "Completed 4th Sem" },
+                          { value: "5", label: "Completed 5th Sem" },
+                          { value: "6", label: "Completed 6th Sem" },
+                          { value: "7", label: "Completed 7th Sem" },
+                        ]}
+                      />
+                    </div>
 
-                  <div>
-                    <label className="block text-xs font-mono font-bold text-text-secondary uppercase mb-1.5">
-                      Target Milestone
-                    </label>
-                    <Select
-                      value={targetMilestone}
-                      onChange={handleTargetMilestoneChange}
-                      options={targetMilestoneOptions}
-                      placeholder="Select milestone..."
-                    />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div>
-                    <label className="block text-xs font-mono font-bold text-text-secondary uppercase mb-1.5">
-                      Completed Credits So Far
-                    </label>
-                    <input
-                      type="number"
-                      step="0.5"
-                      value={manualCompletedCr}
-                      onChange={(e) => handleManualCompletedCrChange(e.target.value)}
-                      placeholder="e.g. 122.5"
-                      className="w-full py-2 px-3 text-sm rounded-md border border-border-default bg-surface-primary font-mono font-bold text-text-primary"
-                    />
-                  </div>
+                    <div>
+                      <label className="block text-xs font-mono font-bold text-text-secondary uppercase mb-1.5">
+                        Target Milestone
+                      </label>
+                      <Select
+                        value={targetMilestone}
+                        onChange={handleTargetMilestoneChange}
+                        options={targetMilestoneOptions}
+                        placeholder="Select milestone..."
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <label className="block text-xs font-mono font-bold text-text-secondary uppercase mb-1.5">
+                        Completed Credits So Far
+                      </label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={manualCompletedCr}
+                        onChange={(e) => handleManualCompletedCrChange(e.target.value)}
+                        placeholder="e.g. 122.5"
+                        className="w-full py-2 px-3 text-sm rounded-md border border-black dark:border-border-default bg-surface-elevated font-mono font-bold text-text-primary shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_var(--border-default)] hover:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:outline-none transition-shadow"
+                      />
+                    </div>
 
-                  <div>
-                    <label className="block text-xs font-mono font-bold text-text-secondary uppercase mb-1.5">
-                      Remaining Credits
-                    </label>
-                    <input
-                      type="number"
-                      step="0.5"
-                      value={manualRemainingCr}
-                      onChange={(e) => handleManualRemainingCrChange(e.target.value)}
-                      placeholder="e.g. 38.0"
-                      className="w-full py-2 px-3 text-sm rounded-md border border-border-default bg-surface-primary font-mono font-bold text-text-primary"
-                    />
-                  </div>
-                </>
-              )}
+                    <div>
+                      <label className="block text-xs font-mono font-bold text-text-secondary uppercase mb-1.5">
+                        Remaining Credits
+                      </label>
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={manualRemainingCr}
+                        onChange={(e) => handleManualRemainingCrChange(e.target.value)}
+                        placeholder="e.g. 38.0"
+                        className="w-full py-2 px-3 text-sm rounded-md border border-black dark:border-border-default bg-surface-elevated font-mono font-bold text-text-primary shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_var(--border-default)] hover:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:outline-none transition-shadow"
+                      />
+                    </div>
+                  </>
+                )}
 
-              <div>
-                <label className="block text-xs font-mono font-bold text-text-secondary uppercase mb-1.5">
-                  Current CGPA
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="4"
-                  value={currentCgpaInput}
-                  onChange={(e) => handleCurrentCgpaChange(e.target.value)}
-                  placeholder="e.g. 3.45"
-                  className="w-full py-2 px-3 text-sm rounded-md border border-border-default bg-surface-primary font-mono font-bold text-text-primary"
-                />
-              </div>
+                <div>
+                  <label className="block text-xs font-mono font-bold text-text-secondary uppercase mb-1.5">
+                    Current CGPA
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="4"
+                    value={currentCgpaInput}
+                    onChange={(e) => handleCurrentCgpaChange(e.target.value)}
+                    placeholder="e.g. 3.45"
+                    className="w-full py-2 px-3 text-sm rounded-md border border-black dark:border-border-default bg-surface-elevated font-mono font-bold text-text-primary shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_var(--border-default)] hover:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:outline-none transition-shadow"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-xs font-mono font-bold text-text-secondary uppercase mb-1.5">
-                  Desired Target CGPA
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max="4"
-                  value={targetCgpaInput}
-                  onChange={(e) => handleTargetCgpaChange(e.target.value)}
-                  placeholder="e.g. 3.55"
-                  className="w-full py-2 px-3 text-sm rounded-md border border-border-default bg-surface-primary font-mono font-bold text-accent-primary"
-                />
+                <div>
+                  <label className="block text-xs font-mono font-bold text-text-secondary uppercase mb-1.5">
+                    Desired Target CGPA
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="4"
+                    value={targetCgpaInput}
+                    onChange={(e) => handleTargetCgpaChange(e.target.value)}
+                    placeholder="e.g. 3.55"
+                    className="w-full py-2 px-3 text-sm rounded-md border border-black dark:border-border-default bg-surface-elevated font-mono font-bold text-accent-primary shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_var(--border-default)] hover:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:outline-none transition-shadow"
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Target Results Callout */}
-            <div className="pt-4 border-t border-border-default">
+            {/* Target Results / Roadmap Section (Directly integrated, NOT a nested card!) */}
+            <div className="border-t border-black dark:border-border-default bg-surface-secondary/40 p-5 sm:p-6">
               {!liveTargetResult ? (
-                /* Pre-Simulation Prompt Card */
-                <div className="p-6 rounded-2xl bg-surface-secondary/30 border border-dashed border-border-default text-center space-y-2">
-                  <div className="w-10 h-10 rounded-xl bg-accent-primary-light border border-accent-primary/20 flex items-center justify-center text-accent-primary mx-auto">
+                /* Pre-Simulation Prompt */
+                <div className="py-6 text-center space-y-2">
+                  <div className="w-10 h-10 rounded-md bg-accent-primary/10 border border-accent-primary/25 flex items-center justify-center text-accent-primary mx-auto">
                     <Target size={20} />
                   </div>
                   <h4 className="font-heading font-black text-sm text-text-primary uppercase tracking-tight">
@@ -1896,7 +1918,7 @@ export function CgpaCalculatorClient() {
                   </p>
                 </div>
               ) : liveTargetResult.status === "impossible" ? (
-                <div className="p-5 rounded-2xl bg-red-500/10 border border-red-500/30 space-y-3">
+                <div className="p-4 rounded-lg bg-red-500/10 border-l-4 border-red-500 space-y-2">
                   <div className="flex items-center gap-2 text-red-500 font-bold font-mono text-sm uppercase">
                     <AlertTriangle size={18} /> Mathematically Impossible
                   </div>
@@ -1916,7 +1938,7 @@ export function CgpaCalculatorClient() {
                   </div>
                 </div>
               ) : liveTargetResult.status === "achieved" ? (
-                <div className="p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-2">
+                <div className="p-4 rounded-lg bg-emerald-500/10 border-l-4 border-emerald-500 space-y-1.5">
                   <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold font-mono text-sm uppercase">
                     <CheckCircle2 size={18} /> Target Already Secured
                   </div>
@@ -1926,34 +1948,32 @@ export function CgpaCalculatorClient() {
                   </p>
                 </div>
               ) : (
-                <div className="p-6 rounded-2xl bg-surface-secondary/40 border border-border-brutalist dark:border-border-default shadow-[4px_4px_0px_var(--border-brutalist)]">
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-                    <div className="md:col-span-5 text-center md:text-left border-b md:border-b-0 md:border-r border-border-default pb-4 md:pb-0 md:pr-4">
-                      <span className="text-xs font-mono font-bold uppercase tracking-wider text-text-tertiary block mb-1">
-                        Required Average GPA
-                      </span>
-                      <div className="text-4xl sm:text-5xl font-black font-heading text-accent-primary mb-2">
-                        {liveTargetResult.requiredGpa.toFixed(2)}
-                      </div>
-                      <span className="text-xs font-mono text-text-secondary">
-                        Across {liveTargetResult.remainingCredits.toFixed(1)} remaining credits
-                      </span>
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                  <div className="md:col-span-5 text-center md:text-left border-b md:border-b-0 md:border-r border-border-default pb-4 md:pb-0 md:pr-6">
+                    <span className="text-xs font-mono font-bold uppercase tracking-wider text-text-tertiary block mb-1">
+                      Required Average GPA
+                    </span>
+                    <div className="text-4xl sm:text-5xl font-black font-heading text-accent-primary mb-1">
+                      {liveTargetResult.requiredGpa.toFixed(2)}
                     </div>
+                    <span className="text-xs font-mono text-text-secondary">
+                      Across {liveTargetResult.remainingCredits.toFixed(1)} remaining credits
+                    </span>
+                  </div>
 
-                    <div className="md:col-span-7 space-y-3">
-                      <div className="text-xs font-mono font-bold uppercase text-text-primary flex items-center gap-1.5">
-                        <TrendingUp size={15} className="text-accent-primary" /> Roadmap & Strategy:
-                      </div>
-                      <p className="text-xs sm:text-sm text-text-secondary leading-relaxed">
-                        To elevate your CGPA from <strong>{currentCgpaInput}</strong> to{" "}
-                        <strong className="text-accent-primary">{targetCgpaInput}</strong>, you need to maintain an average of{" "}
-                        <strong>{pointToLetter(liveTargetResult.requiredGpa)} ({liveTargetResult.requiredGpa.toFixed(2)})</strong>.
-                      </p>
-                      <div className="p-2.5 rounded-lg bg-surface-elevated border border-border-default text-xs font-mono text-text-primary">
-                        Recommended Grade Mix: Aim for{" "}
-                        <strong>{liveTargetResult.requiredGpa >= 3.75 ? "mostly A+ (4.00)" : "at least A (3.75) and A- (3.50)"}</strong>{" "}
-                        in major theory courses and straight A+ in sessional labs.
-                      </div>
+                  <div className="md:col-span-7 space-y-3">
+                    <div className="text-xs font-mono font-bold uppercase text-text-primary flex items-center gap-1.5">
+                      <TrendingUp size={15} className="text-accent-primary" /> Roadmap &amp; Strategy:
+                    </div>
+                    <p className="text-xs sm:text-sm text-text-secondary leading-relaxed">
+                      To elevate your CGPA from <strong>{currentCgpaInput}</strong> to{" "}
+                      <strong className="text-accent-primary">{targetCgpaInput}</strong>, you need to maintain an average of{" "}
+                      <strong>{pointToLetter(liveTargetResult.requiredGpa)} ({liveTargetResult.requiredGpa.toFixed(2)})</strong>.
+                    </p>
+                    <div className="p-3 rounded-r-md border-l-2 border-accent-primary bg-accent-primary/10 text-xs font-mono text-text-primary">
+                      <span className="font-bold text-accent-primary">Recommended Grade Mix:</span> Aim for{" "}
+                      <strong>{liveTargetResult.requiredGpa >= 3.75 ? "mostly A+ (4.00)" : "at least A (3.75) and A- (3.50)"}</strong>{" "}
+                      in major theory courses and straight A+ in sessional labs.
                     </div>
                   </div>
                 </div>
@@ -1962,6 +1982,7 @@ export function CgpaCalculatorClient() {
           </div>
         </div>
       )}
+      </div>
 
       {/* Quick Fill Modal */}
       <QuickFillModal

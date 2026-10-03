@@ -2,6 +2,7 @@
 
 import { X, Award, CheckCircle2, Calculator } from "lucide-react";
 import { GradeScale } from "@/lib/api/syllabusCourses";
+import { Button } from "@/components/ui/Button";
 
 interface GradingSystemModalProps {
   isOpen: boolean;
@@ -19,13 +20,13 @@ export function GradingSystemModal({
   return (
     <div className="fixed inset-0 z-[1100] flex items-center justify-center p-4 pt-16 sm:pt-20 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150 overflow-y-auto">
       <div
-        className="w-full max-w-lg bg-surface-primary border border-border-brutalist dark:border-border-default rounded-2xl shadow-[6px_6px_0px_var(--border-brutalist)] dark:shadow-[6px_6px_0px_var(--border-default)] overflow-hidden flex flex-col max-h-[85vh] my-auto"
+        className="w-full max-w-lg bg-surface-primary border border-black dark:border-border-default rounded-md shadow-[6px_6px_0px_0px_black] dark:shadow-[6px_6px_0px_0px_var(--border-default)] overflow-hidden flex flex-col max-h-[85vh] my-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-4 sm:p-5 border-b border-border-brutalist dark:border-border-default bg-surface-secondary/40 flex items-center justify-between">
+        <div className="p-4 sm:p-5 border-b border-black dark:border-border-default bg-surface-secondary flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-accent-primary/10 border border-border-brutalist dark:border-border-default flex items-center justify-center text-accent-primary shadow-[2px_2px_0px_var(--border-brutalist)]">
+            <div className="w-9 h-9 rounded-md bg-accent-primary-light border border-black dark:border-border-default flex items-center justify-center text-accent-primary shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_var(--border-default)]">
               <Award size={18} />
             </div>
             <div>
@@ -39,7 +40,7 @@ export function GradingSystemModal({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg border border-border-default hover:bg-surface-elevated text-text-tertiary hover:text-text-primary transition-colors"
+            className="p-1.5 rounded-md border border-black dark:border-border-default bg-surface-elevated hover:bg-surface-elevated text-text-secondary hover:text-text-primary shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_var(--border-default)] hover:shadow-[2px_2px_0px_0px_var(--accent-primary)] transition-all cursor-pointer"
             aria-label="Close modal"
           >
             <X size={18} />
@@ -49,7 +50,7 @@ export function GradingSystemModal({
         {/* Content */}
         <div className="p-4 sm:p-5 space-y-4 overflow-y-auto">
           {/* Formula Callout */}
-          <div className="p-3 rounded-xl bg-surface-elevated border border-border-default flex items-start gap-3">
+          <div className="p-3 rounded-md bg-surface-elevated border border-black dark:border-border-default flex items-start gap-3 shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_var(--border-default)]">
             <Calculator size={18} className="text-accent-primary shrink-0 mt-0.5" />
             <div className="text-xs space-y-1">
               <span className="font-bold text-text-primary block font-mono">GPA Formula:</span>
@@ -60,9 +61,9 @@ export function GradingSystemModal({
           </div>
 
           {/* Scales Table */}
-          <div className="border border-border-default rounded-xl overflow-hidden">
+          <div className="border border-black dark:border-border-default rounded-md overflow-hidden shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_var(--border-default)]">
             <table className="w-full text-left text-xs font-sans">
-              <thead className="bg-surface-secondary/60 text-text-secondary font-mono font-bold uppercase text-[11px] border-b border-border-default">
+              <thead className="bg-surface-secondary text-text-secondary font-mono font-bold uppercase text-[11px] border-b border-black dark:border-border-default">
                 <tr>
                   <th className="py-2.5 px-3">Marks Range</th>
                   <th className="py-2.5 px-3">Letter Grade</th>
@@ -106,7 +107,7 @@ export function GradingSystemModal({
           </div>
 
           {/* Passing requirements */}
-          <div className="p-3 rounded-xl bg-accent-primary-light dark:bg-accent-primary/10 border border-accent-primary/20 text-xs text-text-primary flex items-start gap-2.5">
+          <div className="p-3 rounded-md bg-accent-primary-light dark:bg-accent-primary/10 border border-black dark:border-border-default text-xs text-text-primary flex items-start gap-2.5 shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_var(--border-default)]">
             <CheckCircle2 size={16} className="text-accent-primary shrink-0 mt-0.5" />
             <p className="leading-relaxed">
               <strong>Passing Grade:</strong> The minimum passing grade is{" "}
@@ -117,13 +118,14 @@ export function GradingSystemModal({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-border-default bg-surface-secondary/20 flex justify-end">
-          <button
+        <div className="p-4 border-t border-black dark:border-border-default bg-surface-secondary flex justify-end">
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={onClose}
-            className="px-5 py-2 rounded-lg bg-surface-primary border border-border-brutalist dark:border-border-default text-xs font-bold font-mono text-text-primary shadow-[2px_2px_0px_var(--border-brutalist)] hover:translate-x-[1px] hover:translate-y-[1px] transition-all"
           >
             Close
-          </button>
+          </Button>
         </div>
       </div>
     </div>

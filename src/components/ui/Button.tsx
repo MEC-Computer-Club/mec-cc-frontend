@@ -20,15 +20,32 @@ interface ButtonProps {
   "aria-selected"?: boolean;
   "aria-label"?: string;
   "aria-expanded"?: boolean;
+  isTab?: boolean;
+  isFlip?: boolean;
 }
 
+// Canonical brutalist buttons across the website (4px lift & 4px solid shadow)
 const BUTTON_VARIANTS: Record<string, string> = {
   primary:
-    "bg-black text-white border-0 hover:not-disabled:bg-neutral-800 hover:not-disabled:shadow-[4px_4px_0px_0px_var(--accent-primary)] dark:bg-white dark:text-black dark:hover:not-disabled:bg-neutral-200 dark:hover:not-disabled:shadow-[4px_4px_0px_0px_var(--accent-primary)] hover:not-disabled:-translate-x-1 hover:not-disabled:-translate-y-1 active:not-disabled:translate-x-0 active:not-disabled:translate-y-0 active:not-disabled:shadow-none",
+    "bg-black text-white border border-black hover:not-disabled:bg-neutral-800 hover:not-disabled:border-black hover:not-disabled:shadow-[4px_4px_0px_0px_var(--accent-primary)] dark:bg-white dark:text-black dark:border-white dark:hover:not-disabled:bg-neutral-200 dark:hover:not-disabled:border-white dark:hover:not-disabled:shadow-[4px_4px_0px_0px_var(--accent-primary)] hover:not-disabled:-translate-x-1 hover:not-disabled:-translate-y-1 active:not-disabled:translate-x-0 active:not-disabled:translate-y-0 active:not-disabled:shadow-none",
   secondary:
     "bg-transparent text-black border border-black hover:not-disabled:bg-neutral-100 hover:not-disabled:shadow-[4px_4px_0px_0px_black] dark:bg-transparent dark:text-white dark:border-white dark:hover:not-disabled:bg-neutral-900 dark:hover:not-disabled:shadow-[4px_4px_0px_0px_white] hover:not-disabled:-translate-x-1 hover:not-disabled:-translate-y-1 active:not-disabled:translate-x-0 active:not-disabled:translate-y-0 active:not-disabled:shadow-none",
   outline:
     "bg-transparent text-black border border-black hover:not-disabled:bg-neutral-100 hover:not-disabled:shadow-[4px_4px_0px_0px_black] dark:bg-transparent dark:text-white dark:border-white dark:hover:not-disabled:bg-neutral-900 dark:hover:not-disabled:shadow-[4px_4px_0px_0px_white] hover:not-disabled:-translate-x-1 hover:not-disabled:-translate-y-1 active:not-disabled:translate-x-0 active:not-disabled:translate-y-0 active:not-disabled:shadow-none",
+  ghost:
+    "bg-transparent text-text-secondary font-semibold hover:not-disabled:text-text-primary hover:not-disabled:bg-surface-secondary",
+};
+
+// 3rd Style: Flip Button (for toggles, tabs, and filter pills)
+// Initial hover transition matches normal buttons exactly (duration-150),
+// while click/toggle state flip is fast and snappy (active:duration-75).
+const FLIP_VARIANTS: Record<string, string> = {
+  primary:
+    "bg-black text-white border border-black hover:not-disabled:bg-neutral-800 hover:not-disabled:border-black hover:not-disabled:shadow-[4px_4px_0px_0px_var(--accent-primary)] dark:bg-white dark:text-black dark:border-white dark:hover:not-disabled:bg-neutral-200 dark:hover:not-disabled:border-white dark:hover:not-disabled:shadow-[4px_4px_0px_0px_var(--accent-primary)] hover:not-disabled:-translate-x-1 hover:not-disabled:-translate-y-1 active:not-disabled:translate-x-0 active:not-disabled:translate-y-0 active:not-disabled:shadow-none active:not-disabled:duration-75",
+  secondary:
+    "bg-transparent text-black border border-black hover:not-disabled:bg-neutral-100 hover:not-disabled:shadow-[4px_4px_0px_0px_black] dark:bg-transparent dark:text-white dark:border-white dark:hover:not-disabled:bg-neutral-900 dark:hover:not-disabled:shadow-[4px_4px_0px_0px_white] hover:not-disabled:-translate-x-1 hover:not-disabled:-translate-y-1 active:not-disabled:translate-x-0 active:not-disabled:translate-y-0 active:not-disabled:shadow-none active:not-disabled:duration-75",
+  outline:
+    "bg-transparent text-black border border-black hover:not-disabled:bg-neutral-100 hover:not-disabled:shadow-[4px_4px_0px_0px_black] dark:bg-transparent dark:text-white dark:border-white dark:hover:not-disabled:bg-neutral-900 dark:hover:not-disabled:shadow-[4px_4px_0px_0px_white] hover:not-disabled:-translate-x-1 hover:not-disabled:-translate-y-1 active:not-disabled:translate-x-0 active:not-disabled:translate-y-0 active:not-disabled:shadow-none active:not-disabled:duration-75",
   ghost:
     "bg-transparent text-text-secondary font-semibold hover:not-disabled:text-text-primary hover:not-disabled:bg-surface-secondary",
 };
@@ -59,13 +76,21 @@ export function Button({
   "aria-selected": ariaSelected,
   "aria-label": ariaLabel,
   "aria-expanded": ariaExpanded,
+  isTab = false,
+  isFlip = false,
 }: ButtonProps) {
-  const variantClass = BUTTON_VARIANTS[variant] || BUTTON_VARIANTS.primary;
+  const isFlipButton = Boolean(isFlip || isTab || role === "tab");
+  const variantMap = isFlipButton ? FLIP_VARIANTS : BUTTON_VARIANTS;
+  const variantClass = variantMap[variant] || variantMap.primary;
   const sizeClass = BUTTON_SIZES[size] || BUTTON_SIZES.md;
   const widthClass = fullWidth ? "w-full" : "";
+  const transitionClass = isFlipButton
+    ? "transition-all duration-150 active:duration-75"
+    : "transition-all duration-150";
 
   const classes = [
-    "inline-flex items-center justify-center gap-2 font-sans font-bold rounded-md cursor-pointer transition-all duration-150 no-underline whitespace-nowrap leading-none focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed",
+    "inline-flex items-center justify-center gap-2 font-sans font-bold rounded-md cursor-pointer no-underline whitespace-nowrap leading-none focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed",
+    transitionClass,
     variantClass,
     sizeClass,
     widthClass,

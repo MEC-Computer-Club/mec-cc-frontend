@@ -268,6 +268,7 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
         {/* Tab Switcher */}
         <div className="flex items-center gap-2 shrink-0">
           <Button
+            isFlip
             onClick={() => {
               setLeaderboardMode("cpsheet");
               setSortBy("sheetSolved");
@@ -279,6 +280,7 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
             <span>CP Sheet Ladder</span>
           </Button>
           <Button
+            isFlip
             onClick={() => {
               setLeaderboardMode("cf");
               setSortBy("rating");
@@ -429,7 +431,7 @@ export default function LeaderboardTable({ initialEntries }: LeaderboardTablePro
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search member, handle, designation..."
-            className="w-full pl-10 pr-4 py-2.5 text-xs sm:text-sm bg-surface-elevated border border-black dark:border-border-default rounded-xl focus:outline-none focus:ring-2 focus:ring-accent-primary font-sans text-text-primary placeholder:text-text-tertiary"
+            className="w-full pl-10 pr-4 py-2 text-xs sm:text-sm bg-surface-elevated border border-black dark:border-border-default rounded-md shadow-[2px_2px_0px_0px_black] dark:shadow-[2px_2px_0px_0px_var(--border-default)] hover:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:shadow-[3px_3px_0px_0px_var(--accent-primary)] focus:outline-none font-sans font-medium text-text-primary placeholder:text-text-tertiary transition-all duration-150"
           />
         </div>
 

@@ -174,6 +174,9 @@ export default function ExecutivePanelClient({
                 <Button
                   key={t.term}
                   type="button"
+                  isFlip
+                  role="tab"
+                  aria-selected={isSelected}
                   onClick={() => handleTermChange(t.term)}
                   variant={isSelected ? "primary" : "secondary"}
                   size="sm"
@@ -187,6 +190,7 @@ export default function ExecutivePanelClient({
             <div className="relative" ref={dropdownRef}>
               <Button
                 type="button"
+                isFlip
                 onClick={() => setIsFilterDropdownOpen((prev) => !prev)}
                 title="Browse all previous committee sessions"
                 variant={isFilterDropdownOpen ? "primary" : "secondary"}

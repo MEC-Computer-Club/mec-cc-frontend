@@ -36,6 +36,9 @@ import {
   FileCheck,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { Button } from "@/components/ui/Button";
+import { Select } from "@/components/ui/Select";
+import { SearchInput } from "@/components/ui/SearchInput";
 import { api } from "@/lib/api";
 import {
   QuestionArchiveItem,
@@ -545,27 +548,16 @@ export function QuestionsArchiveClient() {
 
   return (
     <div className="min-h-screen bg-surface-primary text-text-primary pb-20">
-      {/* Hero Header */}
-      <section className="relative overflow-hidden pt-28 pb-12 border-b border-border-default bg-gradient-to-b from-surface-secondary/80 via-surface-primary to-surface-primary">
-        <div className="absolute inset-0 -z-10 pointer-events-none opacity-20">
-          <div className="absolute -top-32 left-1/4 w-96 h-96 rounded-full bg-accent-primary/20 blur-3xl" />
-          <div className="absolute -top-20 right-1/4 w-80 h-80 rounded-full bg-cyan-500/15 blur-3xl" />
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+      {/* Header Section */}
+      <section className="pt-8 pb-4">
+        <div className="container mx-auto px-4 md:px-8">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-border-default pb-6">
             <div className="max-w-3xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-accent-primary/10 text-accent-primary border border-accent-primary/25 mb-4">
-                <BookOpen size={14} />
-                <span>Academic Utility</span>
-              </div>
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-text-primary font-display">
-                Questions{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent-primary to-emerald-500">
-                  Archive
-                </span>
+              <span className="kicker">Academic Resource</span>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-text-primary my-3">
+                Academic Vault (Questions Archive)
               </h1>
-              <p className="mt-3 text-base sm:text-lg text-text-secondary leading-relaxed">
+              <p className="text-base sm:text-lg text-text-secondary max-w-[640px] leading-relaxed">
                 Comprehensive question bank for all academic years and engineering departments.
                 Filter, view, and download semester final and class test (CT1, CT2, CT3, Quiz)
                 questions in PDF or Image formats.
@@ -573,37 +565,63 @@ export function QuestionsArchiveClient() {
             </div>
 
             {/* Quick Actions & Dynamic Stats */}
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3 shrink-0">
               {isAdmin && (
-                <button
+                <Button
                   onClick={() => handleOpenUploadModal()}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm bg-accent-primary text-black hover:bg-accent-primary/90 transition-all shadow-md hover:scale-[1.02] active:scale-[0.98]"
+                  size="md"
+                  variant="primary"
+                  icon={<Plus size={18} />}
                 >
-                  <Plus size={18} />
-                  <span>Upload Question Paper</span>
-                </button>
+                  Upload Question Paper
+                </Button>
               )}
 
-              <div className="inline-flex items-center gap-3 px-4 py-2 rounded-xl bg-surface-elevated border border-border-default text-xs shadow-sm">
-                <div>
-                  <span className="text-text-secondary block">Total Papers</span>
-                  <span className="text-base font-bold text-text-primary">
-                    {pagination.total || filterMeta.stats?.totalQuestions || 0}
-                  </span>
+              <div className="inline-flex items-center gap-3.5 sm:gap-4 px-4 py-2 sm:px-5 sm:py-2.5 rounded-md bg-surface-elevated border border-black dark:border-border-default shadow-[4px_4px_0px_var(--accent-primary)] text-xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-sm bg-accent-primary/10 border border-accent-primary/25 flex items-center justify-center text-accent-primary shrink-0">
+                    <BookOpen size={15} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] sm:text-[11px] font-semibold text-text-secondary uppercase tracking-wider block">
+                      Total Papers
+                    </span>
+                    <span className="text-sm sm:text-base font-black text-text-primary leading-tight">
+                      {pagination.total || filterMeta.stats?.totalQuestions || 0}
+                    </span>
+                  </div>
                 </div>
-                <div className="h-6 w-px bg-border-default" />
-                <div>
-                  <span className="text-text-secondary block">Departments</span>
-                  <span className="text-base font-bold text-text-primary">
-                    {filterMeta.departments?.length || 3}
-                  </span>
+
+                <div className="h-7 w-px bg-border-default" />
+
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-sm bg-cyan-500/10 border border-cyan-500/25 flex items-center justify-center text-cyan-600 dark:text-cyan-400 shrink-0">
+                    <GraduationCap size={15} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] sm:text-[11px] font-semibold text-text-secondary uppercase tracking-wider block">
+                      Departments
+                    </span>
+                    <span className="text-sm sm:text-base font-black text-text-primary leading-tight">
+                      {filterMeta.departments?.length || 3}
+                    </span>
+                  </div>
                 </div>
-                <div className="h-6 w-px bg-border-default" />
-                <div>
-                  <span className="text-text-secondary block">PDFs / Images</span>
-                  <span className="text-base font-bold text-text-primary">
-                    {filterMeta.stats?.totalPdfs ?? 0} / {filterMeta.stats?.totalImages ?? 0}
-                  </span>
+
+                <div className="h-7 w-px bg-border-default" />
+
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-sm bg-purple-500/10 border border-purple-500/25 flex items-center justify-center text-purple-600 dark:text-purple-400 shrink-0">
+                    <Layers size={15} />
+                  </div>
+                  <div>
+                    <span className="text-[10px] sm:text-[11px] font-semibold text-text-secondary uppercase tracking-wider block">
+                      PDFs / Images
+                    </span>
+                    <span className="text-sm sm:text-base font-black text-text-primary leading-tight">
+                      {filterMeta.stats?.totalPdfs ?? 0} / {filterMeta.stats?.totalImages ?? 0}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -612,170 +630,165 @@ export function QuestionsArchiveClient() {
       </section>
 
       {/* Main Filter & Content Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+      <div className="container mx-auto px-4 md:px-8 pt-6">
         {/* Dynamic Filters Bar */}
-        <div className="bg-surface-elevated rounded-2xl border border-border-default p-5 shadow-sm mb-8 space-y-4">
+        <div className="bg-surface-elevated rounded-xl border border-black dark:border-border-default p-5 sm:p-6 shadow-[4px_4px_0px_var(--accent-primary)] mb-8 space-y-4">
           {/* Top row: Search, Format & Sort */}
           <div className="flex flex-col sm:flex-row items-center gap-3">
             {/* Search Input */}
-            <div className="relative flex-1 w-full">
-              <Search
-                size={18}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-tertiary"
-              />
-              <input
-                type="text"
+            <div className="flex-1 w-full">
+              <SearchInput
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChangeValue={setSearchQuery}
+                onClear={() => setSearchQuery("")}
                 placeholder="Search by course code (e.g. CSE-1101), title, subject, topic..."
-                className="w-full pl-10 pr-10 py-2.5 rounded-xl bg-surface-secondary border border-border-default text-text-primary placeholder:text-text-tertiary text-sm focus:outline-none focus:border-accent-primary focus:bg-surface-elevated transition-colors"
+                sizeVariant="md"
               />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary p-1"
-                >
-                  <X size={15} />
-                </button>
-              )}
             </div>
 
             {/* File Format Filter */}
-            <div className="flex items-center gap-1 bg-surface-secondary p-1 rounded-xl border border-border-default text-xs">
-              <button
+            <div className="flex flex-wrap items-center gap-2" role="tablist">
+              <Button
+                type="button"
+                isFlip
+                role="tab"
+                size="sm"
+                variant={selectedFileType === "all" ? "primary" : "secondary"}
                 onClick={() => {
                   setSelectedFileType("all");
                   setPage(1);
                 }}
-                className={`px-3 py-1.5 rounded-lg transition-colors font-medium ${
-                  selectedFileType === "all"
-                    ? "bg-accent-primary text-black font-bold shadow-xs"
-                    : "text-text-secondary hover:text-text-primary"
-                }`}
               >
                 All Formats
-              </button>
-              <button
+              </Button>
+              <Button
+                type="button"
+                isFlip
+                role="tab"
+                size="sm"
+                variant={selectedFileType === "pdf" ? "primary" : "secondary"}
+                icon={<FileText size={14} />}
                 onClick={() => {
                   setSelectedFileType("pdf");
                   setPage(1);
                 }}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-colors font-medium ${
-                  selectedFileType === "pdf"
-                    ? "bg-accent-primary text-black font-bold shadow-xs"
-                    : "text-text-secondary hover:text-text-primary"
-                }`}
               >
-                <FileText size={13} />
                 PDF
-              </button>
-              <button
+              </Button>
+              <Button
+                type="button"
+                isFlip
+                role="tab"
+                size="sm"
+                variant={selectedFileType === "image" ? "primary" : "secondary"}
+                icon={<ImageIcon size={14} />}
                 onClick={() => {
                   setSelectedFileType("image");
                   setPage(1);
                 }}
-                className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg transition-colors font-medium ${
-                  selectedFileType === "image"
-                    ? "bg-accent-primary text-black font-bold shadow-xs"
-                    : "text-text-secondary hover:text-text-primary"
-                }`}
               >
-                <ImageIcon size={13} />
                 Images
-              </button>
+              </Button>
             </div>
 
-            {/* Sorting Select */}
+            {/* Sorting Select & View Mode */}
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              <select
+              <Select
                 value={`${sortBy}-${sortOrder}`}
-                onChange={(e) => {
-                  const [field, order] = e.target.value.split("-");
+                onChange={(val) => {
+                  const [field, order] = val.split("-");
                   setSortBy(field);
                   setSortOrder(order as "asc" | "desc");
                 }}
-                className="w-full sm:w-44 px-3 py-2.5 rounded-xl bg-surface-secondary border border-border-default text-xs font-medium text-text-primary focus:outline-none focus:border-accent-primary focus:bg-surface-elevated cursor-pointer"
-              >
-                <option value="year-desc">Year: Newest First</option>
-                <option value="year-asc">Year: Oldest First</option>
-                <option value="semester-asc">Semester: Ascending</option>
-                <option value="semester-desc">Semester: Descending</option>
-                <option value="downloads-desc">Most Downloaded</option>
-                <option value="views-desc">Most Viewed</option>
-              </select>
+                options={[
+                  { value: "year-desc", label: "Year: Newest First" },
+                  { value: "year-asc", label: "Year: Oldest First" },
+                  { value: "semester-asc", label: "Semester: Ascending" },
+                  { value: "semester-desc", label: "Semester: Descending" },
+                  { value: "downloads-desc", label: "Most Downloaded" },
+                  { value: "views-desc", label: "Most Viewed" },
+                ]}
+                size="sm"
+                className="w-full sm:w-48"
+              />
 
               {/* View Mode Toggle */}
-              <div className="inline-flex rounded-xl bg-surface-secondary p-1 border border-border-default">
-                <button
+              <div className="flex items-center gap-1.5" role="tablist">
+                <Button
+                  type="button"
+                  isFlip
+                  role="tab"
+                  size="sm"
+                  variant={viewMode === "grid" ? "primary" : "secondary"}
                   onClick={() => setViewMode("grid")}
-                  className={`p-1.5 rounded-lg transition-colors ${
-                    viewMode === "grid"
-                      ? "bg-accent-primary text-black shadow-xs"
-                      : "text-text-secondary hover:text-text-primary"
-                  }`}
                   title="Grid View"
+                  className="!w-9 !h-9 !px-0"
                 >
-                  <LayoutGrid size={18} />
-                </button>
-                <button
+                  <LayoutGrid size={16} />
+                </Button>
+                <Button
+                  type="button"
+                  isFlip
+                  role="tab"
+                  size="sm"
+                  variant={viewMode === "table" ? "primary" : "secondary"}
                   onClick={() => setViewMode("table")}
-                  className={`p-1.5 rounded-lg transition-colors ${
-                    viewMode === "table"
-                      ? "bg-accent-primary text-black shadow-xs"
-                      : "text-text-secondary hover:text-text-primary"
-                  }`}
                   title="List / Table View"
+                  className="!w-9 !h-9 !px-0"
                 >
-                  <List size={18} />
-                </button>
+                  <List size={16} />
+                </Button>
               </div>
 
               {/* Reset Filters Button */}
               {activeFiltersCount > 0 && (
-                <button
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="secondary"
                   onClick={handleResetFilters}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-rose-500 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 transition-colors"
+                  icon={<RotateCcw size={14} />}
+                  className="!text-rose-500 !border-rose-500 hover:!bg-rose-500/10 hover:!shadow-[4px_4px_0px_0px_#ef4444]"
                 >
-                  <RotateCcw size={13} />
-                  <span>Reset</span>
-                </button>
+                  Reset ({activeFiltersCount})
+                </Button>
               )}
             </div>
           </div>
 
           {/* Department Filter Pills (Completely dynamic) */}
-          <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-border-default">
-            <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider mr-1">
+          <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-border-default" role="tablist">
+            <span className="text-xs font-bold text-text-secondary uppercase tracking-wider mr-1">
               Department:
             </span>
-            <button
+            <Button
+              type="button"
+              isFlip
+              role="tab"
+              size="sm"
+              variant={selectedDepartment === "all" ? "primary" : "secondary"}
               onClick={() => {
                 setSelectedDepartment("all");
                 setPage(1);
               }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                selectedDepartment === "all"
-                  ? "bg-accent-primary text-black font-bold shadow-xs"
-                  : "bg-surface-secondary hover:bg-surface-elevated text-text-secondary hover:text-text-primary border border-border-default"
-              }`}
             >
               All Departments
-            </button>
+            </Button>
             {filterMeta.departments?.map((dept) => (
-              <button
+              <Button
                 key={dept}
+                type="button"
+                isFlip
+                role="tab"
+                size="sm"
+                variant={selectedDepartment === dept ? "primary" : "secondary"}
                 onClick={() => {
                   setSelectedDepartment(dept);
                   setPage(1);
                 }}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                  selectedDepartment === dept
-                    ? "bg-accent-primary text-black font-bold shadow-xs"
-                    : "bg-surface-secondary hover:bg-surface-elevated text-text-secondary hover:text-text-primary border border-border-default"
-                }`}
               >
                 {dept}
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -783,68 +796,59 @@ export function QuestionsArchiveClient() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-3 border-t border-border-default">
             {/* Exam Type */}
             <div>
-              <label className="block text-xs font-medium text-text-secondary mb-1.5">
+              <label className="block text-xs font-semibold text-text-secondary mb-1.5">
                 Exam Type
               </label>
-              <select
+              <Select
                 value={selectedExamType}
-                onChange={(e) => {
-                  setSelectedExamType(e.target.value);
+                onChange={(val) => {
+                  setSelectedExamType(val);
                   setPage(1);
                 }}
-                className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-border-default text-xs text-text-primary focus:outline-none focus:border-accent-primary focus:bg-surface-elevated cursor-pointer"
-              >
-                <option value="all">All Exam Types (Final, CTs, etc.)</option>
-                {filterMeta.examTypes?.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { value: "all", label: "All Exam Types (Final, CTs, etc.)" },
+                  ...(filterMeta.examTypes?.map((type) => ({ value: type, label: type })) || []),
+                ]}
+                size="sm"
+              />
             </div>
 
             {/* Year */}
             <div>
-              <label className="block text-xs font-medium text-text-secondary mb-1.5">
+              <label className="block text-xs font-semibold text-text-secondary mb-1.5">
                 Academic Year
               </label>
-              <select
+              <Select
                 value={selectedYear}
-                onChange={(e) => {
-                  setSelectedYear(e.target.value);
+                onChange={(val) => {
+                  setSelectedYear(val);
                   setPage(1);
                 }}
-                className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-border-default text-xs text-text-primary focus:outline-none focus:border-accent-primary focus:bg-surface-elevated cursor-pointer"
-              >
-                <option value="all">All Available Years</option>
-                {availableYears.map((yr) => (
-                  <option key={yr} value={yr}>
-                    Year {yr}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { value: "all", label: "All Available Years" },
+                  ...availableYears.map((yr) => ({ value: String(yr), label: `Year ${yr}` })),
+                ]}
+                size="sm"
+              />
             </div>
 
             {/* Semester */}
             <div>
-              <label className="block text-xs font-medium text-text-secondary mb-1.5">
+              <label className="block text-xs font-semibold text-text-secondary mb-1.5">
                 Semester
               </label>
-              <select
+              <Select
                 value={selectedSemester}
-                onChange={(e) => {
-                  setSelectedSemester(e.target.value);
+                onChange={(val) => {
+                  setSelectedSemester(val);
                   setPage(1);
                 }}
-                className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-border-default text-xs text-text-primary focus:outline-none focus:border-accent-primary focus:bg-surface-elevated cursor-pointer"
-              >
-                <option value="all">All Semesters</option>
-                {filterMeta.semesters?.map((sem) => (
-                  <option key={sem} value={sem}>
-                    Semester {sem}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { value: "all", label: "All Semesters" },
+                  ...(filterMeta.semesters?.map((sem) => ({ value: String(sem), label: `Semester ${sem}` })) || []),
+                ]}
+                size="sm"
+              />
             </div>
           </div>
         </div>
@@ -856,30 +860,34 @@ export function QuestionsArchiveClient() {
             <p className="text-text-secondary text-sm">Loading question archive...</p>
           </div>
         ) : questions.length === 0 ? (
-          <div className="py-20 text-center rounded-2xl bg-surface-elevated border border-border-default p-8 shadow-sm">
+          <div className="py-16 text-center rounded-xl bg-surface-elevated border border-black dark:border-border-default p-8 shadow-[4px_4px_0px_var(--accent-primary)]">
             <FileText size={48} className="mx-auto text-text-tertiary mb-4 opacity-50" />
-            <h3 className="text-lg font-semibold text-text-primary">No Question Papers Found</h3>
+            <h3 className="text-xl font-black text-text-primary">No Question Papers Found</h3>
             <p className="text-text-secondary text-sm max-w-md mx-auto mt-1 mb-6">
               {activeFiltersCount > 0
                 ? "Try clearing some filters or searching with different keywords."
                 : "No question papers have been archived yet for this category."}
             </p>
             {activeFiltersCount > 0 ? (
-              <button
+              <Button
+                type="button"
                 onClick={handleResetFilters}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-accent-primary text-black font-semibold text-xs shadow-md"
+                size="md"
+                variant="primary"
+                icon={<RotateCcw size={16} />}
               >
-                <RotateCcw size={14} />
-                <span>Reset All Filters</span>
-              </button>
+                Reset All Filters
+              </Button>
             ) : isAdmin ? (
-              <button
+              <Button
+                type="button"
                 onClick={() => handleOpenUploadModal()}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-accent-primary text-black font-semibold text-xs shadow-md"
+                size="md"
+                variant="primary"
+                icon={<Plus size={16} />}
               >
-                <Plus size={14} />
-                <span>Upload First Question Paper</span>
-              </button>
+                Upload First Question Paper
+              </Button>
             ) : null}
           </div>
         ) : viewMode === "grid" ? (
@@ -891,20 +899,20 @@ export function QuestionsArchiveClient() {
                 <div
                   key={item._id}
                   onClick={() => handleOpenPreview(item)}
-                  className="group relative flex flex-col justify-between rounded-2xl bg-surface-elevated hover:bg-surface-secondary/40 border border-border-default hover:border-accent-primary/50 hover:shadow-[4px_4px_0px_var(--accent-primary)] transition-shadow duration-200 p-5 cursor-pointer"
+                  className="group relative flex flex-col justify-between rounded-xl bg-surface-elevated border border-black dark:border-border-default p-5 shadow-[4px_4px_0px_0px_black] dark:shadow-[4px_4px_0px_0px_var(--border-default)] hover:shadow-[4px_4px_0px_var(--accent-primary)] hover:-translate-x-1 hover:-translate-y-1 transition-all duration-150 cursor-pointer"
                 >
                   <div>
                     {/* Top badges: Course Code, File Format & Exam Type */}
                     <div className="flex items-center justify-between gap-2 mb-3">
                       <div className="flex items-center gap-1.5">
-                        <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-lg bg-surface-secondary border border-border-default text-text-primary group-hover:border-accent-primary/40 transition-colors">
+                        <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-md bg-surface-secondary border border-black dark:border-border-default text-text-primary group-hover:border-accent-primary transition-colors">
                           {item.courseCode}
                         </span>
                         <span
-                          className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                          className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md border ${
                             isImg
-                              ? "bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30"
-                              : "bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30"
+                              ? "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/40"
+                              : "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/40"
                           }`}
                         >
                           {isImg ? <ImageIcon size={11} /> : <FileText size={11} />}
@@ -913,7 +921,7 @@ export function QuestionsArchiveClient() {
                       </div>
 
                       <span
-                        className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full border ${getExamTypeBadge(
+                        className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${getExamTypeBadge(
                           item.examType
                         )}`}
                       >
@@ -922,29 +930,29 @@ export function QuestionsArchiveClient() {
                     </div>
 
                     {/* Title & Course Name */}
-                    <h3 className="font-semibold text-base text-text-primary group-hover:text-accent-primary transition-colors line-clamp-1 mb-1">
+                    <h3 className="font-bold text-base text-text-primary group-hover:text-accent-primary transition-colors line-clamp-1 mb-1">
                       {item.courseName}
                     </h3>
-                    <p className="text-xs text-text-secondary line-clamp-2 mb-4">
+                    <p className="text-xs text-text-secondary line-clamp-2 mb-4 leading-relaxed">
                       {item.description || item.title}
                     </p>
 
                     {/* Meta Chips */}
                     <div className="flex flex-wrap items-center gap-2 text-[11px] text-text-secondary mb-4">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-secondary border border-border-default">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-surface-secondary border border-border-default font-medium">
                         <GraduationCap size={12} className="text-accent-primary" />
                         {item.department}
                       </span>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-secondary border border-border-default">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-surface-secondary border border-border-default font-medium">
                         <Layers size={12} className="text-cyan-500" />
                         Sem {item.semester}
                       </span>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-surface-secondary border border-border-default">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-surface-secondary border border-border-default font-medium">
                         <Calendar size={12} className="text-amber-500" />
                         {item.year}
                       </span>
                       {item.fileSize ? (
-                        <span className="px-2 py-0.5 rounded-md bg-surface-secondary border border-border-default">
+                        <span className="px-2.5 py-1 rounded-md bg-surface-secondary border border-border-default font-mono">
                           {(item.fileSize / 1024).toFixed(0)} KB
                         </span>
                       ) : null}
@@ -953,7 +961,7 @@ export function QuestionsArchiveClient() {
 
                   {/* Footer stats & actions */}
                   <div className="pt-3 border-t border-border-default flex items-center justify-between">
-                    <div className="flex items-center gap-3 text-xs text-text-secondary">
+                    <div className="flex items-center gap-3 text-xs text-text-secondary font-medium">
                       <span className="inline-flex items-center gap-1" title="Views">
                         <Eye size={13} /> {item.viewCount}
                       </span>
@@ -962,39 +970,45 @@ export function QuestionsArchiveClient() {
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      <button
+                    <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        size="sm"
+                        variant="secondary"
                         onClick={(e) => handleDownload(item, e)}
-                        className="p-2 rounded-lg bg-surface-secondary hover:bg-accent-primary/20 hover:text-accent-primary text-text-secondary border border-border-default transition-colors"
                         title="Download Document"
+                        className="!w-8 !h-8 !px-0"
                       >
-                        <Download size={15} />
-                      </button>
+                        <Download size={14} />
+                      </Button>
 
                       {isAdmin && (
                         <>
-                          <button
+                          <Button
+                            size="sm"
+                            variant="secondary"
                             onClick={(e) => {
                               e.stopPropagation();
                               handleOpenUploadModal(item);
                             }}
-                            className="p-2 rounded-lg bg-surface-secondary hover:bg-amber-500/20 hover:text-amber-500 text-text-secondary border border-border-default transition-colors"
                             title="Edit Question"
+                            className="!w-8 !h-8 !px-0 hover:!text-amber-500 hover:!border-amber-500"
                           >
-                            <Edit3 size={15} />
-                          </button>
-                          <button
+                            <Edit3 size={14} />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="secondary"
                             onClick={(e) => {
                               e.stopPropagation();
                               if (confirm("Are you sure you want to delete this question paper?")) {
                                 handleDeleteQuestion(item._id);
                               }
                             }}
-                            className="p-2 rounded-lg bg-surface-secondary hover:bg-rose-500/20 hover:text-rose-500 text-text-secondary border border-border-default transition-colors"
                             title="Delete Question"
+                            className="!w-8 !h-8 !px-0 hover:!text-rose-500 hover:!border-rose-500"
                           >
-                            <Trash2 size={15} />
-                          </button>
+                            <Trash2 size={14} />
+                          </Button>
                         </>
                       )}
                     </div>
@@ -1005,9 +1019,9 @@ export function QuestionsArchiveClient() {
           </div>
         ) : (
           /* Table View */
-          <div className="overflow-x-auto rounded-2xl border border-border-default bg-surface-elevated shadow-sm">
+          <div className="overflow-x-auto rounded-xl border border-black dark:border-border-default bg-surface-elevated shadow-[4px_4px_0px_var(--accent-primary)]">
             <table className="w-full text-left text-xs">
-              <thead className="bg-surface-secondary text-text-secondary uppercase tracking-wider text-[11px] border-b border-border-default">
+              <thead className="bg-surface-secondary text-text-secondary uppercase tracking-wider text-[11px] border-b border-black dark:border-border-default">
                 <tr>
                   <th className="px-4 py-3 font-semibold">Format</th>
                   <th className="px-4 py-3 font-semibold">Course</th>
@@ -1031,10 +1045,10 @@ export function QuestionsArchiveClient() {
                     >
                       <td className="px-4 py-3">
                         <span
-                          className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                          className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md border ${
                             isImg
-                              ? "bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30"
-                              : "bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30"
+                              ? "bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/40"
+                              : "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/40"
                           }`}
                         >
                           {isImg ? <ImageIcon size={11} /> : <FileText size={11} />}
@@ -1071,27 +1085,33 @@ export function QuestionsArchiveClient() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
-                          <button
+                        <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                          <Button
+                            size="sm"
+                            variant="secondary"
                             onClick={(e) => handleDownload(item, e)}
-                            className="p-1.5 rounded-lg bg-surface-secondary hover:bg-accent-primary/20 hover:text-accent-primary text-text-secondary border border-border-default transition-colors"
                             title="Download"
+                            className="!w-8 !h-8 !px-0"
                           >
                             <Download size={14} />
-                          </button>
+                          </Button>
                           {isAdmin && (
                             <>
-                              <button
+                              <Button
+                                size="sm"
+                                variant="secondary"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleOpenUploadModal(item);
                                 }}
-                                className="p-1.5 rounded-lg bg-surface-secondary hover:bg-amber-500/20 hover:text-amber-500 text-text-secondary border border-border-default transition-colors"
                                 title="Edit"
+                                className="!w-8 !h-8 !px-0 hover:!text-amber-500 hover:!border-amber-500"
                               >
                                 <Edit3 size={14} />
-                              </button>
-                              <button
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="secondary"
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   if (
@@ -1102,11 +1122,11 @@ export function QuestionsArchiveClient() {
                                     handleDeleteQuestion(item._id);
                                   }
                                 }}
-                                className="p-1.5 rounded-lg bg-surface-secondary hover:bg-rose-500/20 hover:text-rose-500 text-text-secondary border border-border-default transition-colors"
                                 title="Delete"
+                                className="!w-8 !h-8 !px-0 hover:!text-rose-500 hover:!border-rose-500"
                               >
                                 <Trash2 size={14} />
-                              </button>
+                              </Button>
                             </>
                           )}
                         </div>
@@ -1121,38 +1141,39 @@ export function QuestionsArchiveClient() {
 
         {/* Pagination Controls */}
         {pagination.pages > 1 && (
-          <div className="mt-8 flex items-center justify-between border-t border-border-default pt-4">
-            <span className="text-xs text-text-secondary">
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-border-default pt-4">
+            <span className="text-xs text-text-secondary font-medium">
               Showing page {pagination.page} of {pagination.pages} ({pagination.total} items)
             </span>
             <div className="flex items-center gap-1.5">
-              <button
+              <Button
+                size="sm"
+                variant="secondary"
                 disabled={page <= 1}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-surface-secondary hover:bg-surface-elevated border border-border-default text-text-primary disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Previous
-              </button>
+              </Button>
               {Array.from({ length: pagination.pages }, (_, i) => i + 1).map((pNum) => (
-                <button
+                <Button
                   key={pNum}
+                  isFlip
+                  size="sm"
+                  variant={pNum === page ? "primary" : "secondary"}
                   onClick={() => setPage(pNum)}
-                  className={`w-8 h-8 rounded-lg text-xs font-semibold transition-colors ${
-                    pNum === page
-                      ? "bg-accent-primary text-black"
-                      : "bg-surface-secondary hover:bg-surface-elevated text-text-secondary border border-border-default"
-                  }`}
+                  className="!w-9 !h-9 !px-0"
                 >
                   {pNum}
-                </button>
+                </Button>
               ))}
-              <button
+              <Button
+                size="sm"
+                variant="secondary"
                 disabled={page >= pagination.pages}
                 onClick={() => setPage((p) => Math.min(pagination.pages, p + 1))}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-surface-secondary hover:bg-surface-elevated border border-border-default text-text-primary disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Next
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -1162,23 +1183,23 @@ export function QuestionsArchiveClient() {
       {previewQuestion && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/70 backdrop-blur-sm animate-fadeIn">
           <div
-            className={`relative flex flex-col bg-surface-elevated text-text-primary border border-border-default rounded-2xl shadow-2xl overflow-hidden transition-all duration-300 ${
+            className={`relative flex flex-col bg-surface-elevated text-text-primary border border-black dark:border-border-default rounded-xl shadow-[8px_8px_0px_var(--accent-primary)] overflow-hidden transition-all duration-300 ${
               isFullscreenPreview
                 ? "w-full h-full rounded-none"
                 : "w-full max-w-5xl h-[85vh]"
             }`}
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-border-default bg-surface-secondary">
+            <div className="flex items-center justify-between px-5 py-3.5 border-b border-black dark:border-border-default bg-surface-secondary">
               <div className="flex items-center gap-3">
-                <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-surface-elevated border border-border-default text-accent-primary">
+                <span className="font-mono text-xs font-bold px-2.5 py-1 rounded-md bg-surface-elevated border border-black dark:border-border-default text-accent-primary">
                   {previewQuestion.courseCode}
                 </span>
                 <div>
-                  <h3 className="font-semibold text-sm sm:text-base text-text-primary line-clamp-1">
+                  <h3 className="font-bold text-sm sm:text-base text-text-primary line-clamp-1">
                     {previewQuestion.courseName}
                   </h3>
-                  <div className="flex items-center gap-2 text-xs text-text-secondary">
+                  <div className="flex items-center gap-2 text-xs text-text-secondary font-medium">
                     <span>{previewQuestion.department}</span>
                     <span>•</span>
                     <span>Semester {previewQuestion.semester}</span>
@@ -1196,20 +1217,22 @@ export function QuestionsArchiveClient() {
 
               <div className="flex items-center gap-2">
                 {isImageFile(previewQuestion) && (
-                  <div className="flex items-center gap-1 bg-surface-elevated px-2 py-1 rounded-lg border border-border-default text-xs">
+                  <div className="flex items-center gap-1 bg-surface-elevated px-2 py-1 rounded-md border border-black dark:border-border-default text-xs">
                     <button
+                      type="button"
                       onClick={() => setImageZoom((z) => Math.max(0.5, z - 0.25))}
-                      className="p-1 hover:text-accent-primary text-text-secondary"
+                      className="p-1 hover:text-accent-primary text-text-secondary cursor-pointer"
                       title="Zoom Out"
                     >
                       <ZoomOut size={14} />
                     </button>
-                    <span className="w-10 text-center font-mono text-[11px] text-text-primary">
+                    <span className="w-10 text-center font-mono text-[11px] text-text-primary font-bold">
                       {Math.round(imageZoom * 100)}%
                     </span>
                     <button
+                      type="button"
                       onClick={() => setImageZoom((z) => Math.min(3, z + 0.25))}
-                      className="p-1 hover:text-accent-primary text-text-secondary"
+                      className="p-1 hover:text-accent-primary text-text-secondary cursor-pointer"
                       title="Zoom In"
                     >
                       <ZoomIn size={14} />
@@ -1217,33 +1240,41 @@ export function QuestionsArchiveClient() {
                   </div>
                 )}
 
-                <button
+                <Button
+                  size="sm"
+                  variant="primary"
+                  icon={<Download size={14} />}
                   onClick={() => handleDownload(previewQuestion)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-accent-primary text-black hover:bg-accent-primary/90 transition-colors"
                 >
-                  <Download size={14} />
-                  <span>Download</span>
-                </button>
-                <button
+                  Download
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
                   onClick={() => window.open(resolveFileUrl(previewQuestion.fileUrl), "_blank")}
-                  className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary bg-surface-elevated border border-border-default transition-colors"
                   title="Open Raw File"
+                  className="!w-9 !h-9 !px-0"
                 >
-                  <ExternalLink size={16} />
-                </button>
-                <button
+                  <ExternalLink size={15} />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
                   onClick={() => setIsFullscreenPreview(!isFullscreenPreview)}
-                  className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary bg-surface-elevated border border-border-default transition-colors"
                   title={isFullscreenPreview ? "Exit Fullscreen" : "Fullscreen"}
+                  className="!w-9 !h-9 !px-0"
                 >
-                  {isFullscreenPreview ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
-                </button>
-                <button
+                  {isFullscreenPreview ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
                   onClick={() => setPreviewQuestion(null)}
-                  className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary bg-surface-elevated border border-border-default transition-colors"
+                  title="Close Preview"
+                  className="!w-9 !h-9 !px-0"
                 >
-                  <X size={18} />
-                </button>
+                  <X size={16} />
+                </Button>
               </div>
             </div>
 
@@ -1274,46 +1305,47 @@ export function QuestionsArchiveClient() {
       {/* Admin Upload / Edit Question Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn overflow-y-auto">
-          <div className="relative w-full max-w-2xl bg-surface-elevated text-text-primary border border-border-default rounded-2xl shadow-2xl p-6 my-8 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-4 border-b border-border-default mb-5">
+          <div className="relative w-full max-w-2xl bg-surface-elevated text-text-primary border border-black dark:border-border-default rounded-xl shadow-[8px_8px_0px_var(--accent-primary)] p-6 my-8 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-4 border-b border-black dark:border-border-default mb-5">
               <div className="flex items-center gap-2">
                 <FilePlus className="text-accent-primary" size={22} />
                 <h3 className="text-lg font-bold text-text-primary">
                   {editingQuestion ? "Edit Question Paper" : "Upload Exam Question Paper"}
                 </h3>
               </div>
-              <button
+              <Button
+                size="sm"
+                variant="secondary"
                 onClick={() => setIsModalOpen(false)}
-                className="text-text-secondary hover:text-text-primary p-1"
+                title="Close"
+                className="!w-8 !h-8 !px-0"
               >
-                <X size={20} />
-              </button>
+                <X size={16} />
+              </Button>
             </div>
 
             <form onSubmit={handleFormSubmit} className="space-y-4">
               {/* CURRENT FILE PREVIEW (Crucial when editing!) */}
               {editingQuestion && (
-                <div className="rounded-xl border border-border-default bg-surface-secondary p-3.5 space-y-3">
+                <div className="rounded-xl border border-black dark:border-border-default bg-surface-secondary p-3.5 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold uppercase tracking-wider text-accent-primary flex items-center gap-1.5">
                       <FileCheck size={14} /> Current Uploaded File
                     </span>
-                    <button
+                    <Button
                       type="button"
+                      size="sm"
+                      variant={isReplacingFile ? "secondary" : "primary"}
                       onClick={() => setIsReplacingFile(!isReplacingFile)}
-                      className={`text-xs font-semibold px-2.5 py-1 rounded-lg border transition-colors ${
-                        isReplacingFile
-                          ? "bg-rose-500/15 text-rose-500 border-rose-500/30 hover:bg-rose-500/25"
-                          : "bg-accent-primary/15 text-accent-primary border-accent-primary/30 hover:bg-accent-primary/25"
-                      }`}
+                      className={isReplacingFile ? "!text-rose-500 !border-rose-500" : ""}
                     >
                       {isReplacingFile ? "Keep Current File" : "Replace With New File"}
-                    </button>
+                    </Button>
                   </div>
 
-                  <div className="flex items-center gap-3 bg-surface-elevated p-2.5 rounded-lg border border-border-default">
+                  <div className="flex items-center gap-3 bg-surface-elevated p-2.5 rounded-lg border border-black dark:border-border-default">
                     {isImageFile(editingQuestion) ? (
-                      <div className="w-14 h-14 rounded overflow-hidden bg-surface-secondary border border-border-default shrink-0 flex items-center justify-center">
+                      <div className="w-14 h-14 rounded-md overflow-hidden bg-surface-secondary border border-border-default shrink-0 flex items-center justify-center">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={resolveFileUrl(editingQuestion.fileUrl)}
@@ -1322,7 +1354,7 @@ export function QuestionsArchiveClient() {
                         />
                       </div>
                     ) : (
-                      <div className="w-14 h-14 rounded bg-red-500/10 border border-red-500/20 text-red-500 shrink-0 flex items-center justify-center">
+                      <div className="w-14 h-14 rounded-md bg-red-500/10 border border-red-500/20 text-red-500 shrink-0 flex items-center justify-center">
                         <FileText size={24} />
                       </div>
                     )}
@@ -1345,21 +1377,25 @@ export function QuestionsArchiveClient() {
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0">
-                      <button
+                      <Button
                         type="button"
+                        size="sm"
+                        variant="secondary"
                         onClick={() => window.open(resolveFileUrl(editingQuestion.fileUrl), "_blank")}
-                        className="px-2.5 py-1 text-xs rounded bg-surface-secondary hover:bg-surface-elevated border border-border-default text-text-secondary hover:text-text-primary"
+                        className="!h-8 !text-xs !px-2.5"
                       >
                         View File
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
+                        size="sm"
+                        variant="secondary"
                         onClick={() => handleDownload(editingQuestion)}
-                        className="p-1 rounded bg-surface-secondary hover:bg-surface-elevated border border-border-default text-text-secondary hover:text-accent-primary"
                         title="Download"
+                        className="!w-8 !h-8 !px-0"
                       >
                         <Download size={14} />
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -1398,33 +1434,29 @@ export function QuestionsArchiveClient() {
                         })
                       }
                       placeholder="e.g. ME, BME, ARCH..."
-                      className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-accent-primary text-xs uppercase text-text-primary focus:outline-none focus:bg-surface-elevated"
+                      className="w-full h-10 px-3 rounded-md bg-surface-primary border border-accent-primary text-xs uppercase text-text-primary focus:outline-none focus:shadow-[2px_2px_0px_var(--accent-primary)] transition-all"
                       required
                     />
                   ) : (
-                    <select
+                    <Select
                       value={uploadFormData.department}
-                      onChange={(e) => {
-                        if (e.target.value === "CUSTOM") {
+                      onChange={(val) => {
+                        if (val === "CUSTOM") {
                           setUploadFormData({ ...uploadFormData, isCustomDept: true });
                         } else {
                           setUploadFormData({
                             ...uploadFormData,
-                            department: e.target.value,
+                            department: val,
                             isCustomDept: false,
                           });
                         }
                       }}
-                      className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-border-default text-xs text-text-primary focus:outline-none focus:border-accent-primary focus:bg-surface-elevated cursor-pointer"
-                      required
-                    >
-                      {filterMeta.departments?.map((dept) => (
-                        <option key={dept} value={dept}>
-                          {dept}
-                        </option>
-                      ))}
-                      <option value="CUSTOM">+ Add New Custom Department...</option>
-                    </select>
+                      options={[
+                        ...(filterMeta.departments?.map((dept) => ({ value: dept, label: dept })) || []),
+                        { value: "CUSTOM", label: "+ Add New Custom Department..." },
+                      ]}
+                      size="md"
+                    />
                   )}
                 </div>
 
@@ -1461,35 +1493,32 @@ export function QuestionsArchiveClient() {
                       min={1}
                       max={20}
                       placeholder="e.g. 9, 10..."
-                      className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-accent-primary text-xs text-text-primary focus:outline-none focus:bg-surface-elevated"
+                      className="w-full h-10 px-3 rounded-md bg-surface-primary border border-accent-primary text-xs text-text-primary focus:outline-none focus:shadow-[2px_2px_0px_var(--accent-primary)] transition-all"
                       required
                     />
                   ) : (
-                    <select
-                      value={uploadFormData.semester}
-                      onChange={(e) =>
+                    <Select
+                      value={String(uploadFormData.semester)}
+                      onChange={(val) =>
                         setUploadFormData({
                           ...uploadFormData,
-                          semester: parseInt(e.target.value, 10),
+                          semester: parseInt(val, 10),
                         })
                       }
-                      className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-border-default text-xs text-text-primary focus:outline-none focus:border-accent-primary focus:bg-surface-elevated cursor-pointer"
-                      required
-                    >
-                      {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
-                        <option key={s} value={s}>
-                          Semester {s}
-                        </option>
-                      ))}
-                    </select>
+                      options={[1, 2, 3, 4, 5, 6, 7, 8].map((s) => ({
+                        value: String(s),
+                        label: `Semester ${s}`,
+                      }))}
+                      size="md"
+                    />
                   )}
                 </div>
               </div>
 
               {/* AUTOMATIC COURSE FILTERING FOR THIS DEPARTMENT & SEMESTER */}
-              <div className="p-3 rounded-xl bg-surface-secondary border border-border-default space-y-2">
+              <div className="p-3.5 rounded-xl bg-surface-secondary border border-black dark:border-border-default space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-semibold text-text-primary flex items-center gap-1.5">
+                  <label className="text-xs font-bold text-text-primary flex items-center gap-1.5">
                     <BookOpen size={14} className="text-accent-primary" />
                     <span>
                       {uploadFormData.isCustomDept
@@ -1510,49 +1539,46 @@ export function QuestionsArchiveClient() {
 
                 {availableCoursesForSemester.length > 0 ? (
                   <>
-                    <select
+                    <Select
                       value=""
-                      onChange={(e) => {
-                        const code = e.target.value;
-                        if (!code) return;
+                      onChange={(val) => {
+                        if (!val) return;
                         const c = availableCoursesForSemester.find(
-                          (item) => item.courseCode === code
+                          (item) => item.courseCode === val
                         );
                         if (c) {
                           handleApplyCourse(c);
                         }
                       }}
-                      className="w-full px-3 py-2 rounded-lg bg-surface-elevated text-text-primary border border-border-default focus:border-accent-primary text-xs font-medium cursor-pointer"
-                    >
-                      <option value="">
-                        -- Choose an official semester course to auto-fill --
-                      </option>
-                      {availableCoursesForSemester.map((c) => (
-                        <option key={c.courseCode} value={c.courseCode}>
-                          {c.courseCode} — {c.courseName}{" "}
-                          {c.courseCredit ? `(${c.courseCredit} Cr)` : ""}
-                        </option>
-                      ))}
-                    </select>
+                      options={[
+                        { value: "", label: "-- Choose an official semester course to auto-fill --" },
+                        ...availableCoursesForSemester.map((c) => ({
+                          value: c.courseCode,
+                          label: `${c.courseCode} — ${c.courseName}${c.courseCredit ? ` (${c.courseCredit} Cr)` : ""}`,
+                        })),
+                      ]}
+                      placeholder="-- Choose an official semester course to auto-fill --"
+                      size="md"
+                    />
 
                     {/* Quick clickable chips */}
-                    <div className="flex flex-wrap gap-1.5 pt-1">
+                    <div className="flex flex-wrap gap-1.5 pt-1" role="tablist">
                       {availableCoursesForSemester.map((c) => {
                         const isSelected = uploadFormData.courseCode === c.courseCode;
                         return (
-                          <button
+                          <Button
                             type="button"
                             key={c.courseCode}
+                            isFlip
+                            role="tab"
+                            size="sm"
+                            variant={isSelected ? "primary" : "secondary"}
                             onClick={() => handleApplyCourse(c)}
-                            className={`text-[11px] px-2.5 py-1 rounded-md border transition-all text-left flex items-center gap-1 ${
-                              isSelected
-                                ? "bg-accent-primary text-black border-accent-primary font-bold shadow-xs"
-                                : "bg-surface-elevated text-text-secondary border-border-default hover:border-accent-primary hover:text-text-primary"
-                            }`}
+                            className="!text-[11px] !h-8 !px-2.5"
                           >
                             <span className="font-mono font-bold">{c.courseCode}</span>
                             <span className="truncate max-w-[130px]">({c.courseName})</span>
-                          </button>
+                          </Button>
                         );
                       })}
                     </div>
@@ -1577,7 +1603,7 @@ export function QuestionsArchiveClient() {
                       setUploadFormData({ ...uploadFormData, courseCode: e.target.value })
                     }
                     placeholder="CSE-1101"
-                    className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-border-default text-xs uppercase text-text-primary focus:outline-none focus:border-accent-primary focus:bg-surface-elevated"
+                    className="w-full h-10 px-3 rounded-md bg-surface-primary border border-black dark:border-border-default text-xs uppercase text-text-primary focus:outline-none focus:border-accent-primary focus:shadow-[2px_2px_0px_var(--accent-primary)] transition-all"
                     required
                   />
                 </div>
@@ -1593,7 +1619,7 @@ export function QuestionsArchiveClient() {
                       setUploadFormData({ ...uploadFormData, courseName: e.target.value })
                     }
                     placeholder="e.g. Fundamentals of Programming"
-                    className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-border-default text-xs text-text-primary focus:outline-none focus:border-accent-primary focus:bg-surface-elevated"
+                    className="w-full h-10 px-3 rounded-md bg-surface-primary border border-black dark:border-border-default text-xs text-text-primary focus:outline-none focus:border-accent-primary focus:shadow-[2px_2px_0px_var(--accent-primary)] transition-all"
                     required
                   />
                 </div>
@@ -1634,33 +1660,29 @@ export function QuestionsArchiveClient() {
                       min={2000}
                       max={2050}
                       placeholder="e.g. 2028, 2029..."
-                      className="w-full px-3 py-2 rounded-xl bg-surface-secondary text-text-primary border border-accent-primary focus:outline-none focus:bg-surface-elevated text-xs"
+                      className="w-full h-10 px-3 rounded-md bg-surface-primary text-text-primary border border-accent-primary focus:outline-none focus:shadow-[2px_2px_0px_var(--accent-primary)] text-xs transition-all"
                       required
                     />
                   ) : (
-                    <select
-                      value={uploadFormData.year}
-                      onChange={(e) => {
-                        if (e.target.value === "CUSTOM") {
+                    <Select
+                      value={String(uploadFormData.year)}
+                      onChange={(val) => {
+                        if (val === "CUSTOM") {
                           setUploadFormData({ ...uploadFormData, isCustomYear: true });
                         } else {
                           setUploadFormData({
                             ...uploadFormData,
-                            year: parseInt(e.target.value, 10),
+                            year: parseInt(val, 10),
                             isCustomYear: false,
                           });
                         }
                       }}
-                      className="w-full px-3 py-2 rounded-xl bg-surface-secondary text-text-primary border border-border-default focus:outline-none focus:border-accent-primary text-xs cursor-pointer focus:bg-surface-elevated"
-                      required
-                    >
-                      {availableYears.map((yr) => (
-                        <option key={yr} value={yr}>
-                          {yr}
-                        </option>
-                      ))}
-                      <option value="CUSTOM">+ Add Custom Year...</option>
-                    </select>
+                      options={[
+                        ...availableYears.map((yr) => ({ value: String(yr), label: `Year ${yr}` })),
+                        { value: "CUSTOM", label: "+ Add Custom Year..." },
+                      ]}
+                      size="md"
+                    />
                   )}
                 </div>
 
@@ -1695,36 +1717,36 @@ export function QuestionsArchiveClient() {
                         })
                       }
                       placeholder="e.g. CT4, Retake, Quiz, Model Test..."
-                      className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-accent-primary text-xs text-text-primary focus:outline-none focus:bg-surface-elevated"
+                      className="w-full h-10 px-3 rounded-md bg-surface-primary border border-accent-primary text-xs text-text-primary focus:outline-none focus:shadow-[2px_2px_0px_var(--accent-primary)] transition-all"
                       required
                     />
                   ) : (
-                    <select
+                    <Select
                       value={uploadFormData.examType}
-                      onChange={(e) => {
-                        if (e.target.value === "CUSTOM") {
+                      onChange={(val) => {
+                        if (val === "CUSTOM") {
                           setUploadFormData({ ...uploadFormData, isCustomExamType: true });
                         } else {
                           setUploadFormData({
                             ...uploadFormData,
-                            examType: e.target.value,
+                            examType: val,
                             isCustomExamType: false,
                           });
                         }
                       }}
-                      className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-border-default text-xs text-text-primary focus:outline-none focus:border-accent-primary focus:bg-surface-elevated cursor-pointer"
-                      required
-                    >
-                      <option value="Semester Final">Semester Final</option>
-                      <option value="CT1">CT1</option>
-                      <option value="CT2">CT2</option>
-                      <option value="CT3">CT3</option>
-                      <option value="Midterm">Midterm</option>
-                      <option value="Lab Final">Lab Final</option>
-                      <option value="Quiz">Quiz</option>
-                      <option value="Make-up">Make-up Exam</option>
-                      <option value="CUSTOM">+ Add Custom Exam Type...</option>
-                    </select>
+                      options={[
+                        { value: "Semester Final", label: "Semester Final" },
+                        { value: "CT1", label: "CT1" },
+                        { value: "CT2", label: "CT2" },
+                        { value: "CT3", label: "CT3" },
+                        { value: "Midterm", label: "Midterm" },
+                        { value: "Lab Final", label: "Lab Final" },
+                        { value: "Quiz", label: "Quiz" },
+                        { value: "Make-up", label: "Make-up Exam" },
+                        { value: "CUSTOM", label: "+ Add Custom Exam Type..." },
+                      ]}
+                      size="md"
+                    />
                   )}
                 </div>
               </div>
@@ -1737,7 +1759,7 @@ export function QuestionsArchiveClient() {
                       ? "Upload Replacement Document or Image"
                       : "Question Document or Image *"}
                   </label>
-                  <div className="relative border-2 border-dashed border-border-default hover:border-accent-primary/60 rounded-2xl p-5 text-center bg-surface-secondary/50 transition-colors">
+                  <div className="relative border-2 border-dashed border-black dark:border-border-default hover:border-accent-primary rounded-xl p-5 text-center bg-surface-secondary/50 transition-colors cursor-pointer">
                     <input
                       type="file"
                       accept=".pdf,image/*,.jpg,.jpeg,.png,.webp,.gif,.avif"
@@ -1748,7 +1770,7 @@ export function QuestionsArchiveClient() {
                     {selectedFile ? (
                       <div className="space-y-1">
                         {filePreviewUrl ? (
-                          <div className="w-16 h-16 mx-auto rounded overflow-hidden mb-2 border border-border-default">
+                          <div className="w-16 h-16 mx-auto rounded-md overflow-hidden mb-2 border border-black dark:border-border-default">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img
                               src={filePreviewUrl}
@@ -1760,7 +1782,7 @@ export function QuestionsArchiveClient() {
                           <FileText size={24} className="mx-auto text-red-500 mb-1" />
                         )}
                         <p className="text-xs font-semibold text-text-primary">{selectedFile.name}</p>
-                        <p className="text-[11px] text-text-secondary">
+                        <p className="text-[11px] text-text-secondary font-mono">
                           {(selectedFile.size / 1024).toFixed(1)} KB • {selectedFile.type || "Document"}
                         </p>
                       </div>
@@ -1791,7 +1813,7 @@ export function QuestionsArchiveClient() {
                       setUploadFormData({ ...uploadFormData, session: e.target.value })
                     }
                     placeholder="e.g. 2023-24"
-                    className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-border-default text-xs text-text-primary focus:outline-none focus:border-accent-primary focus:bg-surface-elevated"
+                    className="w-full h-10 px-3 rounded-md bg-surface-primary border border-black dark:border-border-default text-xs text-text-primary focus:outline-none focus:border-accent-primary focus:shadow-[2px_2px_0px_var(--accent-primary)] transition-all"
                   />
                 </div>
 
@@ -1806,7 +1828,7 @@ export function QuestionsArchiveClient() {
                       setUploadFormData({ ...uploadFormData, tags: e.target.value })
                     }
                     placeholder="Algorithms, Graphs, Final, 2024"
-                    className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-border-default text-xs text-text-primary focus:outline-none focus:border-accent-primary focus:bg-surface-elevated"
+                    className="w-full h-10 px-3 rounded-md bg-surface-primary border border-black dark:border-border-default text-xs text-text-primary focus:outline-none focus:border-accent-primary focus:shadow-[2px_2px_0px_var(--accent-primary)] transition-all"
                   />
                 </div>
               </div>
@@ -1822,27 +1844,29 @@ export function QuestionsArchiveClient() {
                     setUploadFormData({ ...uploadFormData, description: e.target.value })
                   }
                   placeholder="Additional context, hints, handwritten note or syllabus changes..."
-                  className="w-full px-3 py-2 rounded-xl bg-surface-secondary border border-border-default text-xs text-text-primary focus:outline-none focus:border-accent-primary focus:bg-surface-elevated"
+                  className="w-full p-3 rounded-md bg-surface-primary border border-black dark:border-border-default text-xs text-text-primary focus:outline-none focus:border-accent-primary focus:shadow-[2px_2px_0px_var(--accent-primary)] transition-all"
                 />
               </div>
 
               {/* Submit Buttons */}
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-border-default">
-                <button
+                <Button
                   type="button"
+                  size="md"
+                  variant="secondary"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-medium text-text-secondary hover:text-text-primary bg-surface-secondary border border-border-default"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
+                  size="md"
+                  variant="primary"
                   disabled={isSubmitting}
-                  className="inline-flex items-center gap-2 px-5 py-2 rounded-xl text-xs font-bold bg-accent-primary text-black hover:bg-accent-primary/90 transition-all disabled:opacity-50"
+                  icon={isSubmitting ? <Loader2 size={16} className="animate-spin" /> : undefined}
                 >
-                  {isSubmitting && <Loader2 size={14} className="animate-spin" />}
-                  <span>{editingQuestion ? "Save Changes" : "Archive Question"}</span>
-                </button>
+                  {editingQuestion ? "Save Changes" : "Archive Question"}
+                </Button>
               </div>
             </form>
           </div>
