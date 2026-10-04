@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "@/lib/api";
 import FilterSelect from "@/app/dashboard/components/FilterSelect";
+import { formatCompactNumber } from "@/lib/formatters";
 import {
   Activity,
   Globe,
@@ -25,8 +26,11 @@ import {
   CheckCircle2,
   AlertCircle,
   HelpCircle,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
+import ConfirmationModal from "@/components/ui/shared/ConfirmModal";
 
 interface PageStat {
   path: string;
@@ -97,6 +101,12 @@ const TIME_RANGE_OPTIONS = [
 ];
 
 export default function AnalyticsDashboardPage() {
+  const { user, isAdmin } = useAuth();
+  const canClear =
+    isAdmin ||
+    user?.role === "admin" ||
+    user?.clubRole === "executive";
+
   const [data, setData] = useState<AnalyticsDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -104,6 +114,8 @@ export default function AnalyticsDashboardPage() {
   const [expandedRoutes, setExpandedRoutes] = useState<Record<string, boolean>>({});
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [activeTab, setActiveTab] = useState<"all" | "web" | "api">("all");
+  const [clearModalOpen, setClearModalOpen] = useState(false);
+  const [clearing, setClearing] = useState(false);
 
   const fetchAnalytics = useCallback(
     async (isSilent = false) => {
@@ -132,6 +144,21 @@ export default function AnalyticsDashboardPage() {
   useEffect(() => {
     fetchAnalytics(false);
   }, [fetchAnalytics]);
+
+  const handleClearAnalytics = async () => {
+    setClearing(true);
+    try {
+      await axios.delete(`${API_BASE_URL}/api/analytics/site-overview`, {
+        withCredentials: true,
+      });
+      setClearModalOpen(false);
+      await fetchAnalytics(false);
+    } catch (err) {
+      console.error("Failed to clear site analytics:", err);
+    } finally {
+      setClearing(false);
+    }
+  };
 
   const toggleRouteExpand = (key: string) => {
     setExpandedRoutes((prev) => ({
@@ -221,6 +248,19 @@ export default function AnalyticsDashboardPage() {
             />
             <span>{refreshing ? "Refreshing..." : "Refresh"}</span>
           </button>
+
+          {canClear && (
+            <button
+              type="button"
+              onClick={() => setClearModalOpen(true)}
+              disabled={clearing || loading}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-rose-500/40 bg-rose-500/10 text-xs font-bold text-rose-500 hover:bg-rose-500 hover:text-white transition shadow-[2px_2px_0px_0px_rgba(244,63,94,0.3)] hover:shadow-[3px_3px_0px_0px_rgba(244,63,94,0.6)] active:translate-x-[1px] active:translate-y-[1px]"
+              title="Reset all site and API analytics metrics"
+            >
+              <Trash2 size={13} />
+              <span>Clear Data</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -297,8 +337,8 @@ export default function AnalyticsDashboardPage() {
                 <span className="text-xs font-bold uppercase tracking-wider">Page Views</span>
                 <Globe className="h-4 w-4 text-sky-400 group-hover:scale-110 transition-transform" />
               </div>
-              <div className="text-2xl font-black tracking-tight text-text-primary">
-                {(data?.summary.totalPageViews || 0).toLocaleString()}
+              <div className="text-2xl font-black tracking-tight text-text-primary" title={(data?.summary.totalPageViews || 0).toLocaleString()}>
+                {formatCompactNumber(data?.summary.totalPageViews || 0)}
               </div>
               <p className="text-[11px] text-text-secondary mt-1 font-medium">
                 Total site impressions
@@ -311,8 +351,8 @@ export default function AnalyticsDashboardPage() {
                 <span className="text-xs font-bold uppercase tracking-wider">Unique Visitors</span>
                 <Users className="h-4 w-4 text-emerald-400 group-hover:scale-110 transition-transform" />
               </div>
-              <div className="text-2xl font-black tracking-tight text-text-primary">
-                {(data?.summary.uniqueVisitors || 0).toLocaleString()}
+              <div className="text-2xl font-black tracking-tight text-text-primary" title={(data?.summary.uniqueVisitors || 0).toLocaleString()}>
+                {formatCompactNumber(data?.summary.uniqueVisitors || 0)}
               </div>
               <p className="text-[11px] text-text-secondary mt-1 font-medium">
                 Zero-PII daily hashed
@@ -325,8 +365,8 @@ export default function AnalyticsDashboardPage() {
                 <span className="text-xs font-bold uppercase tracking-wider">Sessions</span>
                 <Activity className="h-4 w-4 text-amber-400 group-hover:scale-110 transition-transform" />
               </div>
-              <div className="text-2xl font-black tracking-tight text-text-primary">
-                {(data?.summary.totalSessions || 0).toLocaleString()}
+              <div className="text-2xl font-black tracking-tight text-text-primary" title={(data?.summary.totalSessions || 0).toLocaleString()}>
+                {formatCompactNumber(data?.summary.totalSessions || 0)}
               </div>
               <p className="text-[11px] text-text-secondary mt-1 font-medium">
                 30-min browsing visits
@@ -367,8 +407,8 @@ export default function AnalyticsDashboardPage() {
                 <span className="text-xs font-bold uppercase tracking-wider">API Requests</span>
                 <Code2 className="h-4 w-4 text-fuchsia-400 group-hover:scale-110 transition-transform" />
               </div>
-              <div className="text-2xl font-black tracking-tight text-text-primary">
-                {(data?.summary.totalApiHits || 0).toLocaleString()}
+              <div className="text-2xl font-black tracking-tight text-text-primary" title={(data?.summary.totalApiHits || 0).toLocaleString()}>
+                {formatCompactNumber(data?.summary.totalApiHits || 0)}
               </div>
               <p className="text-[11px] text-text-secondary mt-1 font-medium">
                 Tracked API invocations
@@ -422,8 +462,8 @@ export default function AnalyticsDashboardPage() {
                         {/* Tooltip on hover */}
                         <div className="absolute -top-14 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-surface-primary border border-border-default rounded-md px-2 py-1 shadow-[2px_2px_0px_0px_var(--border-default)] text-[10px] whitespace-nowrap z-20">
                           <div className="font-bold text-text-primary">{day.date}</div>
-                          <div className="text-accent-primary">Views: {day.views}</div>
-                          <div className="text-sky-400">Visitors: {day.uniqueVisitors}</div>
+                          <div className="text-accent-primary">Views: {formatCompactNumber(day.views)}</div>
+                          <div className="text-sky-400">Visitors: {formatCompactNumber(day.uniqueVisitors)}</div>
                         </div>
 
                         {/* Bar pair */}
@@ -496,8 +536,8 @@ export default function AnalyticsDashboardPage() {
                               </span>
                             </div>
                           </td>
-                          <td className="py-3 px-3 font-bold text-text-primary">
-                            {page.views.toLocaleString()}
+                          <td className="py-3 px-3 font-bold text-text-primary" title={page.views.toLocaleString()}>
+                            {formatCompactNumber(page.views)}
                           </td>
                           <td className="py-3 px-3">
                             <div className="flex items-center gap-2 w-36">
@@ -575,8 +615,8 @@ export default function AnalyticsDashboardPage() {
                             <dev.icon size={13} className="text-text-primary" />
                             {dev.label}
                           </span>
-                          <span className="font-mono text-text-primary">
-                            {dev.count} ({pct}%)
+                          <span className="font-mono text-text-primary" title={dev.count.toLocaleString()}>
+                            {formatCompactNumber(dev.count)} ({pct}%)
                           </span>
                         </div>
                         <div className="h-2 rounded-full bg-surface-secondary overflow-hidden">
@@ -614,8 +654,8 @@ export default function AnalyticsDashboardPage() {
                             className="flex items-center justify-between text-xs font-semibold p-2 rounded-lg bg-surface-secondary/40 border border-border-default"
                           >
                             <span className="text-text-primary">{browser}</span>
-                            <span className="font-mono text-text-secondary">
-                              {count} ({pct}%)
+                            <span className="font-mono text-text-secondary" title={count.toLocaleString()}>
+                              {formatCompactNumber(count)} ({pct}%)
                             </span>
                           </div>
                         );
@@ -645,8 +685,8 @@ export default function AnalyticsDashboardPage() {
                             className="flex items-center justify-between text-xs font-semibold p-2 rounded-lg bg-surface-secondary/40 border border-border-default"
                           >
                             <span className="text-text-primary font-bold">{source}</span>
-                            <span className="font-mono text-accent-primary font-bold">
-                              {count} ({pct}%)
+                            <span className="font-mono text-accent-primary font-bold" title={count.toLocaleString()}>
+                              {formatCompactNumber(count)} ({pct}%)
                             </span>
                           </div>
                         );
@@ -710,10 +750,10 @@ export default function AnalyticsDashboardPage() {
 
                           <div className="flex items-center flex-wrap gap-4 text-xs">
                             {/* Hit Count */}
-                            <div className="flex items-center gap-1.5 font-bold">
+                            <div className="flex items-center gap-1.5 font-bold" title={endpoint.totalHits.toLocaleString()}>
                               <span className="text-text-secondary font-medium">Hits:</span>
                               <span className="font-mono text-text-primary">
-                                {endpoint.totalHits.toLocaleString()}
+                                {formatCompactNumber(endpoint.totalHits)}
                               </span>
                             </div>
 
@@ -732,18 +772,18 @@ export default function AnalyticsDashboardPage() {
                             {/* Status Buckets */}
                             <div className="flex items-center gap-1.5 text-[11px] font-mono font-bold">
                               {endpoint.statusBuckets.s2xx > 0 && (
-                                <span className="text-emerald-500">
-                                  {endpoint.statusBuckets.s2xx} ok
+                                <span className="text-emerald-500" title={endpoint.statusBuckets.s2xx.toLocaleString()}>
+                                  {formatCompactNumber(endpoint.statusBuckets.s2xx)} ok
                                 </span>
                               )}
                               {endpoint.statusBuckets.s4xx > 0 && (
-                                <span className="text-amber-500">
-                                  {endpoint.statusBuckets.s4xx} 4xx
+                                <span className="text-amber-500" title={endpoint.statusBuckets.s4xx.toLocaleString()}>
+                                  {formatCompactNumber(endpoint.statusBuckets.s4xx)} 4xx
                                 </span>
                               )}
                               {endpoint.statusBuckets.s5xx > 0 && (
-                                <span className="text-rose-500">
-                                  {endpoint.statusBuckets.s5xx} err
+                                <span className="text-rose-500" title={endpoint.statusBuckets.s5xx.toLocaleString()}>
+                                  {formatCompactNumber(endpoint.statusBuckets.s5xx)} err
                                 </span>
                               )}
                             </div>
@@ -767,7 +807,9 @@ export default function AnalyticsDashboardPage() {
                                 <Layers size={13} className="text-accent-primary" />
                                 Caller Source Breakdown for {endpoint.route}
                               </span>
-                              <span>Total Hits: {endpoint.totalHits}</span>
+                              <span title={endpoint.totalHits.toLocaleString()}>
+                                Total Hits: {formatCompactNumber(endpoint.totalHits)}
+                              </span>
                             </div>
 
                             {(!endpoint.callers || endpoint.callers.length === 0) ? (
@@ -793,8 +835,8 @@ export default function AnalyticsDashboardPage() {
                                           style={{ width: `${caller.percentage}%` }}
                                         />
                                       </div>
-                                      <span className="font-mono text-xs font-bold text-text-primary">
-                                        {caller.hits.toLocaleString()} hits
+                                      <span className="font-mono text-xs font-bold text-text-primary" title={caller.hits.toLocaleString()}>
+                                        {formatCompactNumber(caller.hits)} hits
                                       </span>
                                       <span className="text-[11px] font-mono text-text-secondary w-12 text-right">
                                         ({caller.percentage}%)
@@ -828,6 +870,19 @@ export default function AnalyticsDashboardPage() {
           </div>
         </>
       )}
+
+      {/* Clear Analytics Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={clearModalOpen}
+        onClose={() => setClearModalOpen(false)}
+        onConfirm={handleClearAnalytics}
+        title="Clear Site Analytics"
+        message="Are you sure you want to completely clear all site traffic and API analytics? All historical counts will be wiped so you can observe fresh telemetry."
+        confirmText={clearing ? "Clearing..." : "Clear Analytics"}
+        cancelText="Cancel"
+        loading={clearing}
+        confirmColor="red"
+      />
     </div>
   );
 }

@@ -142,19 +142,8 @@ function CreateEventFormContent() {
     allowParticipationClaims: false,
   });
 
-  const [positionModal, setPositionModal] = useState<{
-    isOpen: boolean;
-    type: "cover" | "banner";
-  }>({
-    isOpen: false,
-    type: "cover",
-  });
-
+  const [positionModalOpen, setPositionModalOpen] = useState(false);
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
-
-  const openPositionModal = (type: "cover" | "banner") => {
-    setPositionModal({ isOpen: true, type });
-  };
 
   const DEFAULT_RULES = useMemo(
     () => [
@@ -265,8 +254,10 @@ function CreateEventFormContent() {
             }
           }
 
-          initialCoverUrlRef.current = ev.coverImageUrl || "";
-          initialBannerUrlRef.current = ev.bannerImageUrl || "";
+          const initialImg = ev.bannerImageUrl || ev.coverImageUrl || ev.image || "";
+          const initialPos = ev.bannerImagePosition || ev.coverImagePosition || "50% 50%";
+          initialCoverUrlRef.current = initialImg;
+          initialBannerUrlRef.current = initialImg;
 
           const rawLinked =
             ev.linkedForm?._id ? String(ev.linkedForm._id)
@@ -303,10 +294,10 @@ function CreateEventFormContent() {
             registrationDeadlineTime: rTime || "23:59",
             maxParticipants: ev.maxParticipants ? String(ev.maxParticipants) : "",
             registrationFee: ev.registrationFee !== undefined ? String(ev.registrationFee) : "0",
-            coverImageUrl: ev.coverImageUrl || "",
-            coverImagePosition: ev.coverImagePosition || "50% 50%",
-            bannerImageUrl: ev.bannerImageUrl || "",
-            bannerImagePosition: ev.bannerImagePosition || "50% 50%",
+            coverImageUrl: initialImg,
+            coverImagePosition: initialPos,
+            bannerImageUrl: initialImg,
+            bannerImagePosition: initialPos,
             organizer: ev.organizer || "",
             contactEmail: ev.contactEmail || "",
             contactPhone: ev.contactPhone || "",
@@ -365,19 +356,13 @@ function CreateEventFormContent() {
     setError(null);
 
     try {
-      let finalCoverUrl = form.coverImageUrl;
-      let finalBannerUrl = form.bannerImageUrl;
+      let finalBannerUrl = form.bannerImageUrl || form.coverImageUrl;
 
-      // 1. Upload Cover Image if a local file was dropped or selected
-      if (coverFile) {
-        setSavingProgress("Compressing and uploading cover image…");
-        finalCoverUrl = await uploadAndCompressImage(coverFile, "events");
-      }
-
-      // 2. Upload Banner Image if a local file was dropped or selected
-      if (bannerFile) {
+      // Upload Banner Image if a local file was dropped or selected
+      const uploadFile = bannerFile || coverFile;
+      if (uploadFile) {
         setSavingProgress("Compressing and uploading banner image…");
-        finalBannerUrl = await uploadAndCompressImage(bannerFile, "events");
+        finalBannerUrl = await uploadAndCompressImage(uploadFile, "events");
       }
 
       setSavingProgress("Saving event details…");
@@ -396,8 +381,11 @@ function CreateEventFormContent() {
 
       const payload = {
         ...form,
-        coverImageUrl: finalCoverUrl,
+        coverImageUrl: finalBannerUrl,
         bannerImageUrl: finalBannerUrl,
+        image: finalBannerUrl,
+        bannerImagePosition: form.bannerImagePosition || form.coverImagePosition || "50% 50%",
+        coverImagePosition: form.bannerImagePosition || form.coverImagePosition || "50% 50%",
         linkedForm: registrationSource === "custom_form" ? (form.linkedForm || "") : "",
         registrationLink: registrationSource === "external_url" ? (form.registrationLink ? form.registrationLink.trim() : "") : "",
         providesCertificate: Boolean(form.providesCertificate),
@@ -424,33 +412,22 @@ function CreateEventFormContent() {
       }
 
       // Cleanup orphaned Cloudinary images if replaced
-      if (
-        initialCoverUrlRef.current &&
-        initialCoverUrlRef.current !== finalCoverUrl &&
-        initialCoverUrlRef.current.includes("cloudinary.com")
-      ) {
-        try {
-          await axios.delete(`${API_BASE_URL}/api/upload/image`, {
-            data: { url: initialCoverUrlRef.current },
-            withCredentials: true,
-          });
-        } catch (e) {
-          console.warn("Failed to delete replaced cover image from Cloudinary", e);
-        }
+      const oldImagesToDelete = new Set<string>();
+      if (initialCoverUrlRef.current && initialCoverUrlRef.current !== finalBannerUrl && initialCoverUrlRef.current.includes("cloudinary.com")) {
+        oldImagesToDelete.add(initialCoverUrlRef.current);
+      }
+      if (initialBannerUrlRef.current && initialBannerUrlRef.current !== finalBannerUrl && initialBannerUrlRef.current.includes("cloudinary.com")) {
+        oldImagesToDelete.add(initialBannerUrlRef.current);
       }
 
-      if (
-        initialBannerUrlRef.current &&
-        initialBannerUrlRef.current !== finalBannerUrl &&
-        initialBannerUrlRef.current.includes("cloudinary.com")
-      ) {
+      for (const oldUrl of oldImagesToDelete) {
         try {
           await axios.delete(`${API_BASE_URL}/api/upload/image`, {
-            data: { url: initialBannerUrlRef.current },
+            data: { url: oldUrl },
             withCredentials: true,
           });
         } catch (e) {
-          console.warn("Failed to delete replaced banner image from Cloudinary", e);
+          console.warn("Failed to delete replaced image from Cloudinary", e);
         }
       }
       router.push("/dashboard/manage-events");
@@ -552,11 +529,11 @@ function CreateEventFormContent() {
           </Field>
         </Section>
 
-        {/* ── 2. Event Images (Placed directly below General Info per user request) ── */}
-        <Section icon={ImageIcon} title="Event Images" color="text-purple-500">
+        {/* ── 2. Event Banner Image (Used for both Card & Event Banner) ── */}
+        <Section icon={ImageIcon} title="Event Banner Image" color="text-purple-500">
           <div className="flex items-center justify-between flex-wrap gap-2">
             <p className="text-xs text-slate-500 leading-relaxed">
-              Upload event cover and banner images below. You can position and frame both images to ensure they fit cards and headers perfectly.
+              Upload the event banner photo below. This single image is automatically used for both the event card display and the event detail hero banner.
             </p>
             <button
               type="button"
@@ -568,39 +545,27 @@ function CreateEventFormContent() {
             </button>
           </div>
 
-          <div className="space-y-5">
-            <UniversalImageDropzone
-              label="Cover Image"
-              hint="Shown in event cards on the homepage and events list."
-              aspectRatioHint="Recommended: 16:9 (e.g. 1280×720 or min 800×450px)"
-              currentUrl={form.coverImageUrl}
-              selectedFile={coverFile}
-              imagePosition={form.coverImagePosition}
-              onAdjustPosition={() => openPositionModal("cover")}
-              onFileSelect={(file) => setCoverFile(file)}
-              onClear={() => {
-                setCoverFile(null);
-                set("coverImageUrl", "");
-                set("coverImagePosition", "50% 50%");
-              }}
-            />
-
-            <UniversalImageDropzone
-              label="Banner / Hero Image"
-              hint="Full-width hero banner shown on top of the event detail page."
-              aspectRatioHint="Recommended: 21:9 or 16:9 widescreen"
-              currentUrl={form.bannerImageUrl}
-              selectedFile={bannerFile}
-              imagePosition={form.bannerImagePosition}
-              onAdjustPosition={() => openPositionModal("banner")}
-              onFileSelect={(file) => setBannerFile(file)}
-              onClear={() => {
-                setBannerFile(null);
-                set("bannerImageUrl", "");
-                set("bannerImagePosition", "50% 50%");
-              }}
-            />
-          </div>
+          <UniversalImageDropzone
+            label="Banner Image (Card & Hero Header)"
+            hint="This single banner image is displayed across event cards on the homepage/events list and as the hero header on the event detail page."
+            aspectRatioHint="Recommended: 16:9 widescreen (e.g. 1920×1080 or 1280×720px)"
+            currentUrl={form.bannerImageUrl || form.coverImageUrl}
+            selectedFile={bannerFile || coverFile}
+            imagePosition={form.bannerImagePosition || form.coverImagePosition}
+            onAdjustPosition={() => setPositionModalOpen(true)}
+            onFileSelect={(file) => {
+              setBannerFile(file);
+              setCoverFile(null);
+            }}
+            onClear={() => {
+              setBannerFile(null);
+              setCoverFile(null);
+              set("bannerImageUrl", "");
+              set("coverImageUrl", "");
+              set("bannerImagePosition", "50% 50%");
+              set("coverImagePosition", "50% 50%");
+            }}
+          />
         </Section>
 
         {/* ── 3. Date & Location ── */}
@@ -1265,50 +1230,37 @@ function CreateEventFormContent() {
         onClose={() => setPreviewModalOpen(false)}
         event={{
           ...form,
+          coverImageUrl: form.bannerImageUrl || form.coverImageUrl,
+          bannerImageUrl: form.bannerImageUrl || form.coverImageUrl,
+          coverImagePosition: form.bannerImagePosition || form.coverImagePosition,
+          bannerImagePosition: form.bannerImagePosition || form.coverImagePosition,
           tags,
           rewards,
           schedule,
           rules,
           contributors,
         }}
-        coverFile={coverFile}
-        bannerFile={bannerFile}
-        onOpenPositioner={(type) => {
-          openPositionModal(type);
-        }}
+        coverFile={bannerFile || coverFile}
+        bannerFile={bannerFile || coverFile}
       />
 
-      {/* Event Image Positioner Modal (rendered after preview modal with z-[100010] to ensure it always appears on top) */}
+      {/* Event Image Positioner Modal */}
       <EventImagePositionModal
-        isOpen={positionModal.isOpen}
-        onClose={() => setPositionModal((prev) => ({ ...prev, isOpen: false }))}
+        isOpen={positionModalOpen}
+        onClose={() => setPositionModalOpen(false)}
         imageUrl={
-          positionModal.type === "cover"
-            ? coverFile
-              ? URL.createObjectURL(coverFile)
-              : form.coverImageUrl
-            : bannerFile
-            ? URL.createObjectURL(bannerFile)
-            : form.bannerImageUrl
+          bannerFile || coverFile
+            ? URL.createObjectURL((bannerFile || coverFile)!)
+            : form.bannerImageUrl || form.coverImageUrl || null
         }
-        imageTitle={positionModal.type === "cover" ? "Cover Image" : "Banner / Hero Image"}
-        aspectRatio={positionModal.type === "cover" ? "16:9" : "21:9"}
-        currentPosition={
-          positionModal.type === "cover"
-            ? form.coverImagePosition
-            : form.bannerImagePosition
-        }
+        imageTitle="Banner"
+        currentPosition={form.bannerImagePosition || form.coverImagePosition}
         eventTitle={form.title || "Event Title Preview"}
         category={form.category || "EVENT"}
         onSavePosition={(pos) => {
-          if (positionModal.type === "cover") {
-            set("coverImagePosition", pos);
-          } else {
-            set("bannerImagePosition", pos);
-          }
-          toast.success(
-            `${positionModal.type === "cover" ? "Cover" : "Banner"} image position saved!`
-          );
+          set("bannerImagePosition", pos);
+          set("coverImagePosition", pos);
+          toast.success("Banner focal position saved!");
         }}
       />
     </div>

@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { api } from "@/lib/api";
 import {
   Bell,
+  BellRing,
   CheckCircle2,
   Calendar,
   Award,
@@ -85,7 +86,11 @@ function playNotificationChime() {
   }
 }
 
-export function NotificationCenter() {
+export interface NotificationCenterProps {
+  className?: string;
+}
+
+export function NotificationCenter({ className }: NotificationCenterProps = {}) {
   const { user, isAdmin } = useAuth();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -431,28 +436,27 @@ export function NotificationCenter() {
       <style dangerouslySetInnerHTML={{
         __html: `
           .notif-container { position: relative; display: inline-flex; align-items: center; }
-          .notif-trigger { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: var(--radius-md); border: 1px solid #000000; background: transparent; color: #000000; cursor: pointer; box-shadow: none; transition: all 150ms ease; outline: none; padding: 0; flex-shrink: 0; box-sizing: border-box; }
-          .dark .notif-trigger { border-color: #FFFFFF; color: #FFFFFF; background: transparent; box-shadow: none; }
-          .notif-trigger:hover { background-color: #f5f5f5 !important; color: #000000 !important; border-color: #000000 !important; box-shadow: 4px 4px 0px 0px #000000 !important; transform: translate(-4px, -4px) !important; }
-          .dark .notif-trigger:hover { background-color: #171717 !important; color: #FFFFFF !important; border-color: #FFFFFF !important; box-shadow: 4px 4px 0px 0px #FFFFFF !important; transform: translate(-4px, -4px) !important; }
-          .notif-trigger:active { transform: translate(0, 0) !important; box-shadow: none !important; }
-          .notif-trigger--open { background-color: var(--surface-secondary); border-color: #000000; color: #000000; }
-          .dark .notif-trigger--open { border-color: #FFFFFF; color: #FFFFFF; }
-          .notif-trigger__icon { transition: transform 150ms ease; }
-          .notif-trigger:hover .notif-trigger__icon { transform: rotate(12deg); }
-          .notif-badge { position: absolute; top: -5px; right: -5px; min-width: 17px; height: 17px; padding: 0 4px; background-color: var(--accent-error, #ef4444); color: #FFFFFF; border: 1.5px solid var(--surface-primary); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 9px; font-weight: 800; line-height: 1; pointer-events: none; box-shadow: none; }
+          .notif-trigger { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: var(--radius-md); border: 1px solid var(--border-default); background: var(--surface-elevated); color: var(--text-secondary); cursor: pointer; box-shadow: none; transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast); outline: none; padding: 0; flex-shrink: 0; box-sizing: border-box; }
+          .dark .notif-trigger { border-color: var(--border-default); box-shadow: none; color: var(--text-secondary); }
+          .notif-trigger:hover { background-color: var(--surface-secondary); color: var(--text-primary); border-color: var(--text-primary); box-shadow: 3px 3px 0px 0px var(--text-primary); transform: translate(-2px, -2px); }
+          .dark .notif-trigger:hover { border-color: var(--accent-primary); box-shadow: 3px 3px 0px 0px var(--accent-primary); color: #FFFFFF; }
+          .notif-trigger--open { border-color: var(--text-primary) !important; box-shadow: 3px 3px 0px 0px var(--text-primary) !important; color: var(--text-primary) !important; background-color: var(--surface-secondary); transform: translate(-2px, -2px); }
+          .dark .notif-trigger--open { border-color: var(--accent-primary) !important; box-shadow: 3px 3px 0px 0px var(--accent-primary) !important; color: #FFFFFF !important; }
+          .notif-trigger__icon { transition: transform var(--transition-fast); }
+          .notif-trigger:hover .notif-trigger__icon,
+          .notif-trigger--open .notif-trigger__icon { transform: rotate(12deg); }
+          .notif-badge { position: absolute; top: -5px; right: -5px; min-width: 17px; height: 17px; padding: 0 4px; background-color: var(--accent-error, #ef4444); color: #FFFFFF; border: 1.5px solid var(--surface-primary); border-radius: var(--radius-full); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 9px; font-weight: 800; line-height: 1; pointer-events: none; box-shadow: 1px 1px 0 var(--border-brutalist); }
           .notif-badge__ping { position: absolute; inset: -1px; border-radius: var(--radius-full); background-color: var(--accent-error, #ef4444); opacity: 0.75; animation: notifPing 1.8s cubic-bezier(0, 0, 0.2, 1) infinite; pointer-events: none; z-index: -1; }
           @keyframes notifPing { 0% { transform: scale(1); opacity: 0.8; } 75%, 100% { transform: scale(1.6); opacity: 0; } }
           .notif-popover { position: absolute; top: calc(100% + 8px); right: 0; width: 360px; max-width: calc(100vw - 24px); background: var(--surface-elevated); border: 1px solid black; border-radius: 12px; box-shadow: 4px 4px 0px 0px var(--accent-primary); z-index: 1000; display: flex; flex-direction: column; overflow: hidden; box-sizing: border-box; animation: notifSlideDown 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards; transform-origin: top right; }
           .dark .notif-popover { border-color: var(--border-default); box-shadow: 4px 4px 0px 0px var(--accent-primary); background: var(--surface-elevated); }
           @keyframes notifSlideDown { from { opacity: 0; transform: translateY(-6px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-          .notif-header { padding: 10px 12px; background: var(--surface-secondary); border-bottom: 1px solid var(--border-default); display: flex; align-items: center; justify-content: space-between; gap: 8px; box-sizing: border-box; flex-shrink: 0; flex-wrap: wrap; }
-          .notif-header__title-group { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+          .notif-header { padding: 10px 14px; background: var(--surface-secondary); border-bottom: 1px solid var(--border-default); display: flex; align-items: center; justify-content: space-between; gap: 8px; box-sizing: border-box; flex-shrink: 0; }
+          .notif-header__title-group { display: flex; align-items: center; gap: 8px; }
           .notif-header__title { font-family: var(--font-heading); font-size: var(--text-sm); font-weight: 800; color: var(--text-primary); letter-spacing: -0.2px; }
           .notif-header__count { font-family: var(--font-mono); font-size: 10px; font-weight: 700; padding: 2px 7px; background-color: var(--accent-primary); color: var(--accent-primary-text, #000000); border: 1px solid var(--border-brutalist); border-radius: var(--radius-sm); }
           .notif-header__count--zero { background-color: var(--surface-primary); color: var(--text-tertiary); border-color: var(--border-default); }
-          .notif-header__actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; flex-wrap: nowrap; }
-          .notif-header__btn { display: inline-flex; align-items: center; gap: 4px; background: transparent; border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 3px 8px; font-family: var(--font-body); font-size: 11px; font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all var(--transition-fast); white-space: nowrap; flex-shrink: 0; line-height: 1.2; }
+          .notif-header__btn { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; padding: 0; background: transparent; border: 1px solid var(--border-default); border-radius: var(--radius-sm); color: var(--text-secondary); cursor: pointer; transition: all var(--transition-fast); flex-shrink: 0; }
           .notif-header__btn:hover { background-color: var(--accent-primary-light); color: var(--text-primary); border-color: var(--accent-primary); }
           html.dark .notif-header__btn:hover, .dark .notif-header__btn:hover { background-color: color-mix(in srgb, var(--accent-primary) 25%, var(--surface-primary)); color: #FFFFFF !important; border-color: var(--accent-primary); }
           .notif-tabs { display: flex; background: var(--surface-primary); border-bottom: 1px solid var(--border-default); padding: 5px 8px; gap: 4px; box-sizing: border-box; flex-shrink: 0; }
@@ -509,13 +513,14 @@ export function NotificationCenter() {
       {/* Trigger Bell Button */}
       <button
         type="button"
-        className={`notif-trigger ${open ? "notif-trigger--open" : ""} ${unreadCount > 0 ? "notif-trigger--has-unread" : ""}`}
+        title="Notifications"
+        className={`notif-trigger ${open ? "notif-trigger--open" : ""} ${unreadCount > 0 ? "notif-trigger--has-unread" : ""} ${className || ""}`.trim()}
         onClick={() => setOpen((prev) => !prev)}
         aria-label={`Notifications (${unreadCount} unread)`}
         aria-expanded={open}
         aria-haspopup="dialog"
       >
-        <Bell size={16} className="notif-trigger__icon" />
+        <Bell size={17} className="notif-trigger__icon" />
         {unreadCount > 0 && (
           <span className="notif-badge" aria-label={`${unreadCount} unread alerts`}>
             <span className="notif-badge__ping" aria-hidden="true" />
@@ -538,16 +543,16 @@ export function NotificationCenter() {
               )}
             </div>
 
-            <div className="notif-header__actions">
+            <div className="notif-header__actions flex items-center gap-1.5">
               {browserPermission !== "granted" && (
                 <button
                   type="button"
                   className="notif-header__btn"
                   onClick={requestBrowserPermission}
                   title="Enable browser alerts"
+                  aria-label="Enable browser alerts"
                 >
-                  <span className="shrink-0">🔔</span>
-                  <span>Enable Alerts</span>
+                  <BellRing size={13} />
                 </button>
               )}
               {unreadCount > 0 && (
@@ -556,9 +561,9 @@ export function NotificationCenter() {
                   className="notif-header__btn"
                   onClick={markAllAsRead}
                   title="Mark all as read"
+                  aria-label="Mark all as read"
                 >
-                  <CheckCheck size={13} className="shrink-0" />
-                  <span>Mark read</span>
+                  <CheckCheck size={13} />
                 </button>
               )}
             </div>
@@ -666,11 +671,11 @@ export function NotificationCenter() {
           {/* Footer */}
           <div className="notif-footer">
             <Link
-              href="/dashboard?mode=personal&tab=overview"
+              href="/profile"
               className="notif-footer__link"
               onClick={() => setOpen(false)}
             >
-              Member Profile
+              Profile
             </Link>
 
             {notifications.length > 0 && (

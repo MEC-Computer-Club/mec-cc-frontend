@@ -17,6 +17,32 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
+  // Shortcut: Ctrl+B / Cmd+B to toggle sidebar collapse/expand
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === "b" || e.key === "B")) {
+        const target = e.target as HTMLElement | null;
+        const isEditable =
+          target &&
+          (target.tagName === "INPUT" ||
+            target.tagName === "TEXTAREA" ||
+            target.isContentEditable);
+
+        if (!isEditable) {
+          e.preventDefault();
+          if (typeof window !== "undefined" && window.innerWidth < 1024) {
+            setIsSidebarOpen((prev) => !prev);
+          } else {
+            setIsSidebarCollapsed((prev) => !prev);
+          }
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   const userRole = String(user?.role || "").toLowerCase();
   const isExecutive =
     userRole === "admin" ||

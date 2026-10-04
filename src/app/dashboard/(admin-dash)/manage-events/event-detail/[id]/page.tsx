@@ -427,7 +427,7 @@ function OverviewTab({ event }: { event: EventData }) {
   const pendingTotal =
     typeof event.pendingCount === "number"
       ? event.pendingCount
-      : event.pendingParticipants.length;
+      : 0;
 
   return (
     <div className="space-y-6">
@@ -522,8 +522,6 @@ function OverviewTab({ event }: { event: EventData }) {
 // ─────────────────────────────────────────────────────────────────────────────
 function ParticipantsTab({
   event,
-  onApprove,
-  onReject,
   onApproveClaim,
   onRejectClaim,
   onRemove,
@@ -532,10 +530,9 @@ function ParticipantsTab({
   inFlight,
   onRefresh,
   showToast,
+  onEmailApplicant,
 }: {
   event: EventData;
-  onApprove: (targetId: string) => Promise<void>;
-  onReject: (targetId: string) => Promise<void>;
   onApproveClaim: (claimId: string) => Promise<void>;
   onRejectClaim: (claimId: string) => Promise<void>;
   onRemove: (userId: string) => Promise<void>;
@@ -544,6 +541,7 @@ function ParticipantsTab({
   inFlight: Set<string>;
   onRefresh: () => void;
   showToast: (msg: string, type?: "success" | "error") => void;
+  onEmailApplicant?: (email: string, name: string) => void;
 }) {
   const [search, setSearch] = useState("");
   const [addMode, setAddMode] = useState<"member" | "guest">("member");
@@ -622,6 +620,7 @@ function ParticipantsTab({
         eventId={event._id}
         onSubmissionsUpdated={onRefresh}
         showToast={showToast}
+        onEmailApplicant={onEmailApplicant}
       />
 
       {/* ── Participation Claims Section (Archived / Past Event Claims) ── */}
@@ -731,129 +730,6 @@ function ParticipantsTab({
                       <span className="font-bold text-slate-500">Proof / Note: </span>
                       <span className="whitespace-pre-wrap">{claim.notes}</span>
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {event.pendingParticipants.length > 0 && (
-        <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800 rounded-2xl p-5">
-          <h3 className="font-semibold text-amber-800 dark:text-amber-300 mb-4 flex items-center gap-2">
-            <Clock size={16} /> Pending Approvals ({event.pendingParticipants.length})
-          </h3>
-          <div className="space-y-4">
-            {event.pendingParticipants.map((p) => {
-              const targetId = p._id || p.userId?._id || "";
-              const isTeam = !!p.teamName;
-
-              return (
-                <div key={p._id} className="bg-white dark:bg-slate-900 rounded-xl p-4 border border-amber-200 dark:border-amber-900/50 shadow-sm space-y-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
-                    <div className="flex items-center gap-3">
-                      {isTeam ? (
-                        <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-600 dark:text-amber-400 font-bold text-lg">
-                          🏆
-                        </div>
-                      ) : (
-                        p.userId && <Avatar user={p.userId} fallbackName={p.leaderName || p.teamName} size={40} />
-                      )}
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h4 className="text-base font-bold text-slate-900 dark:text-white">
-                            {isTeam ? p.teamName : p.userId?.fullName || p.leaderName}
-                          </h4>
-                          {isTeam && (
-                            <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
-                              Squad / Team
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-slate-500">
-                          Registered {new Date(p.registeredAt).toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-2 self-end sm:self-auto flex-shrink-0">
-                      <button
-                        onClick={() => onApprove(targetId)}
-                        disabled={inFlight.has(targetId)}
-                        className="flex items-center gap-1.5 px-3.5 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-semibold shadow-sm transition disabled:opacity-50"
-                      >
-                        {inFlight.has(targetId) ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
-                        Approve {isTeam ? "Squad" : ""}
-                      </button>
-                      <button
-                        onClick={() => onReject(targetId)}
-                        disabled={inFlight.has(targetId)}
-                        className="flex items-center gap-1.5 px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold transition disabled:opacity-50"
-                      >
-                        <X size={13} /> Reject
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* If team: Captain and Roster */}
-                  {isTeam ? (
-                    <div className="space-y-3 pt-1">
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700">
-                        <div>
-                          <span className="text-slate-400 font-medium">Captain: </span>
-                          <span className="font-semibold text-slate-700 dark:text-slate-200">{p.leaderName}</span>
-                          {p.inGameId && <span className="text-amber-600 font-mono ml-1">({p.inGameId})</span>}
-                        </div>
-                        <div>
-                          <span className="text-slate-400 font-medium">Email: </span>
-                          <span className="font-medium text-slate-700 dark:text-slate-200">{p.leaderEmail}</span>
-                        </div>
-                        <div>
-                          <span className="text-slate-400 font-medium">Phone: </span>
-                          <span className="font-medium text-slate-700 dark:text-slate-200">{p.leaderPhone || "—"}</span>
-                        </div>
-                      </div>
-
-                      {p.members && p.members.length > 0 && (
-                        <div>
-                          <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">
-                            Squad Roster ({p.members.length} players):
-                          </p>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-                            {p.members.map((m, mIdx) => (
-                              <div key={mIdx} className="text-xs p-2 rounded-md bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                                <div className="font-bold text-slate-800 dark:text-slate-100 flex items-center justify-between">
-                                  <span>{mIdx + 1}. {m.fullName}</span>
-                                  {m.studentId && <span className="text-[10px] text-slate-400">{m.studentId}</span>}
-                                </div>
-                                {m.inGameId && (
-                                  <div className="text-[11px] text-amber-600 dark:text-amber-400 font-mono mt-0.5">
-                                    UID: {m.inGameId}
-                                  </div>
-                                )}
-                                {m.department && (
-                                  <div className="text-[10px] text-slate-400">
-                                    Dept: {m.department}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    p.userId && (
-                      <div className="text-xs text-slate-500">
-                        <p>{p.userId.email}</p>
-                        {(p.userId.studentId || p.userId.department) && (
-                          <p className="text-slate-400">
-                            {[p.userId.studentId, p.userId.department].filter(Boolean).join(" · ")}
-                          </p>
-                        )}
-                      </div>
-                    )
                   )}
                 </div>
               );
@@ -4134,11 +4010,26 @@ export default function EventDetailPage() {
   const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
   const [inFlight, setInFlight] = useState<Set<string>>(new Set());
   const [winnerSaving, setWinnerSaving] = useState(false);
+  const [mailingPrefill, setMailingPrefill] = useState<{
+    audience: "approved_participants" | "pending_registrants" | "volunteers" | "sponsors" | "all" | "custom";
+    customEmails: string;
+    deliveryMethod: "bcc" | "cc" | "individual";
+  } | null>(null);
 
   const showToast = useCallback((msg: string, type: "success" | "error" = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3500);
   }, []);
+
+  const handleEmailApplicant = useCallback((email: string, name: string) => {
+    setMailingPrefill({
+      audience: "custom",
+      customEmails: email,
+      deliveryMethod: "individual",
+    });
+    setActiveTab("mailing");
+    showToast(`Composing personalized email for ${name || email}`);
+  }, [showToast]);
 
   const addInFlight = useCallback((key: string) =>
     setInFlight((s) => new Set(s).add(key)), []);
@@ -4426,7 +4317,7 @@ export default function EventDetailPage() {
   }
 
   return (
-    <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
+    <div className={`${activeTab === "mailing" ? "max-w-7xl" : "max-w-5xl"} mx-auto px-4 sm:px-6 py-8 space-y-6 transition-all duration-300`}>
       {/* Header */}
       <div className="flex items-center gap-3">
         <button
@@ -4451,7 +4342,7 @@ export default function EventDetailPage() {
               onClick={() => setActiveTab(tabId)}
               badge={
                 tabId === "participants"
-                  ? event.pendingParticipants.length
+                  ? (event.pendingCount || undefined)
                   : tabId === "volunteers"
                   ? (event.contributors?.length || undefined)
                   : undefined
@@ -4470,8 +4361,6 @@ export default function EventDetailPage() {
       {activeTab === "participants" && (
         <ParticipantsTab
           event={event}
-          onApprove={handleApprove}
-          onReject={handleReject}
           onApproveClaim={handleApproveClaim}
           onRejectClaim={handleRejectClaim}
           onRemove={handleRemoveAttendee}
@@ -4480,6 +4369,7 @@ export default function EventDetailPage() {
           inFlight={inFlight}
           onRefresh={fetchEvent}
           showToast={showToast}
+          onEmailApplicant={handleEmailApplicant}
         />
       )}
 
@@ -4529,6 +4419,9 @@ export default function EventDetailPage() {
         <EventMailingTab
           event={event}
           showToast={showToast}
+          initialAudience={mailingPrefill?.audience}
+          initialCustomEmails={mailingPrefill?.customEmails}
+          initialDeliveryMethod={mailingPrefill?.deliveryMethod}
         />
       )}
 

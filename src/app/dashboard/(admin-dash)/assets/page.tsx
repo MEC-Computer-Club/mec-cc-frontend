@@ -32,8 +32,6 @@ import { API_BASE_URL } from "@/lib/api";
 import {
   BorrowedEquipment,
   ClubAsset,
-  INITIAL_BORROWED_EQUIPMENT,
-  INITIAL_CLUB_ASSETS,
   BorrowedItemStatus,
   ClubAssetStatus,
   AssetCondition,
@@ -92,27 +90,10 @@ export default function AssetsPage() {
   }, []);
 
   // Data States
-  const [borrowedItems, setBorrowedItems] = useState<BorrowedEquipment[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY_BORROWED);
-        if (stored) return JSON.parse(stored);
-      } catch {}
-    }
-    return INITIAL_BORROWED_EQUIPMENT;
-  });
-
-  const [clubAssets, setClubAssets] = useState<ClubAsset[]>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY_CLUB);
-        if (stored) return JSON.parse(stored);
-      } catch {}
-    }
-    return INITIAL_CLUB_ASSETS;
-  });
-
+  const [borrowedItems, setBorrowedItems] = useState<BorrowedEquipment[]>([]);
+  const [clubAssets, setClubAssets] = useState<ClubAsset[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Search & Filter States
   const [searchQuery, setSearchQuery] = useState("");
@@ -146,36 +127,35 @@ export default function AssetsPage() {
     }
   }, [isAnyModalOpen]);
 
-  // Sync to localStorage on mount if not yet written
-  useEffect(() => {
+  // Fetch live assets from database
+  const fetchAssets = useCallback(async () => {
     try {
-      if (!localStorage.getItem(STORAGE_KEY_BORROWED)) {
-        localStorage.setItem(STORAGE_KEY_BORROWED, JSON.stringify(INITIAL_BORROWED_EQUIPMENT));
+      setIsLoading(true);
+      const res = await axios.get(`${API_BASE_URL}/api/assets`, {
+        withCredentials: true,
+      });
+      if (res.data?.success && Array.isArray(res.data.data)) {
+        const all: any[] = res.data.data;
+        setBorrowedItems(all.filter((a) => a.assetType === "borrowed"));
+        setClubAssets(all.filter((a) => a.assetType === "club"));
       }
-      if (!localStorage.getItem(STORAGE_KEY_CLUB)) {
-        localStorage.setItem(STORAGE_KEY_CLUB, JSON.stringify(INITIAL_CLUB_ASSETS));
-      }
-    } catch (e) {
-      console.error("Error setting initial assets to storage:", e);
+    } catch (err) {
+      console.error("Error loading assets from database:", err);
     } finally {
+      setIsLoading(false);
       setIsLoaded(true);
     }
   }, []);
 
-  // Save changes to storage
-  const saveBorrowed = useCallback((items: BorrowedEquipment[]) => {
-    setBorrowedItems(items);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_KEY_BORROWED, JSON.stringify(items));
-    }
-  }, []);
+  useEffect(() => {
+    // Clear out stale mock data from previous localStorage versions
+    try {
+      localStorage.removeItem(STORAGE_KEY_BORROWED);
+      localStorage.removeItem(STORAGE_KEY_CLUB);
+    } catch {}
 
-  const saveClub = useCallback((items: ClubAsset[]) => {
-    setClubAssets(items);
-    if (typeof window !== "undefined") {
-      localStorage.setItem(STORAGE_KEY_CLUB, JSON.stringify(items));
-    }
-  }, []);
+    fetchAssets();
+  }, [fetchAssets]);
 
   // Filter options
   const statusOptionsBorrowed: FilterOption[] = [
@@ -315,53 +295,35 @@ export default function AssetsPage() {
   }, [borrowedItems, clubAssets]);
 
   // Handle Quick Return of a borrowed equipment
-  const handleConfirmReturn = () => {
+  const handleConfirmReturn = async () => {
     if (!returningItem) return;
-
-    const previousStatus = returningItem.status;
-    const previousReturnDate = returningItem.returnDate || "Not Returned";
-    const previousLocation = returningItem.location;
 
     const todayStr = new Date().toISOString().split("T")[0];
     const updatedLocation = `${returningItem.borrowedFrom} (Returned)`;
+    const updatedNotes = returnNotes
+      ? `${returningItem.notes ? returningItem.notes + " | " : ""}Returned on ${todayStr}: ${returnNotes}`
+      : returningItem.notes;
 
-    const updated = borrowedItems.map((item) => {
-      if (item.id === returningItem.id) {
-        return {
-          ...item,
-          status: "Returned" as BorrowedItemStatus,
+    try {
+      await axios.put(
+        `${API_BASE_URL}/api/assets/${returningItem.id}`,
+        {
+          status: "Returned",
           returnDate: todayStr,
           location: updatedLocation,
-          notes: returnNotes
-            ? `${item.notes ? item.notes + " | " : ""}Returned on ${todayStr}: ${returnNotes}`
-            : item.notes,
-          updatedAt: new Date().toISOString(),
-        };
-      }
-      return item;
-    });
-
-    saveBorrowed(updated);
-
-    // Audit log
-    logAdminActivity({
-      actorName: currentActorName,
-      actorRole: currentActorRole,
-      actorEmail: currentActorEmail,
-      action: "STATUS_CHANGE",
-      targetType: "ASSET",
-      targetTitle: returningItem.name,
-      description: `${currentActorName} marked borrowed asset '${returningItem.name}' as Returned to ${returningItem.borrowedFrom}. Previous version was '${previousStatus}'.`,
-      diff: [
-        { field: "Status", previousValue: previousStatus, newValue: "Returned" },
-        { field: "Return Date", previousValue: previousReturnDate, newValue: todayStr },
-        { field: "Location", previousValue: previousLocation, newValue: updatedLocation },
-        ...(returnNotes ? [{ field: "Return Notes", previousValue: "N/A", newValue: returnNotes }] : []),
-      ],
-    });
-
-    setReturningItem(null);
-    setReturnNotes("");
+          notes: updatedNotes,
+        },
+        { withCredentials: true }
+      );
+      toast.success(`'${returningItem.name}' marked as Returned.`);
+      await fetchAssets();
+    } catch (err) {
+      console.error("Failed to return asset:", err);
+      toast.error("Failed to update asset return status.");
+    } finally {
+      setReturningItem(null);
+      setReturnNotes("");
+    }
   };
 
   // Delete Borrowed Item trigger
@@ -375,48 +337,26 @@ export default function AssetsPage() {
   };
 
   // Confirm and Execute Deletion
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     if (!itemToDelete) return;
     const { type, item } = itemToDelete;
 
-    if (type === "borrowed") {
-      const updated = borrowedItems.filter((i) => i.id !== item.id);
-      saveBorrowed(updated);
-
-      logAdminActivity({
-        actorName: currentActorName,
-        actorRole: currentActorRole,
-        actorEmail: currentActorEmail,
-        action: "DELETE",
-        targetType: "ASSET",
-        targetTitle: item.name,
-        description: `${currentActorName} deleted borrowed asset record '${item.name}' (Qty: ${item.quantity}, From: ${(item as BorrowedEquipment).borrowedFrom}).`,
-        diff: [
-          { field: "Record Status", previousValue: "Active Record", newValue: "Deleted" },
-          { field: "Previous State", previousValue: (item as BorrowedEquipment).status, newValue: "N/A" },
-        ],
+    try {
+      await axios.delete(`${API_BASE_URL}/api/assets/${item.id}`, {
+        withCredentials: true,
       });
-      toast.success(`'${item.name}' deleted from borrowed inventory.`);
-    } else {
-      const updated = clubAssets.filter((i) => i.id !== item.id);
-      saveClub(updated);
-
-      logAdminActivity({
-        actorName: currentActorName,
-        actorRole: currentActorRole,
-        actorEmail: currentActorEmail,
-        action: "DELETE",
-        targetType: "ASSET",
-        targetTitle: item.name,
-        description: `${currentActorName} deleted club asset '${item.name}' (Qty: ${item.quantity}).`,
-        diff: [
-          { field: "Record Status", previousValue: "Active Record", newValue: "Deleted" },
-        ],
-      });
-      toast.success(`'${item.name}' deleted from club assets.`);
+      if (type === "borrowed") {
+        toast.success(`'${item.name}' deleted from borrowed inventory.`);
+      } else {
+        toast.success(`'${item.name}' deleted from club assets.`);
+      }
+      await fetchAssets();
+    } catch (err) {
+      console.error("Failed to delete asset:", err);
+      toast.error("Failed to delete asset record.");
+    } finally {
+      setItemToDelete(null);
     }
-
-    setItemToDelete(null);
   };
 
   return (
@@ -905,7 +845,16 @@ export default function AssetsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-default text-xs sm:text-sm">
-                {filteredBorrowed.length === 0 ? (
+                {isLoading && !isLoaded ? (
+                  <tr>
+                    <td colSpan={6} className="py-12 text-center text-text-secondary">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <div className="w-6 h-6 border-2 border-accent-primary border-t-transparent rounded-full animate-spin" />
+                        <span className="text-xs font-mono font-bold">Loading assets from database...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredBorrowed.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="py-12 text-center text-text-tertiary">
                       <Package size={36} className="mx-auto mb-2 opacity-40" />
@@ -1114,7 +1063,16 @@ export default function AssetsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-default text-xs sm:text-sm">
-                {filteredClub.length === 0 ? (
+                {isLoading && !isLoaded ? (
+                  <tr>
+                    <td colSpan={5} className="py-12 text-center text-text-secondary">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <div className="w-6 h-6 border-2 border-accent-primary border-t-transparent rounded-full animate-spin" />
+                        <span className="text-xs font-mono font-bold">Loading assets from database...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredClub.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="py-12 text-center text-text-tertiary">
                       <Package size={36} className="mx-auto mb-2 opacity-40" />
@@ -1367,57 +1325,31 @@ export default function AssetsPage() {
             setIsAddBorrowedOpen(false);
             setEditingBorrowed(null);
           }}
-          onSave={(item) => {
-            if (editingBorrowed) {
-              // Edit flow
-              const previous = editingBorrowed;
-              const updated = borrowedItems.map((i) => (i.id === item.id ? item : i));
-              saveBorrowed(updated);
-
-              // Generate diff
-              const diffItems = [];
-              if (previous.status !== item.status)
-                diffItems.push({ field: "Status", previousValue: previous.status, newValue: item.status });
-              if (previous.quantity !== item.quantity)
-                diffItems.push({ field: "Quantity", previousValue: previous.quantity, newValue: item.quantity });
-              if (previous.location !== item.location)
-                diffItems.push({ field: "Location", previousValue: previous.location, newValue: item.location });
-              if (previous.borrowedBy !== item.borrowedBy)
-                diffItems.push({ field: "Borrowed By", previousValue: previous.borrowedBy, newValue: item.borrowedBy });
-
-              logAdminActivity({
-                actorName: currentActorName,
-                actorRole: currentActorRole,
-                actorEmail: currentActorEmail,
-                action: "UPDATE",
-                targetType: "ASSET",
-                targetTitle: item.name,
-                description: `${currentActorName} modified borrowed equipment '${item.name}' details.`,
-                diff: diffItems.length > 0 ? diffItems : [{ field: "Details", previousValue: "Modified", newValue: "Saved" }],
-              });
-            } else {
-              // Add flow
-              const updated = [item, ...borrowedItems];
-              saveBorrowed(updated);
-
-              logAdminActivity({
-                actorName: currentActorName,
-                actorRole: currentActorRole,
-                actorEmail: currentActorEmail,
-                action: "CREATE",
-                targetType: "ASSET",
-                targetTitle: item.name,
-                description: `${currentActorName} logged new borrowed equipment '${item.name}' (Qty: ${item.quantity}) from ${item.borrowedFrom}.`,
-                diff: [
-                  { field: "Status", previousValue: "N/A", newValue: item.status },
-                  { field: "Quantity", previousValue: "0", newValue: String(item.quantity) },
-                  { field: "Borrowed By", previousValue: "N/A", newValue: item.borrowedBy },
-                  { field: "Location", previousValue: "N/A", newValue: item.location },
-                ],
-              });
+          onSave={async (item) => {
+            try {
+              if (editingBorrowed) {
+                await axios.put(
+                  `${API_BASE_URL}/api/assets/${item.id}`,
+                  { ...item, assetType: "borrowed" },
+                  { withCredentials: true }
+                );
+                toast.success(`'${item.name}' updated successfully.`);
+              } else {
+                await axios.post(
+                  `${API_BASE_URL}/api/assets`,
+                  { ...item, assetType: "borrowed" },
+                  { withCredentials: true }
+                );
+                toast.success(`'${item.name}' logged to borrowed inventory.`);
+              }
+              await fetchAssets();
+            } catch (err: any) {
+              console.error("Failed to save borrowed equipment:", err);
+              toast.error(err?.response?.data?.message || "Failed to save equipment record.");
+            } finally {
+              setIsAddBorrowedOpen(false);
+              setEditingBorrowed(null);
             }
-            setIsAddBorrowedOpen(false);
-            setEditingBorrowed(null);
           }}
         />
       )}
@@ -1430,53 +1362,31 @@ export default function AssetsPage() {
             setIsAddClubOpen(false);
             setEditingClub(null);
           }}
-          onSave={(asset) => {
-            if (editingClub) {
-              // Edit flow
-              const previous = editingClub;
-              const updated = clubAssets.map((a) => (a.id === asset.id ? asset : a));
-              saveClub(updated);
-
-              const diffItems = [];
-              if (previous.status !== asset.status)
-                diffItems.push({ field: "Status", previousValue: previous.status, newValue: asset.status });
-              if (previous.custodian !== asset.custodian)
-                diffItems.push({ field: "Custodian", previousValue: previous.custodian, newValue: asset.custodian });
-              if (previous.location !== asset.location)
-                diffItems.push({ field: "Location", previousValue: previous.location, newValue: asset.location });
-
-              logAdminActivity({
-                actorName: currentActorName,
-                actorRole: currentActorRole,
-                actorEmail: currentActorEmail,
-                action: "UPDATE",
-                targetType: "ASSET",
-                targetTitle: asset.name,
-                description: `${currentActorName} updated club asset '${asset.name}'.`,
-                diff: diffItems.length > 0 ? diffItems : [{ field: "Details", previousValue: "Old", newValue: "New" }],
-              });
-            } else {
-              // Add flow
-              const updated = [asset, ...clubAssets];
-              saveClub(updated);
-
-              logAdminActivity({
-                actorName: currentActorName,
-                actorRole: currentActorRole,
-                actorEmail: currentActorEmail,
-                action: "CREATE",
-                targetType: "ASSET",
-                targetTitle: asset.name,
-                description: `${currentActorName} added new club asset '${asset.name}' (Qty: ${asset.quantity}).`,
-                diff: [
-                  { field: "Custodian", previousValue: "N/A", newValue: asset.custodian },
-                  { field: "Quantity", previousValue: "0", newValue: String(asset.quantity) },
-                  { field: "Status", previousValue: "N/A", newValue: asset.status },
-                ],
-              });
+          onSave={async (asset) => {
+            try {
+              if (editingClub) {
+                await axios.put(
+                  `${API_BASE_URL}/api/assets/${asset.id}`,
+                  { ...asset, assetType: "club" },
+                  { withCredentials: true }
+                );
+                toast.success(`'${asset.name}' updated successfully.`);
+              } else {
+                await axios.post(
+                  `${API_BASE_URL}/api/assets`,
+                  { ...asset, assetType: "club" },
+                  { withCredentials: true }
+                );
+                toast.success(`'${asset.name}' added to club assets.`);
+              }
+              await fetchAssets();
+            } catch (err: any) {
+              console.error("Failed to save club asset:", err);
+              toast.error(err?.response?.data?.message || "Failed to save club asset.");
+            } finally {
+              setIsAddClubOpen(false);
+              setEditingClub(null);
             }
-            setIsAddClubOpen(false);
-            setEditingClub(null);
           }}
         />
       )}

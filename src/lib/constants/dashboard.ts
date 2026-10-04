@@ -133,17 +133,13 @@ export const ADMIN_MENU_SECTIONS: MenuSection[] = [
         iconColor: "text-slate-300",
         href: "/dashboard/page-editor",
       },
-      ...(process.env.NODE_ENV === "development"
-        ? [
-            {
-              key: "media",
-              label: "Cloudinary Media",
-              icon: ImageIcon,
-              iconColor: "text-purple-400",
-              href: "/dashboard/media",
-            },
-          ]
-        : []),
+      {
+        key: "media",
+        label: "Cloudinary Media",
+        icon: ImageIcon,
+        iconColor: "text-purple-400",
+        href: "/dashboard/media",
+      },
     ],
   },
   {
@@ -298,17 +294,13 @@ export const MODERATOR_MENU_SECTIONS: MenuSection[] = [
         iconColor: "text-slate-300",
         href: "/dashboard/page-editor",
       },
-      ...(process.env.NODE_ENV === "development"
-        ? [
-            {
-              key: "media",
-              label: "Cloudinary Media",
-              icon: ImageIcon,
-              iconColor: "text-purple-400",
-              href: "/dashboard/media",
-            },
-          ]
-        : []),
+      {
+        key: "media",
+        label: "Cloudinary Media",
+        icon: ImageIcon,
+        iconColor: "text-purple-400",
+        href: "/dashboard/media",
+      },
     ],
   },
   {

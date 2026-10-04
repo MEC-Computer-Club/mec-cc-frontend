@@ -143,10 +143,10 @@ export default async function EventDetailPage({
 
         {/* ── 1. Hero Header Banner ── */}
         <div className="relative rounded-2xl border-2 border-border-brutalist bg-surface-elevated overflow-hidden shadow-[6px_6px_0px_var(--border-brutalist)]">
-          {event.image && (() => {
+          {(event.bannerImageUrl || event.coverImageUrl || event.image) && (() => {
             const rawBannerPos = event.bannerImagePosition || event.coverImagePosition || "50% 50%";
             const parsedBanner = parseImagePosition(rawBannerPos);
-            const bannerSrc = event.bannerImageUrl || event.image;
+            const bannerSrc = (event.bannerImageUrl || event.coverImageUrl || event.image)!;
             return (
               <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] md:aspect-[2.3/1] min-h-[260px] max-h-[520px] bg-surface-secondary overflow-hidden border-b-2 border-border-brutalist flex items-center justify-center">
                 {(parsedBanner.isContain || parsedBanner.scaleX < 1) && (

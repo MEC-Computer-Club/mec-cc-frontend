@@ -66,8 +66,8 @@ const SidebarContent: React.FC<{
             type="button"
             onClick={onToggleCollapse}
             className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary transition"
-            title="Expand Sidebar"
-            aria-label="Expand Sidebar"
+            title="Expand Sidebar (Ctrl+B)"
+            aria-label="Expand Sidebar (Ctrl+B)"
           >
             <Menu size={18} />
           </button>
@@ -123,8 +123,8 @@ const SidebarContent: React.FC<{
               type="button"
               onClick={onToggleCollapse || onClose}
               className="p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-secondary transition"
-              title="Collapse Sidebar"
-              aria-label="Collapse Sidebar"
+              title="Collapse Sidebar (Ctrl+B)"
+              aria-label="Collapse Sidebar (Ctrl+B)"
             >
               <X size={17} />
             </button>

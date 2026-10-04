@@ -7,6 +7,7 @@ import { api, API_BASE_URL } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { useRoleGuard } from "@/hooks/useRoleGuard";
 import FilterSelect, { FilterOption } from "@/app/dashboard/components/FilterSelect";
+import EmailTemplatesManager from "@/components/dashboard/EmailTemplatesManager";
 import EmailRoutingSettings from "@/components/dashboard/EmailRoutingSettings";
 import ClubRoomAdminCard from "@/components/dashboard/ClubRoomAdminCard";
 import toast from "react-hot-toast";
@@ -191,432 +192,7 @@ export default function AdministrationPage() {
    TAB 1: EMAIL TEMPLATES VISUAL CUSTOMIZER & PREVIEWER
 ───────────────────────────────────────────────────────────── */
 function EmailTemplatesTab({ currentUser, isAdmin }: { currentUser: any; isAdmin: boolean }) {
-  const [templates, setTemplates] = useState<EmailTemplateItem[]>([]);
-  const [selectedKey, setSelectedKey] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(true);
-  const [saving, setSaving] = useState<boolean>(false);
-  const [viewMode, setViewMode] = useState<"preview" | "code">("preview");
-
-  // Edit buffer
-  const [editSubject, setEditSubject] = useState("");
-  const [editHtml, setEditHtml] = useState("");
-  const [copiedVar, setCopiedVar] = useState<string | null>(null);
-
-  // Test send modal
-  const [isTestModalOpen, setIsTestModalOpen] = useState(false);
-  const [testEmail, setTestEmail] = useState(currentUser?.email || "");
-  const [sendingTest, setSendingTest] = useState(false);
-
-  const fetchTemplates = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await axios.get(`${API_BASE_URL}/api/email-templates`, { withCredentials: true });
-      if (res.data?.success && Array.isArray(res.data.data)) {
-        setTemplates(res.data.data);
-        if (res.data.data.length > 0 && !selectedKey) {
-          const first = res.data.data[0];
-          setSelectedKey(first.key);
-          setEditSubject(first.subject);
-          setEditHtml(first.html);
-        }
-      }
-    } catch {
-      toast.error("Failed to load email templates catalog");
-    } finally {
-      setLoading(false);
-    }
-  }, [selectedKey]);
-
-  useEffect(() => {
-    fetchTemplates();
-  }, [fetchTemplates]);
-
-  const currentTemplate = useMemo(() => {
-    return templates.find((t) => t.key === selectedKey) || templates[0];
-  }, [templates, selectedKey]);
-
-  const handleSelectTemplate = (item: EmailTemplateItem) => {
-    setSelectedKey(item.key);
-    setEditSubject(item.subject);
-    setEditHtml(item.html);
-  };
-
-  const handleSaveTemplate = async () => {
-    if (!currentTemplate) return;
-    setSaving(true);
-    try {
-      await axios.put(
-        `${API_BASE_URL}/api/email-templates/${currentTemplate.key}`,
-        {
-          html: editHtml,
-          subject: editSubject,
-        },
-        { withCredentials: true }
-      );
-      toast.success(`Template "${currentTemplate.title}" saved successfully!`);
-      // Update local state
-      setTemplates((prev) =>
-        prev.map((t) =>
-          t.key === currentTemplate.key
-            ? { ...t, html: editHtml, subject: editSubject, isCustomized: true }
-            : t
-        )
-      );
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to save template");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleResetTemplate = async () => {
-    if (!currentTemplate) return;
-    if (!window.confirm(`Reset "${currentTemplate.title}" to its code default? Any custom changes will be lost.`)) {
-      return;
-    }
-    setSaving(true);
-    try {
-      const res = await axios.post(
-        `${API_BASE_URL}/api/email-templates/${currentTemplate.key}/reset`,
-        {},
-        { withCredentials: true }
-      );
-      const defaultHtml = res.data?.html || "";
-      setEditHtml(defaultHtml);
-      setEditSubject(currentTemplate.defaultSubject);
-      setTemplates((prev) =>
-        prev.map((t) =>
-          t.key === currentTemplate.key
-            ? { ...t, html: defaultHtml, subject: currentTemplate.defaultSubject, isCustomized: false }
-            : t
-        )
-      );
-      toast.success("Template reset to original default");
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to reset template");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleSendTest = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!testEmail || !testEmail.includes("@")) {
-      toast.error("Please enter a valid recipient email");
-      return;
-    }
-    setSendingTest(true);
-    try {
-      await axios.post(
-        `${API_BASE_URL}/api/email-templates/test-send`,
-        {
-          key: currentTemplate?.key,
-          recipientEmail: testEmail,
-          html: editHtml,
-          subject: editSubject,
-        },
-        { withCredentials: true }
-      );
-      toast.success(`Test email sent to ${testEmail}! Check your inbox.`);
-      setIsTestModalOpen(false);
-    } catch (err: any) {
-      toast.error(err.response?.data?.message || "Failed to send test email");
-    } finally {
-      setSendingTest(false);
-    }
-  };
-
-  const handleCopyVar = (varName: string) => {
-    navigator.clipboard.writeText(`{{${varName}}}`);
-    setCopiedVar(varName);
-    toast.success(`Copied {{${varName}}} to clipboard`);
-    setTimeout(() => setCopiedVar(null), 2000);
-  };
-
-  if (loading) {
-    return (
-      <div className="py-24 text-center bg-surface-elevated rounded-2xl border-2 border-border-brutalist dark:border-border-default shadow-[4px_4px_0px_0px_var(--border-brutalist)]">
-        <Loader2 className="w-8 h-8 animate-spin text-accent-primary mx-auto mb-2" />
-        <p className="text-xs text-text-secondary font-semibold">
-          Loading email templates catalog…
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-      {/* ── Left Sidebar: Template Selection ── */}
-      <div className="lg:col-span-4 space-y-3">
-        <div className="bg-surface-elevated rounded-2xl border-2 border-border-brutalist dark:border-border-default p-4 shadow-[4px_4px_0px_0px_var(--border-brutalist)]">
-          <div className="flex items-center justify-between mb-3 border-b border-border-default pb-2.5">
-            <h3 className="text-sm font-black text-text-primary uppercase tracking-wider">
-              Templates Catalog
-            </h3>
-            <span className="text-[11px] font-mono text-text-tertiary">
-              {templates.length} Active
-            </span>
-          </div>
-
-          <div className="space-y-2">
-            {templates.map((tpl) => {
-              const isSelected = tpl.key === currentTemplate?.key;
-              return (
-                <button
-                  key={tpl.key}
-                  type="button"
-                  onClick={() => handleSelectTemplate(tpl)}
-                  className={`w-full text-left p-3 rounded-xl border transition-all cursor-pointer flex flex-col justify-between ${
-                    isSelected
-                      ? "bg-accent-primary/10 border-accent-primary shadow-[2px_2px_0px_0px_var(--border-brutalist)]"
-                      : "bg-surface-secondary/50 border-border-default hover:bg-surface-secondary"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-bold text-text-primary truncate">
-                      {tpl.title}
-                    </span>
-                    {tpl.isCustomized ? (
-                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30 shrink-0">
-                        Customized
-                      </span>
-                    ) : (
-                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-surface-elevated text-text-tertiary border border-border-default shrink-0">
-                        Default
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-text-tertiary mt-1 line-clamp-2 leading-relaxed">
-                    {tpl.description}
-                  </p>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Dynamic Variables Cheat Sheet */}
-        {currentTemplate && (
-          <div className="bg-surface-elevated rounded-2xl border-2 border-border-brutalist dark:border-border-default p-4 shadow-[4px_4px_0px_0px_var(--border-brutalist)]">
-            <h4 className="text-xs font-bold text-text-primary uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <Sparkles size={13} className="text-accent-primary" />
-              Dynamic Tokens
-            </h4>
-            <p className="text-[11px] text-text-tertiary mb-3">
-              Click any token to copy and insert into your subject or HTML template:
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {currentTemplate.variables.map((v) => (
-                <button
-                  key={v.name}
-                  type="button"
-                  onClick={() => handleCopyVar(v.name)}
-                  className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-surface-secondary hover:bg-accent-primary/20 text-text-primary border border-border-default font-mono text-[10px] font-bold transition cursor-pointer"
-                  title={`${v.description} (e.g. ${v.sample})`}
-                >
-                  <span>&#123;&#123;{v.name}&#125;&#125;</span>
-                  {copiedVar === v.name ? <Check size={11} className="text-emerald-500" /> : <Copy size={10} className="text-text-tertiary" />}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ── Right Content: Template Editor & Live Preview ── */}
-      <div className="lg:col-span-8 space-y-4">
-        {currentTemplate && (
-          <div className="bg-surface-elevated rounded-2xl border-2 border-border-brutalist dark:border-border-default p-5 shadow-[4px_4px_0px_0px_var(--border-brutalist)] flex flex-col justify-between">
-            {/* Header with actions */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-default pb-4 mb-4">
-              <div>
-                <div className="flex items-center gap-2">
-                  <h3 className="text-base font-bold text-text-primary">
-                    {currentTemplate.title}
-                  </h3>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-surface-secondary text-text-secondary border border-border-default uppercase">
-                    {currentTemplate.category}
-                  </span>
-                </div>
-                <p className="text-xs text-text-secondary mt-0.5">
-                  {currentTemplate.description}
-                </p>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <button
-                  type="button"
-                  onClick={() => setIsTestModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-surface-secondary hover:bg-surface-elevated text-text-secondary hover:text-text-primary border border-border-default text-xs font-bold transition cursor-pointer"
-                >
-                  <Send size={13} />
-                  Send Test
-                </button>
-
-                {isAdmin && currentTemplate.isCustomized && (
-                  <button
-                    type="button"
-                    onClick={handleResetTemplate}
-                    disabled={saving}
-                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl border border-border-default text-text-secondary hover:text-text-primary text-xs font-bold transition cursor-pointer"
-                    title="Restore code default"
-                  >
-                    <RefreshCw size={12} />
-                    Reset
-                  </button>
-                )}
-
-                {isAdmin ? (
-                  <button
-                    type="button"
-                    onClick={handleSaveTemplate}
-                    disabled={saving}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-accent-primary text-text-primary font-bold text-xs border border-border-brutalist shadow-[2px_2px_0px_0px_var(--border-brutalist)] hover:opacity-95 disabled:opacity-50 cursor-pointer"
-                  >
-                    {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
-                    Save Template
-                  </button>
-                ) : (
-                  <span className="text-[11px] font-bold text-text-secondary px-2.5 py-1 bg-surface-secondary rounded-lg border border-border-default">
-                    View Only
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Subject Line Input */}
-            <div className="mb-4">
-              <label className="block text-xs font-bold text-text-secondary mb-1">
-                Email Subject Line
-              </label>
-              <input
-                type="text"
-                value={editSubject}
-                onChange={(e) => setEditSubject(e.target.value)}
-                className="w-full px-3.5 py-2 bg-surface-secondary border border-border-default rounded-xl text-xs text-text-primary font-semibold focus:outline-none focus:border-accent-primary"
-                placeholder="e.g. Welcome to MEC Computer Club!"
-              />
-            </div>
-
-            {/* View Mode Toggle: Preview vs Code */}
-            <div className="flex items-center justify-between border-b border-border-default/60 pb-2 mb-3">
-              <div className="flex items-center p-1 bg-surface-secondary border border-border-default rounded-xl gap-0.5">
-                <button
-                  type="button"
-                  onClick={() => setViewMode("preview")}
-                  className={`inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                    viewMode === "preview"
-                      ? "bg-accent-primary text-text-primary shadow-xs"
-                      : "text-text-secondary hover:text-text-primary"
-                  }`}
-                >
-                  <Eye size={13} />
-                  Live Preview
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode("code")}
-                  className={`inline-flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
-                    viewMode === "code"
-                      ? "bg-accent-primary text-text-primary shadow-xs"
-                      : "text-text-secondary hover:text-text-primary"
-                  }`}
-                >
-                  <Code size={13} />
-                  HTML Source
-                </button>
-              </div>
-
-              <span className="text-[11px] font-mono text-text-tertiary">
-                Responsive HTML5 Email View
-              </span>
-            </div>
-
-            {/* Editor vs Preview Container */}
-            <div className="border border-border-default rounded-2xl overflow-hidden bg-slate-950/5 min-h-[480px]">
-              {viewMode === "preview" ? (
-                <iframe
-                  title="Email Preview"
-                  srcDoc={editHtml}
-                  className="w-full h-[520px] border-0 bg-white"
-                  sandbox="allow-same-origin"
-                />
-              ) : (
-                <div className="p-2">
-                  <textarea
-                    rows={22}
-                    value={editHtml}
-                    onChange={(e) => setEditHtml(e.target.value)}
-                    className="w-full font-mono text-xs p-3 bg-surface-secondary text-text-primary rounded-xl border border-border-default focus:outline-none focus:border-accent-primary leading-relaxed resize-y"
-                    placeholder="<html><body>...</body></html>"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* ── Test Send Modal ── */}
-      {isTestModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-2xl max-w-sm w-full p-5 shadow-[6px_6px_0px_0px_var(--border-brutalist)]">
-            <div className="flex items-center justify-between border-b border-border-default pb-3 mb-3">
-              <h4 className="text-sm font-bold text-text-primary flex items-center gap-1.5">
-                <Send size={15} className="text-accent-primary" />
-                Dispatch Test Email
-              </h4>
-              <button
-                type="button"
-                onClick={() => setIsTestModalOpen(false)}
-                className="p-1 text-text-tertiary hover:text-text-primary cursor-pointer"
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSendTest} className="space-y-3 text-xs">
-              <p className="text-text-secondary leading-relaxed">
-                Sends a live test version of <strong>{currentTemplate?.title}</strong> with sample variables to your inbox.
-              </p>
-              <div>
-                <label className="font-bold text-text-secondary block mb-1">
-                  Recipient Email Address *
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={testEmail}
-                  onChange={(e) => setTestEmail(e.target.value)}
-                  placeholder="admin@example.com"
-                  className="w-full px-3 py-2 bg-surface-secondary border border-border-default rounded-xl focus:outline-none focus:border-accent-primary"
-                />
-              </div>
-
-              <div className="pt-2 flex items-center justify-end gap-2 border-t border-border-default">
-                <button
-                  type="button"
-                  onClick={() => setIsTestModalOpen(false)}
-                  className="px-3.5 py-1.5 rounded-xl border border-border-default font-bold hover:bg-surface-secondary cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={sendingTest}
-                  className="px-4 py-1.5 rounded-xl bg-accent-primary text-text-primary font-bold border border-border-brutalist shadow-[2px_2px_0px_0px_var(--border-brutalist)] hover:opacity-95 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
-                >
-                  {sendingTest && <Loader2 size={13} className="animate-spin" />}
-                  Send Now
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+  return <EmailTemplatesManager currentUser={currentUser} isAdmin={isAdmin} />;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -1103,6 +679,8 @@ function BroadcastsTab({ currentUser, isAdmin }: { currentUser: any; isAdmin: bo
   const [priority, setPriority] = useState<"normal" | "high" | "urgent">("normal");
   const [link, setLink] = useState("");
   const [actionLabel, setActionLabel] = useState("View Details");
+  const [pendingDelete, setPendingDelete] = useState<any | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const AUDIENCE_OPTIONS: FilterOption[] = [
     { value: "all", label: "All Club Members & Staff" },
@@ -1169,14 +747,19 @@ function BroadcastsTab({ currentUser, isAdmin }: { currentUser: any; isAdmin: bo
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to revoke this broadcast announcement?")) return;
+  const handleConfirmDelete = async () => {
+    if (!pendingDelete?._id) return;
+    const id = pendingDelete._id;
+    setDeleting(true);
     try {
       await axios.delete(`${API_BASE_URL}/api/notifications/broadcasts/${id}`, { withCredentials: true });
-      toast.success("Broadcast removed");
+      toast.success("Broadcast revoked");
       setBroadcasts((prev) => prev.filter((b) => b._id !== id));
-    } catch {
-      toast.error("Failed to delete broadcast");
+      setPendingDelete(null);
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || "Failed to delete broadcast");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -1361,7 +944,7 @@ function BroadcastsTab({ currentUser, isAdmin }: { currentUser: any; isAdmin: bo
                   {isAdmin && (
                     <button
                       type="button"
-                      onClick={() => handleDelete(b._id)}
+                      onClick={() => setPendingDelete(b)}
                       className="p-1 rounded-lg text-text-tertiary hover:text-accent-error hover:bg-red-500/10 transition cursor-pointer"
                       title="Revoke / Delete Broadcast"
                     >
@@ -1374,6 +957,66 @@ function BroadcastsTab({ currentUser, isAdmin }: { currentUser: any; isAdmin: bo
           </div>
         )}
       </div>
+
+      {/* ── Revoke Broadcast Confirmation Modal ── */}
+      {pendingDelete && (
+        <div
+          className="fixed inset-0 z-[1300] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => !deleting && setPendingDelete(null)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            onClick={(e) => e.stopPropagation()}
+            className="bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-2xl max-w-sm w-full p-5 shadow-[6px_6px_0px_0px_var(--border-brutalist)] space-y-4"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-bold text-sm">
+                <Trash2 size={16} />
+                <span>Revoke Broadcast?</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPendingDelete(null)}
+                disabled={deleting}
+                className="p-1 rounded-lg text-text-tertiary hover:text-text-primary cursor-pointer disabled:opacity-50"
+                title="Close"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="p-3 rounded-xl bg-surface-secondary border border-border-default text-xs space-y-1">
+              <p className="font-bold text-text-primary truncate">{pendingDelete.title}</p>
+              <p className="text-text-secondary line-clamp-2">{pendingDelete.message}</p>
+            </div>
+
+            <p className="text-xs text-text-secondary leading-relaxed">
+              This removes the announcement from every member&apos;s notification center. This action cannot be undone.
+            </p>
+
+            <div className="flex items-center justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setPendingDelete(null)}
+                disabled={deleting}
+                className="px-3 py-1.5 rounded-xl border border-border-default text-text-secondary hover:text-text-primary text-xs font-bold transition cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={deleting}
+                className="px-3.5 py-1.5 rounded-xl bg-red-600 text-white font-bold text-xs border border-border-brutalist shadow-[2px_2px_0px_0px_var(--border-brutalist)] transition flex items-center gap-1 cursor-pointer disabled:opacity-50"
+              >
+                {deleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                Revoke
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

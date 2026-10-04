@@ -59,12 +59,14 @@ interface EventFormSubmissionsSectionProps {
   eventId: string;
   onSubmissionsUpdated: () => void;
   showToast: (msg: string, type?: "success" | "error") => void;
+  onEmailApplicant?: (email: string, name: string) => void;
 }
 
 export default function EventFormSubmissionsSection({
   eventId,
   onSubmissionsUpdated,
   showToast,
+  onEmailApplicant,
 }: EventFormSubmissionsSectionProps) {
   const [submissions, setSubmissions] = useState<EnrichedSubmission[]>([]);
   const [forms, setForms] = useState<any[]>([]);
@@ -589,6 +591,19 @@ export default function EventFormSubmissionsSection({
                       >
                         <X className="w-3.5 h-3.5" />
                         Reject
+                      </button>
+                    )}
+
+                    {/* Direct Email shortcut button */}
+                    {details.email && onEmailApplicant && (
+                      <button
+                        type="button"
+                        onClick={() => onEmailApplicant(details.email, details.fullName)}
+                        className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-950/40 text-xs font-semibold transition flex items-center gap-1"
+                        title={`Compose personalized email to ${details.fullName || details.email}`}
+                      >
+                        <Mail className="w-3.5 h-3.5 text-indigo-500" />
+                        <span>Email</span>
                       </button>
                     )}
 

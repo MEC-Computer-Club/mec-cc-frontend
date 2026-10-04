@@ -87,17 +87,12 @@ export default function DashboardActivityLogPage() {
           };
         });
 
-        // Merge with local logs to prevent missing any in-browser uncommitted mock actions
-        const localLogs = getAdminLogs();
-        const existingIds = new Set(mappedLogs.map((l) => l.id));
-        const nonDuplicateLocal = localLogs.filter((l) => !existingIds.has(l.id));
-        setLogs([...mappedLogs, ...nonDuplicateLocal]);
+        setLogs(mappedLogs);
       } else {
-        setLogs(getAdminLogs());
+        setLogs([]);
       }
     } catch {
-      // Fallback cleanly to local storage logs
-      setLogs(getAdminLogs());
+      setLogs([]);
     } finally {
       setIsFetchingRemote(false);
     }

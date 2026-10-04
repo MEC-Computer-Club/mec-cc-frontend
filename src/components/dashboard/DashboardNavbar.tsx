@@ -8,6 +8,7 @@ import { Menu, User, ChevronDown, LogOut, Settings, Sun, Moon } from "lucide-rea
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { NotificationCenter } from "@/components/layout/NotificationCenter";
+import { ThemePaletteButton } from "@/components/ThemePaletteButton";
 import { AuthUser } from "@/types";
 import { getOptimizedImageUrl } from "@/lib/api/gallery";
 
@@ -97,8 +98,11 @@ export const DashboardNavbar: React.FC<DashboardNavbarProps> = ({
             </Link>
           </div>
 
-          {/* Right side — Theme toggle, Notifications & User menu */}
-          <div className="ml-auto flex items-center gap-2.5">
+          {/* Right side — Theme toggles, Notifications & User menu */}
+          <div className="ml-auto flex items-center gap-2">
+            {/* Color Theme (Palette) Picker */}
+            <ThemePaletteButton />
+
             {/* Dark / Light Theme Toggle */}
             <button
               type="button"

@@ -141,57 +141,6 @@ export function DashboardActivityCard({ recentMessages = [] }: DashboardActivity
       });
     });
 
-    // 3. Fallback mock activities matching the reference design to ensure rich, beautiful display
-    const fallbackActivities: DashboardActivityItem[] = [
-      {
-        id: "mock-1",
-        category: "approvals",
-        title: "Membership request",
-        subtitle: "From Test bot",
-        date: "9/13",
-        rawDate: new Date("2026-09-13T12:00:00Z").getTime(),
-        dotColor: "bg-indigo-500",
-        href: "/dashboard/members?tab=pending",
-      },
-      {
-        id: "mock-2",
-        category: "roles",
-        title: "Tanvir Rahman promoted to Moderator",
-        subtitle: "by Md. Nasir Ahmed",
-        date: "9/10",
-        rawDate: new Date("2026-09-10T14:30:00Z").getTime(),
-        dotColor: "bg-emerald-500",
-        href: "/dashboard/roles-and-invitation",
-      },
-      {
-        id: "mock-3",
-        category: "messages",
-        title: "Contact form submitted",
-        subtitle: "From Md. Nasir Ahmed",
-        date: "6/24",
-        rawDate: new Date("2026-06-24T09:15:00Z").getTime(),
-        dotColor: "bg-amber-500",
-        href: "/dashboard/messages",
-      },
-      {
-        id: "mock-4",
-        category: "roles",
-        title: "3 members marked Alumni",
-        subtitle: "Batch 2026 graduation",
-        date: "6/20",
-        rawDate: new Date("2026-06-20T16:00:00Z").getTime(),
-        dotColor: "bg-blue-500",
-        href: "/dashboard/members?tab=alumni",
-      },
-    ];
-
-    // Merge fallback activities if there are fewer live items
-    fallbackActivities.forEach((fb) => {
-      if (!items.some((it) => it.title === fb.title)) {
-        items.push(fb);
-      }
-    });
-
     return items.sort((a, b) => b.rawDate - a.rawDate);
   }, [recentMessages, auditLogs]);
 
