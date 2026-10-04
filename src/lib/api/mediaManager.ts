@@ -10,6 +10,7 @@ export interface MediaEntityReference {
 }
 
 export interface CloudinaryUsageStats {
+  unconfigured?: boolean;
   plan: string;
   lastUpdated: string;
   storage: {

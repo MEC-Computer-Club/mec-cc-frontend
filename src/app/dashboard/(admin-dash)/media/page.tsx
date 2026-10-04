@@ -71,7 +71,7 @@ const LINK_STATUS_OPTIONS: FilterOption[] = [
 ];
 
 export default function MediaManagerPage() {
-  const { isAllowed, isLoading: guardLoading } = useRoleGuard(["admin", "moderator", "executive"]);
+  const { isAllowed, isLoading: guardLoading } = useRoleGuard(["admin"]);
   // Stats state
   const [stats, setStats] = useState<CloudinaryUsageStats | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
@@ -125,7 +125,7 @@ export default function MediaManagerPage() {
       const data = await fetchMediaStats();
       setStats(data);
     } catch (err: any) {
-      toast.error(err?.message || "Failed to load Cloudinary storage stats");
+      console.warn("Could not load Cloudinary stats:", err);
     } finally {
       setIsLoadingStats(false);
     }
@@ -173,7 +173,7 @@ export default function MediaManagerPage() {
         setTotalCount(result.totalCount);
         setNextCursor(result.nextCursor);
       } catch (err: any) {
-        toast.error(err?.message || "Failed to load media items");
+        console.warn("Could not load media items:", err);
       } finally {
         setIsLoadingResources(false);
         setIsLoadingMore(false);

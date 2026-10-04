@@ -1,9 +1,25 @@
 import Cookies from "js-cookie";
 import axios from "axios";
 
-export const API_BASE_URL = (
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"
-).replace(/\/+$/, "");
+const getApiBaseUrl = (): string => {
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname;
+    const isLocal = hostname === "localhost" || hostname === "127.0.0.1";
+    if (!isLocal) {
+      return "https://api.meccomputerclub.org";
+    }
+    return process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+  }
+
+  // Server-side (Node.js / Next.js SSR)
+  if (process.env.NODE_ENV === "production" || process.env.API_URL) {
+    return process.env.API_URL || "https://api.meccomputerclub.org";
+  }
+
+  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+};
+
+export const API_BASE_URL = getApiBaseUrl().replace(/\/+$/, "");
 
 // Global Axios interceptor for caller source attribution
 if (typeof window !== "undefined") {
@@ -78,11 +94,23 @@ async function request<T = any>(
   }
 
   if (!response.ok) {
-    const errorMessage =
+    let errorMessage =
       (responseData && typeof responseData === "object" && responseData.message) ||
-      (responseData && typeof responseData === "object" && responseData.error) ||
-      (typeof responseData === "string" && responseData) ||
-      `Request failed with status ${response.status}`;
+      (responseData && typeof responseData === "object" && responseData.error);
+
+    if (!errorMessage && typeof responseData === "string" && responseData.trim()) {
+      if (responseData.includes("<!DOCTYPE") || responseData.includes("<html")) {
+        const preMatch = responseData.match(/<pre>([\s\S]*?)<\/pre>/i);
+        const titleMatch = responseData.match(/<title>([\s\S]*?)<\/title>/i);
+        errorMessage = preMatch?.[1]?.trim() || titleMatch?.[1]?.trim() || `Server error (${response.status}). Please try again later.`;
+      } else {
+        errorMessage = responseData.trim();
+      }
+    }
+
+    if (!errorMessage) {
+      errorMessage = `Request failed with status ${response.status}`;
+    }
 
     throw new ApiError(errorMessage, response.status, responseData);
   }

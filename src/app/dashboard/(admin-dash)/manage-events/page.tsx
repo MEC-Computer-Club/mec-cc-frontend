@@ -233,8 +233,7 @@ export default function EventsManagementPage() {
             {canManage && (
             <Link
               href="/dashboard/manage-events/create-event"
-              className="flex items-center gap-2 whitespace-nowrap bg-text-primary hover:bg-surface-inverse text-white px-4 py-2.5 rounded-lg font-semibold transition-all shadow-[3px_3px_0px_0px_var(--border-default)] text-sm border border-border-default"
-              style={{ color: "#FFFFFF" }}
+              className="flex items-center gap-2 whitespace-nowrap bg-black text-white dark:bg-white dark:text-black border border-black dark:border-white hover:bg-neutral-800 dark:hover:bg-neutral-200 px-4 py-2.5 rounded-lg font-semibold transition-all shadow-[3px_3px_0px_0px_var(--border-default)] text-sm cursor-pointer"
             >
               <Plus size={16} />
               New Event
