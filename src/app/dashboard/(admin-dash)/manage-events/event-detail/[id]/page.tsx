@@ -147,6 +147,10 @@ interface EventData {
   organizer?: string;
   contactEmail?: string;
   coverImageUrl?: string;
+  bannerImageUrl?: string;
+  image?: string;
+  coverImagePosition?: string;
+  bannerImagePosition?: string;
   attendees: UserRef[];
   approvedParticipants?: ApprovedParticipant[];
   pendingParticipants: PendingParticipant[];
@@ -429,8 +433,57 @@ function OverviewTab({ event }: { event: EventData }) {
       ? event.pendingCount
       : 0;
 
+  const rawBannerSrc = event.bannerImageUrl || event.coverImageUrl || event.image;
+  let bannerSrc = rawBannerSrc;
+  if (bannerSrc && bannerSrc.includes("res.cloudinary.com") && bannerSrc.includes("/upload/")) {
+    if (!bannerSrc.includes("/upload/q_auto") && !bannerSrc.includes("/upload/f_auto")) {
+      bannerSrc = bannerSrc.replace("/upload/", "/upload/f_auto,q_auto:best/");
+    }
+  }
+
   return (
     <div className="space-y-6">
+      {/* ── Top Hero Banner (Full Resolution Display) ── */}
+      {bannerSrc && (
+        <div className="relative w-full rounded-2xl border-2 border-border-brutalist dark:border-border-default bg-surface-secondary overflow-hidden shadow-[4px_4px_0px_var(--border-brutalist)] dark:shadow-[4px_4px_0px_var(--border-default)] group">
+          {/* Ambient blurred backdrop for letterboxing */}
+          <div
+            className="absolute inset-0 bg-cover bg-center blur-2xl opacity-20 dark:opacity-30 scale-110 pointer-events-none"
+            style={{ backgroundImage: `url(${bannerSrc})` }}
+          />
+
+          <div className="relative w-full min-h-[220px] max-h-[520px] flex items-center justify-center p-2 sm:p-3">
+            <img
+              src={bannerSrc}
+              alt={event.title}
+              className="max-h-[500px] w-auto max-w-full rounded-xl object-contain shadow-xs block relative z-10"
+              loading="eager"
+            />
+          </div>
+
+          {/* Quick Actions Overlay */}
+          <div className="absolute top-3 right-3 flex items-center gap-2 z-20 opacity-90 group-hover:opacity-100 transition">
+            <a
+              href={rawBannerSrc}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-black/70 hover:bg-black/90 backdrop-blur-md text-white text-xs font-bold shadow-md transition"
+              title="Open full resolution in new tab"
+            >
+              <Maximize2 size={13} />
+              <span>Full Resolution</span>
+            </a>
+            <Link
+              href={`/dashboard/manage-events/create-event?edit=${event._id}`}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600/90 hover:bg-indigo-600 backdrop-blur-md text-white text-xs font-bold shadow-md transition"
+              title="Change banner in edit mode"
+            >
+              <Edit size={13} />
+              <span>Edit Banner</span>
+            </Link>
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <StatCard icon={Users} label={attendanceLabel} value={totalApproved}
           color="bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400" />
@@ -507,12 +560,6 @@ function OverviewTab({ event }: { event: EventData }) {
           </div>
         )}
       </div>
-
-      {event.coverImageUrl && (
-        <div className="relative w-full h-48 rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-700">
-          <Image src={event.coverImageUrl} alt={event.title} fill style={{ objectFit: "cover" }} unoptimized />
-        </div>
-      )}
     </div>
   );
 }
