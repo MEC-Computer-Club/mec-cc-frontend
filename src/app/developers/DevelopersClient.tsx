@@ -217,7 +217,23 @@ function DevelopersContent() {
       setEditingDev(null);
     } catch (err: any) {
       console.error("Error updating contributor in database:", err);
-      toast.error(err.message || "Failed to update contributor in database.");
+      // Fallback: update state and localStorage if live backend hasn't been deployed yet
+      setDevelopers((prev) =>
+        prev.map((d) => (d.id === updatedDev.id ? updatedDev : d))
+      );
+      try {
+        localStorage.setItem(
+          LOCAL_STORAGE_KEY,
+          JSON.stringify(developers.map((d) => (d.id === updatedDev.id ? updatedDev : d)))
+        );
+      } catch {}
+
+      if (err.message && err.message.includes("Can't find")) {
+        toast.error("Live backend server not updated yet! Saved locally in your browser.");
+      } else {
+        toast.error(err.message || "Failed to update contributor in database.");
+      }
+      setEditingDev(null);
     }
   };
 
@@ -248,7 +264,21 @@ function DevelopersContent() {
       setOpenMenuId(null);
     } catch (err: any) {
       console.error("Error deleting contributor from database:", err);
-      toast.error(err.message || "Failed to remove contributor from database.");
+      // Fallback: remove from state and localStorage if live backend hasn't deployed yet
+      setDevelopers((prev) => prev.filter((d) => d.id !== id));
+      try {
+        localStorage.setItem(
+          LOCAL_STORAGE_KEY,
+          JSON.stringify(developers.filter((d) => d.id !== id))
+        );
+      } catch {}
+
+      if (err.message && err.message.includes("Can't find")) {
+        toast.error("Live backend server not updated yet! Removed locally from browser.");
+      } else {
+        toast.error(err.message || "Failed to remove contributor from database.");
+      }
+      setOpenMenuId(null);
     }
   };
 
