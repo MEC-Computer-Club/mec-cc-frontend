@@ -117,6 +117,11 @@ function mapBackendEvent(e: any): Event {
     allowParticipationClaims: Boolean(e.allowParticipationClaims),
     participationClaims: Array.isArray(e.participationClaims) ? e.participationClaims : [],
     contributors: Array.isArray(e.contributors) ? e.contributors : [],
+    organizer: e.organizer || "MEC Computer Club",
+    organizerType: e.organizerType || (e.organizer && e.organizer !== "MEC Computer Club" ? "other" : "mec_cc"),
+    organizerLogoUrl: e.organizerLogoUrl || undefined,
+    contactEmail: e.contactEmail || undefined,
+    contactPhone: e.contactPhone || undefined,
   };
 }
 

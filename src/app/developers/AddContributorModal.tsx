@@ -426,15 +426,15 @@ export default function AddContributorModal({
 
   return (
     <div
-      className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/65 backdrop-blur-xs animate-in fade-in duration-200"
+      className="fixed inset-0 z-[200] overflow-y-auto p-4 sm:p-6 bg-black/65 backdrop-blur-xs flex min-h-full items-center justify-center animate-in fade-in duration-200"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-lg bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-xl shadow-2xl overflow-hidden flex flex-col"
+        className="relative w-full max-w-lg my-auto bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[calc(100vh-2rem)] sm:max-h-[calc(100vh-3rem)]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* ── Premium Modal Header ── */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border-brutalist dark:border-border-default bg-surface-secondary/50">
+        {/* ── Premium Modal Header (Pinned) ── */}
+        <div className="shrink-0 flex items-center justify-between px-6 py-4 border-b border-border-brutalist dark:border-border-default bg-surface-secondary/50">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-md bg-black text-white dark:bg-white dark:text-black flex items-center justify-center font-mono font-bold text-sm shadow-xs">
               {editData ? <Pencil size={15} /> : <Plus size={16} />}
@@ -460,14 +460,15 @@ export default function AddContributorModal({
           </button>
         </div>
 
-        {/* ── Modal Form Body ── */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          {formError && (
-            <div className="p-3 rounded-md bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 font-mono text-xs flex items-center gap-2">
-              <AlertCircle size={15} className="shrink-0" />
-              <span>{formError}</span>
-            </div>
-          )}
+        {/* ── Modal Form with Pinned Footer ── */}
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          <div className="flex-1 overflow-y-auto min-h-0 p-5 sm:p-6 space-y-5 overscroll-contain">
+            {formError && (
+              <div className="p-3 rounded-md bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 font-mono text-xs flex items-center gap-2">
+                <AlertCircle size={15} className="shrink-0" />
+                <span>{formError}</span>
+              </div>
+            )}
 
           {/* ══════════════════════════════════════════════════════════
               STEP 1: Member Search & Auto-Filled Identity Card
@@ -684,9 +685,10 @@ export default function AddContributorModal({
               />
             </div>
           </div>
+          </div>
 
-          {/* ── Modal Footer ── */}
-          <div className="pt-4 border-t border-border-default flex items-center justify-end gap-2.5">
+          {/* ── Modal Footer (Pinned at Bottom inside form) ── */}
+          <div className="shrink-0 px-6 py-3.5 border-t border-border-default bg-surface-secondary/40 flex items-center justify-end gap-2.5">
             <Button
               type="button"
               variant="secondary"

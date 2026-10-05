@@ -23,6 +23,7 @@ import { useRoleGuard } from "@/hooks/useRoleGuard";
 import { EventImagePositionModal } from "../components/EventImagePositionModal";
 import { EventPreviewModal } from "../components/EventPreviewModal";
 import { api } from "@/lib/api";
+import { MecLogoIcon } from "@/components/ui/MecLogoIcon";
 
 // ── Reusable field wrapper ──────────────────────────────────────────────────
 function Field({ label, required, hint, children }: {
@@ -93,6 +94,11 @@ const REGISTRATION_TYPE_OPTIONS = [
   { value: "team", label: "Team / Squad Registration" },
 ];
 
+const ORGANIZER_TYPE_OPTIONS = [
+  { value: "mec_cc", label: "MEC Computer Club" },
+  { value: "other", label: "Others (External Organizer / Partner)" },
+];
+
 function CreateEventFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -132,6 +138,8 @@ function CreateEventFormContent() {
     bannerImageUrl: "",
     bannerImagePosition: "50% 50%",
     organizer: "",
+    organizerType: "mec_cc" as "mec_cc" | "other",
+    organizerLogoUrl: "",
     contactEmail: "",
     contactPhone: "",
     isPublished: true,
@@ -174,6 +182,7 @@ function CreateEventFormContent() {
       setForm((prev) => ({
         ...prev,
         organizer: prev.organizer || settings.club_name || "MEC Computer Club",
+        organizerType: prev.organizerType || "mec_cc",
         contactEmail: prev.contactEmail || settings.contact_email || "meccomputerclub@gmail.com",
         contactPhone: prev.contactPhone || settings.contact_phone || "",
       }));
@@ -298,7 +307,9 @@ function CreateEventFormContent() {
             coverImagePosition: initialPos,
             bannerImageUrl: initialImg,
             bannerImagePosition: initialPos,
-            organizer: ev.organizer || "",
+            organizer: ev.organizer || "MEC Computer Club",
+            organizerType: ev.organizerType || (ev.organizer && ev.organizer !== "MEC Computer Club" ? "other" : "mec_cc"),
+            organizerLogoUrl: ev.organizerLogoUrl || "",
             contactEmail: ev.contactEmail || "",
             contactPhone: ev.contactPhone || "",
             isPublished: ev.isPublished ?? true,
@@ -328,8 +339,9 @@ function CreateEventFormContent() {
   // Helper to compress and upload a file to Cloudinary only when saving
   const uploadAndCompressImage = async (file: File, folder: string = "events"): Promise<string> => {
     const compressed = await compressImage(file, {
-      maxSizeMB: 1.5,
-      maxWidthOrHeight: 1920,
+      maxSizeMB: 4.0,
+      maxWidthOrHeight: 2560,
+      initialQuality: 0.95,
       useWebWorker: true,
     });
 
@@ -1142,22 +1154,101 @@ function CreateEventFormContent() {
         {/* ── 9. Organiser & Contact ── */}
         <Section icon={Info} title="Organiser & Contact" color="text-orange-500">
           <p className="text-xs text-slate-500 leading-relaxed">
-            Pre-filled with MEC Computer Club global site contact information. You can modify these values if this event has a specific external partner or coordinator.
+            Choose whether this event is organized directly by MEC Computer Club or an external partner/department.
           </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <Field label="Organiser Name">
-              <Input icon={Users} placeholder="e.g. MEC Computer Club" value={form.organizer}
-                onChange={(e) => set("organizer", e.target.value)} />
-            </Field>
-            <Field label="Contact Email">
-              <Input icon={Mail} type="email" placeholder="meccomputerclub@gmail.com" value={form.contactEmail}
-                onChange={(e) => set("contactEmail", e.target.value)} />
-            </Field>
-            <Field label="Contact Phone">
-              <Input icon={Phone} type="tel" placeholder="+8801XXXXXXXXX" value={form.contactPhone}
-                onChange={(e) => set("contactPhone", e.target.value)} />
-            </Field>
-          </div>
+
+          <Field label="Organised By" required hint="Select MEC Computer Club or an external organizer / collaborator">
+            <Select
+              value={form.organizerType}
+              onChange={(val) => {
+                set("organizerType", val);
+                if (val === "mec_cc") {
+                  set("organizer", settings?.club_name || "MEC Computer Club");
+                  set("organizerLogoUrl", "");
+                } else if (form.organizer === "MEC Computer Club") {
+                  set("organizer", "");
+                }
+              }}
+              options={ORGANIZER_TYPE_OPTIONS}
+            />
+          </Field>
+
+          {form.organizerType === "mec_cc" ? (
+            <div className="flex items-center gap-3.5 p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-800/40">
+              <div className="w-11 h-11 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-center p-1.5 shrink-0 shadow-xs">
+                <MecLogoIcon size={32} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100">MEC Computer Club</h4>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                    Official Host
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Official PC Logo and verified club branding applied automatically.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4 p-4 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/30">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field label="External Organiser Name" required hint="e.g. IEEE MEC SB, DIU Robotics Club, CSE Dept">
+                  <Input
+                    icon={Users}
+                    placeholder="e.g. MEC Robotics Society"
+                    value={form.organizer}
+                    onChange={(e) => set("organizer", e.target.value)}
+                  />
+                </Field>
+                <Field label="Organiser Logo URL" hint="Direct image link (PNG, JPG, SVG)">
+                  <Input
+                    icon={ImageIcon}
+                    placeholder="https://example.com/logo.png"
+                    value={form.organizerLogoUrl}
+                    onChange={(e) => set("organizerLogoUrl", e.target.value)}
+                  />
+                </Field>
+              </div>
+
+              {form.organizerLogoUrl && (
+                <div className="flex items-center gap-3 p-3 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700">
+                  <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 flex items-center justify-center shrink-0">
+                    <img
+                      src={form.organizerLogoUrl}
+                      alt="Logo Preview"
+                      className="w-full h-full object-contain p-1"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = "none";
+                      }}
+                    />
+                  </div>
+                  <span className="text-xs text-slate-500">Logo preview loaded</span>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field label="Contact Email" hint="For attendee questions">
+                  <Input
+                    icon={Mail}
+                    type="email"
+                    placeholder="contact@partner.org"
+                    value={form.contactEmail}
+                    onChange={(e) => set("contactEmail", e.target.value)}
+                  />
+                </Field>
+                <Field label="Contact Phone" hint="Helpline or WhatsApp">
+                  <Input
+                    icon={Phone}
+                    type="tel"
+                    placeholder="+8801XXXXXXXXX"
+                    value={form.contactPhone}
+                    onChange={(e) => set("contactPhone", e.target.value)}
+                  />
+                </Field>
+              </div>
+            </div>
+          )}
         </Section>
 
         {/* ── 11. Custom HTML Section ── */}
