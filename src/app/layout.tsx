@@ -111,9 +111,11 @@ export const metadata: Metadata = {
       "The official computer club of MEC, Mymensingh. Join numerous members competing in ICPC, building production software, and advancing student technology careers.",
     images: [
       {
-        url: "/mec-club-photo.jpg",
+        url: `${siteOrigin}/mec-club-photo.jpg`,
+        secureUrl: `${siteOrigin}/mec-club-photo.jpg`,
         width: 1200,
         height: 630,
+        type: "image/jpeg",
         alt: "MEC Computer Club Members & Activities",
       },
     ],
@@ -123,7 +125,7 @@ export const metadata: Metadata = {
     title: "MEC Computer Club | Official Website",
     description:
       "Weekly CP practice, real projects, one club. The official student tech community of Mymensingh Engineering College (MEC), Mymensingh.",
-    images: ["/mec-club-photo.jpg"],
+    images: [`${siteOrigin}/mec-club-photo.jpg`],
   },
   robots: {
     index: true,

@@ -57,30 +57,24 @@ function formatEventDeadline(dStr: string) {
   });
 }
 
+import { cleanMetaDescription, getOpenGraphImageUrl } from "@/lib/seo";
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const event = await getEventBySlug(slug);
   if (!event) return { title: "Event Not Found" };
 
   const eventTitle = `${event.title} | MEC Computer Club`;
+  const plainDesc = cleanMetaDescription(event.description, 180);
   const eventDescription =
-    event.description ||
+    plainDesc ||
     `Join ${event.title} organized by MEC Computer Club, Mymensingh Engineering College.`;
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.VERCEL_PROJECT_PRODUCTION_URL
-      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-      : process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "https://meccomputerclub.org");
-
-  const pageUrl = `${baseUrl.replace(/\/+$/, "")}/events/${event.slug || slug}`;
+  const baseUrl = "https://meccomputerclub.org";
+  const pageUrl = `${baseUrl}/events/${event.slug || slug}`;
 
   const rawImage = event.coverImageUrl || event.bannerImageUrl || event.image || "/mec-club-photo.jpg";
-  const ogImageUrl = rawImage.startsWith("http://") || rawImage.startsWith("https://")
-    ? rawImage
-    : `${baseUrl.replace(/\/+$/, "")}${rawImage.startsWith("/") ? rawImage : `/${rawImage}`}`;
+  const ogImageUrl = getOpenGraphImageUrl(rawImage);
 
   return {
     title: eventTitle,
@@ -97,8 +91,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       images: [
         {
           url: ogImageUrl,
+          secureUrl: ogImageUrl,
           width: 1200,
           height: 630,
+          type: "image/jpeg",
           alt: event.title,
         },
       ],

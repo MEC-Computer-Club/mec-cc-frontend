@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/Badge";
 import { parseImagePosition } from "@/lib/imagePosition";
 import { Event } from "@/types";
-import { Gamepad2, Trophy } from "lucide-react";
+import { Gamepad2, Trophy, Maximize2 } from "lucide-react";
 
 interface EventHeroBannerProps {
   event: Event;
@@ -29,7 +29,15 @@ export function EventHeroBanner({ event }: EventHeroBannerProps) {
   const isTeam = event.registrationType === "team" || event.type === "gaming";
 
   return (
-    <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] md:aspect-[2.35/1] min-h-[260px] max-h-[540px] bg-surface-secondary overflow-hidden flex items-center justify-center">
+    <div className="relative w-full aspect-[16/9] sm:aspect-[21/9] md:aspect-[2.35/1] min-h-[260px] max-h-[580px] bg-surface-secondary overflow-hidden flex items-center justify-center group">
+      {/* Ambient background glow if image is contained or letterboxed */}
+      {(parsedBanner.isContain || parsedBanner.scaleX < 1) && (
+        <div
+          className="absolute inset-0 bg-cover bg-center blur-2xl opacity-25 scale-110 pointer-events-none"
+          style={{ backgroundImage: `url(${highResBannerSrc})` }}
+        />
+      )}
+
       {/* Crystal clear image with high-res srcset and natural full color */}
       <Image
         src={highResBannerSrc}
@@ -43,9 +51,10 @@ export function EventHeroBanner({ event }: EventHeroBannerProps) {
               ? `scale(${parsedBanner.scaleX}, ${parsedBanner.scaleY})`
               : undefined,
         }}
-        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1400px"
-        quality={95}
+        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1920px"
+        quality={100}
         priority
+        unoptimized
       />
 
       {/* Floating Top Badges */}
@@ -77,6 +86,20 @@ export function EventHeroBanner({ event }: EventHeroBannerProps) {
             <Gamepad2 size={13} /> Squad Mode
           </span>
         )}
+      </div>
+
+      {/* Top Right Full Resolution Button */}
+      <div className="absolute top-4 right-4 sm:top-5 sm:right-5 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+        <a
+          href={rawBannerSrc}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-black/75 hover:bg-black/90 backdrop-blur-md text-white text-xs font-semibold shadow-lg transition border border-white/20"
+          title="Open original high-resolution banner in new tab"
+        >
+          <Maximize2 size={13} />
+          <span>Full Resolution</span>
+        </a>
       </div>
 
       {/* Floating Prize Badge if provided */}
