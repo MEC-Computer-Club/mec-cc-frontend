@@ -128,7 +128,7 @@ export function Footer() {
           [ Brand: club | college → tagline → contact ] [ Explore ] [ Resources ] [ Community ]
           ─────────────────────────────────────────────────────────── */}
       <div className="container py-10 lg:py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.9fr_1fr_1fr_1fr] gap-x-10 gap-y-8 lg:gap-x-12 items-stretch">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[2.2fr_1fr_1fr_1fr] gap-x-8 gap-y-8 lg:gap-x-10 items-start">
           {/* Part 1: Logo + Contact */}
           <div className="flex flex-col sm:col-span-2 lg:col-span-1">
             {/* Club logo | separator | College (64px row, same height as column headings) */}
@@ -239,7 +239,7 @@ export function Footer() {
                 </h4>
                 <div className="w-8 h-[2px] bg-accent-primary-hover rounded-full" />
               </div>
-              <ul className="list-none p-0 m-0 mt-4 flex flex-col gap-2 flex-1 lg:justify-between">
+              <ul className="list-none p-0 m-0 mt-4 flex flex-col gap-2.5">
                 {items.map((item) => {
                   const Icon = item.icon;
                   return (
