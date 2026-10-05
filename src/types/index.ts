@@ -128,6 +128,11 @@ export interface Event {
   allowParticipationClaims?: boolean;
   participationClaims?: ParticipationClaim[];
   contributors?: EventContributor[];
+  organizer?: string;
+  organizerType?: "mec_cc" | "other";
+  organizerLogoUrl?: string;
+  contactEmail?: string;
+  contactPhone?: string;
 }
 
 export interface Project {

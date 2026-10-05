@@ -32,10 +32,15 @@ export const DashboardNavbar: React.FC<DashboardNavbarProps> = ({
   const { resolvedTheme, setTheme } = useTheme();
   const { currentVibe } = useAccent();
   const [mounted, setMounted] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    setImgError(false);
+  }, [user?.imageUrl]);
 
   const logoSrc = `/logo-${currentVibe || "lime"}-${resolvedTheme === "dark" ? "dark" : "light"}.png`;
 
@@ -136,12 +141,13 @@ export const DashboardNavbar: React.FC<DashboardNavbarProps> = ({
                 className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-surface-secondary border border-transparent hover:border-border-default transition"
               >
                 <div className="w-8 h-8 rounded-md overflow-hidden bg-surface-secondary flex items-center justify-center text-text-primary font-bold text-xs flex-shrink-0 relative border border-border-default shadow-[1.5px_1.5px_0px_var(--border-default)]">
-                  {user?.imageUrl ? (
+                  {user?.imageUrl && !imgError ? (
                     <img
                       src={getOptimizedImageUrl(user.imageUrl, 200)}
                       alt={user.fullName || "User avatar"}
                       className="w-full h-full object-cover block"
                       style={{ objectPosition: user.imagePosition || authUser?.imagePosition || "50% 50%" }}
+                      onError={() => setImgError(true)}
                     />
                   ) : (
                     user?.fullName?.charAt(0)?.toUpperCase() || <User size={16} />

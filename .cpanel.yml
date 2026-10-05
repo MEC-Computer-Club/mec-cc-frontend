@@ -1,0 +1,12 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/meccompu/apps/frontend
+    - /bin/mkdir -p $DEPLOYPATH
+    - /bin/cp -R .next $DEPLOYPATH/
+    - /bin/cp -R public $DEPLOYPATH/ 2>/dev/null || true
+    - /bin/cp package.json $DEPLOYPATH/
+    - /bin/cp package-lock.json $DEPLOYPATH/ 2>/dev/null || true
+    - /bin/cp server.js $DEPLOYPATH/ 2>/dev/null || true
+    - /bin/mkdir -p $DEPLOYPATH/tmp
+    - /bin/touch $DEPLOYPATH/tmp/restart.txt

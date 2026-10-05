@@ -48,21 +48,43 @@ export function getCleanMediaTitle(title?: string, event?: string): string {
  *   - w_{n},c_limit → caps width but never upscales (no wasted bytes)
  *   - dpr=2         → requests 2× CSS pixels for sharp retina rendering
  */
+import { API_BASE_URL } from "@/lib/api";
+const API_URL = API_BASE_URL;
+
 export function getOptimizedImageUrl(url?: string | null, width = 800, dpr = 2): string {
   if (!url) return "/mec-club-photo.jpg";
-  if (url.includes("res.cloudinary.com") && url.includes("/upload/")) {
-    const cleanUrl = url.replace(
+
+  let cleanInput = url.trim();
+
+  // If URL contains Cloudinary domain, strip any corrupted prepended prefix
+  if (cleanInput.includes("res.cloudinary.com")) {
+    const httpIdx = cleanInput.indexOf("http");
+    if (httpIdx !== -1) {
+      cleanInput = cleanInput.substring(httpIdx);
+    } else {
+      const domainIdx = cleanInput.indexOf("res.cloudinary.com");
+      cleanInput = "https://" + cleanInput.substring(domainIdx);
+    }
+  }
+
+  if (cleanInput.includes("res.cloudinary.com") && cleanInput.includes("/upload/")) {
+    const cleanUrl = cleanInput.replace(
       /(\/upload\/)([a-z][a-z0-9_,:/]+,|[a-z]+_[a-z0-9_,:/]+\/)/,
       "/upload/"
     );
     const effectiveWidth = Math.round(width * dpr);
     return cleanUrl.replace("/upload/", `/upload/f_auto,q_auto:good,w_${effectiveWidth},c_limit/`);
   }
-  return url;
+
+  // If it's a relative path from backend uploads like /public/uploads/..., route to backend API domain
+  if (cleanInput.startsWith("/public/uploads/") || cleanInput.startsWith("public/uploads/")) {
+    const pathPart = cleanInput.startsWith("/") ? cleanInput : `/${cleanInput}`;
+    return `${API_URL}${pathPart}`;
+  }
+
+  return cleanInput;
 }
 
-import { API_BASE_URL } from "@/lib/api";
-const API_URL = API_BASE_URL;
 
 export async function getGalleryItems(): Promise<GalleryItem[]> {
   try {

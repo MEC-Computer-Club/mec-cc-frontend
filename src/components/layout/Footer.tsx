@@ -110,10 +110,10 @@ export function Footer() {
     "inline-flex items-center justify-center w-8 h-8 rounded-md bg-transparent text-black border border-black hover:bg-neutral-100 hover:shadow-[3px_3px_0px_0px_black] dark:bg-transparent dark:text-white dark:border-white dark:hover:bg-neutral-900 dark:hover:shadow-[3px_3px_0px_0px_white] hover:-translate-x-0.5 hover:-translate-y-0.5 active:translate-x-0 active:translate-y-0 active:shadow-none transition-all duration-150 no-underline cursor-pointer";
 
   const footerLinkClass =
-    "text-sm text-text-tertiary no-underline transition-all duration-200 hover:text-text-primary hover:translate-x-1 flex items-center justify-between py-1 group/link";
+    "text-sm text-text-tertiary no-underline transition-all duration-200 hover:text-text-primary hover:translate-x-1 inline-flex items-center gap-2 py-1 group/link w-fit";
 
   const headingClass =
-    "flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider text-text-primary mb-2";
+    "flex items-center gap-2 font-mono text-xs font-bold uppercase tracking-wider text-text-primary mb-1.5";
 
   const linkColumns: { title: string; icon: NavItem["icon"]; items: NavItem[] }[] = [
     { title: "Explore", icon: Compass, items: footerNavigation.explore },
@@ -128,7 +128,7 @@ export function Footer() {
           [ Brand: club | college → tagline → contact ] [ Explore ] [ Resources ] [ Community ]
           ─────────────────────────────────────────────────────────── */}
       <div className="container py-10 lg:py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.9fr_1fr_1fr_1fr] gap-x-10 gap-y-8 lg:gap-x-12 items-stretch">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[2.2fr_1fr_1fr_1fr] gap-x-8 gap-y-8 lg:gap-x-10 items-start">
           {/* Part 1: Logo + Contact */}
           <div className="flex flex-col sm:col-span-2 lg:col-span-1">
             {/* Club logo | separator | College (64px row, same height as column headings) */}
@@ -175,7 +175,7 @@ export function Footer() {
             </div>
 
             {/* Body: tagline + contact (starts level with the link lists) */}
-            <div className="flex flex-col gap-4 flex-1 mt-4">
+            <div className="flex flex-col gap-4 flex-1 mt-3">
               {/* Tagline (aligned below the logo row) */}
               <div className="flex flex-col gap-1.5">
                 <span className="font-heading text-lg font-bold text-text-primary leading-tight tracking-tight">
@@ -233,30 +233,28 @@ export function Footer() {
           {/* Parts 2-4: Explore / Resources / Community */}
           {linkColumns.map(({ title, icon: HeadingIcon, items }) => (
             <div key={title} className="flex flex-col">
-              <div className="h-16 flex flex-col justify-center">
+              <div className="h-14 flex flex-col justify-end pb-1.5">
                 <h4 className={headingClass}>
                   <HeadingIcon size={14} className="text-accent-primary-hover" /> {title}
                 </h4>
                 <div className="w-8 h-[2px] bg-accent-primary-hover rounded-full" />
               </div>
-              <ul className="list-none p-0 m-0 mt-4 flex flex-col gap-2 flex-1 lg:justify-between">
+              <ul className="list-none p-0 m-0 mt-3 flex flex-col gap-2">
                 {items.map((item) => {
                   const Icon = item.icon;
                   return (
-                    <li key={item.href}>
+                    <li key={item.href} className="flex">
                       <Link href={item.href} className={footerLinkClass}>
-                        <div className="flex items-center gap-2.5">
-                          <Icon
-                            size={14}
-                            className="text-text-tertiary group-hover/link:text-accent-primary-hover transition-colors flex-shrink-0"
-                          />
-                          <span className="transition-colors duration-150 group-hover/link:text-text-primary">
-                            {item.label}
-                          </span>
-                        </div>
+                        <Icon
+                          size={14}
+                          className="text-text-tertiary group-hover/link:text-accent-primary-hover transition-colors flex-shrink-0"
+                        />
+                        <span className="transition-colors duration-150 group-hover/link:text-text-primary">
+                          {item.label}
+                        </span>
                         <ChevronRight
                           size={13}
-                          className="opacity-0 -translate-x-1.5 group-hover/link:opacity-85 group-hover/link:translate-x-0 transition-all duration-200 text-accent-primary-hover flex-shrink-0"
+                          className="opacity-0 -translate-x-1 group-hover/link:opacity-100 group-hover/link:translate-x-0 transition-all duration-200 text-accent-primary-hover flex-shrink-0"
                         />
                       </Link>
                     </li>

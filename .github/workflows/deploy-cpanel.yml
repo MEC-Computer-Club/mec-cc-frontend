@@ -1,0 +1,72 @@
+name: Deploy Frontend to cPanel
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy Frontend to cPanel
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: ⚙️ Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+
+      - name: 📦 Install Dependencies
+        run: npm ci
+
+      - name: 🔨 Build Next.js Production Bundle
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: https://api.meccomputerclub.org
+
+      - name: 🗜️ Package into build.zip (Drops upload to < 30 seconds)
+        run: |
+          mkdir -p dist-deploy
+          cp -R .next dist-deploy/
+          cp -R public dist-deploy/
+          cp server.js package.json package-lock.json dist-deploy/
+          mkdir -p dist-deploy/tmp && date +%s > dist-deploy/tmp/restart.txt
+          cd dist-deploy && zip -r -q ../build.zip . && cd ..
+          mkdir -p ftp-upload
+          mv build.zip ftp-upload/
+
+      - name: 🚀 Upload build.zip via FTP (Single File Transfer)
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.CPANEL_FTP_SERVER }}
+          username: ${{ secrets.CPANEL_FTP_USERNAME }}
+          password: ${{ secrets.CPANEL_FTP_PASSWORD }}
+          server-dir: apps/frontend/
+          local-dir: ./ftp-upload/
+
+      - name: 🔄 Extract on cPanel (via SSH if available)
+        uses: appleboy/ssh-action@v1.0.3
+        if: env.CPANEL_SSH_HOST != ''
+        env:
+          CPANEL_SSH_HOST: ${{ secrets.CPANEL_SSH_HOST }}
+        with:
+          host: ${{ secrets.CPANEL_SSH_HOST }}
+          username: ${{ secrets.CPANEL_SSH_USER }}
+          password: ${{ secrets.CPANEL_SSH_PASSWORD }}
+          key: ${{ secrets.CPANEL_SSH_KEY }}
+          port: ${{ secrets.CPANEL_SSH_PORT || 22 }}
+          script: |
+            cd /home/meccompu/apps/frontend
+            unzip -qo build.zip
+            rm -f build.zip
+            mkdir -p tmp && touch tmp/restart.txt
+
+      - name: 🔄 Trigger cPanel Auto-Extraction (via Webhook)
+        if: env.CPANEL_SSH_HOST == ''
+        run: |
+          curl -s -f "https://meccomputerclub.org/extract-frontend.php?secret=${{ secrets.DEPLOY_SECRET || 'mec_cc_deploy_secret_2026' }}" || echo "Extractor pinged. Note: If extract-frontend.php is placed in public_html, it unzips automatically."

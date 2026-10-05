@@ -63,6 +63,9 @@ const siteOrigin =
     ? `https://${process.env.VERCEL_URL}`
     : "https://meccomputerclub.org");
 
+const OG_IMAGE_URL =
+  "https://res.cloudinary.com/dj1sjgitq/image/upload/f_jpg,w_1200,h_630,c_fill,g_auto,q_auto:good/v1791228612/uploads/site/mec-club-og.jpg";
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteOrigin),
   title: {
@@ -111,9 +114,11 @@ export const metadata: Metadata = {
       "The official computer club of MEC, Mymensingh. Join numerous members competing in ICPC, building production software, and advancing student technology careers.",
     images: [
       {
-        url: "/mec-club-photo.jpg",
+        url: OG_IMAGE_URL,
+        secureUrl: OG_IMAGE_URL,
         width: 1200,
         height: 630,
+        type: "image/jpeg",
         alt: "MEC Computer Club Members & Activities",
       },
     ],
@@ -123,7 +128,7 @@ export const metadata: Metadata = {
     title: "MEC Computer Club | Official Website",
     description:
       "Weekly CP practice, real projects, one club. The official student tech community of Mymensingh Engineering College (MEC), Mymensingh.",
-    images: ["/mec-club-photo.jpg"],
+    images: [OG_IMAGE_URL],
   },
   robots: {
     index: true,
@@ -167,7 +172,7 @@ const jsonLdOrg = {
   ],
   "url": "https://meccomputerclub.org",
   "logo": "https://meccomputerclub.org/logo-lime-dark.png",
-  "image": "https://meccomputerclub.org/mec-club-photo.jpg",
+  "image": "https://res.cloudinary.com/dj1sjgitq/image/upload/f_jpg,w_1200,h_630,c_fill,g_auto,q_auto:good/v1791228612/uploads/site/mec-club-og.jpg",
   "description": "The official student technology and competitive programming organization of Mymensingh Engineering College (MEC), Mymensingh. Providing weekly CP practices, software development projects, hackathons, and career workshops.",
   "address": {
     "@type": "PostalAddress",

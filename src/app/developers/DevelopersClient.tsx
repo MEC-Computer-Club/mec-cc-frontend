@@ -18,6 +18,8 @@ import {
   GitPullRequest,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { api } from "@/lib/api";
+import toast from "react-hot-toast";
 import AddContributorModal, {
   Developer,
   FeatureItem,
@@ -130,89 +132,154 @@ function DevelopersContent() {
     };
   }, [openMenuId]);
 
-  // Load any stored custom contributors on client mount
+  // Load contributors from MongoDB database on mount
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    let isMounted = true;
+
+    const fetchDevelopers = async () => {
       try {
-        const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            const hasInitialDev = parsed.some((d) =>
-              INITIAL_DEVELOPERS.some((init) => init.id === d.id)
-            );
-            if (hasInitialDev) {
+        const data = await api.get("/api/developers");
+        if (isMounted && Array.isArray(data) && data.length > 0) {
+          setDevelopers(data);
+        }
+      } catch (err) {
+        console.warn("Could not load developers from backend database, checking fallback:", err);
+        // Fallback to local storage if offline or during local transition
+        try {
+          const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            if (Array.isArray(parsed) && parsed.length > 0 && isMounted) {
               setDevelopers(parsed);
-            } else {
-              setDevelopers([...INITIAL_DEVELOPERS, ...parsed]);
             }
           }
+        } catch {
+          // ignore
         }
-      } catch {
-        // ignore JSON parse error
       }
-    }
+    };
+
+    fetchDevelopers();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // Save custom added contributors
-  const handleAddDeveloper = (newDev: Developer) => {
-    const updated = [...developers, newDev];
-    setDevelopers(updated);
+  // Save new contributor to database
+  const handleAddDeveloper = async (newDev: Developer) => {
+    try {
+      const savedDev = await api.post("/api/developers", newDev);
+      const devToAdd = savedDev || newDev;
+      setDevelopers((prev) => {
+        const exists = prev.some((d) => d.id === devToAdd.id);
+        if (exists) {
+          return prev.map((d) => (d.id === devToAdd.id ? devToAdd : d));
+        }
+        return [...prev, devToAdd];
+      });
 
-    if (typeof window !== "undefined") {
+      // Also sync to localStorage as secondary backup
       try {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
-      } catch {
-        // ignore
-      }
-    }
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify([...developers, devToAdd]));
+      } catch {}
 
-    setNotification(`Successfully added ${newDev.name} as platform contributor!`);
-    setTimeout(() => setNotification(null), 5000);
+      toast.success(`Successfully added ${newDev.name} as platform contributor!`);
+      setNotification(`Successfully added ${newDev.name} as platform contributor!`);
+      setTimeout(() => setNotification(null), 5000);
+    } catch (err: any) {
+      console.error("Error saving contributor to database:", err);
+      toast.error(err.message || "Failed to save contributor to database.");
+      // Optimistic fallback
+      setDevelopers((prev) => [...prev, newDev]);
+    }
   };
 
-  // Update existing contributor
-  const handleUpdateDeveloper = (updatedDev: Developer) => {
-    const updated = developers.map((d) =>
-      d.id === updatedDev.id ? updatedDev : d
-    );
-    setDevelopers(updated);
+  // Update existing contributor in database
+  const handleUpdateDeveloper = async (updatedDev: Developer) => {
+    try {
+      const savedDev = await api.put(`/api/developers/${updatedDev.id}`, updatedDev);
+      const devToUpdate = savedDev || updatedDev;
+      setDevelopers((prev) =>
+        prev.map((d) => (d.id === devToUpdate.id ? devToUpdate : d))
+      );
 
-    if (typeof window !== "undefined") {
+      // Also sync to localStorage
       try {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
-      } catch {
-        // ignore
-      }
-    }
+        localStorage.setItem(
+          LOCAL_STORAGE_KEY,
+          JSON.stringify(developers.map((d) => (d.id === devToUpdate.id ? devToUpdate : d)))
+        );
+      } catch {}
 
-    setNotification(`Updated contributor profile for ${updatedDev.name}.`);
-    setTimeout(() => setNotification(null), 4000);
-    setEditingDev(null);
+      toast.success(`Updated contributor profile for ${updatedDev.name}.`);
+      setNotification(`Updated contributor profile for ${updatedDev.name}.`);
+      setTimeout(() => setNotification(null), 4000);
+      setEditingDev(null);
+    } catch (err: any) {
+      console.error("Error updating contributor in database:", err);
+      // Fallback: update state and localStorage if live backend hasn't been deployed yet
+      setDevelopers((prev) =>
+        prev.map((d) => (d.id === updatedDev.id ? updatedDev : d))
+      );
+      try {
+        localStorage.setItem(
+          LOCAL_STORAGE_KEY,
+          JSON.stringify(developers.map((d) => (d.id === updatedDev.id ? updatedDev : d)))
+        );
+      } catch {}
+
+      if (err.message && err.message.includes("Can't find")) {
+        toast.error("Live backend server not updated yet! Saved locally in your browser.");
+      } else {
+        toast.error(err.message || "Failed to update contributor in database.");
+      }
+      setEditingDev(null);
+    }
   };
 
-  // Remove a contributor
-  const handleRemoveDeveloper = (id: string, name?: string) => {
+  // Remove a contributor from database
+  const handleRemoveDeveloper = async (id: string, name?: string) => {
     if (
       !window.confirm(
         `Are you sure you want to remove ${name || "this contributor"}?`
       )
     )
       return;
-    const updated = developers.filter((d) => d.id !== id);
-    setDevelopers(updated);
 
-    if (typeof window !== "undefined") {
+    try {
+      await api.delete(`/api/developers/${id}`);
+      setDevelopers((prev) => prev.filter((d) => d.id !== id));
+
+      // Also sync to localStorage
       try {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
-      } catch {
-        // ignore
-      }
-    }
+        localStorage.setItem(
+          LOCAL_STORAGE_KEY,
+          JSON.stringify(developers.filter((d) => d.id !== id))
+        );
+      } catch {}
 
-    setNotification("Contributor removed.");
-    setTimeout(() => setNotification(null), 4000);
-    setOpenMenuId(null);
+      toast.success("Contributor removed from database.");
+      setNotification("Contributor removed.");
+      setTimeout(() => setNotification(null), 4000);
+      setOpenMenuId(null);
+    } catch (err: any) {
+      console.error("Error deleting contributor from database:", err);
+      // Fallback: remove from state and localStorage if live backend hasn't deployed yet
+      setDevelopers((prev) => prev.filter((d) => d.id !== id));
+      try {
+        localStorage.setItem(
+          LOCAL_STORAGE_KEY,
+          JSON.stringify(developers.filter((d) => d.id !== id))
+        );
+      } catch {}
+
+      if (err.message && err.message.includes("Can't find")) {
+        toast.error("Live backend server not updated yet! Removed locally from browser.");
+      } else {
+        toast.error(err.message || "Failed to remove contributor from database.");
+      }
+      setOpenMenuId(null);
+    }
   };
 
   return (

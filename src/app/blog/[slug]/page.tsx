@@ -6,42 +6,38 @@ import BlogViewClient from "./BlogViewClient";
 
 export const dynamic = "force-dynamic";
 
+import { cleanMetaDescription, getOpenGraphImageUrl } from "@/lib/seo";
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const post = await getBlogBySlugFromApi(slug);
   if (!post) return { title: "Post Not Found" };
 
-  const baseUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (process.env.VERCEL_PROJECT_PRODUCTION_URL
-      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-      : process.env.VERCEL_URL
-      ? `https://${process.env.VERCEL_URL}`
-      : "https://meccomputerclub.org");
-
-  const pageUrl = `${baseUrl.replace(/\/+$/, "")}/blog/${post.slug || slug}`;
+  const baseUrl = "https://meccomputerclub.org";
+  const pageUrl = `${baseUrl}/blog/${post.slug || slug}`;
   const rawImage = (post as any).coverImage || post.image || "/mec-club-photo.jpg";
-  const ogImageUrl = rawImage.startsWith("http://") || rawImage.startsWith("https://")
-    ? rawImage
-    : `${baseUrl.replace(/\/+$/, "")}${rawImage.startsWith("/") ? rawImage : `/${rawImage}`}`;
+  const ogImageUrl = getOpenGraphImageUrl(rawImage);
+  const plainDesc = cleanMetaDescription(post.excerpt || (post as any).content, 180);
 
   return {
     title: `${post.title} | MEC Blog`,
-    description: post.excerpt,
+    description: plainDesc,
     alternates: {
       canonical: pageUrl,
     },
     openGraph: {
       title: post.title,
-      description: post.excerpt,
+      description: plainDesc,
       url: pageUrl,
       siteName: "MEC Computer Club",
       type: "article",
       images: [
         {
           url: ogImageUrl,
+          secureUrl: ogImageUrl,
           width: 1200,
           height: 630,
+          type: "image/jpeg",
           alt: post.title,
         },
       ],
@@ -49,7 +45,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     twitter: {
       card: "summary_large_image",
       title: post.title,
-      description: post.excerpt,
+      description: plainDesc,
       images: [ogImageUrl],
     },
   };

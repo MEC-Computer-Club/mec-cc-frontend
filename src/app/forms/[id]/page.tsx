@@ -17,8 +17,11 @@ import {
   Loader2,
   Clock,
   ArrowLeft,
+  Home,
+  Users,
   Sparkles,
   CheckCircle2,
+  Ban,
 } from "lucide-react";
 import { FormField } from "@/lib/types/form";
 import { Select } from "@/components/ui/Select";
@@ -40,11 +43,27 @@ interface FormData {
   status?: string;
   allowMultipleSubmissions?: boolean;
   fields: FormField[];
+  eventInfo?: {
+    eventId: string;
+    eventTitle: string;
+    eventSlug: string;
+    maxParticipants: number | null;
+    registeredCount: number;
+    isCapacityReached: boolean;
+  };
+  maxParticipants?: number | null;
+  registeredCount?: number;
+  isCapacityReached?: boolean;
 }
 
 export function checkIsFormClosed(f: FormData | null): boolean {
   if (!f) return true;
-  if (f.isActive === false || f.isClosed === true || f.status === "closed") {
+  if (
+    f.isActive === false ||
+    f.isClosed === true ||
+    f.status === "closed" ||
+    f.isCapacityReached === true
+  ) {
     return true;
   }
   if (!f.endDate) return false;
@@ -335,29 +354,61 @@ export default function PublicFormViewPage() {
     );
   }
 
+  const handleBack = () => {
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else if (form?.eventInfo?.eventSlug) {
+      router.push(`/events/${form.eventInfo.eventSlug}`);
+    } else {
+      router.push("/");
+    }
+  };
+
   if (!form) {
     return (
-      <div className="min-h-screen bg-surface-secondary/50 flex items-center justify-center p-4">
-        <div className="max-w-md w-full p-8 rounded-2xl bg-surface-elevated border border-border-default shadow-[6px_6px_0px_0px_var(--border-default)] text-center space-y-4">
-          <AlertCircle className="w-12 h-12 mx-auto text-accent-error" />
-          <h2 className="text-xl font-black text-text-primary">Form Unavailable</h2>
-          <p className="text-xs text-text-secondary">
-            This form does not exist or has been closed by the administrators.
-          </p>
-          <button
-            type="button"
-            onClick={() => router.push("/")}
-            className="px-5 py-2.5 rounded-xl bg-text-primary text-surface-primary text-xs font-semibold hover:bg-surface-inverse transition"
-          >
-            Return to Homepage
-          </button>
+      <div className="min-h-screen bg-surface-secondary/40 py-8 px-4 sm:px-6 flex flex-col items-center">
+        <div className="w-full max-w-md space-y-4">
+          <div className="flex items-center gap-2 text-xs font-semibold text-text-secondary pb-1">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="flex items-center gap-1.5 hover:text-text-primary transition cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4" /> Back
+            </button>
+            <span className="text-slate-400 dark:text-slate-500 font-medium select-none px-0.5" aria-hidden="true">|</span>
+            <Link
+              href="/"
+              className="flex items-center gap-1.5 hover:text-text-primary transition cursor-pointer"
+            >
+              <Home className="w-3.5 h-3.5" /> Home
+            </Link>
+          </div>
+
+          <div className="p-8 rounded-2xl bg-surface-elevated border border-border-default shadow-[6px_6px_0px_0px_var(--border-default)] text-center space-y-4">
+            <AlertCircle className="w-12 h-12 mx-auto text-accent-error" />
+            <h2 className="text-xl font-black text-text-primary">Form Unavailable</h2>
+            <p className="text-xs text-text-secondary">
+              This form does not exist or has been closed by the administrators.
+            </p>
+            <button
+              type="button"
+              onClick={() => router.push("/")}
+              className="px-5 py-2.5 rounded-xl bg-text-primary text-surface-primary text-xs font-semibold hover:bg-surface-inverse transition cursor-pointer"
+            >
+              Return to Homepage
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
-  // Event title helper
+  // Event title & slug helper
   const eventTitle = typeof form.eventId === "object" ? form.eventId?.title : undefined;
+  const eventSlug =
+    form.eventInfo?.eventSlug ||
+    (typeof form.eventId === "object" ? (form.eventId as any)?.slug : null);
   const isClosed = checkIsFormClosed(form);
 
   return (
@@ -366,13 +417,22 @@ export default function PublicFormViewPage() {
       <div className="w-full max-w-2xl space-y-5">
         {/* Navigation & Header Brand */}
         <div className="flex items-center justify-between pb-1">
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="flex items-center gap-1.5 text-xs font-semibold text-text-secondary hover:text-text-primary transition"
-          >
-            <ArrowLeft className="w-4 h-4" /> Back
-          </button>
+          <div className="flex items-center gap-2 text-xs font-semibold text-text-secondary">
+            <button
+              type="button"
+              onClick={handleBack}
+              className="flex items-center gap-1.5 hover:text-text-primary transition cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4" /> Back
+            </button>
+            <span className="text-slate-400 dark:text-slate-500 font-medium select-none px-0.5" aria-hidden="true">|</span>
+            <Link
+              href="/"
+              className="flex items-center gap-1.5 hover:text-text-primary transition cursor-pointer"
+            >
+              <Home className="w-3.5 h-3.5" /> Home
+            </Link>
+          </div>
           <span className="text-[11px] font-mono font-semibold uppercase tracking-wider text-accent-primary bg-accent-primary-light px-2.5 py-0.5 rounded border border-accent-primary/30">
             MEC Computer Club Official
           </span>
@@ -417,7 +477,7 @@ export default function PublicFormViewPage() {
             </div>
           </div>
         ) : isClosed ? (
-          /* ── Form Closed / Deadline Passed Card ── */
+          /* ── Form Closed / Capacity Reached / Deadline Passed Card ── */
           <div className="bg-surface-elevated rounded-2xl border border-border-default shadow-[6px_6px_0px_0px_var(--border-default)] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
             {form.coverImageUrl ? (
               <div
@@ -425,15 +485,30 @@ export default function PublicFormViewPage() {
                 style={{ backgroundImage: `url(${form.coverImageUrl})` }}
               />
             ) : (
-              <div className="w-full h-3.5 bg-accent-error border-b border-border-default" />
+              <div
+                className={`w-full h-3.5 border-b border-border-default ${
+                  form.isCapacityReached ? "bg-amber-500" : "bg-accent-error"
+                }`}
+              />
             )}
 
             <div className="p-6 sm:p-8 space-y-6">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 bg-rose-500/10 px-2.5 py-0.5 rounded border border-rose-500/30">
-                  Submissions Closed
-                </span>
-                {form.endDate && (
+                {form.isCapacityReached ? (
+                  <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2.5 py-0.5 rounded border border-amber-500/30 flex items-center gap-1">
+                    <Ban className="w-3 h-3" /> Registration Full
+                  </span>
+                ) : (
+                  <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 bg-rose-500/10 px-2.5 py-0.5 rounded border border-rose-500/30">
+                    Submissions Closed
+                  </span>
+                )}
+                {form.maxParticipants && form.maxParticipants > 0 && (
+                  <span className="text-[11px] font-mono font-semibold text-text-tertiary">
+                    Capacity: {form.registeredCount || form.maxParticipants} / {form.maxParticipants}
+                  </span>
+                )}
+                {form.endDate && !form.isCapacityReached && (
                   <span className="text-[11px] font-medium text-text-tertiary flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5 text-accent-error" /> Deadline: {form.endDate} {form.closingTime ? `@ ${form.closingTime} (BST)` : ""}
                   </span>
@@ -444,22 +519,29 @@ export default function PublicFormViewPage() {
                 <h1 className="text-2xl sm:text-3xl font-black text-text-primary tracking-tight">
                   {form.title}
                 </h1>
-                {eventTitle && (
-                  <div className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-text-primary bg-surface-secondary px-3 py-1.5 rounded-lg border border-border-default">
-                    <Calendar className="w-3.5 h-3.5 text-accent-primary" /> Associated Event: {eventTitle}
-                  </div>
-                )}
               </div>
 
-              <div className="p-5 rounded-xl border border-rose-500/30 bg-rose-500/5 dark:bg-rose-950/20 space-y-2">
-                <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-bold text-sm">
-                  <AlertCircle className="w-4 h-4 shrink-0" />
-                  <span>This form is no longer accepting responses</span>
+              {form.isCapacityReached ? (
+                <div className="p-5 rounded-xl border border-amber-500/30 bg-amber-500/5 dark:bg-amber-950/20 space-y-2">
+                  <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 font-bold text-sm">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>Participant Limit Reached</span>
+                  </div>
+                  <p className="text-xs text-text-secondary leading-relaxed">
+                    This event has reached its maximum capacity limit of <strong>{form.maxParticipants} participants</strong> ({form.registeredCount || form.maxParticipants} / {form.maxParticipants} seats filled). Therefore, this registration form is no longer accepting new responses.
+                  </p>
                 </div>
-                <p className="text-xs text-text-secondary leading-relaxed">
-                  The deadline for this form has reached its end date and time ({form.endDate ? `${form.endDate} ${form.closingTime ? `at ${form.closingTime} (BST)` : ""}` : "closing time"}). If you believe this is an error or require assistance, please contact the MEC Computer Club executive committee.
-                </p>
-              </div>
+              ) : (
+                <div className="p-5 rounded-xl border border-rose-500/30 bg-rose-500/5 dark:bg-rose-950/20 space-y-2">
+                  <div className="flex items-center gap-2 text-rose-600 dark:text-rose-400 font-bold text-sm">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>This form is no longer accepting responses</span>
+                  </div>
+                  <p className="text-xs text-text-secondary leading-relaxed">
+                    The deadline for this form has reached its end date and time ({form.endDate ? `${form.endDate} ${form.closingTime ? `at ${form.closingTime} (BST)` : ""}` : "closing time"}). If you believe this is an error or require assistance, please contact the MEC Computer Club executive committee.
+                  </p>
+                </div>
+              )}
 
               {form.description && (
                 <div className="space-y-1.5 border-t border-border-default pt-4">
@@ -473,17 +555,26 @@ export default function PublicFormViewPage() {
               )}
 
               <div className="pt-2 flex flex-col sm:flex-row items-center gap-3">
+                {form.eventInfo?.eventSlug && (
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/events/${form.eventInfo?.eventSlug}`)}
+                    className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-accent-primary text-text-inverse font-bold text-xs hover:opacity-90 transition shadow-sm cursor-pointer"
+                  >
+                    View Event Details
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => router.push("/events")}
-                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-accent-primary text-text-inverse font-bold text-xs hover:opacity-90 transition shadow-sm"
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-border-default bg-surface-primary text-text-primary hover:bg-surface-secondary text-xs font-semibold transition shadow-sm cursor-pointer"
                 >
                   View Active Events
                 </button>
                 <button
                   type="button"
                   onClick={() => router.push("/")}
-                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-border-default bg-surface-primary text-text-primary hover:bg-surface-secondary text-xs font-semibold transition shadow-sm"
+                  className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-border-default bg-surface-primary text-text-primary hover:bg-surface-secondary text-xs font-semibold transition shadow-sm cursor-pointer"
                 >
                   Return to Homepage
                 </button>
@@ -537,9 +628,62 @@ export default function PublicFormViewPage() {
                   </p>
                 )}
 
-                {eventTitle && (
-                  <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-text-primary bg-surface-secondary px-3 py-1.5 rounded-lg border border-border-default mt-1">
-                    <Calendar className="w-3.5 h-3.5 text-accent-primary" /> Associated Event: {eventTitle}
+                {/* ── Event Capacity & Registration Progress Widget ── */}
+                {form.maxParticipants && form.maxParticipants > 0 && (
+                  <div className="p-4 rounded-xl bg-surface-secondary/70 border border-border-default space-y-2.5 mt-2">
+                    <div className="flex items-center justify-between text-xs font-mono">
+                      <span className="font-bold text-text-tertiary uppercase tracking-wider flex items-center gap-1.5">
+                        <Users size={13} className="text-accent-primary" /> Participation Cap
+                      </span>
+                      <span className="font-bold text-text-primary shrink-0 whitespace-nowrap">
+                        {form.registeredCount || 0} / {form.maxParticipants} Seats
+                      </span>
+                    </div>
+
+                    <div className="w-full h-2 rounded-full bg-surface-primary overflow-hidden border border-border-default/40">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          (form.registeredCount || 0) >= form.maxParticipants
+                            ? "bg-amber-500"
+                            : (form.registeredCount || 0) / form.maxParticipants >= 0.8
+                            ? "bg-accent-primary"
+                            : "bg-emerald-500"
+                        }`}
+                        style={{
+                          width: `${Math.min(
+                            100,
+                            Math.round(((form.registeredCount || 0) / form.maxParticipants) * 100)
+                          )}%`,
+                        }}
+                      />
+                    </div>
+
+                    <div className="flex items-center justify-between text-[11px] text-text-secondary">
+                      <span>
+                        {form.maxParticipants - (form.registeredCount || 0) > 0
+                          ? `${form.maxParticipants - (form.registeredCount || 0)} seat${
+                              form.maxParticipants - (form.registeredCount || 0) === 1 ? "" : "s"
+                            } remaining`
+                          : "Event at maximum capacity"}
+                      </span>
+                      {eventSlug ? (
+                        <Link
+                          href={`/events/${eventSlug}`}
+                          className="font-bold text-accent-primary hover:text-accent-primary-hover hover:underline transition-colors inline-flex items-center gap-1"
+                          title="View associated event"
+                        >
+                          Event &rarr;
+                        </Link>
+                      ) : (
+                        <Link
+                          href="/events"
+                          className="font-bold text-accent-primary hover:text-accent-primary-hover hover:underline transition-colors inline-flex items-center gap-1"
+                          title="View all active events"
+                        >
+                          Event &rarr;
+                        </Link>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
