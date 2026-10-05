@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import DevelopersClient from "./DevelopersClient";
 
+// revalidate function
 export const revalidate = 120;
 
 export const metadata: Metadata = {
