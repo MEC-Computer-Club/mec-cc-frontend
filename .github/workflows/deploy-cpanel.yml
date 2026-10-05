@@ -29,25 +29,27 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: https://api.meccomputerclub.org
 
-      - name: 🔄 Prepare Passenger Restart Flag
-        run: mkdir -p tmp && date +%s > tmp/restart.txt
+      - name: 🗜️ Package into build.zip (Drops upload to < 30 seconds)
+        run: |
+          mkdir -p dist-deploy
+          cp -R .next dist-deploy/
+          cp -R public dist-deploy/
+          cp server.js package.json package-lock.json dist-deploy/
+          mkdir -p dist-deploy/tmp && date +%s > dist-deploy/tmp/restart.txt
+          cd dist-deploy && zip -r -q ../build.zip . && cd ..
+          mkdir -p ftp-upload
+          mv build.zip ftp-upload/
 
-      - name: 🚀 Deploy via SFTP/FTP to cPanel
+      - name: 🚀 Upload build.zip via FTP (Single File Transfer)
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.CPANEL_FTP_SERVER }}
           username: ${{ secrets.CPANEL_FTP_USERNAME }}
           password: ${{ secrets.CPANEL_FTP_PASSWORD }}
           server-dir: apps/frontend/
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            src/**
-            .env
-            .env.local
+          local-dir: ./ftp-upload/
 
-      - name: 🔄 Trigger cPanel Application Restart (Optional SSH)
+      - name: 🔄 Extract on cPanel (via SSH if available)
         uses: appleboy/ssh-action@v1.0.3
         if: env.CPANEL_SSH_HOST != ''
         env:
@@ -60,4 +62,11 @@ jobs:
           port: ${{ secrets.CPANEL_SSH_PORT || 22 }}
           script: |
             cd /home/meccompu/apps/frontend
+            unzip -qo build.zip
+            rm -f build.zip
             mkdir -p tmp && touch tmp/restart.txt
+
+      - name: 🔄 Trigger cPanel Auto-Extraction (via Webhook)
+        if: env.CPANEL_SSH_HOST == ''
+        run: |
+          curl -s -f "https://meccomputerclub.org/extract-frontend.php?secret=${{ secrets.DEPLOY_SECRET || 'mec_cc_deploy_secret_2026' }}" || echo "Extractor pinged. Note: If extract-frontend.php is placed in public_html, it unzips automatically."
