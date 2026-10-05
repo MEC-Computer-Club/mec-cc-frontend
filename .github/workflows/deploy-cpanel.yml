@@ -28,6 +28,9 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: https://api.meccomputerclub.org
 
+      - name: 🔄 Prepare Passenger Restart Flag
+        run: mkdir -p tmp && date +%s > tmp/restart.txt
+
       - name: 🚀 Deploy via SFTP/FTP to cPanel
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
