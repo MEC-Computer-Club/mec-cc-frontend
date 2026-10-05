@@ -294,13 +294,6 @@ export const MODERATOR_MENU_SECTIONS: MenuSection[] = [
         iconColor: "text-slate-300",
         href: "/dashboard/page-editor",
       },
-      {
-        key: "media",
-        label: "Cloudinary Media",
-        icon: ImageIcon,
-        iconColor: "text-purple-400",
-        href: "/dashboard/media",
-      },
     ],
   },
   {

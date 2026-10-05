@@ -38,6 +38,20 @@ export function Card({
   );
 }
 
+export function stripHtml(input?: string): string {
+  if (!input) return "";
+  return input
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 /* ===== Event Card ===== */
 interface EventCardProps {
   id?: string;
@@ -216,7 +230,7 @@ export function EventCard({
             {location}
           </div>
           
-          <p className="text-sm text-text-secondary leading-normal line-clamp-2 overflow-hidden min-h-[2.6em]">{description}</p>
+          <p className="text-sm text-text-secondary leading-normal line-clamp-2 overflow-hidden min-h-[2.6em]">{stripHtml(description)}</p>
           
           <div className="flex items-center justify-between mt-auto pt-3 border-t border-text-primary/15 dark:border-border-default bg-surface-primary dark:bg-transparent gap-2 flex-wrap">
             <div className="font-mono [font-feature-settings:'liga'_0,'calt'_0] text-xs text-text-primary font-bold">
@@ -314,7 +328,7 @@ export function ProjectCard({
         </div>
         
         <h3 className="font-bold text-xl leading-snug line-clamp-2 overflow-hidden text-text-primary group-hover:text-accent-primary-hover transition-colors mt-1">{title}</h3>
-        <p className="text-sm text-text-secondary leading-normal line-clamp-2 overflow-hidden">{description}</p>
+        <p className="text-sm text-text-secondary leading-normal line-clamp-2 overflow-hidden">{stripHtml(description)}</p>
         
         <div className="flex flex-wrap gap-1.5 mt-2">
           {safeTechStack.slice(0, 4).map((tech) => (

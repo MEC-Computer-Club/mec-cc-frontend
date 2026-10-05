@@ -45,5 +45,6 @@ next-env.d.ts
 club.db
 *.log
 .vscode/
+server.js
 
 
