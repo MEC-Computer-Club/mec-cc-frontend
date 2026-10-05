@@ -9,7 +9,7 @@
  * 4. Clean plain text descriptions without raw HTML markup.
  */
 
-const DEFAULT_FALLBACK_IMAGE = "https://meccomputerclub.org/mec-club-photo.jpg";
+const DEFAULT_FALLBACK_IMAGE = "https://res.cloudinary.com/dj1sjgitq/image/upload/f_jpg,w_1200,h_630,c_fill,g_auto,q_auto:good/v1791228612/uploads/site/mec-club-og.jpg";
 const DEFAULT_SITE_URL = "https://meccomputerclub.org";
 
 /**
