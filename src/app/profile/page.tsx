@@ -213,9 +213,13 @@ function ProfileContent() {
       ]);
 
       // 1. All Club Events (for browsing & registration)
+      let fetchedAllEvents: any[] = [];
       if (results[0].status === "fulfilled" && results[0].value) {
         const evs = (results[0].value as any).data || (results[0].value as any).events || results[0].value;
-        if (Array.isArray(evs) && evs.length > 0) setAllEvents(evs);
+        if (Array.isArray(evs) && evs.length > 0) {
+          fetchedAllEvents = evs;
+          setAllEvents(evs);
+        }
       }
 
       // 2. User's Registered Events
@@ -223,10 +227,9 @@ function ProfileContent() {
         const myEvs = (results[1].value as any).data || (results[1].value as any).events || results[1].value;
         if (Array.isArray(myEvs)) setMyEvents(myEvs);
       } else {
-        // Fallback to filtering allEvents by user's attended list if my-events is empty
-        const userId = user.id || user._id;
+        // Fallback to filtering freshly-fetched events by user's attended list
         const attendedIds = new Set((user.eventsAttended || []).map((e: any) => (e._id || e.id || e).toString()));
-        const myEvsFallback = allEvents.filter((ev) => {
+        const myEvsFallback = fetchedAllEvents.filter((ev) => {
           const evId = (ev._id || ev.id)?.toString();
           return evId && attendedIds.has(evId);
         });
@@ -255,7 +258,8 @@ function ProfileContent() {
     } finally {
       setLoadingData(false);
     }
-  }, [user, allEvents]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   useEffect(() => {
     if (user) {
