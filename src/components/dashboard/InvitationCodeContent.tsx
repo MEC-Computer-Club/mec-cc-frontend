@@ -433,7 +433,12 @@ const InvitationCodeContent = () => {
               <button
                 type="button"
                 onClick={() => {
-                  const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+                  const origin =
+                    typeof window !== "undefined" &&
+                    !window.location.origin.includes("localhost") &&
+                    !window.location.origin.includes("127.0.0.1")
+                      ? window.location.origin
+                      : "https://meccomputerclub.org";
                   navigator.clipboard.writeText(
                     `${origin}/register?role=${invitationResult.role || selectedRole}&code=${encodeURIComponent(invitationResult.code)}`
                   );
@@ -636,7 +641,12 @@ const InvitationCodeContent = () => {
                           <button
                             type="button"
                             onClick={() => {
-                              const origin = typeof window !== "undefined" ? window.location.origin : "http://localhost:3000";
+                              const origin =
+                                typeof window !== "undefined" &&
+                                !window.location.origin.includes("localhost") &&
+                                !window.location.origin.includes("127.0.0.1")
+                                  ? window.location.origin
+                                  : "https://meccomputerclub.org";
                               navigator.clipboard.writeText(
                                 `${origin}/register?role=${inv.role || "member"}&code=${encodeURIComponent(inv.code)}`
                               );

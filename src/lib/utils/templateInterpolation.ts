@@ -51,7 +51,12 @@ export function interpolateCertificateHtml(
 
   // Build QR code URL if not explicitly provided
   const certId = data.certificate_id || "MCC-PREVIEW-001";
-  const origin = typeof window !== "undefined" ? window.location.origin : "https://meccomputerclub.org";
+  const origin =
+    typeof window !== "undefined" &&
+    !window.location.origin.includes("localhost") &&
+    !window.location.origin.includes("127.0.0.1")
+      ? window.location.origin
+      : "https://meccomputerclub.org";
   const defaultVerifyUrl = data.verification_url || `${origin}/verify?cert=${certId}`;
   const defaultQrUrl =
     data.qr_code_url ||

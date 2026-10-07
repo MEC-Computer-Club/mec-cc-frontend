@@ -17,6 +17,20 @@ import {
   Redo,
   Sparkles,
   Plus,
+  MousePointerClick,
+  Info,
+  AlertTriangle,
+  CheckCircle2,
+  Bookmark,
+  Calendar,
+  Minus,
+  X,
+  ChevronDown,
+  Check,
+  Maximize2,
+  Layers,
+  Copy,
+  ExternalLink,
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -452,13 +466,150 @@ export function RichTextEditor({
     [disabled, activeFormats, unwrapBlock, handleInput, updateActiveFormats]
   );
 
-  const handleLink = useCallback(() => {
-    if (disabled) return;
-    const url = prompt("Enter URL (e.g. https://example.com):");
-    if (url) {
-      execCommand("createLink", url);
+  // Selection memory across modals
+  const savedSelectionRef = useRef<Range | null>(null);
+
+  const saveCurrentSelection = useCallback(() => {
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0 && editorRef.current) {
+      const range = sel.getRangeAt(0);
+      if (editorRef.current.contains(range.commonAncestorContainer)) {
+        savedSelectionRef.current = range.cloneRange();
+        return;
+      }
     }
-  }, [disabled, execCommand]);
+    savedSelectionRef.current = null;
+  }, []);
+
+  const restoreCurrentSelection = useCallback(() => {
+    if (savedSelectionRef.current && editorRef.current) {
+      editorRef.current.focus();
+      const sel = window.getSelection();
+      if (sel) {
+        sel.removeAllRanges();
+        sel.addRange(savedSelectionRef.current);
+      }
+    }
+  }, []);
+
+  // Modals & Popover State
+  const [showButtonModal, setShowButtonModal] = useState(false);
+  const [btnText, setBtnText] = useState("Join Google Meet &rarr;");
+  const [btnUrl, setBtnUrl] = useState("https://meet.google.com/");
+  const [btnColor, setBtnColor] = useState("#002e5b");
+  const [btnAlign, setBtnAlign] = useState<"center" | "left" | "right">("center");
+  const [btnSize, setBtnSize] = useState<"md" | "lg">("md");
+
+  const [showBoxDropdown, setShowBoxDropdown] = useState(false);
+  const [showBoxModal, setShowBoxModal] = useState(false);
+  const [boxType, setBoxType] = useState<"info" | "warning" | "success" | "note">("info");
+  const [boxCustomTitle, setBoxCustomTitle] = useState("");
+  const [boxCustomContent, setBoxCustomContent] = useState("");
+
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [schedTitle, setSchedTitle] = useState("📅 Event Schedule & Session Details");
+  const [schedDate, setSchedDate] = useState("{{eventDate}}");
+  const [schedTime, setSchedTime] = useState("03:00 PM - 05:00 PM BST");
+  const [schedVenue, setSchedVenue] = useState("{{eventVenue}}");
+  const [schedAudience, setSchedAudience] = useState("All Registered Participants");
+
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [linkText, setLinkText] = useState("");
+  const [linkUrl, setLinkUrl] = useState("https://");
+
+  const [showTokensDropdown, setShowTokensDropdown] = useState(false);
+
+  // Close popovers on click outside
+  const boxDropdownRef = useRef<HTMLDivElement>(null);
+  const tokensDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleDocumentClick = (e: MouseEvent) => {
+      if (boxDropdownRef.current && !boxDropdownRef.current.contains(e.target as Node)) {
+        setShowBoxDropdown(false);
+      }
+      if (tokensDropdownRef.current && !tokensDropdownRef.current.contains(e.target as Node)) {
+        setShowTokensDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleDocumentClick);
+    return () => document.removeEventListener("mousedown", handleDocumentClick);
+  }, []);
+
+  /**
+   * Safe HTML insertion at caret position with paragraph continuation
+   */
+  const insertHtmlAtCursor = useCallback(
+    (htmlToInsert: string) => {
+      if (disabled || !editorRef.current) return;
+      editorRef.current.focus();
+      restoreCurrentSelection();
+
+      const sel = window.getSelection();
+      let inserted = false;
+
+      if (sel && sel.rangeCount > 0 && editorRef.current) {
+        const range = sel.getRangeAt(0);
+        if (editorRef.current.contains(range.commonAncestorContainer)) {
+          range.deleteContents();
+
+          const temp = document.createElement("div");
+          temp.innerHTML = htmlToInsert;
+          const frag = document.createDocumentFragment();
+          let node: Node | null;
+          let lastNode: Node | null = null;
+          while ((node = temp.firstChild)) {
+            lastNode = frag.appendChild(node);
+          }
+
+          range.insertNode(frag);
+
+          if (lastNode) {
+            const newRange = document.createRange();
+            newRange.setStartAfter(lastNode);
+            newRange.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(newRange);
+          }
+          inserted = true;
+        }
+      }
+
+      if (!inserted && editorRef.current) {
+        editorRef.current.innerHTML += `<p><br></p>${htmlToInsert}<p><br></p>`;
+      }
+
+      handleInput();
+      setTimeout(updateActiveFormats, 10);
+    },
+    [disabled, restoreCurrentSelection, handleInput, updateActiveFormats]
+  );
+
+  const handleOpenLinkModal = useCallback(() => {
+    if (disabled) return;
+    saveCurrentSelection();
+    const sel = window.getSelection();
+    if (sel && !sel.isCollapsed) {
+      setLinkText(sel.toString());
+    } else {
+      setLinkText("");
+    }
+    setLinkUrl("https://");
+    setShowLinkModal(true);
+  }, [disabled, saveCurrentSelection]);
+
+  const handleInsertLink = useCallback(() => {
+    if (!linkUrl.trim()) {
+      toast.error("Please enter a valid URL.");
+      return;
+    }
+    const cleanUrl = linkUrl.trim();
+    const display = linkText.trim() || cleanUrl;
+    const linkHtml = `<a href="${cleanUrl}" target="_blank" style="color: #002e5b; font-weight: 600; text-decoration: underline;">${display}</a>`;
+    insertHtmlAtCursor(linkHtml);
+    setShowLinkModal(false);
+    toast.success("Link inserted");
+  }, [linkUrl, linkText, insertHtmlAtCursor]);
 
   /**
    * Inserts dynamic token like {{userName}} directly at caret position
@@ -488,10 +639,208 @@ export function RichTextEditor({
 
       handleInput();
       navigator.clipboard?.writeText(token);
-      toast.success(`Inserted ${token} at cursor position`);
+      toast.success(`Inserted ${token}`);
     },
     [disabled, handleInput]
   );
+
+  // Notice Boxes Configuration
+  const noticeBoxTypes = {
+    info: {
+      name: "Information Box",
+      icon: "💡",
+      bgColor: "#eff6ff",
+      borderColor: "#bfdbfe",
+      accentBorderColor: "#2563eb",
+      titleColor: "#1d4ed8",
+      textColor: "#1e40af",
+      defaultTitle: "Important Guidelines & Information",
+      defaultContent: "Please review the event guidelines and instructions carefully before joining.",
+    },
+    warning: {
+      name: "Warning / Alert Box",
+      icon: "⚠️",
+      bgColor: "#fffbeb",
+      borderColor: "#fde68a",
+      accentBorderColor: "#d97706",
+      titleColor: "#b45309",
+      textColor: "#92400e",
+      defaultTitle: "Urgent Notice & Arrival Time",
+      defaultContent: "Please join the meeting or venue at least 15 minutes before the session starts.",
+    },
+    success: {
+      name: "Confirmation / Success Box",
+      icon: "✅",
+      bgColor: "#f0fdf4",
+      borderColor: "#bbf7d0",
+      accentBorderColor: "#16a34a",
+      titleColor: "#15803d",
+      textColor: "#166534",
+      defaultTitle: "Registration Status: Confirmed",
+      defaultContent: "Your registration has been approved. Your seat is officially reserved.",
+    },
+    note: {
+      name: "Important Note / Preparation",
+      icon: "📌",
+      bgColor: "#faf5ff",
+      borderColor: "#e9d5ff",
+      accentBorderColor: "#9333ea",
+      titleColor: "#7e22ce",
+      textColor: "#6b21a8",
+      defaultTitle: "Preparation & Required Items",
+      defaultContent: "Bring your institutional ID card and ensure you have all materials ready.",
+    },
+  };
+
+  const handleInsertNoticeBoxPreset = (type: "info" | "warning" | "success" | "note") => {
+    const cfg = noticeBoxTypes[type];
+    const boxHtml = `
+      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 16px 0; background-color: ${cfg.bgColor}; border: 1px solid ${cfg.borderColor}; border-left: 4px solid ${cfg.accentBorderColor}; border-radius: 8px; border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+        <tr>
+          <td style="padding: 14px 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; color: ${cfg.textColor};">
+            <div style="font-weight: 700; margin-bottom: 4px; font-size: 14px; color: ${cfg.titleColor};">
+              ${cfg.icon} ${cfg.defaultTitle}
+            </div>
+            <div style="font-size: 13.5px; color: ${cfg.textColor};">
+              ${cfg.defaultContent}
+            </div>
+          </td>
+        </tr>
+      </table>
+      <p><br></p>
+    `;
+    insertHtmlAtCursor(boxHtml);
+    setShowBoxDropdown(false);
+    toast.success(`Inserted ${cfg.name} (editable in place)`);
+  };
+
+  const handleInsertNoticeBoxCustom = () => {
+    const cfg = noticeBoxTypes[boxType];
+    const title = boxCustomTitle.trim() || cfg.defaultTitle;
+    const content = boxCustomContent.trim() || cfg.defaultContent;
+    const boxHtml = `
+      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 16px 0; background-color: ${cfg.bgColor}; border: 1px solid ${cfg.borderColor}; border-left: 4px solid ${cfg.accentBorderColor}; border-radius: 8px; border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+        <tr>
+          <td style="padding: 14px 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.5; color: ${cfg.textColor};">
+            <div style="font-weight: 700; margin-bottom: 4px; font-size: 14px; color: ${cfg.titleColor};">
+              ${cfg.icon} ${title}
+            </div>
+            <div style="font-size: 13.5px; color: ${cfg.textColor};">
+              ${content}
+            </div>
+          </td>
+        </tr>
+      </table>
+      <p><br></p>
+    `;
+    insertHtmlAtCursor(boxHtml);
+    setShowBoxModal(false);
+    toast.success(`Inserted ${cfg.name}`);
+  };
+
+  const handleInsertButtonSubmit = () => {
+    const label = btnText.trim() || "Click Here";
+    const link = btnUrl.trim() || "#";
+    const padding = btnSize === "lg" ? "14px 32px" : "11px 24px";
+    const fontSize = btnSize === "lg" ? "16px" : "14px";
+
+    const buttonHtml = `
+      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 20px 0; border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+        <tr>
+          <td align="${btnAlign}" style="padding: 0;">
+            <table border="0" cellpadding="0" cellspacing="0" style="border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+              <tr>
+                <td align="center" style="background-color: ${btnColor}; border-radius: 8px; padding: 0;">
+                  <a href="${link}" target="_blank" style="display: inline-block; padding: ${padding}; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: ${fontSize}; font-weight: 700; color: #ffffff !important; text-decoration: none; border-radius: 8px; line-height: 1.2; text-align: center;">
+                    ${label}
+                  </a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+      <p><br></p>
+    `;
+    insertHtmlAtCursor(buttonHtml);
+    setShowButtonModal(false);
+    toast.success("Inserted Call-to-Action button");
+  };
+
+  const handleInsertScheduleSubmit = () => {
+    const title = schedTitle.trim() || "📅 Event Schedule & Session Details";
+    const date = schedDate.trim() || "{{eventDate}}";
+    const time = schedTime.trim() || "03:00 PM - 05:00 PM BST";
+    const venue = schedVenue.trim() || "{{eventVenue}}";
+    const audience = schedAudience.trim();
+
+    const scheduleHtml = `
+      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 18px 0; background-color: #f8fafc; border: 2px dashed #f58a1f; border-radius: 10px; border-collapse: separate; mso-table-lspace: 0pt; mso-table-rspace: 0pt;">
+        <tr>
+          <td style="padding: 16px 18px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+            <div style="font-size: 13px; font-weight: 800; color: #002e5b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+              ${title}
+            </div>
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse: collapse;">
+              <tr>
+                <td style="padding: 7px 0; font-size: 13px; color: #64748b; width: 110px; font-weight: 600; border-bottom: 1px solid #f1f5f9;">
+                  📅 Date:
+                </td>
+                <td style="padding: 7px 0; font-size: 13px; color: #002e5b; font-weight: 700; border-bottom: 1px solid #f1f5f9;">
+                  ${date}
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 7px 0; font-size: 13px; color: #64748b; width: 110px; font-weight: 600; border-bottom: 1px solid #f1f5f9;">
+                  ⏰ Time:
+                </td>
+                <td style="padding: 7px 0; font-size: 13px; color: #002e5b; font-weight: 700; border-bottom: 1px solid #f1f5f9;">
+                  ${time}
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 7px 0; font-size: 13px; color: #64748b; width: 110px; font-weight: 600; border-bottom: 1px solid #f1f5f9;">
+                  📍 Venue:
+                </td>
+                <td style="padding: 7px 0; font-size: 13px; color: #002e5b; font-weight: 700; border-bottom: 1px solid #f1f5f9;">
+                  ${venue}
+                </td>
+              </tr>
+              ${
+                audience
+                  ? `<tr>
+                <td style="padding: 7px 0; font-size: 13px; color: #64748b; width: 110px; font-weight: 600;">
+                  👥 Audience:
+                </td>
+                <td style="padding: 7px 0; font-size: 13px; color: #002e5b; font-weight: 700;">
+                  ${audience}
+                </td>
+              </tr>`
+                  : ""
+              }
+            </table>
+          </td>
+        </tr>
+      </table>
+      <p><br></p>
+    `;
+    insertHtmlAtCursor(scheduleHtml);
+    setShowScheduleModal(false);
+    toast.success("Inserted Event Schedule Card");
+  };
+
+  const handleInsertDivider = () => {
+    const dividerHtml = `
+      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 22px 0; border-collapse: collapse;">
+        <tr>
+          <td style="border-top: 1px solid #e2e8f0; font-size: 0; line-height: 0; height: 1px;">&nbsp;</td>
+        </tr>
+      </table>
+      <p><br></p>
+    `;
+    insertHtmlAtCursor(dividerHtml);
+    toast.success("Inserted Divider line");
+  };
 
   const toolbarActions: (ToolbarAction | "separator")[] = [
     { icon: <Bold size={15} />, command: "bold", title: "Bold (Ctrl+B)" },
@@ -502,7 +851,7 @@ export function RichTextEditor({
     { icon: <Heading2 size={15} />, command: "formatBlock", arg: "h2", title: "Heading 2" },
     { icon: <Heading3 size={15} />, command: "formatBlock", arg: "h3", title: "Heading 3" },
     { icon: <Quote size={15} />, command: "formatBlock", arg: "blockquote", title: "Blockquote" },
-    { icon: <Code size={15} />, command: "formatBlock", arg: "pre", title: "Code Block (Click again to undo)" },
+    { icon: <Code size={15} />, command: "formatBlock", arg: "pre", title: "Code Block" },
     "separator",
     { icon: <List size={15} />, command: "insertUnorderedList", title: "Bulleted List" },
     { icon: <ListOrdered size={15} />, command: "insertOrderedList", title: "Numbered List" },
@@ -527,79 +876,686 @@ export function RichTextEditor({
     return false;
   };
 
+  /**
+   * Reusable Block insertion toolbar component
+   */
+  const renderBlockTools = () => {
+    const quickTokens = emailMetadata?.quickTokens || [];
+
+    return (
+      <div className="flex items-center gap-1.5 flex-wrap">
+        {/* Button Inserter */}
+        <button
+          type="button"
+          title="Insert Call-to-Action Button"
+          disabled={disabled}
+          onClick={() => {
+            saveCurrentSelection();
+            setShowButtonModal(true);
+          }}
+          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface-elevated hover:bg-accent-primary/20 text-text-primary text-xs font-bold border border-border-default hover:border-accent-primary transition cursor-pointer shadow-2xs"
+        >
+          <MousePointerClick size={13} className="text-blue-500" />
+          <span>Button</span>
+        </button>
+
+        {/* Notice Box Dropdown */}
+        <div className="relative" ref={boxDropdownRef}>
+          <button
+            type="button"
+            title="Insert Notice / Info / Warning Box"
+            disabled={disabled}
+            onClick={() => setShowBoxDropdown((prev) => !prev)}
+            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface-elevated hover:bg-accent-primary/20 text-text-primary text-xs font-bold border border-border-default hover:border-accent-primary transition cursor-pointer shadow-2xs"
+          >
+            <Info size={13} className="text-amber-500" />
+            <span>Notice Box</span>
+            <ChevronDown size={12} className="text-text-tertiary" />
+          </button>
+
+          {showBoxDropdown && (
+            <div className="absolute left-0 mt-1.5 w-64 rounded-xl bg-surface-elevated border-2 border-border-brutalist dark:border-border-default shadow-[4px_4px_0px_0px_var(--border-brutalist)] z-50 overflow-hidden text-xs animate-scale-up">
+              <div className="p-2 border-b border-border-default bg-surface-secondary/60">
+                <span className="font-bold text-[11px] uppercase tracking-wider text-text-secondary">
+                  Insert Notice / Callout Box
+                </span>
+              </div>
+              <div className="p-1 space-y-0.5">
+                <button
+                  type="button"
+                  onClick={() => handleInsertNoticeBoxPreset("info")}
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-blue-500/10 flex items-center gap-2 transition cursor-pointer"
+                >
+                  <span className="text-base">💡</span>
+                  <div className="min-w-0">
+                    <span className="font-bold text-blue-700 dark:text-blue-300 block">Information Box</span>
+                    <span className="text-[10px] text-text-tertiary truncate block">Guidelines & announcements</span>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleInsertNoticeBoxPreset("warning")}
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-amber-500/10 flex items-center gap-2 transition cursor-pointer"
+                >
+                  <span className="text-base">⚠️</span>
+                  <div className="min-w-0">
+                    <span className="font-bold text-amber-700 dark:text-amber-300 block">Warning / Alert Box</span>
+                    <span className="text-[10px] text-text-tertiary truncate block">Urgent timing & precautions</span>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleInsertNoticeBoxPreset("success")}
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-emerald-500/10 flex items-center gap-2 transition cursor-pointer"
+                >
+                  <span className="text-base">✅</span>
+                  <div className="min-w-0">
+                    <span className="font-bold text-emerald-700 dark:text-emerald-300 block">Confirmation Box</span>
+                    <span className="text-[10px] text-text-tertiary truncate block">Approval & reserved seat</span>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleInsertNoticeBoxPreset("note")}
+                  className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-purple-500/10 flex items-center gap-2 transition cursor-pointer"
+                >
+                  <span className="text-base">📌</span>
+                  <div className="min-w-0">
+                    <span className="font-bold text-purple-700 dark:text-purple-300 block">Important Note Box</span>
+                    <span className="text-[10px] text-text-tertiary truncate block">Preparation & prerequisites</span>
+                  </div>
+                </button>
+              </div>
+              <div className="p-1 border-t border-border-default bg-surface-secondary/40">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowBoxDropdown(false);
+                    saveCurrentSelection();
+                    setShowBoxModal(true);
+                  }}
+                  className="w-full text-center px-2 py-1 rounded-lg text-accent-primary hover:bg-accent-primary/10 font-bold text-[11px] transition cursor-pointer"
+                >
+                  ⚙️ Customize Box Content &rarr;
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Schedule Card Inserter */}
+        <button
+          type="button"
+          title="Insert Event Schedule & Venue Grid"
+          disabled={disabled}
+          onClick={() => {
+            saveCurrentSelection();
+            setShowScheduleModal(true);
+          }}
+          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface-elevated hover:bg-accent-primary/20 text-text-primary text-xs font-bold border border-border-default hover:border-accent-primary transition cursor-pointer shadow-2xs"
+        >
+          <Calendar size={13} className="text-orange-500" />
+          <span>Schedule Card</span>
+        </button>
+
+        {/* Divider Inserter */}
+        <button
+          type="button"
+          title="Insert Horizontal Divider Line"
+          disabled={disabled}
+          onClick={handleInsertDivider}
+          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface-elevated hover:bg-accent-primary/20 text-text-primary text-xs font-bold border border-border-default hover:border-accent-primary transition cursor-pointer shadow-2xs"
+        >
+          <Minus size={13} className="text-slate-500" />
+          <span>Divider</span>
+        </button>
+
+        {/* Dynamic Tokens Dropdown */}
+        {quickTokens.length > 0 && (
+          <div className="relative" ref={tokensDropdownRef}>
+            <button
+              type="button"
+              title="Insert Dynamic Token at Cursor"
+              disabled={disabled}
+              onClick={() => setShowTokensDropdown((prev) => !prev)}
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-surface-elevated hover:bg-accent-primary/20 text-text-primary text-xs font-bold border border-border-default hover:border-accent-primary transition cursor-pointer shadow-2xs"
+            >
+              <Sparkles size={13} className="text-purple-500" />
+              <span>Token</span>
+              <ChevronDown size={12} className="text-text-tertiary" />
+            </button>
+
+            {showTokensDropdown && (
+              <div className="absolute left-0 mt-1.5 w-60 max-h-64 overflow-y-auto rounded-xl bg-surface-elevated border-2 border-border-brutalist dark:border-border-default shadow-[4px_4px_0px_0px_var(--border-brutalist)] z-50 p-1 text-xs animate-scale-up">
+                <div className="p-1.5 border-b border-border-default text-[10px] uppercase font-bold text-text-secondary">
+                  Insert Dynamic Token
+                </div>
+                {quickTokens.map((tok) => (
+                  <button
+                    key={tok.name}
+                    type="button"
+                    onClick={() => {
+                      insertTokenAtCursor(tok.name);
+                      setShowTokensDropdown(false);
+                    }}
+                    className="w-full text-left px-2 py-1.5 rounded-lg hover:bg-accent-primary/10 flex items-center justify-between text-text-primary transition cursor-pointer"
+                  >
+                    <span className="font-mono font-bold text-accent-primary">
+                      &#123;&#123;{tok.name}&#125;&#125;
+                    </span>
+                    <span className="text-[10px] text-text-tertiary truncate max-w-[100px]">
+                      {tok.description}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  /**
+   * Modals for Button, Notice Box, Schedule, and Link
+   */
+  const renderModals = () => (
+    <>
+      {/* ── Button Insertion Modal ── */}
+      {showButtonModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-2xl max-w-md w-full p-5 shadow-[6px_6px_0px_0px_var(--border-brutalist)] space-y-4 animate-scale-up">
+            <div className="flex items-center justify-between border-b border-border-default pb-2.5">
+              <h3 className="font-bold text-sm text-text-primary flex items-center gap-2">
+                <MousePointerClick className="w-4 h-4 text-accent-primary" />
+                Insert Call-to-Action Button
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowButtonModal(false)}
+                className="text-text-tertiary hover:text-text-primary p-1 cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="font-bold text-text-secondary block mb-1">
+                  Button Text / Label:
+                </label>
+                <input
+                  type="text"
+                  value={btnText}
+                  onChange={(e) => setBtnText(e.target.value)}
+                  placeholder="e.g. Join Google Meet &rarr;"
+                  className="w-full px-3 py-2 rounded-xl border border-border-default bg-surface-secondary text-text-primary focus:border-accent-primary outline-none"
+                />
+                <div className="flex flex-wrap gap-1 mt-1.5">
+                  {[
+                    "Join Google Meet &rarr;",
+                    "Register Now &rarr;",
+                    "View Schedule &rarr;",
+                    "Join WhatsApp Group &rarr;",
+                  ].map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => setBtnText(s)}
+                      className="px-1.5 py-0.5 rounded bg-surface-secondary hover:bg-accent-primary/20 text-[10px] text-text-secondary border border-border-default cursor-pointer"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-text-secondary block mb-1">
+                  Destination URL / Action Link:
+                </label>
+                <input
+                  type="text"
+                  value={btnUrl}
+                  onChange={(e) => setBtnUrl(e.target.value)}
+                  placeholder="https://meet.google.com/xyz or {{eventUrl}}"
+                  className="w-full px-3 py-2 rounded-xl border border-border-default bg-surface-secondary text-text-primary focus:border-accent-primary outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-text-secondary block mb-1">
+                  Color Theme:
+                </label>
+                <div className="grid grid-cols-5 gap-1.5">
+                  {[
+                    { label: "Navy", color: "#002e5b" },
+                    { label: "Orange", color: "#f58a1f" },
+                    { label: "Green", color: "#16a34a" },
+                    { label: "Purple", color: "#7c3aed" },
+                    { label: "Dark", color: "#1e293b" },
+                  ].map((c) => (
+                    <button
+                      key={c.color}
+                      type="button"
+                      onClick={() => setBtnColor(c.color)}
+                      className={`p-2 rounded-xl border text-[11px] font-bold text-white flex flex-col items-center justify-center transition cursor-pointer ${
+                        btnColor === c.color ? "ring-2 ring-accent-primary scale-102" : "opacity-85 hover:opacity-100"
+                      }`}
+                      style={{ backgroundColor: c.color }}
+                    >
+                      <span>{c.label}</span>
+                      {btnColor === c.color && <Check size={12} className="mt-0.5" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="font-bold text-text-secondary block mb-1">Alignment:</label>
+                  <div className="flex rounded-xl border border-border-default overflow-hidden">
+                    {(["center", "left", "right"] as const).map((a) => (
+                      <button
+                        key={a}
+                        type="button"
+                        onClick={() => setBtnAlign(a)}
+                        className={`flex-1 py-1.5 font-bold capitalize text-[11px] cursor-pointer ${
+                          btnAlign === a ? "bg-accent-primary text-text-primary" : "bg-surface-secondary text-text-secondary"
+                        }`}
+                      >
+                        {a}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="font-bold text-text-secondary block mb-1">Size:</label>
+                  <div className="flex rounded-xl border border-border-default overflow-hidden">
+                    {(["md", "lg"] as const).map((s) => (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => setBtnSize(s)}
+                        className={`flex-1 py-1.5 font-bold uppercase text-[11px] cursor-pointer ${
+                          btnSize === s ? "bg-accent-primary text-text-primary" : "bg-surface-secondary text-text-secondary"
+                        }`}
+                      >
+                        {s === "md" ? "Medium" : "Large"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Live Preview Card inside Modal */}
+              <div className="p-3 bg-surface-secondary/70 border border-border-default rounded-xl space-y-1">
+                <span className="text-[10px] font-bold text-text-tertiary uppercase block">
+                  Live Preview:
+                </span>
+                <div style={{ textAlign: btnAlign }} className="py-2">
+                  <span
+                    style={{
+                      backgroundColor: btnColor,
+                      color: "#ffffff",
+                      padding: btnSize === "lg" ? "12px 28px" : "9px 20px",
+                      borderRadius: "8px",
+                      fontWeight: 700,
+                      display: "inline-block",
+                      fontSize: btnSize === "lg" ? "15px" : "13px",
+                    }}
+                  >
+                    {btnText || "Click Here"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-border-default">
+              <button
+                type="button"
+                onClick={() => setShowButtonModal(false)}
+                className="px-3 py-1.5 rounded-xl text-xs font-bold text-text-secondary hover:text-text-primary cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleInsertButtonSubmit}
+                className="px-4 py-2 rounded-xl bg-accent-primary text-text-primary font-bold text-xs border border-border-brutalist shadow-[2px_2px_0px_0px_var(--border-brutalist)] hover:opacity-95 cursor-pointer"
+              >
+                Insert Button Into Email
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Notice Box Customizer Modal ── */}
+      {showBoxModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-2xl max-w-md w-full p-5 shadow-[6px_6px_0px_0px_var(--border-brutalist)] space-y-4 animate-scale-up">
+            <div className="flex items-center justify-between border-b border-border-default pb-2.5">
+              <h3 className="font-bold text-sm text-text-primary flex items-center gap-2">
+                <Info className="w-4 h-4 text-accent-primary" />
+                Customize Notice / Callout Box
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowBoxModal(false)}
+                className="text-text-tertiary hover:text-text-primary p-1 cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="font-bold text-text-secondary block mb-1">Notice Style / Type:</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(["info", "warning", "success", "note"] as const).map((t) => {
+                    const cfg = noticeBoxTypes[t];
+                    const isSel = boxType === t;
+                    return (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => {
+                          setBoxType(t);
+                          if (!boxCustomTitle) setBoxCustomTitle(cfg.defaultTitle);
+                          if (!boxCustomContent) setBoxCustomContent(cfg.defaultContent);
+                        }}
+                        className={`p-2 rounded-xl border text-left flex items-center gap-2 transition cursor-pointer ${
+                          isSel
+                            ? "border-accent-primary bg-accent-primary/10 shadow-[2px_2px_0px_0px_var(--border-brutalist)] font-bold text-text-primary"
+                            : "border-border-default bg-surface-secondary text-text-secondary hover:bg-surface-elevated"
+                        }`}
+                      >
+                        <span className="text-base">{cfg.icon}</span>
+                        <span className="truncate text-xs">{cfg.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-text-secondary block mb-1">Box Header Title:</label>
+                <input
+                  type="text"
+                  value={boxCustomTitle}
+                  onChange={(e) => setBoxCustomTitle(e.target.value)}
+                  placeholder={noticeBoxTypes[boxType].defaultTitle}
+                  className="w-full px-3 py-2 rounded-xl border border-border-default bg-surface-secondary text-text-primary focus:border-accent-primary outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-text-secondary block mb-1">Notice Body Content:</label>
+                <textarea
+                  rows={3}
+                  value={boxCustomContent}
+                  onChange={(e) => setBoxCustomContent(e.target.value)}
+                  placeholder={noticeBoxTypes[boxType].defaultContent}
+                  className="w-full px-3 py-2 rounded-xl border border-border-default bg-surface-secondary text-text-primary focus:border-accent-primary outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-border-default">
+              <button
+                type="button"
+                onClick={() => setShowBoxModal(false)}
+                className="px-3 py-1.5 rounded-xl text-xs font-bold text-text-secondary hover:text-text-primary cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleInsertNoticeBoxCustom}
+                className="px-4 py-2 rounded-xl bg-accent-primary text-text-primary font-bold text-xs border border-border-brutalist shadow-[2px_2px_0px_0px_var(--border-brutalist)] hover:opacity-95 cursor-pointer"
+              >
+                Insert Notice Box
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Schedule Card Modal ── */}
+      {showScheduleModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-2xl max-w-md w-full p-5 shadow-[6px_6px_0px_0px_var(--border-brutalist)] space-y-4 animate-scale-up">
+            <div className="flex items-center justify-between border-b border-border-default pb-2.5">
+              <h3 className="font-bold text-sm text-text-primary flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-accent-primary" />
+                Insert Event Schedule &amp; Details Card
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowScheduleModal(false)}
+                className="text-text-tertiary hover:text-text-primary p-1 cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="space-y-2.5 text-xs">
+              <div>
+                <label className="font-bold text-text-secondary block mb-1">Card Title:</label>
+                <input
+                  type="text"
+                  value={schedTitle}
+                  onChange={(e) => setSchedTitle(e.target.value)}
+                  placeholder="📅 Event Schedule & Session Details"
+                  className="w-full px-3 py-2 rounded-xl border border-border-default bg-surface-secondary text-text-primary focus:border-accent-primary outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="font-bold text-text-secondary block mb-1">Date:</label>
+                  <input
+                    type="text"
+                    value={schedDate}
+                    onChange={(e) => setSchedDate(e.target.value)}
+                    placeholder="{{eventDate}} or Oct 24, 2026"
+                    className="w-full px-3 py-2 rounded-xl border border-border-default bg-surface-secondary text-text-primary focus:border-accent-primary outline-none font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="font-bold text-text-secondary block mb-1">Time:</label>
+                  <input
+                    type="text"
+                    value={schedTime}
+                    onChange={(e) => setSchedTime(e.target.value)}
+                    placeholder="03:00 PM - 05:00 PM BST"
+                    className="w-full px-3 py-2 rounded-xl border border-border-default bg-surface-secondary text-text-primary focus:border-accent-primary outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-text-secondary block mb-1">Venue / Platform:</label>
+                <input
+                  type="text"
+                  value={schedVenue}
+                  onChange={(e) => setSchedVenue(e.target.value)}
+                  placeholder="{{eventVenue}} or Google Meet"
+                  className="w-full px-3 py-2 rounded-xl border border-border-default bg-surface-secondary text-text-primary focus:border-accent-primary outline-none font-mono"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-text-secondary block mb-1">Target Audience:</label>
+                <input
+                  type="text"
+                  value={schedAudience}
+                  onChange={(e) => setSchedAudience(e.target.value)}
+                  placeholder="All Registered Participants"
+                  className="w-full px-3 py-2 rounded-xl border border-border-default bg-surface-secondary text-text-primary focus:border-accent-primary outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-border-default">
+              <button
+                type="button"
+                onClick={() => setShowScheduleModal(false)}
+                className="px-3 py-1.5 rounded-xl text-xs font-bold text-text-secondary hover:text-text-primary cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleInsertScheduleSubmit}
+                className="px-4 py-2 rounded-xl bg-accent-primary text-text-primary font-bold text-xs border border-border-brutalist shadow-[2px_2px_0px_0px_var(--border-brutalist)] hover:opacity-95 cursor-pointer"
+              >
+                Insert Schedule Card
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Link Insertion Modal ── */}
+      {showLinkModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-surface-elevated border-2 border-border-brutalist dark:border-border-default rounded-2xl max-w-sm w-full p-5 shadow-[6px_6px_0px_0px_var(--border-brutalist)] space-y-4 animate-scale-up">
+            <div className="flex items-center justify-between border-b border-border-default pb-2.5">
+              <h3 className="font-bold text-sm text-text-primary flex items-center gap-2">
+                <LinkIcon className="w-4 h-4 text-accent-primary" />
+                Insert Hyperlink
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowLinkModal(false)}
+                className="text-text-tertiary hover:text-text-primary p-1 cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="font-bold text-text-secondary block mb-1">Text to Display:</label>
+                <input
+                  type="text"
+                  value={linkText}
+                  onChange={(e) => setLinkText(e.target.value)}
+                  placeholder="e.g. Click here to read rules"
+                  className="w-full px-3 py-2 rounded-xl border border-border-default bg-surface-secondary text-text-primary focus:border-accent-primary outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="font-bold text-text-secondary block mb-1">Destination URL:</label>
+                <input
+                  type="text"
+                  value={linkUrl}
+                  onChange={(e) => setLinkUrl(e.target.value)}
+                  placeholder="https://example.com"
+                  className="w-full px-3 py-2 rounded-xl border border-border-default bg-surface-secondary text-text-primary focus:border-accent-primary outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-border-default">
+              <button
+                type="button"
+                onClick={() => setShowLinkModal(false)}
+                className="px-3 py-1.5 rounded-xl text-xs font-bold text-text-secondary hover:text-text-primary cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleInsertLink}
+                className="px-4 py-2 rounded-xl bg-accent-primary text-text-primary font-bold text-xs border border-border-brutalist shadow-[2px_2px_0px_0px_var(--border-brutalist)] hover:opacity-95 cursor-pointer"
+              >
+                Insert Link
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
+
   // ─────────────────────────────────────────────────────────────
   // 1. LIVE EMAIL STUDIO CANVAS MODE (In-Place Live Preview & Editor)
   // ─────────────────────────────────────────────────────────────
   if (variant === "email-canvas") {
     const previewDevice = emailMetadata?.previewDevice || "desktop";
-    const useSampleData = Boolean(emailMetadata?.useSampleData);
-    const quickTokens = emailMetadata?.quickTokens || [];
 
     return (
       <div className="w-full flex flex-col space-y-3">
         {/* Studio Formatting Toolbar Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-2 p-2 bg-surface-secondary border border-border-default rounded-xl select-none">
-          <div className="flex flex-wrap items-center gap-1">
-            {toolbarActions.map((action, i) => {
-              if (action === "separator") {
+        <div className="flex flex-col gap-2 p-2.5 bg-surface-secondary border border-border-default rounded-xl select-none">
+          {/* Row 1: Formatting icons and Extra Controls */}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-1">
+              {toolbarActions.map((action, i) => {
+                if (action === "separator") {
+                  return (
+                    <div key={`sep-${i}`} className="w-px h-5 bg-border-default mx-1 shrink-0" />
+                  );
+                }
+                const active = isActionActive(action);
                 return (
-                  <div key={`sep-${i}`} className="w-px h-5 bg-border-default mx-1 shrink-0" />
+                  <button
+                    key={action.command + (action.arg || "")}
+                    type="button"
+                    title={action.title}
+                    disabled={disabled}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      handleToolbarClick(action);
+                    }}
+                    className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border transition-all text-xs cursor-pointer ${
+                      active
+                        ? "bg-accent-primary text-black dark:text-black font-bold border-text-primary shadow-[2px_2px_0px_0px_var(--text-primary)]"
+                        : "border-transparent text-text-secondary hover:text-text-primary hover:bg-surface-elevated hover:border-border-default disabled:opacity-40"
+                    }`}
+                  >
+                    {action.icon}
+                  </button>
                 );
-              }
-              const active = isActionActive(action);
-              return (
-                <button
-                  key={action.command + (action.arg || "")}
-                  type="button"
-                  title={action.title}
-                  disabled={disabled}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    handleToolbarClick(action);
-                  }}
-                  className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border transition-all text-xs cursor-pointer ${
-                    active
-                      ? "bg-accent-primary text-black dark:text-black font-bold border-text-primary shadow-[2px_2px_0px_0px_var(--text-primary)]"
-                      : "border-transparent text-text-secondary hover:text-text-primary hover:bg-surface-elevated hover:border-border-default disabled:opacity-40"
-                  }`}
-                >
-                  {action.icon}
-                </button>
-              );
-            })}
+              })}
 
-            {/* Link button */}
-            <button
-              type="button"
-              title="Insert Link"
-              disabled={disabled}
-              onMouseDown={(e) => {
-                e.preventDefault();
-                handleLink();
-              }}
-              className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border border-transparent text-text-secondary hover:text-text-primary hover:bg-surface-elevated hover:border-border-default transition-all cursor-pointer disabled:opacity-40"
-            >
-              <LinkIcon size={15} />
-            </button>
+              {/* Link button */}
+              <button
+                type="button"
+                title="Insert Link"
+                disabled={disabled}
+                onClick={handleOpenLinkModal}
+                className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border border-transparent text-text-secondary hover:text-text-primary hover:bg-surface-elevated hover:border-border-default transition-all cursor-pointer disabled:opacity-40"
+              >
+                <LinkIcon size={15} />
+              </button>
+            </div>
+
+            {/* Extra Controls: Viewport Device Switcher & Sample Data Switcher */}
+            {emailMetadata?.extraControls && (
+              <div className="flex items-center gap-2">
+                {emailMetadata.extraControls}
+              </div>
+            )}
           </div>
 
-          {/* Extra Controls: Viewport Device Switcher & Sample Data Switcher */}
-          {emailMetadata?.extraControls && (
-            <div className="flex items-center gap-2">
-              {emailMetadata.extraControls}
+          {/* Row 2: Dedicated Email Block Builder Menu */}
+          <div className="flex items-center justify-between pt-2 border-t border-border-default/60 flex-wrap gap-2">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider mr-1">
+                Insert Blocks:
+              </span>
+              {renderBlockTools()}
             </div>
-          )}
-        </div>
-
-        {/* Status / Guidance Banner */}
-        <div className="flex items-center justify-between px-3 py-1.5 bg-accent-primary/10 border border-accent-primary/20 rounded-lg text-[11px] text-text-secondary font-medium">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            Live Email Studio • Click anywhere inside the email card to edit Title, Greeting, Body, Reference Schedule, and Regards directly in real time.
-          </span>
-          <span className="text-[10px] font-mono text-text-tertiary uppercase font-bold">
-            Interactive WYSIWYG
-          </span>
+            <span className="text-[10px] font-mono text-text-tertiary hidden sm:inline-block">
+              Click elements inside email card to edit directly
+            </span>
+          </div>
         </div>
 
         {/* Live Studio Canvas Background */}
@@ -655,6 +1611,7 @@ export function RichTextEditor({
           </div>
         </div>
 
+        {renderModals()}
         <GlobalEditorStyles />
       </div>
     );
@@ -673,48 +1630,55 @@ export function RichTextEditor({
 
       <div className="border border-border-default dark:border-border-default rounded-xl overflow-hidden bg-surface-elevated focus-within:border-accent-primary focus-within:ring-2 focus-within:ring-accent-primary/20 transition shadow-xs">
         {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-1 px-2.5 py-1.5 bg-surface-secondary border-b border-border-default select-none">
-          {toolbarActions.map((action, i) => {
-            if (action === "separator") {
+        <div className="flex flex-col gap-2 p-2 bg-surface-secondary border-b border-border-default select-none">
+          <div className="flex flex-wrap items-center gap-1">
+            {toolbarActions.map((action, i) => {
+              if (action === "separator") {
+                return (
+                  <div key={`sep-${i}`} className="w-px h-5 bg-border-default mx-1 shrink-0" />
+                );
+              }
+              const active = isActionActive(action);
               return (
-                <div key={`sep-${i}`} className="w-px h-5 bg-border-default mx-1 shrink-0" />
+                <button
+                  key={action.command + (action.arg || "")}
+                  type="button"
+                  title={action.title}
+                  disabled={disabled}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    handleToolbarClick(action);
+                  }}
+                  className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border transition-all text-xs cursor-pointer ${
+                    active
+                      ? "bg-accent-primary text-black dark:text-black font-bold border-text-primary shadow-[2px_2px_0px_0px_var(--text-primary)]"
+                      : "border-transparent text-text-secondary hover:text-text-primary hover:bg-surface-elevated hover:border-border-default"
+                  }`}
+                >
+                  {action.icon}
+                </button>
               );
-            }
-            const active = isActionActive(action);
-            return (
-              <button
-                key={action.command + (action.arg || "")}
-                type="button"
-                title={action.title}
-                disabled={disabled}
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  handleToolbarClick(action);
-                }}
-                className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border transition-all text-xs cursor-pointer ${
-                  active
-                    ? "bg-accent-primary text-black dark:text-black font-bold border-text-primary shadow-[2px_2px_0px_0px_var(--text-primary)]"
-                    : "border-transparent text-text-secondary hover:text-text-primary hover:bg-surface-elevated hover:border-border-default"
-                }`}
-              >
-                {action.icon}
-              </button>
-            );
-          })}
+            })}
 
-          {/* Link button */}
-          <button
-            type="button"
-            title="Insert Link"
-            disabled={disabled}
-            onMouseDown={(e) => {
-              e.preventDefault();
-              handleLink();
-            }}
-            className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border border-transparent text-text-secondary hover:text-text-primary hover:bg-surface-elevated hover:border-border-default transition-all cursor-pointer"
-          >
-            <LinkIcon size={15} />
-          </button>
+            {/* Link button */}
+            <button
+              type="button"
+              title="Insert Link"
+              disabled={disabled}
+              onClick={handleOpenLinkModal}
+              className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-lg border border-transparent text-text-secondary hover:text-text-primary hover:bg-surface-elevated hover:border-border-default transition-all cursor-pointer"
+            >
+              <LinkIcon size={15} />
+            </button>
+          </div>
+
+          {/* Blocks Toolbar row in standard mode */}
+          <div className="flex items-center gap-2 pt-1 border-t border-border-default/50 flex-wrap">
+            <span className="text-[10px] font-bold text-text-tertiary uppercase tracking-wider">
+              Blocks:
+            </span>
+            {renderBlockTools()}
+          </div>
         </div>
 
         {/* Contenteditable Area */}
@@ -733,6 +1697,7 @@ export function RichTextEditor({
         />
       </div>
 
+      {renderModals()}
       <GlobalEditorStyles />
     </div>
   );
@@ -1000,6 +1965,43 @@ function GlobalEditorStyles() {
       :global(.dark) .email-prose-editor .warning-box {
         background-color: #1e293b;
         color: #cbd5e1;
+      }
+
+      /* In-editor block styling */
+      .email-prose-editor table {
+        border-collapse: separate !important;
+        max-width: 100% !important;
+      }
+      .email-prose-editor table td {
+        word-break: break-word;
+      }
+      :global(.dark) .email-prose-editor table[style*="background-color: #eff6ff"],
+      :global(.dark) .email-prose-editor table[style*="background-color: rgb(239, 246, 255)"] {
+        background-color: #0f172a !important;
+        border-color: #1e3a8a !important;
+      }
+      :global(.dark) .email-prose-editor table[style*="background-color: #fffbeb"],
+      :global(.dark) .email-prose-editor table[style*="background-color: rgb(255, 251, 235)"] {
+        background-color: #1c1917 !important;
+        border-color: #78350f !important;
+      }
+      :global(.dark) .email-prose-editor table[style*="background-color: #f0fdf4"],
+      :global(.dark) .email-prose-editor table[style*="background-color: rgb(240, 253, 244)"] {
+        background-color: #052e16 !important;
+        border-color: #14532d !important;
+      }
+      :global(.dark) .email-prose-editor table[style*="background-color: #faf5ff"],
+      :global(.dark) .email-prose-editor table[style*="background-color: rgb(250, 245, 255)"] {
+        background-color: #1e1b4b !important;
+        border-color: #581c87 !important;
+      }
+      :global(.dark) .email-prose-editor table[style*="background-color: #f8fafc"],
+      :global(.dark) .email-prose-editor table[style*="background-color: rgb(248, 250, 252)"] {
+        background-color: #0f172a !important;
+      }
+      :global(.dark) .email-prose-editor table td div[style*="color: #002e5b"],
+      :global(.dark) .email-prose-editor table td[style*="color: #002e5b"] {
+        color: #93c5fd !important;
       }
     `}</style>
   );

@@ -10,20 +10,43 @@ export type GalleryItem = {
   isYoutube?: boolean;
 };
 
-export function getYoutubeEmbedUrl(url: string): string | null {
+export function getYoutubeVideoId(url?: string | null): string | null {
   if (!url) return null;
-  const match = url.match(
-    /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/|live\/))([\\w-]{11})/i
+  const trimmed = url.trim();
+
+  try {
+    // 1. Short links: youtu.be/<id>
+    const shortMatch = trimmed.match(/^https?:\/\/(?:www\.)?youtu\.be\/([a-zA-Z0-9_-]{11})/i);
+    if (shortMatch) return shortMatch[1];
+
+    // 2. Standard URL via URL constructor
+    const parsed = new URL(trimmed.startsWith("http") ? trimmed : `https://${trimmed}`);
+    if (parsed.hostname.includes("youtube.com") || parsed.hostname.includes("youtube-nocookie.com")) {
+      const v = parsed.searchParams.get("v");
+      if (v && /^[a-zA-Z0-9_-]{11}$/.test(v)) return v;
+
+      const pathMatch = parsed.pathname.match(/\/(?:embed|shorts|live|v)\/([a-zA-Z0-9_-]{11})/i);
+      if (pathMatch) return pathMatch[1];
+    }
+  } catch {
+    // Fallback regex parsing if URL constructor throws
+  }
+
+  // 3. Fallback regex for loose / unparsed strings (e.g. watch?si=...&v=...)
+  const fallback = trimmed.match(
+    /(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:embed\/|v\/|watch\?v=|watch\?.*[&?]v=|shorts\/|live\/))([a-zA-Z0-9_-]{11})/i
   );
-  return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+  return fallback ? fallback[1] : null;
 }
 
-export function getYoutubeThumbnail(url: string): string | null {
-  if (!url) return null;
-  const match = url.match(
-    /(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/|live\/))([\\w-]{11})/i
-  );
-  return match ? `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg` : null;
+export function getYoutubeEmbedUrl(url?: string | null): string | null {
+  const id = getYoutubeVideoId(url);
+  return id ? `https://www.youtube.com/embed/${id}` : null;
+}
+
+export function getYoutubeThumbnail(url?: string | null): string | null {
+  const id = getYoutubeVideoId(url);
+  return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
 }
 
 export function getCleanMediaTitle(title?: string, event?: string): string {

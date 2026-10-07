@@ -98,15 +98,30 @@ export function EventMediaGallery({ media, eventTitle }: EventMediaGalleryProps)
                 return (
                   <div
                     key={vid._id || `vid-${i}`}
-                    className="rounded-xl overflow-hidden border-2 border-border-brutalist bg-black aspect-video shadow-[3px_3px_0px_var(--border-brutalist)] flex flex-col"
+                    className="rounded-xl overflow-hidden border-2 border-border-brutalist bg-black aspect-video shadow-[3px_3px_0px_var(--border-brutalist)] flex flex-col group relative"
                   >
-                    <iframe
-                      src={`${ytEmbed}?rel=0`}
-                      title={vid.title || "Event Video"}
-                      className="w-full h-full border-0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
+                    <div className="flex items-center justify-between px-3 py-1.5 bg-surface-secondary border-b border-border-default text-xs shrink-0 z-10">
+                      <span className="font-bold truncate text-text-primary pr-2">
+                        {getCleanMediaTitle(vid.title, eventTitle)}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setActiveItem(vid)}
+                        className="inline-flex items-center gap-1 text-[11px] font-mono font-bold text-accent-primary hover:underline cursor-pointer shrink-0"
+                        title="Enlarge video in cinema lightbox"
+                      >
+                        <Maximize2 size={12} /> Cinema View
+                      </button>
+                    </div>
+                    <div className="w-full flex-1 min-h-0 bg-black">
+                      <iframe
+                        src={`${ytEmbed}?rel=0`}
+                        title={vid.title || "Event Video"}
+                        className="w-full h-full border-0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                      />
+                    </div>
                   </div>
                 );
               }
@@ -124,6 +139,7 @@ export function EventMediaGallery({ media, eventTitle }: EventMediaGalleryProps)
                     muted
                     loop
                     playsInline
+                    preload="metadata"
                   />
                   <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/25 transition-colors">
                     <div className="w-12 h-12 rounded-full bg-accent-primary text-white flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
@@ -216,12 +232,12 @@ export function EventMediaGallery({ media, eventTitle }: EventMediaGalleryProps)
                   />
                 </div>
               ) : getYoutubeEmbedUrl(activeItem.url) ? (
-                <div className="w-full aspect-video max-h-[65vh]">
+                <div className="w-full aspect-video max-h-[70vh]">
                   <iframe
                     src={`${getYoutubeEmbedUrl(activeItem.url)}?autoplay=1&rel=0`}
                     title={activeItem.title || "Video"}
                     className="w-full h-full border-0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                     allowFullScreen
                   />
                 </div>
@@ -230,6 +246,8 @@ export function EventMediaGallery({ media, eventTitle }: EventMediaGalleryProps)
                   src={activeItem.url}
                   controls
                   autoPlay
+                  playsInline
+                  preload="metadata"
                   className="w-full max-h-[60vh] object-contain"
                 />
               )}
@@ -237,7 +255,13 @@ export function EventMediaGallery({ media, eventTitle }: EventMediaGalleryProps)
 
             {/* Modal Footer */}
             <div className="px-6 py-3 bg-surface-secondary flex items-center justify-between text-xs font-mono text-text-tertiary">
-              <span>{activeItem.mediaType === "image" ? "Photo Preview" : "Video Player"}</span>
+              <span>
+                {activeItem.mediaType === "image"
+                  ? "Photo Preview"
+                  : getYoutubeEmbedUrl(activeItem.url)
+                  ? "YouTube Player"
+                  : "Video Player"}
+              </span>
               <a
                 href={activeItem.url}
                 target="_blank"
