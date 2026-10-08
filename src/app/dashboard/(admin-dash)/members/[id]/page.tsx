@@ -88,9 +88,6 @@ const SYSTEM_ROLE_OPTIONS = [
   { value: "member", label: "Member (Standard User)" },
   { value: "moderator", label: "Moderator (Staff Access)" },
   { value: "admin", label: "Administrator (Full Access)" },
-  { value: "executive", label: "Executive (Panel Member)" },
-  { value: "advisor", label: "Advisor (Advisory Access)" },
-  { value: "alumni", label: "Alumni (Graduate Member)" },
   { value: "guest", label: "Guest (Unverified)" },
 ];
 
@@ -1276,19 +1273,15 @@ export default function DashboardMemberDetailsPage() {
                     value={editData.role || "member"}
                     options={SYSTEM_ROLE_OPTIONS}
                     onChange={(val: any) =>
-                      setEditData((prev) => {
-                        const isAlumni = val === "alumni";
-                        const isMember = val === "member";
-                        return {
-                          ...prev,
-                          role: val,
-                          clubRole: isAlumni ? "alumni" : (isMember && prev.clubRole === "alumni" ? "member" : prev.clubRole),
-                          isGraduated: isAlumni ? true : (isMember && prev.clubRole === "alumni" ? false : prev.isGraduated),
-                          passingYear: isMember && prev.clubRole === "alumni" ? undefined : prev.passingYear,
-                        };
-                      })
+                      setEditData((prev) => ({
+                        ...prev,
+                        role: val,
+                      }))
                     }
                   />
+                  <p className="text-[11px] text-text-tertiary mt-1">
+                    Platform permissions clearance (Admin, Moderator, Member, Guest).
+                  </p>
                 </div>
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
@@ -1305,11 +1298,13 @@ export default function DashboardMemberDetailsPage() {
                           clubRole: val,
                           isGraduated: isAlumni ? true : (val === "member" ? false : prev.isGraduated),
                           passingYear: val === "member" ? undefined : prev.passingYear,
-                          role: isAlumni && prev.role === "member" ? "alumni" : (val === "member" && prev.role === "alumni" ? "member" : prev.role),
                         };
                       })
                     }
                   />
+                  <p className="text-[11px] text-text-tertiary mt-1">
+                    Club organizational standing (Executive Committee, General Member, Alumni, Advisor).
+                  </p>
                 </div>
               </div>
 
