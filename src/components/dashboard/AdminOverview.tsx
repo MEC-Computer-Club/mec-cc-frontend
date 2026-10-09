@@ -183,7 +183,7 @@ export default function AdminOverview() {
                   { href: "/dashboard/visual-overview", icon: BarChart3, label: "Visual Overview" },
                   { href: "/dashboard/institute-analytics", icon: Building2, label: "Utilities Analytics" },
                   { href: "/dashboard/analytics", icon: Activity, label: "Site Analytics" },
-                  { href: "/advisors", icon: Users, label: "Advisor Directory" },
+                  { href: "/dashboard/advisors", icon: Users, label: "Advisor Directory" },
                   { href: "/dashboard/members", icon: Users, label: "Member Directory" },
                   { href: "/dashboard/alumni", icon: GraduationCap, label: "Alumni Directory" },
                   { href: "/dashboard/assets", icon: HardHat, label: "Club Inventory" },

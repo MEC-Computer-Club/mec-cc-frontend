@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -88,17 +88,7 @@ const SYSTEM_ROLE_OPTIONS = [
   { value: "member", label: "Member (Standard User)" },
   { value: "moderator", label: "Moderator (Staff Access)" },
   { value: "admin", label: "Administrator (Full Access)" },
-  { value: "executive", label: "Executive (Panel Member)" },
-  { value: "advisor", label: "Advisor (Advisory Access)" },
-  { value: "alumni", label: "Alumni (Graduate Member)" },
   { value: "guest", label: "Guest (Unverified)" },
-];
-
-const CLUB_ROLE_OPTIONS = [
-  { value: "member", label: "General Member" },
-  { value: "executive", label: "Executive Committee" },
-  { value: "alumni", label: "Alumni Network" },
-  { value: "advisor", label: "Faculty Advisor" },
 ];
 
 const APPLICATION_STATUS_OPTIONS = [
@@ -162,6 +152,46 @@ export default function DashboardMemberDetailsPage() {
 
   // Edit Form State
   const [editData, setEditData] = useState<Partial<AuthUser>>({});
+
+  // Auto-derived Club Standing computed from Designation and Graduation status
+  const effectiveClubStanding = useMemo(() => {
+    const desig = (editData.designation || "").trim().toLowerCase();
+    const role = (editData.role || "").toLowerCase();
+    const isAdv =
+      role === "advisor" ||
+      desig.includes("advisor") ||
+      desig.includes("patron") ||
+      desig.includes("faculty") ||
+      desig.includes("mentor") ||
+      editData.session === "Faculty";
+
+    if (isAdv) {
+      return {
+        label: "Faculty Advisor",
+        source: "Advisory Panel",
+        badgeClass: "bg-indigo-100 text-indigo-900 border-indigo-300 dark:bg-indigo-950/60 dark:text-indigo-300 dark:border-indigo-800",
+      };
+    }
+    if (editData.isGraduated) {
+      return {
+        label: "Alumni Network",
+        source: "Graduated Alumni",
+        badgeClass: "bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:border-amber-800",
+      };
+    }
+    if (desig && desig !== "general member" && desig !== "member" && desig !== "student") {
+      return {
+        label: "Executive Committee",
+        source: "Executive Designation",
+        badgeClass: "bg-emerald-100 text-emerald-900 border-emerald-300 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800",
+      };
+    }
+    return {
+      label: "General Member",
+      source: "Active Student",
+      badgeClass: "bg-sky-100 text-sky-900 border-sky-300 dark:bg-sky-950/60 dark:text-sky-300 dark:border-sky-800",
+    };
+  }, [editData.designation, editData.role, editData.session, editData.isGraduated]);
 
   // Fetch Member Details
   const fetchMember = useCallback(async () => {
@@ -1276,40 +1306,33 @@ export default function DashboardMemberDetailsPage() {
                     value={editData.role || "member"}
                     options={SYSTEM_ROLE_OPTIONS}
                     onChange={(val: any) =>
-                      setEditData((prev) => {
-                        const isAlumni = val === "alumni";
-                        const isMember = val === "member";
-                        return {
-                          ...prev,
-                          role: val,
-                          clubRole: isAlumni ? "alumni" : (isMember && prev.clubRole === "alumni" ? "member" : prev.clubRole),
-                          isGraduated: isAlumni ? true : (isMember && prev.clubRole === "alumni" ? false : prev.isGraduated),
-                          passingYear: isMember && prev.clubRole === "alumni" ? undefined : prev.passingYear,
-                        };
-                      })
+                      setEditData((prev) => ({
+                        ...prev,
+                        role: val,
+                      }))
                     }
                   />
+                  <p className="text-[11px] text-text-tertiary mt-1">
+                    Platform permissions clearance (Admin, Moderator, Member, Guest).
+                  </p>
                 </div>
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-text-secondary mb-1.5">
-                    Club Role Category
+                    Club Standing (Auto-Derived)
                   </label>
-                  <Select
-                    value={editData.clubRole || "member"}
-                    options={CLUB_ROLE_OPTIONS}
-                    onChange={(val: any) =>
-                      setEditData((prev) => {
-                        const isAlumni = val === "alumni";
-                        return {
-                          ...prev,
-                          clubRole: val,
-                          isGraduated: isAlumni ? true : (val === "member" ? false : prev.isGraduated),
-                          passingYear: val === "member" ? undefined : prev.passingYear,
-                          role: isAlumni && prev.role === "member" ? "alumni" : (val === "member" && prev.role === "alumni" ? "member" : prev.role),
-                        };
-                      })
-                    }
-                  />
+                  <div className="flex items-center justify-between p-2.5 bg-surface-primary border border-border-default rounded-md">
+                    <span
+                      className={`px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wider border shadow-xs ${effectiveClubStanding.badgeClass}`}
+                    >
+                      {effectiveClubStanding.label}
+                    </span>
+                    <span className="text-[11px] font-semibold text-text-secondary">
+                      {effectiveClubStanding.source}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-text-tertiary mt-1">
+                    Auto-calculated from Graduation status &amp; Official Designation.
+                  </p>
                 </div>
               </div>
 

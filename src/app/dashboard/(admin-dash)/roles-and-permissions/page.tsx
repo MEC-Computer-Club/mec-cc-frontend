@@ -1,15 +1,15 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import CommitteeTermsManager from "@/components/dashboard/CommitteeTermsManager";
-import { Users, Mail, Award, KeyRound, Calendar } from "lucide-react";
-import InvitationCodeContent from "@/components/dashboard/InvitationCodeContent";
+import { Users, Mail, Award, KeyRound, Calendar, ArrowRight } from "lucide-react";
 import RolesManagement from "@/components/dashboard/RolesManagement";
 import { DesignationManager } from "@/components/dashboard/legacy/DesignationManager";
 import { useAuth } from "@/context/AuthContext";
 import { useRoleGuard } from "@/hooks/useRoleGuard";
 
-type RolesTab = "roles" | "invitation" | "designations";
+type RolesTab = "roles" | "designations";
 
 export default function RolesAndPermissionsPage() {
   const { isAllowed, isLoading } = useRoleGuard(["admin"]);
@@ -22,17 +22,28 @@ export default function RolesAndPermissionsPage() {
   return (
     <div className="space-y-6">
       {/* ── Page Header ── */}
-      <div className="border-b border-border-default pb-5">
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-950 dark:bg-orange-950/60 dark:text-orange-300 font-mono text-[11px] font-bold tracking-wider uppercase mb-1.5 border border-orange-300 dark:border-orange-700/60">
-          <KeyRound size={13} />
-          Access Control &amp; Hierarchy
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border-default pb-5">
+        <div>
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-orange-100 text-orange-950 dark:bg-orange-950/60 dark:text-orange-300 font-mono text-[11px] font-bold tracking-wider uppercase mb-1.5 border border-orange-300 dark:border-orange-700/60">
+            <KeyRound size={13} />
+            Access Control &amp; Hierarchy
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-text-primary tracking-tight">
+            Roles &amp; Permissions
+          </h1>
+          <p className="text-xs sm:text-sm text-text-secondary mt-0.5 max-w-2xl">
+            Manage member administrative clearance and configure executive committee panels &amp; advisory positions.
+          </p>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-black text-text-primary tracking-tight">
-          Roles &amp; Permissions
-        </h1>
-        <p className="text-xs sm:text-sm text-text-secondary mt-0.5 max-w-2xl">
-          Manage member administrative clearance, generate role-granting invitation codes, and configure executive committee panels.
-        </p>
+
+        <Link
+          href="/dashboard/members?tab=invites"
+          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-border-default bg-surface-secondary hover:bg-surface-elevated text-xs font-bold text-text-primary transition shadow-[2px_2px_0px_0px_var(--border-default)] hover:shadow-md whitespace-nowrap self-start sm:self-auto cursor-pointer"
+        >
+          <Mail size={14} className="text-accent-primary" />
+          <span>Member Invitations</span>
+          <ArrowRight size={13} className="text-text-secondary" />
+        </Link>
       </div>
 
       {/* ── Neo-Brutalist Tabs ── */}
@@ -52,19 +63,6 @@ export default function RolesAndPermissionsPage() {
 
         <button
           type="button"
-          onClick={() => setActiveTab("invitation")}
-          className={`flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-bold rounded-t-xl transition-all cursor-pointer whitespace-nowrap border-t-2 border-x-2 ${
-            activeTab === "invitation"
-              ? "bg-surface-elevated text-text-primary border-border-brutalist dark:border-border-default shadow-[3px_-2px_0px_0px_var(--border-brutalist)] -mb-px"
-              : "border-transparent text-text-secondary hover:text-text-primary hover:bg-surface-secondary/60"
-          }`}
-        >
-          <Mail size={16} className={activeTab === "invitation" ? "text-accent-primary" : ""} />
-          Invitation Codes
-        </button>
-
-        <button
-          type="button"
           onClick={() => setActiveTab("designations")}
           className={`flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-bold rounded-t-xl transition-all cursor-pointer whitespace-nowrap border-t-2 border-x-2 ${
             activeTab === "designations"
@@ -80,8 +78,6 @@ export default function RolesAndPermissionsPage() {
       {/* ── Tab Content ── */}
       <div>
         {activeTab === "roles" && <RolesManagement />}
-
-        {activeTab === "invitation" && <InvitationCodeContent />}
 
         {activeTab === "designations" && (
           <div className="space-y-6">

@@ -53,7 +53,7 @@ type AudienceType =
   | "all"
   | "custom";
 
-type EditorMode = "preview" | "code";
+type EditorMode = "preview" | "code" | "full-preview";
 type BannerSource = "event" | "global" | "custom" | "none";
 type DeliverySystem = "bcc" | "cc" | "individual";
 
@@ -119,30 +119,50 @@ const DEFAULT_BRANDING: EmailBranding = {
 // Helper to extract body content from full HTML5 document
 function extractBodyFromHtml(fullHtml: string): string {
   if (!fullHtml) return "";
-  const cellMatch = fullHtml.match(
-    /<td class="email-content-cell"[^>]*>\s*<div[^>]*>([\s\S]*?)<\/div>\s*(?:<!-- Attachments -->[\s\S]*?)?<\/td>/i
-  );
-  if (cellMatch && cellMatch[1]) {
-    return cellMatch[1].trim();
+
+  // 1. In browser environment, use DOMParser for proper DOM traversal and balanced HTML
+  if (typeof window !== "undefined" && typeof DOMParser !== "undefined") {
+    try {
+      const doc = new DOMParser().parseFromString(fullHtml, "text/html");
+      const contentCell =
+        doc.querySelector(".content-padding") ||
+        doc.querySelector(".email-content-cell") ||
+        doc.querySelector(".event-card-body");
+      if (contentCell && contentCell.innerHTML.trim()) {
+        return contentCell.innerHTML.trim();
+      }
+      if (doc.body && doc.body.innerHTML.trim()) {
+        return doc.body.innerHTML.trim();
+      }
+    } catch {
+      // fallback to balanced tag extraction
+    }
   }
-  const genericCellMatch = fullHtml.match(
-    /<td class="email-content-cell"[^>]*>([\s\S]*?)<\/td>/i
-  );
-  if (genericCellMatch && genericCellMatch[1]) {
-    return genericCellMatch[1].trim();
+
+  // 2. Balanced cell tag extraction for .content-padding or .email-content-cell
+  const targetTagRegex = /<td[^>]*class=["'][^"']*(?:content-padding|email-content-cell)[^"']*["'][^>]*>/i;
+  const match = fullHtml.match(targetTagRegex);
+  if (match && match.index !== undefined) {
+    const startPos = match.index + match[0].length;
+    let depth = 1;
+    let pos = startPos;
+    while (depth > 0 && pos < fullHtml.length) {
+      const nextOpen = fullHtml.indexOf("<td", pos);
+      const nextClose = fullHtml.indexOf("</td", pos);
+      if (nextClose === -1) break;
+      if (nextOpen !== -1 && nextOpen < nextClose) {
+        depth++;
+        pos = fullHtml.indexOf(">", nextOpen) + 1;
+      } else {
+        depth--;
+        if (depth === 0) {
+          return fullHtml.substring(startPos, nextClose).trim();
+        }
+        pos = fullHtml.indexOf(">", nextClose) + 1;
+      }
+    }
   }
-  const match = fullHtml.match(
-    /<div style="font-size: 15px; line-height: 1.65; color: #4b5563;[^"]*">([\s\S]*?)<\/div>/i
-  );
-  if (match && match[1]) {
-    return match[1].trim();
-  }
-  const contentPaddingMatch = fullHtml.match(
-    /<td class="content-padding"[^>]*>([\s\S]*?)<\/td>/i
-  );
-  if (contentPaddingMatch && contentPaddingMatch[1]) {
-    return contentPaddingMatch[1].trim();
-  }
+
   return fullHtml;
 }
 
@@ -846,8 +866,14 @@ ${paragraphsHtml}
   const handleSwitchMode = (mode: EditorMode) => {
     if (mode === "preview") {
       setMessage(extractBodyFromHtml(customHtml));
-    } else {
-      setCustomHtml(buildFullHtml(subject, message));
+    } else if (mode === "code" || mode === "full-preview") {
+      const isStandaloneCustom =
+        customHtml.includes("<!DOCTYPE") ||
+        customHtml.includes("<html") ||
+        customHtml.includes("card-container");
+      if (!isStandaloneCustom || !customHtml.trim()) {
+        setCustomHtml(buildFullHtml(subject, message));
+      }
     }
     setEditorMode(mode);
   };
@@ -1119,7 +1145,8 @@ ${paragraphsHtml}
       return;
     }
 
-    const contentToSend = editorMode === "code" ? customHtml : message;
+    const isRawHtml = editorMode === "code" || editorMode === "full-preview";
+    const contentToSend = isRawHtml ? customHtml : message;
     if (!contentToSend.trim()) {
       showToast("Please enter message content or HTML code.", "error");
       return;
@@ -1136,7 +1163,7 @@ ${paragraphsHtml}
         audience,
         subject: subject.trim(),
         message: contentToSend.trim(),
-        isCustomHtml: editorMode === "code",
+        isCustomHtml: isRawHtml,
         isFullTemplate: editorMode === "preview",
         bannerUrl: effectiveBannerUrl,
         attachments,
@@ -1166,7 +1193,8 @@ ${paragraphsHtml}
       return;
     }
 
-    const contentToSend = editorMode === "code" ? customHtml : message;
+    const isRawHtml = editorMode === "code" || editorMode === "full-preview";
+    const contentToSend = isRawHtml ? customHtml : message;
     if (!contentToSend.trim()) {
       showToast("Please enter message content or HTML code.", "error");
       return;
@@ -1183,7 +1211,7 @@ ${paragraphsHtml}
         audience,
         subject: subject.trim(),
         message: contentToSend.trim(),
-        isCustomHtml: editorMode === "code",
+        isCustomHtml: isRawHtml,
         isFullTemplate: editorMode === "preview",
         bannerUrl: effectiveBannerUrl,
         attachments,
@@ -1793,7 +1821,7 @@ ${paragraphsHtml}
                       showToast("Please provide an email subject line.", "error");
                       return;
                     }
-                    const content = editorMode === "code" ? customHtml : message;
+                    const content = (editorMode === "code" || editorMode === "full-preview") ? customHtml : message;
                     if (!content.trim()) {
                       showToast("Please provide message content.", "error");
                       return;
@@ -1831,7 +1859,7 @@ ${paragraphsHtml}
               />
             </div>
 
-            {/* View Mode Toolbar: Live Preview & Editor vs HTML Source */}
+            {/* View Mode Toolbar: Live Preview & Editor vs HTML Source vs Full Email Preview */}
             <div className="flex items-center justify-between border-b border-border-default/60 pb-2.5 flex-wrap gap-2">
               <div className="flex items-center p-1 bg-surface-secondary border border-border-default rounded-xl gap-0.5">
                 <button
@@ -1858,6 +1886,18 @@ ${paragraphsHtml}
                   <Code size={13} />
                   HTML Source Code
                 </button>
+                <button
+                  type="button"
+                  onClick={() => handleSwitchMode("full-preview")}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                    editorMode === "full-preview"
+                      ? "bg-accent-primary text-text-primary shadow-xs"
+                      : "text-text-secondary hover:text-text-primary"
+                  }`}
+                >
+                  <Monitor size={13} />
+                  Full Email Preview
+                </button>
               </div>
 
               {editorMode === "preview" && (
@@ -1870,6 +1910,40 @@ ${paragraphsHtml}
                 <span className="text-[11px] font-mono text-text-tertiary">
                   Complete HTML5 Document
                 </span>
+              )}
+
+              {editorMode === "full-preview" && (
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-mono text-text-tertiary">
+                    Standalone HTML View
+                  </span>
+                  <div className="flex items-center p-0.5 bg-surface-secondary border border-border-default rounded-lg">
+                    <button
+                      type="button"
+                      onClick={() => setPreviewDevice("desktop")}
+                      className={`p-1 rounded cursor-pointer ${
+                        previewDevice === "desktop"
+                          ? "bg-surface-elevated text-text-primary shadow-xs font-bold"
+                          : "text-text-tertiary hover:text-text-primary"
+                      }`}
+                      title="Desktop preview (600px)"
+                    >
+                      <Monitor size={14} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewDevice("mobile")}
+                      className={`p-1 rounded cursor-pointer ${
+                        previewDevice === "mobile"
+                          ? "bg-surface-elevated text-text-primary shadow-xs font-bold"
+                          : "text-text-tertiary hover:text-text-primary"
+                      }`}
+                      title="Mobile preview (375px)"
+                    >
+                      <Smartphone size={14} />
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
 
@@ -1968,7 +2042,7 @@ ${paragraphsHtml}
                     }}
                   />
                 </div>
-              ) : (
+              ) : editorMode === "code" ? (
                 <div className="p-3">
                   <textarea
                     rows={22}
@@ -1980,6 +2054,20 @@ ${paragraphsHtml}
                     className="w-full font-mono text-xs p-3.5 bg-surface-secondary text-text-primary rounded-xl border border-border-default focus:outline-none focus:border-accent-primary leading-relaxed resize-y"
                     placeholder="<!DOCTYPE html><html>...</html>"
                   />
+                </div>
+              ) : (
+                <div className="p-4 sm:p-6 bg-slate-900/5 dark:bg-slate-950/40 flex flex-col items-center">
+                  <div
+                    className="w-full bg-white rounded-2xl shadow-xl overflow-hidden border border-border-default transition-all duration-200"
+                    style={{ maxWidth: previewDevice === "mobile" ? "375px" : "660px" }}
+                  >
+                    <iframe
+                      title="Full Email Preview"
+                      srcDoc={customHtml.includes("<html") ? customHtml : buildFullHtml(subject, message)}
+                      sandbox="allow-same-origin"
+                      className="w-full min-h-[750px] border-none block"
+                    />
+                  </div>
                 </div>
               )}
             </div>

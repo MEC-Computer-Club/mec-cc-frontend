@@ -25,7 +25,7 @@ const RolesManagement = () => {
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
-  const roles: UserRole[] = ["admin", "moderator", "executive", "advisor", "alumni", "member", "guest"];
+  const roles: UserRole[] = ["admin", "moderator", "member", "guest"];
 
   const selectMember = (u: any) => {
     setSearchedUser(u);
@@ -346,10 +346,22 @@ const RolesManagement = () => {
                                   value={editedRole || getEffectiveRole(searchedUser)}
                                   onChange={(val) => handleRoleChange(val)}
                                   disabled={loading}
-                                  options={roles.map((role) => ({
-                                    value: role,
-                                    label: capitalizeFirstLetter(role),
-                                  }))}
+                                  options={[
+                                    ...roles.map((role) => ({
+                                      value: role,
+                                      label:
+                                        role === "admin"
+                                          ? "Administrator (Full Access)"
+                                          : role === "moderator"
+                                          ? "Platform Moderator (Staff Clearance)"
+                                          : role === "member"
+                                          ? "Standard Member"
+                                          : "Guest (Unverified)",
+                                    })),
+                                    ...(editedRole && !roles.includes(editedRole)
+                                      ? [{ value: editedRole, label: `${capitalizeFirstLetter(editedRole)} (Legacy)` }]
+                                      : []),
+                                  ]}
                                 />
                               </div>
                             ) : (

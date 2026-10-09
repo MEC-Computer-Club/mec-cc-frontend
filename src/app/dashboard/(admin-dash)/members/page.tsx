@@ -21,13 +21,15 @@ import {
   GraduationCap,
   Sparkles,
   Trash2,
+  Mail,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import toast from "react-hot-toast";
 import { AdminAddMemberModal } from "@/components/dashboard/legacy/AdminAddMemberModal";
 import FilterSelect, { FilterOption } from "@/app/dashboard/components/FilterSelect";
+import InvitationCodeContent from "@/components/dashboard/InvitationCodeContent";
 
-type MainTab = "pending" | "all";
+type MainTab = "pending" | "all" | "invites";
 
 interface PaginationData {
   total: number;
@@ -76,7 +78,7 @@ function MemberManagementContent() {
   const isAdmin = currentRole === "admin";
 
   const [activeTab, setActiveTab] = useState<MainTab>(
-    isAdvisor ? "all" : (tabParam === "pending" ? "pending" : "all")
+    isAdvisor ? "all" : (tabParam === "pending" ? "pending" : tabParam === "invites" || tabParam === "invitation" ? "invites" : "all")
   );
 
   useEffect(() => {
@@ -87,6 +89,8 @@ function MemberManagementContent() {
     const currentTabParam = searchParams.get("tab");
     if (currentTabParam === "pending") {
       setActiveTab("pending");
+    } else if (currentTabParam === "invites" || currentTabParam === "invitation") {
+      setActiveTab("invites");
     } else if (currentTabParam === "all") {
       setActiveTab("all");
     }
@@ -142,6 +146,7 @@ function MemberManagementContent() {
   };
 
   const fetchMembers = useCallback(async (isSilent = false) => {
+    if (activeTab === "invites") return;
     try {
       if (!isSilent) setLoading(true);
       const currentFilter = activeTab === "pending" ? pendingFilter : allFilter;
@@ -177,15 +182,17 @@ function MemberManagementContent() {
   }, [activeTab, pendingFilter, allFilter, debouncedSearch, pagination.page, pagination.limit]);
 
   useEffect(() => {
-    fetchMembers();
+    if (activeTab !== "invites") {
+      fetchMembers();
+    }
     // Live presence polling silently every 25 seconds (zero flicker or table reloading)
     const interval = setInterval(() => {
-      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+      if (typeof document !== "undefined" && document.visibilityState === "visible" && activeTab !== "invites") {
         fetchMembers(true);
       }
     }, 25000);
     return () => clearInterval(interval);
-  }, [fetchMembers]);
+  }, [fetchMembers, activeTab]);
 
   const handleTabChange = (tab: MainTab) => {
     if (tab !== activeTab) {
@@ -259,14 +266,27 @@ function MemberManagementContent() {
           </p>
         </div>
         {!isAdvisor && (
-          <button
-            onClick={() => setIsAddModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-text-primary hover:bg-surface-inverse text-white rounded-lg text-sm font-semibold transition shadow-[3px_3px_0px_0px_var(--border-default)] hover:shadow-md whitespace-nowrap"
-            style={{ color: "#fff" }}
-          >
-            <UserPlus size={16} />
-            <span>Add Member / Advisor</span>
-          </button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => handleTabChange("invites")}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold transition shadow-[2px_2px_0px_0px_var(--border-default)] hover:shadow-md whitespace-nowrap cursor-pointer ${
+                activeTab === "invites"
+                  ? "bg-accent-primary text-accent-primary-text border border-border-brutalist"
+                  : "bg-surface-secondary hover:bg-surface-elevated text-text-primary border border-border-default"
+              }`}
+            >
+              <Mail size={16} />
+              <span>Invite Members</span>
+            </button>
+            <button
+              onClick={() => setIsAddModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-text-primary hover:bg-surface-inverse text-white rounded-lg text-sm font-semibold transition shadow-[3px_3px_0px_0px_var(--border-default)] hover:shadow-md whitespace-nowrap cursor-pointer"
+              style={{ color: "#fff" }}
+            >
+              <UserPlus size={16} />
+              <span>Add Member / Advisor</span>
+            </button>
+          </div>
         )}
       </div>
 
@@ -324,6 +344,21 @@ function MemberManagementContent() {
                   )}
                 </button>
               )}
+
+              {/* Invites Tab */}
+              {!isAdvisor && (
+                <button
+                  type="button"
+                  onClick={() => handleTabChange("invites")}
+                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${activeTab === "invites"
+                      ? "bg-surface-elevated text-text-primary border border-border-default shadow-[2px_2px_0px_0px_var(--accent-primary)]"
+                      : "text-text-secondary hover:text-text-primary"
+                    }`}
+                >
+                  <Mail size={14} className={activeTab === "invites" ? "text-accent-primary" : ""} />
+                  <span>Invite &amp; Codes</span>
+                </button>
+              )}
             </div>
 
             {/* Filter Dropdown alongside the selected tab */}
@@ -334,39 +369,41 @@ function MemberManagementContent() {
                 options={pendingOptions}
                 placeholder="Filter Applications"
               />
-            ) : (
+            ) : activeTab === "all" ? (
               <FilterSelect
                 value={allFilter}
                 onChange={handleFilterChange}
                 options={allOptions}
                 placeholder="Filter by Club Role"
               />
-            )}
+            ) : null}
           </div>
 
-          {/* Right: Search Bar */}
-          <div className="relative w-full lg:w-72">
-            <Search
-              size={14}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none"
-            />
-            <input
-              type="text"
-              placeholder="Search by ID, name, email…"
-              value={searchQuery}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              className="w-full pl-9 pr-8 py-1.5 text-xs font-semibold rounded-lg border border-border-default bg-surface-elevated text-text-primary placeholder:font-normal placeholder:text-text-secondary focus:outline-none focus:border-accent-primary focus:shadow-[2px_2px_0px_0px_var(--accent-primary)] transition"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={clearSearch}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary p-0.5 rounded"
-              >
-                <X size={13} />
-              </button>
-            )}
-          </div>
+          {/* Right: Search Bar (Only shown on member tabs) */}
+          {activeTab !== "invites" && (
+            <div className="relative w-full lg:w-72">
+              <Search
+                size={14}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none"
+              />
+              <input
+                type="text"
+                placeholder="Search by ID, name, email…"
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="w-full pl-9 pr-8 py-1.5 text-xs font-semibold rounded-lg border border-border-default bg-surface-elevated text-text-primary placeholder:font-normal placeholder:text-text-secondary focus:outline-none focus:border-accent-primary focus:shadow-[2px_2px_0px_0px_var(--accent-primary)] transition"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={clearSearch}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary p-0.5 rounded"
+                >
+                  <X size={13} />
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
@@ -377,8 +414,12 @@ function MemberManagementContent() {
         onSuccess={fetchMembers}
       />
 
-      {/* ── Table & Cards ── */}
-      {loading ? (
+      {/* ── Table & Cards or Invites Content ── */}
+      {activeTab === "invites" ? (
+        <div className="pt-2">
+          <InvitationCodeContent />
+        </div>
+      ) : loading ? (
         <div className="flex flex-col items-center justify-center py-20 bg-surface-elevated rounded-xl border border-border-default shadow-[4px_4px_0px_0px_var(--border-default)]">
           <Loader2 size={32} className="animate-spin text-accent-primary mb-3" />
           <p className="text-xs font-semibold text-text-secondary">Loading members data…</p>
